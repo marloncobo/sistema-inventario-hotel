@@ -5,6 +5,7 @@ substitutions:
   _DB_USER: postgres
   _DB_PASSWORD_SECRET: lunara-db-password
   _JWT_SECRET: lunara-jwt-secret
+  _CLOUD_SQL_IP_TYPES: PRIVATE
   _IDENTITY_DB: lunara_identity
   _MASTERDATA_DB: lunara_masterdata
   _INVENTORY_DB: lunara_inventory
@@ -74,7 +75,7 @@ steps:
           --platform managed \
           --allow-unauthenticated \
           --add-cloudsql-instances "$_CLOUD_SQL_CONNECTION_NAME" \
-          --set-env-vars "^@^SPRING_PROFILES_ACTIVE=gcp@DB_NAME=$_IDENTITY_DB@DB_USER=$_DB_USER@CLOUD_SQL_CONNECTION_NAME=$_CLOUD_SQL_CONNECTION_NAME@APP_JWT_EXPIRATION_MINUTES=480" \
+          --set-env-vars "^@^SPRING_PROFILES_ACTIVE=gcp@DB_NAME=$_IDENTITY_DB@DB_USER=$_DB_USER@CLOUD_SQL_CONNECTION_NAME=$_CLOUD_SQL_CONNECTION_NAME@CLOUD_SQL_IP_TYPES=$_CLOUD_SQL_IP_TYPES@APP_JWT_EXPIRATION_MINUTES=480" \
           --set-secrets "DB_PASSWORD=$_DB_PASSWORD_SECRET:latest,APP_JWT_SECRET=$_JWT_SECRET:latest"
 
   - name: gcr.io/cloud-builders/gcloud
@@ -88,7 +89,7 @@ steps:
           --platform managed \
           --allow-unauthenticated \
           --add-cloudsql-instances "$_CLOUD_SQL_CONNECTION_NAME" \
-          --set-env-vars "^@^SPRING_PROFILES_ACTIVE=gcp@DB_NAME=$_MASTERDATA_DB@DB_USER=$_DB_USER@CLOUD_SQL_CONNECTION_NAME=$_CLOUD_SQL_CONNECTION_NAME" \
+          --set-env-vars "^@^SPRING_PROFILES_ACTIVE=gcp@DB_NAME=$_MASTERDATA_DB@DB_USER=$_DB_USER@CLOUD_SQL_CONNECTION_NAME=$_CLOUD_SQL_CONNECTION_NAME@CLOUD_SQL_IP_TYPES=$_CLOUD_SQL_IP_TYPES" \
           --set-secrets "DB_PASSWORD=$_DB_PASSWORD_SECRET:latest,APP_JWT_SECRET=$_JWT_SECRET:latest"
 
   - name: gcr.io/cloud-builders/gcloud
@@ -102,7 +103,7 @@ steps:
           --platform managed \
           --allow-unauthenticated \
           --add-cloudsql-instances "$_CLOUD_SQL_CONNECTION_NAME" \
-          --set-env-vars "^@^SPRING_PROFILES_ACTIVE=gcp@DB_NAME=$_INVENTORY_DB@DB_USER=$_DB_USER@CLOUD_SQL_CONNECTION_NAME=$_CLOUD_SQL_CONNECTION_NAME" \
+          --set-env-vars "^@^SPRING_PROFILES_ACTIVE=gcp@DB_NAME=$_INVENTORY_DB@DB_USER=$_DB_USER@CLOUD_SQL_CONNECTION_NAME=$_CLOUD_SQL_CONNECTION_NAME@CLOUD_SQL_IP_TYPES=$_CLOUD_SQL_IP_TYPES" \
           --set-secrets "DB_PASSWORD=$_DB_PASSWORD_SECRET:latest,APP_JWT_SECRET=$_JWT_SECRET:latest"
 
 images:
