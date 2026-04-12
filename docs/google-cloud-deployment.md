@@ -1,13 +1,14 @@
 # Despliegue en Google Cloud
 
-Esta configuracion despliega los tres microservicios en Cloud Run y usa Cloud SQL para PostgreSQL.
+Esta configuracion despliega los tres microservicios en Cloud Run y usa Cloud SQL para PostgreSQL por IP privada.
 
 ## Requisitos
 
 - Un proyecto de Google Cloud con facturacion activa.
 - `gcloud` autenticado y configurado con el proyecto.
 - APIs habilitadas: Cloud Run, Cloud Build, Artifact Registry, Cloud SQL Admin y Secret Manager.
-- Una instancia de Cloud SQL para PostgreSQL.
+- Una instancia de Cloud SQL para PostgreSQL con IP privada.
+- Cloud Run debe tener salida a la VPC donde esta Cloud SQL, usando Direct VPC egress o un Serverless VPC Access connector.
 
 ## Preparar base de datos
 
@@ -50,6 +51,7 @@ El build crea el repositorio de Artifact Registry si no existe, construye las tr
 
 - `SPRING_PROFILES_ACTIVE=gcp`
 - `CLOUD_SQL_CONNECTION_NAME=project:region:instance`
+- `CLOUD_SQL_IP_TYPES=PRIVATE`
 - `DB_NAME=lunara_identity | lunara_masterdata | lunara_inventory`
 - `DB_USER=postgres`
 - `DB_PASSWORD` desde Secret Manager
@@ -58,5 +60,7 @@ El build crea el repositorio de Artifact Registry si no existe, construye las tr
 ## Notas
 
 - Cloud Run define `PORT` automaticamente; las aplicaciones ya lo leen.
+- El perfil `gcp` usa `spring.datasource.hikari.data-source-properties.ipTypes=PRIVATE` por defecto.
+- Si tu instancia Cloud SQL usa solo IP privada, Cloud Run tambien necesita salida a la VPC. Sin esa ruta de red, `ipTypes=PRIVATE` no alcanza.
 - El mismo `APP_JWT_SECRET` debe usarse en los tres servicios para validar el mismo token JWT.
 - Si quieres servicios privados, cambia `--allow-unauthenticated` en `cloudbuild.yaml` por una politica IAM de invocacion controlada.
