@@ -1,0 +1,16 @@
+CREATE TABLE IF NOT EXISTS roles (
+    id BIGSERIAL PRIMARY KEY,
+    name VARCHAR(50) NOT NULL UNIQUE,
+    description VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS users (
+    id BIGSERIAL PRIMARY KEY,
+    full_name VARCHAR(120) NOT NULL,
+    email VARCHAR(120) NOT NULL UNIQUE,
+    username VARCHAR(60) NOT NULL UNIQUE,
+    password_hash VARCHAR(128) NOT NULL,
+    role_id BIGINT NOT NULL REFERENCES roles(id),
+    status VARCHAR(12) NOT NULL,
+    created_at TIMESTAMP NOT NULL
+);

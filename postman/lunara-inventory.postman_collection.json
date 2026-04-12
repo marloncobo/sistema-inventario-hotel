@@ -1,0 +1,148 @@
+{
+  "info": {
+    "name": "Lunara Inventory Platform",
+    "_postman_id": "0fbc9f23-17a0-4ef8-8d4d-5c36b209f6b5",
+    "description": "Coleccion base para probar los microservicios de Lunara Inventory Platform.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "identityUrl", "value": "http://localhost:8081" },
+    { "key": "masterdataUrl", "value": "http://localhost:8082" },
+    { "key": "inventoryUrl", "value": "http://localhost:8083" },
+    { "key": "jwt", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Identity",
+      "item": [
+        {
+          "name": "Login Admin",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"Admin123!\"\n}" },
+            "url": "{{identityUrl}}/api/auth/login"
+          }
+        },
+        {
+          "name": "List Roles",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{jwt}}" }],
+            "url": "{{identityUrl}}/api/roles"
+          }
+        },
+        {
+          "name": "List Users",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{jwt}}" }],
+            "url": "{{identityUrl}}/api/users"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Master Data",
+      "item": [
+        {
+          "name": "List Products",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{jwt}}" }],
+            "url": "{{masterdataUrl}}/api/products"
+          }
+        },
+        {
+          "name": "Create Product",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwt}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"LENC-001\",\n  \"name\": \"Toalla blanca\",\n  \"description\": \"Toalla de baño para habitaciones\",\n  \"categoryId\": 2,\n  \"unitId\": 1,\n  \"supplierId\": 1,\n  \"minimumStock\": 25,\n  \"maximumStock\": 200,\n  \"averageCost\": 15.90,\n  \"perishable\": false,\n  \"lotControl\": false,\n  \"expirationControl\": false,\n  \"status\": \"ACTIVE\"\n}"
+            },
+            "url": "{{masterdataUrl}}/api/products"
+          }
+        },
+        {
+          "name": "List Warehouses",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{jwt}}" }],
+            "url": "{{masterdataUrl}}/api/warehouses"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Inventory",
+      "item": [
+        {
+          "name": "Register Initial Stock",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwt}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": 1,\n  \"productCode\": \"ASEO-001\",\n  \"productName\": \"Detergente industrial\",\n  \"warehouseId\": 1,\n  \"warehouseName\": \"Bodega Central\",\n  \"quantity\": 20,\n  \"unitCost\": 18.50,\n  \"minimumStock\": 20,\n  \"maximumStock\": 120,\n  \"lot\": \"LOT-2026-001\",\n  \"expirationDate\": \"2026-12-31\",\n  \"observations\": \"Carga inicial de apertura\"\n}"
+            },
+            "url": "{{inventoryUrl}}/api/stocks/initial"
+          }
+        },
+        {
+          "name": "Create Purchase Order",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwt}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"supplierId\": 1,\n  \"supplierName\": \"Distribuciones Hoteleras SAS\",\n  \"expectedDate\": \"2026-04-20\",\n  \"observations\": \"Reposicion semanal\",\n  \"lines\": [\n    {\n      \"productId\": 1,\n      \"productCode\": \"ASEO-001\",\n      \"productName\": \"Detergente industrial\",\n      \"quantity\": 30,\n      \"unitPrice\": 18.50\n    }\n  ]\n}"
+            },
+            "url": "{{inventoryUrl}}/api/purchase-orders"
+          }
+        },
+        {
+          "name": "Create Internal Request",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwt}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"areaId\": 2,\n  \"areaName\": \"Housekeeping\",\n  \"observations\": \"Reposicion de turno\",\n  \"lines\": [\n    {\n      \"productId\": 1,\n      \"productCode\": \"ASEO-001\",\n      \"productName\": \"Detergente industrial\",\n      \"requestedQuantity\": 5\n    }\n  ]\n}"
+            },
+            "url": "{{inventoryUrl}}/api/internal-requests"
+          }
+        },
+        {
+          "name": "Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{jwt}}" }],
+            "url": "{{inventoryUrl}}/api/dashboard"
+          }
+        },
+        {
+          "name": "Low Stock Alert",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{jwt}}" }],
+            "url": "{{inventoryUrl}}/api/alerts/low-stock"
+          }
+        }
+      ]
+    }
+  ]
+}

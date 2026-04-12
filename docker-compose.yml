@@ -1,0 +1,66 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: lunara-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/init-databases.sql:/docker-entrypoint-initdb.d/init-databases.sql
+
+  identity-service:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.identity
+    container_name: lunara-identity-service
+    environment:
+      SERVER_PORT: 8081
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/lunara_identity
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      APP_JWT_SECRET: lunara-super-secret-key-very-secure-2026-123456
+      APP_JWT_EXPIRATION_MINUTES: 480
+    ports:
+      - "8081:8081"
+    depends_on:
+      - postgres
+
+  masterdata-service:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.masterdata
+    container_name: lunara-masterdata-service
+    environment:
+      SERVER_PORT: 8082
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/lunara_masterdata
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      APP_JWT_SECRET: lunara-super-secret-key-very-secure-2026-123456
+    ports:
+      - "8082:8082"
+    depends_on:
+      - postgres
+
+  inventory-service:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.inventory
+    container_name: lunara-inventory-service
+    environment:
+      SERVER_PORT: 8083
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/lunara_inventory
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      APP_JWT_SECRET: lunara-super-secret-key-very-secure-2026-123456
+    ports:
+      - "8083:8083"
+    depends_on:
+      - postgres
+
+volumes:
+  postgres_data:
