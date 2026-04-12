@@ -109,3 +109,6 @@ images:
   - $_REGION-docker.pkg.dev/$PROJECT_ID/$_REPOSITORY/identity-service:$COMMIT_SHA
   - $_REGION-docker.pkg.dev/$PROJECT_ID/$_REPOSITORY/masterdata-service:$COMMIT_SHA
   - $_REGION-docker.pkg.dev/$PROJECT_ID/$_REPOSITORY/inventory-service:$COMMIT_SHA
+
+options:
+  logging: CLOUD_LOGGING_ONLY
