@@ -1,0 +1,1 @@
+INSERT INTO stocks (product_id, product_code, product_name, warehouse_id, warehouse_name, current_quantity, minimum_stock, maximum_stock, updated_at) VALUES (1, 'ASEO-001', 'Detergente industrial', 1, 'Bodega Central', 50, 20, 120, CURRENT_TIMESTAMP) ON CONFLICT (product_id, warehouse_id) DO NOTHING;
