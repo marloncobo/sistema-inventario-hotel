@@ -1,0 +1,12 @@
+.git
+.idea
+.mvn/wrapper/maven-wrapper.jar
+**/target
+**/.classpath
+**/.project
+**/.settings
+*.iml
+README.md
+docs
+documentos
+postman

@@ -1,0 +1,52 @@
+# Build outputs
+target/
+**/target/
+*.class
+*.jar
+*.war
+*.ear
+
+# Maven wrapper runtime files
+.mvn/wrapper/maven-wrapper.jar
+
+# Logs and runtime files
+*.log
+logs/
+*.pid
+*.seed
+
+# Environment and local secrets
+.env
+.env.*
+!.env.example
+*.local
+application-local.properties
+application-*.local.properties
+
+# IDEs and editors
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+.settings/
+.classpath
+.project
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Docker local volumes and overrides
+docker-compose.override.yml
+docker/.env
+
+# Google Cloud local config
+.gcloud/
+
+# Test and coverage reports
+surefire-reports/
+failsafe-reports/
+coverage/
+jacoco.exec
