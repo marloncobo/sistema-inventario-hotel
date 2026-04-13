@@ -25,6 +25,7 @@ services:
       SPRING_DATASOURCE_PASSWORD: postgres
       APP_JWT_SECRET: lunara-super-secret-key-very-secure-2026-123456
       APP_JWT_EXPIRATION_MINUTES: 480
+      APP_CORS_ALLOWED_ORIGINS: http://localhost:4200,http://127.0.0.1:4200
     ports:
       - "8081:8081"
     depends_on:
@@ -41,6 +42,7 @@ services:
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
       APP_JWT_SECRET: lunara-super-secret-key-very-secure-2026-123456
+      APP_CORS_ALLOWED_ORIGINS: http://localhost:4200,http://127.0.0.1:4200
     ports:
       - "8082:8082"
     depends_on:
@@ -57,6 +59,7 @@ services:
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
       APP_JWT_SECRET: lunara-super-secret-key-very-secure-2026-123456
+      APP_CORS_ALLOWED_ORIGINS: http://localhost:4200,http://127.0.0.1:4200
     ports:
       - "8083:8083"
     depends_on:
