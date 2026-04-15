@@ -1,0 +1,166 @@
+{
+  "info": {
+    "name": "Hotel Inventory Microservices",
+    "_postman_id": "c5c8ca34-b34a-4441-b91f-5d8881111111",
+    "description": "Colección para probar el sistema de inventario hotelero por el API Gateway.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "itemId",
+      "value": "1"
+    },
+    {
+      "key": "roomId",
+      "value": "1"
+    }
+  ],
+  "item": [
+    {
+      "name": "Inventory",
+      "item": [
+        {
+          "name": "Listar insumos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/inventory/api/inventory/items"
+          }
+        },
+        {
+          "name": "Crear insumo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Jugo de naranja 250ml\",\n  \"category\": \"MINIBAR\",\n  \"unit\": \"UND\",\n  \"stock\": 12,\n  \"minStock\": 5\n}"
+            },
+            "url": "{{baseUrl}}/inventory/api/inventory/items"
+          }
+        },
+        {
+          "name": "Obtener insumo por id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/inventory/api/inventory/items/{{itemId}}"
+          }
+        },
+        {
+          "name": "Registrar entrada de stock",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantity\": 15,\n  \"referenceText\": \"Compra proveedor abril\"\n}"
+            },
+            "url": "{{baseUrl}}/inventory/api/inventory/items/{{itemId}}/entries"
+          }
+        },
+        {
+          "name": "Ver movimientos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/inventory/api/inventory/movements"
+          }
+        },
+        {
+          "name": "Ver stock bajo",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/inventory/api/inventory/items/low-stock"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Rooms",
+      "item": [
+        {
+          "name": "Listar habitaciones",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/rooms/api/rooms"
+          }
+        },
+        {
+          "name": "Crear habitación",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"number\": \"305\",\n  \"type\": \"EJECUTIVA\",\n  \"status\": \"DISPONIBLE\",\n  \"floor\": 3\n}"
+            },
+            "url": "{{baseUrl}}/rooms/api/rooms"
+          }
+        },
+        {
+          "name": "Obtener habitación por id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/rooms/api/rooms/{{roomId}}"
+          }
+        },
+        {
+          "name": "Asignar insumo a habitación",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\\n  \"itemId\": {{itemId}},\\n  \"quantity\": 2,\\n  \"deliveredBy\": \"Ana Maria\",\\n  \"guestName\": \"Carlos Perez\"\\n}"
+            },
+            "url": "{{baseUrl}}/rooms/api/rooms/{{roomId}}/supplies/assign"
+          }
+        },
+        {
+          "name": "Ver asignaciones de una habitación",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/rooms/api/rooms/{{roomId}}/supplies"
+          }
+        },
+        {
+          "name": "Ver todas las asignaciones",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/rooms/api/rooms/supplies"
+          }
+        }
+      ]
+    }
+  ]
+}
