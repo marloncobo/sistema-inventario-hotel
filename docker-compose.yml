@@ -1,35 +1,87 @@
 services:
+  inventory-db:
+    image: postgres:16-alpine
+    container_name: inventory-db
+    environment:
+      POSTGRES_DB: inventorydb
+      POSTGRES_USER: hotel
+      POSTGRES_PASSWORD: hotel
+    ports:
+      - "5433:5432"
+    volumes:
+      - inventory-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hotel -d inventorydb"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  rooms-db:
+    image: postgres:16-alpine
+    container_name: rooms-db
+    environment:
+      POSTGRES_DB: roomsdb
+      POSTGRES_USER: hotel
+      POSTGRES_PASSWORD: hotel
+    ports:
+      - "5434:5432"
+    volumes:
+      - rooms-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hotel -d roomsdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   inventory-service:
     build:
       context: ./inventory-service
     container_name: inventory-service
+    depends_on:
+      inventory-db:
+        condition: service_healthy
     ports:
       - "8081:8081"
     environment:
       SERVER_PORT: 8081
+      SPRING_DATASOURCE_URL: jdbc:postgresql://inventory-db:5432/inventorydb
+      SPRING_DATASOURCE_USERNAME: hotel
+      SPRING_DATASOURCE_PASSWORD: hotel
 
   rooms-service:
     build:
       context: ./rooms-service
     container_name: rooms-service
     depends_on:
-      - inventory-service
+      inventory-service:
+        condition: service_started
+      rooms-db:
+        condition: service_healthy
     ports:
       - "8082:8082"
     environment:
       SERVER_PORT: 8082
       INVENTORY_SERVICE_URL: http://inventory-service:8081
+      SPRING_DATASOURCE_URL: jdbc:postgresql://rooms-db:5432/roomsdb
+      SPRING_DATASOURCE_USERNAME: hotel
+      SPRING_DATASOURCE_PASSWORD: hotel
 
   gateway-service:
     build:
       context: ./gateway-service
     container_name: gateway-service
     depends_on:
-      - inventory-service
-      - rooms-service
+      inventory-service:
+        condition: service_started
+      rooms-service:
+        condition: service_started
     ports:
       - "8080:8080"
     environment:
       SERVER_PORT: 8080
       INVENTORY_SERVICE_URL: http://inventory-service:8081
       ROOMS_SERVICE_URL: http://rooms-service:8082
+
+volumes:
+  inventory-db-data:
+  rooms-db-data:
