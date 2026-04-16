@@ -1,0 +1,9 @@
+.git
+.idea
+.vscode
+documentos
+postman
+**/target
+**/*.log
+**/.DS_Store
+README.md

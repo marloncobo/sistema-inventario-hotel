@@ -35,7 +35,8 @@ services:
 
   inventory-service:
     build:
-      context: ./inventory-service
+      context: .
+      dockerfile: inventory-service/Dockerfile
     container_name: inventory-service
     depends_on:
       inventory-db:
@@ -50,7 +51,8 @@ services:
 
   rooms-service:
     build:
-      context: ./rooms-service
+      context: .
+      dockerfile: rooms-service/Dockerfile
     container_name: rooms-service
     depends_on:
       inventory-service:
@@ -68,7 +70,8 @@ services:
 
   gateway-service:
     build:
-      context: ./gateway-service
+      context: .
+      dockerfile: gateway-service/Dockerfile
     container_name: gateway-service
     depends_on:
       inventory-service:

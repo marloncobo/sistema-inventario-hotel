@@ -8,5 +8,7 @@ public record CreateRoomRequest(
         @NotBlank String number,
         @NotBlank String type,
         @NotBlank String status,
-        @NotNull @Min(1) Integer floor
+        @NotNull @Min(1) Integer capacity,
+        @NotNull @Min(1) Integer floor,
+        String observations
 ) {}

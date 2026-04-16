@@ -47,7 +47,7 @@ class InventoryServiceTest {
         });
 
         SupplyItem created = inventoryService.createItem(
-                new CreateSupplyItemRequest("Toallas", "Lenceria", "unidad", 30, 5)
+                new CreateSupplyItemRequest("LEN-100", "Toallas", null, "Lenceria", "unidad", null, 30, 5, 100)
         );
 
         assertThat(created.getId()).isEqualTo(10L);
@@ -61,7 +61,7 @@ class InventoryServiceTest {
         InventoryMovement movement = movementCaptor.getValue();
         assertThat(movement.getItemId()).isEqualTo(10L);
         assertThat(movement.getItemName()).isEqualTo("Toallas");
-        assertThat(movement.getMovementType()).isEqualTo("INITIAL_LOAD");
+        assertThat(movement.getMovementType()).isEqualTo("ENTRADA");
         assertThat(movement.getQuantity()).isEqualTo(30);
         assertThat(movement.getCreatedAt()).isNotNull();
     }
@@ -72,7 +72,7 @@ class InventoryServiceTest {
         when(supplyItemRepository.findById(1L)).thenReturn(Optional.of(item));
         when(supplyItemRepository.save(item)).thenReturn(item);
 
-        SupplyItem updated = inventoryService.addStock(1L, new StockEntryRequest(8, "Compra semanal"));
+        SupplyItem updated = inventoryService.addStock(1L, new StockEntryRequest(8, null, "Almacen", "Compra semanal"));
 
         assertThat(updated.getStock()).isEqualTo(15);
 
@@ -80,7 +80,7 @@ class InventoryServiceTest {
         verify(movementRepository).save(movementCaptor.capture());
 
         InventoryMovement movement = movementCaptor.getValue();
-        assertThat(movement.getMovementType()).isEqualTo("ENTRY");
+        assertThat(movement.getMovementType()).isEqualTo("ENTRADA");
         assertThat(movement.getQuantity()).isEqualTo(8);
         assertThat(movement.getReferenceText()).isEqualTo("Compra semanal");
     }
@@ -92,7 +92,7 @@ class InventoryServiceTest {
         when(supplyItemRepository.save(item)).thenReturn(item);
 
         StockChangeResponse response = inventoryService.decreaseStock(
-                new InternalStockDecreaseRequest(3L, 5, "204", "Reposicion habitacion")
+                new InternalStockDecreaseRequest(3L, 5, "204", null, "HABITACION", "Laura", "Reposicion habitacion")
         );
 
         assertThat(response.itemId()).isEqualTo(3L);
@@ -102,7 +102,7 @@ class InventoryServiceTest {
 
         ArgumentCaptor<InventoryMovement> movementCaptor = ArgumentCaptor.forClass(InventoryMovement.class);
         verify(movementRepository).save(movementCaptor.capture());
-        assertThat(movementCaptor.getValue().getMovementType()).isEqualTo("ROOM_ASSIGNMENT");
+        assertThat(movementCaptor.getValue().getMovementType()).isEqualTo("SALIDA");
         assertThat(movementCaptor.getValue().getRoomNumber()).isEqualTo("204");
     }
 
@@ -112,7 +112,7 @@ class InventoryServiceTest {
         when(supplyItemRepository.findById(4L)).thenReturn(Optional.of(item));
 
         assertThatThrownBy(() -> inventoryService.decreaseStock(
-                new InternalStockDecreaseRequest(4L, 3, "305", "Reposicion habitacion")
+                new InternalStockDecreaseRequest(4L, 3, "305", null, "HABITACION", "Laura", "Reposicion habitacion")
         ))
                 .isInstanceOf(BusinessException.class)
                 .hasMessageContaining("Stock insuficiente");
@@ -136,7 +136,7 @@ class InventoryServiceTest {
         SupplyItem low = supplyItem(1L, "Papel", 4, 5);
         SupplyItem exact = supplyItem(2L, "Agua", 10, 10);
         SupplyItem healthy = supplyItem(3L, "Cafe", 20, 8);
-        when(supplyItemRepository.findAll()).thenReturn(List.of(low, exact, healthy));
+        when(supplyItemRepository.findLowStockItems()).thenReturn(List.of(low, exact));
 
         List<SupplyItem> result = inventoryService.lowStockItems();
 

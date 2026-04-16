@@ -8,5 +8,6 @@ public record AssignSupplyRequest(
         @NotNull Long itemId,
         @NotNull @Min(1) Integer quantity,
         @NotBlank String deliveredBy,
-        String guestName
+        String guestName,
+        String assignmentType
 ) {}

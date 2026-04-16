@@ -14,24 +14,38 @@ Proyecto base en **Java + Spring Boot** para un hotel que necesita controlar:
 
 El proyecto esta dividido en 3 microservicios:
 
+Cada microservicio mantiene arquitectura en capas:
+
+- `controller`: expone endpoints REST y valida contratos de entrada.
+- `service`: concentra reglas de negocio y transacciones.
+- `repository`: acceso a datos con Spring Data JPA.
+- `model`: entidades persistentes.
+- `dto`: contratos de entrada/salida entre clientes y servicios.
+- `config`: seguridad, carga inicial y clientes HTTP.
+
 ### 1) `inventory-service`
 
 Se encarga del inventario.
 
 - crear insumos
+- editar e inactivar insumos
 - consultar insumos
+- filtrar insumos por categoria
 - registrar entradas de stock
-- reducir stock cuando se reparte a una habitacion
-- listar movimientos
+- registrar salidas unificadas por origen: `HABITACION`, `VENTA`, `CONSUMO_INTERNO`, `MERMA`
+- registrar devoluciones
+- listar movimientos con filtros basicos
 - listar insumos con stock bajo
+- validar codigo/nombre unico, stock minimo/maximo, insumos activos y stock no negativo
 
 ### 2) `rooms-service`
 
 Se encarga de las habitaciones y del historial de reparto.
 
 - crear habitaciones
+- actualizar estado operativo de habitaciones
 - consultar habitaciones
-- asignar insumos a una habitacion
+- asignar insumos a una habitacion para minibar, kit de aseo o servicio a la habitacion
 - consultar el historial de insumos entregados por habitacion
 - consultar todas las asignaciones realizadas
 
@@ -77,6 +91,8 @@ Clave: hotel
 
 Las tablas se crean/actualizan automaticamente con Spring Data JPA y Hibernate (`ddl-auto: update`).
 
+> El script de `documentos/hotel_brisas_inventario.sql` describe un modelo MySQL monolitico de referencia. Este backend lo traduce a microservicios con bases separadas: inventario conserva insumos y movimientos; habitaciones conserva habitaciones y entregas por habitacion.
+
 ## Como ejecutar
 
 ### Sin Docker
@@ -116,12 +132,13 @@ mvn -pl gateway-service spring-boot:run
 
 ### Con Docker
 
-Primero genera los jars:
+Levanta todo el entorno:
 
 ```bash
-mvn clean package
 docker compose up --build
 ```
+
+Cada Dockerfile compila su propio JAR en una etapa Maven y luego ejecuta el servicio sobre una imagen JRE.
 
 ## Puertos
 
@@ -161,6 +178,31 @@ Authorization: Bearer <token>
 5. `POST /rooms/api/rooms/{roomId}/supplies/assign` solo `ADMIN`
 6. `GET /inventory/api/inventory/movements`
 7. `GET /rooms/api/rooms/{roomId}/supplies`
+
+## Endpoints principales
+
+Inventory:
+
+- `POST /inventory/api/inventory/items`
+- `GET /inventory/api/inventory/items?category=ASEO`
+- `GET /inventory/api/inventory/items/{id}`
+- `PUT /inventory/api/inventory/items/{id}`
+- `PATCH /inventory/api/inventory/items/{id}/deactivate`
+- `POST /inventory/api/inventory/items/{id}/entries`
+- `POST /inventory/api/inventory/items/{id}/returns`
+- `POST /inventory/api/inventory/internal/items/decrease`
+- `GET /inventory/api/inventory/items/low-stock`
+- `GET /inventory/api/inventory/movements?type=SALIDA&origin=HABITACION&roomNumber=101`
+
+Rooms:
+
+- `POST /rooms/api/rooms`
+- `GET /rooms/api/rooms`
+- `GET /rooms/api/rooms/{id}`
+- `PATCH /rooms/api/rooms/{id}/status`
+- `POST /rooms/api/rooms/{roomId}/supplies/assign`
+- `GET /rooms/api/rooms/{roomId}/supplies`
+- `GET /rooms/api/rooms/supplies`
 
 ## Conexion a PostgreSQL
 

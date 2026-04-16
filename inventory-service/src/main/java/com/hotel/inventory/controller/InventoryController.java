@@ -4,6 +4,8 @@ import com.hotel.inventory.dto.CreateSupplyItemRequest;
 import com.hotel.inventory.dto.InternalStockDecreaseRequest;
 import com.hotel.inventory.dto.StockChangeResponse;
 import com.hotel.inventory.dto.StockEntryRequest;
+import com.hotel.inventory.dto.StockReturnRequest;
+import com.hotel.inventory.dto.UpdateSupplyItemRequest;
 import com.hotel.inventory.model.InventoryMovement;
 import com.hotel.inventory.model.SupplyItem;
 import com.hotel.inventory.service.InventoryService;
@@ -27,7 +29,10 @@ public class InventoryController {
     }
 
     @GetMapping("/items")
-    public List<SupplyItem> listItems() {
+    public List<SupplyItem> listItems(@RequestParam(required = false) String category) {
+        if (category != null && !category.isBlank()) {
+            return inventoryService.listItemsByCategory(category);
+        }
         return inventoryService.listItems();
     }
 
@@ -36,9 +41,24 @@ public class InventoryController {
         return inventoryService.getItem(id);
     }
 
+    @PutMapping("/items/{id}")
+    public SupplyItem updateItem(@PathVariable Long id, @Valid @RequestBody UpdateSupplyItemRequest request) {
+        return inventoryService.updateItem(id, request);
+    }
+
+    @PatchMapping("/items/{id}/deactivate")
+    public SupplyItem deactivateItem(@PathVariable Long id) {
+        return inventoryService.deactivateItem(id);
+    }
+
     @PostMapping("/items/{id}/entries")
     public SupplyItem addEntry(@PathVariable Long id, @Valid @RequestBody StockEntryRequest request) {
         return inventoryService.addStock(id, request);
+    }
+
+    @PostMapping("/items/{id}/returns")
+    public StockChangeResponse returnStock(@PathVariable Long id, @Valid @RequestBody StockReturnRequest request) {
+        return inventoryService.returnStock(id, request);
     }
 
     @PostMapping("/internal/items/decrease")
@@ -47,8 +67,13 @@ public class InventoryController {
     }
 
     @GetMapping("/movements")
-    public List<InventoryMovement> listMovements() {
-        return inventoryService.listMovements();
+    public List<InventoryMovement> listMovements(
+            @RequestParam(required = false) String type,
+            @RequestParam(required = false) String origin,
+            @RequestParam(required = false) String roomNumber,
+            @RequestParam(required = false) String responsible
+    ) {
+        return inventoryService.listMovements(type, origin, roomNumber, responsible);
     }
 
     @GetMapping("/items/low-stock")

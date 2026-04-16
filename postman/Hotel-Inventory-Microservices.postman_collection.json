@@ -2,13 +2,40 @@
   "info": {
     "name": "Hotel Inventory Microservices",
     "_postman_id": "c5c8ca34-b34a-4441-b91f-5d8881111111",
-    "description": "Colección para probar el sistema de inventario hotelero por el API Gateway.",
+    "description": "Coleccion para probar el sistema de inventario hotelero por el API Gateway. Ejecuta primero Auth / Login admin para guardar el token.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "pm.test('Status code is not 5xx', function () {",
+          "  pm.expect(pm.response.code).to.be.below(500);",
+          "});"
+        ]
+      }
+    }
+  ],
   "variable": [
     {
       "key": "baseUrl",
       "value": "http://localhost:8080"
+    },
+    {
+      "key": "token",
+      "value": ""
     },
     {
       "key": "itemId",
@@ -17,9 +44,101 @@
     {
       "key": "roomId",
       "value": "1"
+    },
+    {
+      "key": "roomNumber",
+      "value": "101"
+    },
+    {
+      "key": "category",
+      "value": "ASEO"
+    },
+    {
+      "key": "responsible",
+      "value": "Almacen"
     }
   ],
   "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Login exitoso', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('token', json.token);",
+                  "pm.test('Token guardado', function () {",
+                  "  pm.expect(pm.collectionVariables.get('token')).to.not.be.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"admin123\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/login"
+          }
+        },
+        {
+          "name": "Login usuario solo lectura",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Login exitoso', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('token', json.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"usuario\",\n  \"password\": \"user123\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/login"
+          }
+        }
+      ]
+    },
     {
       "name": "Inventory",
       "item": [
@@ -32,7 +151,46 @@
           }
         },
         {
+          "name": "Listar insumos por categoria",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/inventory/api/inventory/items?category={{category}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "inventory",
+                "api",
+                "inventory",
+                "items"
+              ],
+              "query": [
+                {
+                  "key": "category",
+                  "value": "{{category}}"
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "Crear insumo",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200 || pm.response.code === 201) {",
+                  "  const json = pm.response.json();",
+                  "  pm.collectionVariables.set('itemId', json.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
@@ -43,7 +201,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Jugo de naranja 250ml\",\n  \"category\": \"MINIBAR\",\n  \"unit\": \"UND\",\n  \"stock\": 12,\n  \"minStock\": 5\n}"
+              "raw": "{\n  \"code\": \"MIN-900\",\n  \"name\": \"Jugo de naranja 250ml\",\n  \"description\": \"Producto para minibar\",\n  \"category\": \"MINIBAR\",\n  \"unit\": \"UND\",\n  \"providerName\": \"Distribuciones Hoteleras SAS\",\n  \"stock\": 12,\n  \"minStock\": 5,\n  \"maxStock\": 80\n}"
             },
             "url": "{{baseUrl}}/inventory/api/inventory/items"
           }
@@ -54,6 +212,31 @@
             "method": "GET",
             "header": [],
             "url": "{{baseUrl}}/inventory/api/inventory/items/{{itemId}}"
+          }
+        },
+        {
+          "name": "Actualizar insumo",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"MIN-900\",\n  \"name\": \"Jugo de naranja 250ml\",\n  \"description\": \"Producto para minibar actualizado\",\n  \"category\": \"MINIBAR\",\n  \"unit\": \"UND\",\n  \"providerName\": \"Distribuciones Hoteleras SAS\",\n  \"minStock\": 6,\n  \"maxStock\": 90,\n  \"active\": true\n}"
+            },
+            "url": "{{baseUrl}}/inventory/api/inventory/items/{{itemId}}"
+          }
+        },
+        {
+          "name": "Inactivar insumo",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": "{{baseUrl}}/inventory/api/inventory/items/{{itemId}}/deactivate"
           }
         },
         {
@@ -68,9 +251,43 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"quantity\": 15,\n  \"referenceText\": \"Compra proveedor abril\"\n}"
+              "raw": "{\n  \"quantity\": 15,\n  \"providerName\": \"Distribuciones Hoteleras SAS\",\n  \"responsible\": \"{{responsible}}\",\n  \"referenceText\": \"Compra proveedor abril\"\n}"
             },
             "url": "{{baseUrl}}/inventory/api/inventory/items/{{itemId}}/entries"
+          }
+        },
+        {
+          "name": "Registrar salida interna",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"itemId\": {{itemId}},\n  \"quantity\": 2,\n  \"roomNumber\": null,\n  \"areaName\": \"LAVANDERIA\",\n  \"origin\": \"CONSUMO_INTERNO\",\n  \"responsible\": \"{{responsible}}\",\n  \"referenceText\": \"Salida para lavanderia\"\n}"
+            },
+            "url": "{{baseUrl}}/inventory/api/inventory/internal/items/decrease"
+          }
+        },
+        {
+          "name": "Registrar devolucion de stock",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantity\": 1,\n  \"roomNumber\": \"{{roomNumber}}\",\n  \"areaName\": null,\n  \"responsible\": \"{{responsible}}\",\n  \"referenceText\": \"Devolucion de insumo no usado\"\n}"
+            },
+            "url": "{{baseUrl}}/inventory/api/inventory/items/{{itemId}}/returns"
           }
         },
         {
@@ -79,6 +296,43 @@
             "method": "GET",
             "header": [],
             "url": "{{baseUrl}}/inventory/api/inventory/movements"
+          }
+        },
+        {
+          "name": "Ver movimientos filtrados",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/inventory/api/inventory/movements?type=SALIDA&origin=HABITACION&roomNumber={{roomNumber}}&responsible={{responsible}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "inventory",
+                "api",
+                "inventory",
+                "movements"
+              ],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "SALIDA"
+                },
+                {
+                  "key": "origin",
+                  "value": "HABITACION"
+                },
+                {
+                  "key": "roomNumber",
+                  "value": "{{roomNumber}}"
+                },
+                {
+                  "key": "responsible",
+                  "value": "{{responsible}}"
+                }
+              ]
+            }
           }
         },
         {
@@ -103,7 +357,22 @@
           }
         },
         {
-          "name": "Crear habitación",
+          "name": "Crear habitacion",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200 || pm.response.code === 201) {",
+                  "  const json = pm.response.json();",
+                  "  pm.collectionVariables.set('roomId', json.id);",
+                  "  pm.collectionVariables.set('roomNumber', json.number);",
+                  "}"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
@@ -114,13 +383,13 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"number\": \"305\",\n  \"type\": \"EJECUTIVA\",\n  \"status\": \"DISPONIBLE\",\n  \"floor\": 3\n}"
+              "raw": "{\n  \"number\": \"405\",\n  \"type\": \"EJECUTIVA\",\n  \"status\": \"DISPONIBLE\",\n  \"capacity\": 2,\n  \"floor\": 4,\n  \"observations\": \"Habitacion de prueba\"\n}"
             },
             "url": "{{baseUrl}}/rooms/api/rooms"
           }
         },
         {
-          "name": "Obtener habitación por id",
+          "name": "Obtener habitacion por id",
           "request": {
             "method": "GET",
             "header": [],
@@ -128,7 +397,24 @@
           }
         },
         {
-          "name": "Asignar insumo a habitación",
+          "name": "Actualizar estado de habitacion",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"OCUPADA\"\n}"
+            },
+            "url": "{{baseUrl}}/rooms/api/rooms/{{roomId}}/status"
+          }
+        },
+        {
+          "name": "Asignar insumo a habitacion",
           "request": {
             "method": "POST",
             "header": [
@@ -139,13 +425,30 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\\n  \"itemId\": {{itemId}},\\n  \"quantity\": 2,\\n  \"deliveredBy\": \"Ana Maria\",\\n  \"guestName\": \"Carlos Perez\"\\n}"
+              "raw": "{\n  \"itemId\": {{itemId}},\n  \"quantity\": 2,\n  \"deliveredBy\": \"Ana Maria\",\n  \"guestName\": \"Carlos Perez\",\n  \"assignmentType\": \"KIT_ASEO\"\n}"
             },
             "url": "{{baseUrl}}/rooms/api/rooms/{{roomId}}/supplies/assign"
           }
         },
         {
-          "name": "Ver asignaciones de una habitación",
+          "name": "Reponer minibar",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"itemId\": {{itemId}},\n  \"quantity\": 1,\n  \"deliveredBy\": \"Housekeeping\",\n  \"guestName\": \"Carlos Perez\",\n  \"assignmentType\": \"MINIBAR\"\n}"
+            },
+            "url": "{{baseUrl}}/rooms/api/rooms/{{roomId}}/supplies/assign"
+          }
+        },
+        {
+          "name": "Ver asignaciones de una habitacion",
           "request": {
             "method": "GET",
             "header": [],
@@ -158,6 +461,22 @@
             "method": "GET",
             "header": [],
             "url": "{{baseUrl}}/rooms/api/rooms/supplies"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Gateway health",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/actuator/health"
           }
         }
       ]

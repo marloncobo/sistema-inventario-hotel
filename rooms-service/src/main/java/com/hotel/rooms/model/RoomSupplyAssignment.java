@@ -23,11 +23,18 @@ public class RoomSupplyAssignment {
     private String deliveredBy;
     private String guestName;
     @Column(nullable = false)
+    private String assignmentType;
+    @Column(nullable = false)
     private LocalDateTime createdAt;
 
     public RoomSupplyAssignment() {}
 
     public RoomSupplyAssignment(Long roomId, String roomNumber, Long itemId, String itemName, Integer quantity, String deliveredBy, String guestName, LocalDateTime createdAt) {
+        this(roomId, roomNumber, itemId, itemName, quantity, deliveredBy, guestName, "HABITACION", createdAt);
+    }
+
+    public RoomSupplyAssignment(Long roomId, String roomNumber, Long itemId, String itemName, Integer quantity,
+                                String deliveredBy, String guestName, String assignmentType, LocalDateTime createdAt) {
         this.roomId = roomId;
         this.roomNumber = roomNumber;
         this.itemId = itemId;
@@ -35,6 +42,7 @@ public class RoomSupplyAssignment {
         this.quantity = quantity;
         this.deliveredBy = deliveredBy;
         this.guestName = guestName;
+        this.assignmentType = assignmentType;
         this.createdAt = createdAt;
     }
 
@@ -46,6 +54,7 @@ public class RoomSupplyAssignment {
     public Integer getQuantity() { return quantity; }
     public String getDeliveredBy() { return deliveredBy; }
     public String getGuestName() { return guestName; }
+    public String getAssignmentType() { return assignmentType; }
     public LocalDateTime getCreatedAt() { return createdAt; }
 
     public void setId(Long id) { this.id = id; }
@@ -56,5 +65,6 @@ public class RoomSupplyAssignment {
     public void setQuantity(Integer quantity) { this.quantity = quantity; }
     public void setDeliveredBy(String deliveredBy) { this.deliveredBy = deliveredBy; }
     public void setGuestName(String guestName) { this.guestName = guestName; }
+    public void setAssignmentType(String assignmentType) { this.assignmentType = assignmentType; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 }

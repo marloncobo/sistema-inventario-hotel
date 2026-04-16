@@ -2,6 +2,7 @@ package com.hotel.rooms.controller;
 
 import com.hotel.rooms.dto.AssignSupplyRequest;
 import com.hotel.rooms.dto.CreateRoomRequest;
+import com.hotel.rooms.dto.UpdateRoomStatusRequest;
 import com.hotel.rooms.model.Room;
 import com.hotel.rooms.model.RoomSupplyAssignment;
 import com.hotel.rooms.service.RoomService;
@@ -32,6 +33,11 @@ public class RoomController {
     @GetMapping("/{id}")
     public Room getRoom(@PathVariable Long id) {
         return roomService.getRoom(id);
+    }
+
+    @PatchMapping("/{id}/status")
+    public Room updateStatus(@PathVariable Long id, @Valid @RequestBody UpdateRoomStatusRequest request) {
+        return roomService.updateStatus(id, request);
     }
 
     @PostMapping("/{roomId}/supplies/assign")

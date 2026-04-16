@@ -4,14 +4,14 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
-public record CreateSupplyItemRequest(
+public record UpdateSupplyItemRequest(
         @NotBlank String code,
         @NotBlank String name,
         String description,
         String category,
         String unit,
         String providerName,
-        @NotNull @Min(0) Integer stock,
         @NotNull @Min(0) Integer minStock,
-        @Min(0) Integer maxStock
+        @Min(0) Integer maxStock,
+        Boolean active
 ) {}

@@ -12,9 +12,14 @@ public class DataLoader {
     CommandLineRunner loadRoomsData(RoomRepository repository) {
         return args -> {
             if (repository.count() == 0) {
-                repository.save(new Room("101", "ESTANDAR", "DISPONIBLE", 1));
-                repository.save(new Room("102", "EJECUTIVA", "OCUPADA", 1));
-                repository.save(new Room("201", "FAMILIAR", "DISPONIBLE", 2));
+                for (int floor = 1; floor <= 3; floor++) {
+                    for (int number = 1; number <= 15; number++) {
+                        String roomNumber = String.valueOf((floor * 100) + number);
+                        String type = number % 5 == 0 ? "FAMILIAR" : number % 3 == 0 ? "EJECUTIVA" : "ESTANDAR";
+                        int capacity = "FAMILIAR".equals(type) ? 4 : 2;
+                        repository.save(new Room(roomNumber, type, "DISPONIBLE", capacity, floor, null));
+                    }
+                }
             }
         };
     }
