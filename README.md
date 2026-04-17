@@ -170,7 +170,6 @@ Usuarios de prueba:
 - `admin` / `Admin123`: rol `ADMIN`, puede consultar y modificar.
 - `almacen` / `Almacen123`: rol `ALMACENISTA`, gestiona inventario y proveedores.
 - `recepcion` / `Recepcion123`: rol `RECEPCION`, gestiona habitaciones.
-- `housekeeping` / `House123`: rol `HOUSEKEEPING`, gestiona entregas a habitaciones.
 - `servicio` / `Servicio123`: rol `SERVICIO`, registra entregas operativas a habitaciones.
 
 Los usuarios se guardan en base de datos desde el gateway y pueden administrarse con rol `ADMIN` en `/auth/users`.
@@ -188,7 +187,7 @@ Authorization: Bearer <token>
 2. `GET /inventory/api/inventory/items`
 3. `POST /inventory/api/inventory/items` con `ADMIN` o `ALMACENISTA`
 4. `POST /inventory/api/inventory/items/{id}/entries` con `ADMIN` o `ALMACENISTA`
-5. `POST /rooms/api/rooms/{roomId}/supplies/assign` con `ADMIN`, `ALMACENISTA`, `HOUSEKEEPING` o `SERVICIO`
+5. `POST /rooms/api/rooms/{roomId}/supplies/assign` con `ADMIN`, `ALMACENISTA` o `SERVICIO`
 6. `GET /inventory/api/inventory/movements`
 7. `GET /rooms/api/rooms/{roomId}/supplies`
 
@@ -239,7 +238,7 @@ Rooms:
 - `GET /rooms/api/rooms/reports/distribution?roomType=ESTANDAR&deliveredBy=Camila`
 - `GET /rooms/api/rooms/reports/distribution/export?format=xlsx&roomType=ESTANDAR`
 - `GET /rooms/api/rooms/reports/distribution/export?format=pdf&roomType=ESTANDAR`
-- `GET /rooms/api/rooms/audit?action=ASSIGN_SUPPLY&username=housekeeping&startDate=2026-04-01&endDate=2026-04-30`
+- `GET /rooms/api/rooms/audit?action=ASSIGN_SUPPLY&username=servicio&startDate=2026-04-01&endDate=2026-04-30`
 
 Gateway:
 

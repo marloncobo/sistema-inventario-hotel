@@ -16,7 +16,6 @@ public class UserDataLoader {
                 userRepository.save(new AppUser("admin", passwordEncoder.encode("Admin123"), List.of("ADMIN"), true));
                 userRepository.save(new AppUser("almacen", passwordEncoder.encode("Almacen123"), List.of("ALMACENISTA"), true));
                 userRepository.save(new AppUser("recepcion", passwordEncoder.encode("Recepcion123"), List.of("RECEPCION"), true));
-                userRepository.save(new AppUser("housekeeping", passwordEncoder.encode("House123"), List.of("HOUSEKEEPING"), true));
                 userRepository.save(new AppUser("servicio", passwordEncoder.encode("Servicio123"), List.of("SERVICIO"), true));
             }
         };

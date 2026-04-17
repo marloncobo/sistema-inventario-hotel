@@ -123,7 +123,7 @@ public class AuthService {
     }
 
     private List<String> normalizeRoles(List<String> roles) {
-        List<String> allowed = List.of("ADMIN", "USER", "ALMACENISTA", "RECEPCION", "HOUSEKEEPING", "SERVICIO");
+        List<String> allowed = List.of("ADMIN", "ALMACENISTA", "RECEPCION", "SERVICIO");
         List<String> normalized = roles.stream()
                 .map(role -> role.trim().toUpperCase(Locale.ROOT))
                 .distinct()
