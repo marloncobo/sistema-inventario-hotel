@@ -13,9 +13,13 @@ import com.hotel.inventory.dto.UpdateSupplyItemRequest;
 import com.hotel.inventory.dto.VoidMovementRequest;
 import com.hotel.inventory.exception.BusinessException;
 import com.hotel.inventory.exception.NotFoundException;
+import com.hotel.inventory.model.Area;
+import com.hotel.inventory.model.Category;
 import com.hotel.inventory.model.InventoryMovement;
 import com.hotel.inventory.model.LowStockAlert;
+import com.hotel.inventory.model.Provider;
 import com.hotel.inventory.model.SupplyItem;
+import com.hotel.inventory.model.UnitOfMeasure;
 import com.hotel.inventory.repository.InventoryMovementRepository;
 import com.hotel.inventory.repository.SupplyItemRepository;
 import org.springframework.stereotype.Service;
@@ -30,6 +34,9 @@ import java.util.Locale;
 
 @Service
 public class InventoryService {
+    private static final LocalDateTime MIN_DATE = LocalDateTime.of(1900, 1, 1, 0, 0);
+    private static final LocalDateTime MAX_DATE = LocalDateTime.of(9999, 12, 31, 23, 59, 59);
+
     private final SupplyItemRepository supplyItemRepository;
     private final InventoryMovementRepository movementRepository;
     private final CatalogService catalogService;
@@ -51,18 +58,18 @@ public class InventoryService {
     @Transactional
     public SupplyItem createItem(CreateSupplyItemRequest request, String username) {
         validateUniqueItem(request.code(), request.name(), null);
-        validateCatalogs(request.category(), request.unit(), request.providerName());
+        CatalogSelection catalogs = validateCatalogs(request.category(), request.unit(), request.providerName());
         validateStockBounds(request.stock(), request.minStock(), request.maxStock());
 
         SupplyItem item = new SupplyItem(
-                normalize(request.code()), request.name(), request.description(), normalize(request.category()),
-                normalize(request.unit()), request.providerName(), request.stock(), request.minStock(),
+                normalize(request.code()), request.name(), request.description(), catalogs.category(),
+                catalogs.unit(), catalogs.provider(), request.stock(), request.minStock(),
                 request.maxStock(), true
         );
         SupplyItem saved = supplyItemRepository.save(item);
         if (saved.getStock() > 0) {
             movementRepository.save(buildMovement(saved, "ENTRADA", "NO_APLICA", saved.getStock(), 0,
-                    saved.getStock(), null, null, saved.getProviderName(), username, "Carga inicial"));
+                    saved.getStock(), null, null, saved.getProviderEntity(), username, "Carga inicial"));
         }
         auditService.record("CREATE", "SupplyItem", saved.getId(), username, saved.getCode());
         lowStockAlertService.evaluate(saved);
@@ -74,7 +81,7 @@ public class InventoryService {
     }
 
     public List<SupplyItem> listItemsByCategory(String category) {
-        return supplyItemRepository.findByCategoryIgnoreCase(category);
+        return supplyItemRepository.findByCategory(blankToNullLower(category));
     }
 
     public SupplyItem getItem(Long id) {
@@ -86,15 +93,15 @@ public class InventoryService {
     public SupplyItem updateItem(Long id, UpdateSupplyItemRequest request, String username) {
         SupplyItem item = getItem(id);
         validateUniqueItem(request.code(), request.name(), id);
-        validateCatalogs(request.category(), request.unit(), request.providerName());
+        CatalogSelection catalogs = validateCatalogs(request.category(), request.unit(), request.providerName());
         validateStockBounds(item.getStock(), request.minStock(), request.maxStock());
 
         item.setCode(normalize(request.code()));
         item.setName(request.name());
         item.setDescription(request.description());
-        item.setCategory(normalize(request.category()));
-        item.setUnit(normalize(request.unit()));
-        item.setProviderName(request.providerName());
+        item.setCategory(catalogs.category());
+        item.setUnit(catalogs.unit());
+        item.setProvider(catalogs.provider());
         item.setMinStock(request.minStock());
         item.setMaxStock(request.maxStock());
         if (request.active() != null) {
@@ -119,14 +126,14 @@ public class InventoryService {
     public SupplyItem addStock(Long itemId, StockEntryRequest request, String username) {
         SupplyItem item = getItem(itemId);
         ensureActive(item);
-        catalogService.ensureActiveProvider(request.providerName());
+        Provider provider = catalogService.ensureActiveProvider(request.providerName());
         int stockBefore = item.getStock();
         int stockAfter = stockBefore + request.quantity();
         validateStockBounds(stockAfter, item.getMinStock(), item.getMaxStock());
 
         item.setStock(stockAfter);
         InventoryMovement movement = buildMovement(item, "ENTRADA", "NO_APLICA", request.quantity(), stockBefore,
-                stockAfter, null, null, request.providerName(), username, request.referenceText());
+                stockAfter, null, null, provider, username, request.referenceText());
         movement.setOperationalResponsible(username);
         movementRepository.save(movement);
         SupplyItem saved = supplyItemRepository.save(item);
@@ -149,15 +156,16 @@ public class InventoryService {
             throw new BusinessException("Las salidas a habitacion deben registrarse desde rooms-service para conservar la distribucion por habitacion");
         }
         validateRoomDestination(origin, request.roomNumber());
+        Area area = null;
         if ("CONSUMO_INTERNO".equals(origin)) {
-            catalogService.ensureActiveArea(request.areaName());
+            area = catalogService.ensureActiveArea(request.areaName());
         }
         int stockBefore = item.getStock();
         int stockAfter = stockBefore - request.quantity();
 
         item.setStock(stockAfter);
         InventoryMovement movement = buildMovement(item, "SALIDA", origin, request.quantity(), stockBefore, stockAfter,
-                request.roomNumber(), request.areaName(), null, username, request.referenceText());
+                request.roomNumber(), area, null, username, request.referenceText());
         movement.setOperationalResponsible(defaultOperationalResponsible(request.operationalResponsible(), username));
         movementRepository.save(movement);
         SupplyItem saved = supplyItemRepository.save(item);
@@ -177,8 +185,8 @@ public class InventoryService {
 
         item.setStock(stockAfter);
         InventoryMovement movement = buildMovement(item, "DEVOLUCION", source == null ? "NO_APLICA" : source.getOrigin(), request.quantity(), stockBefore,
-                stockAfter, request.roomNumber(), request.areaName(), null, username, request.referenceText());
-        movement.setSourceMovementId(request.sourceMovementId());
+                stockAfter, request.roomNumber(), source == null ? null : source.getAreaEntity(), null, username, request.referenceText());
+        movement.setSourceMovement(source);
         movement.setOperationalResponsible(defaultOperationalResponsible(request.operationalResponsible(), username));
         movementRepository.save(movement);
         SupplyItem saved = supplyItemRepository.save(item);
@@ -191,14 +199,14 @@ public class InventoryService {
                                                  String operationalResponsible,
                                                  String areaName, LocalDate startDate, LocalDate endDate) {
         return movementRepository.search(
-                blankToNullLower(type),
-                blankToNullLower(origin),
-                blankToNullLower(roomNumber),
-                blankToNullLower(responsible),
-                blankToNullLower(operationalResponsible),
-                blankToNullLower(areaName),
-                startDate == null ? null : startDate.atStartOfDay(),
-                endDate == null ? null : endDate.plusDays(1).atStartOfDay().minusNanos(1)
+                blankToWildcardLower(type),
+                blankToWildcardLower(origin),
+                blankToWildcardLower(roomNumber),
+                blankToWildcardLower(responsible),
+                blankToWildcardLower(operationalResponsible),
+                blankToWildcardLower(areaName),
+                startDate == null ? MIN_DATE : startDate.atStartOfDay(),
+                endDate == null ? MAX_DATE : endDate.plusDays(1).atStartOfDay().minusNanos(1)
         );
     }
 
@@ -234,15 +242,15 @@ public class InventoryService {
         item.setStock(stockAfter);
         SupplyItem savedItem = supplyItemRepository.save(item);
         InventoryMovement correction = buildMovement(savedItem, "AJUSTE", "CORRECCION", Math.abs(delta), stockBefore,
-                stockAfter, movement.getRoomNumber(), movement.getAreaName(), movement.getProviderName(), username,
+                stockAfter, movement.getRoomNumber(), movement.getAreaEntity(), movement.getProviderEntity(), username,
                 "Anula movimiento " + id + ": " + request.reason());
-        correction.setSourceMovementId(id);
+        correction.setSourceMovement(movement);
         correction.setOperationalResponsible(username);
         InventoryMovement savedCorrection = movementRepository.save(correction);
 
         movement.setStatus("ANULADO");
         movement.setCorrectionReason(request.reason());
-        movement.setCorrectionMovementId(savedCorrection.getId());
+        movement.setCorrectionMovement(savedCorrection);
         movementRepository.save(movement);
         auditService.record("VOID_MOVEMENT", "InventoryMovement", id, username, request.reason());
         lowStockAlertService.evaluate(savedItem);
@@ -251,8 +259,8 @@ public class InventoryService {
 
     public List<InventorySummaryReport> inventoryReport(LocalDate startDate, LocalDate endDate) {
         List<TopUsedItemReport> used = movementRepository.topUsedItems(
-                startDate == null ? null : startDate.atStartOfDay(),
-                endDate == null ? null : endDate.plusDays(1).atStartOfDay().minusNanos(1)
+                startDate == null ? MIN_DATE : startDate.atStartOfDay(),
+                endDate == null ? MAX_DATE : endDate.plusDays(1).atStartOfDay().minusNanos(1)
         );
         return supplyItemRepository.findAll().stream()
                 .map(item -> new InventorySummaryReport(
@@ -269,17 +277,19 @@ public class InventoryService {
 
     public List<TopUsedItemReport> topUsedItems(LocalDate startDate, LocalDate endDate) {
         return movementRepository.topUsedItems(
-                startDate == null ? null : startDate.atStartOfDay(),
-                endDate == null ? null : endDate.plusDays(1).atStartOfDay().minusNanos(1)
+                startDate == null ? MIN_DATE : startDate.atStartOfDay(),
+                endDate == null ? MAX_DATE : endDate.plusDays(1).atStartOfDay().minusNanos(1)
         );
     }
 
     private InventoryMovement buildMovement(SupplyItem item, String type, String origin, Integer quantity,
                                             Integer stockBefore, Integer stockAfter, String roomNumber,
-                                            String areaName, String providerName, String responsible,
+                                            Area area, Provider provider, String responsible,
                                             String referenceText) {
-        return new InventoryMovement(item.getId(), item.getName(), type, origin, quantity, stockBefore, stockAfter,
-                roomNumber, areaName, providerName, responsible, referenceText, "VALIDO", LocalDateTime.now());
+        InventoryMovement movement = new InventoryMovement(item, type, origin, quantity, stockBefore, stockAfter,
+                roomNumber, area, provider, responsible, referenceText, "VALIDO", LocalDateTime.now());
+        movement.setArea(area);
+        return movement;
     }
 
     private void validateUniqueItem(String code, String name, Long currentId) {
@@ -377,13 +387,14 @@ public class InventoryService {
         return source;
     }
 
-    private void validateCatalogs(String category, String unit, String providerName) {
+    private CatalogSelection validateCatalogs(String category, String unit, String providerName) {
         if (isBlank(category) || isBlank(unit)) {
             throw new BusinessException("Categoria y unidad son obligatorias");
         }
-        catalogService.ensureActiveCategory(category);
-        catalogService.ensureActiveUnit(unit);
-        catalogService.ensureActiveProvider(providerName);
+        Category foundCategory = catalogService.ensureActiveCategory(category);
+        UnitOfMeasure foundUnit = catalogService.ensureActiveUnit(unit);
+        Provider foundProvider = catalogService.ensureActiveProvider(providerName);
+        return new CatalogSelection(foundCategory, foundUnit, foundProvider);
     }
 
     private String normalize(String value) {
@@ -394,6 +405,10 @@ public class InventoryService {
         return isBlank(value) ? null : value.trim().toLowerCase(Locale.ROOT);
     }
 
+    private String blankToWildcardLower(String value) {
+        return isBlank(value) ? "%" : value.trim().toLowerCase(Locale.ROOT);
+    }
+
     private boolean isBlank(String value) {
         return value == null || value.isBlank();
     }
@@ -401,4 +416,6 @@ public class InventoryService {
     private String defaultOperationalResponsible(String value, String username) {
         return isBlank(value) ? username : value.trim();
     }
+
+    private record CatalogSelection(Category category, UnitOfMeasure unit, Provider provider) {}
 }

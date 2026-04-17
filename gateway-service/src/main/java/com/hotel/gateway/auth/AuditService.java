@@ -9,6 +9,9 @@ import java.util.Locale;
 
 @Service
 public class AuditService {
+    private static final LocalDateTime MIN_DATE = LocalDateTime.of(1900, 1, 1, 0, 0);
+    private static final LocalDateTime MAX_DATE = LocalDateTime.of(9999, 12, 31, 23, 59, 59);
+
     private final AuditLogRepository auditLogRepository;
 
     public AuditService(AuditLogRepository auditLogRepository) {
@@ -21,14 +24,14 @@ public class AuditService {
 
     public List<AuditLog> list(String action, String username, LocalDate startDate, LocalDate endDate) {
         return auditLogRepository.search(
-                blankToNullLower(action),
-                blankToNullLower(username),
-                startDate == null ? null : startDate.atStartOfDay(),
-                endDate == null ? null : endDate.plusDays(1).atStartOfDay().minusNanos(1)
+                blankToWildcardLower(action),
+                blankToWildcardLower(username),
+                startDate == null ? MIN_DATE : startDate.atStartOfDay(),
+                endDate == null ? MAX_DATE : endDate.plusDays(1).atStartOfDay().minusNanos(1)
         );
     }
 
-    private String blankToNullLower(String value) {
-        return value == null || value.isBlank() ? null : value.trim().toLowerCase(Locale.ROOT);
+    private String blankToWildcardLower(String value) {
+        return value == null || value.isBlank() ? "%" : value.trim().toLowerCase(Locale.ROOT);
     }
 }

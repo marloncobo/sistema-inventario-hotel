@@ -139,7 +139,7 @@ class RoomServiceTest {
     void getRoomAssignmentsRequiresExistingRoomAndReturnsAssignments() {
         Room room = room(7L, "102");
         RoomSupplyAssignment assignment = new RoomSupplyAssignment(
-                7L, "102", 4L, "Jabon", 3, "Laura", null, java.time.LocalDateTime.now()
+                room, 4L, "Jabon", 3, "Laura", null, java.time.LocalDateTime.now()
         );
         when(roomRepository.findById(7L)).thenReturn(Optional.of(room));
         when(assignmentRepository.findByRoomId(7L)).thenReturn(List.of(assignment));

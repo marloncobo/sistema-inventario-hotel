@@ -1,5 +1,6 @@
 package com.hotel.rooms.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
@@ -9,10 +10,9 @@ public class RoomSupplyAssignment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @Column(nullable = false)
-    private Long roomId;
-    @Column(nullable = false)
-    private String roomNumber;
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @JoinColumn(name = "room_id", nullable = false, foreignKey = @ForeignKey(name = "fk_room_supply_assignments_room"))
+    private Room room;
     @Column(nullable = false)
     private Long itemId;
     @Column(nullable = false)
@@ -29,14 +29,13 @@ public class RoomSupplyAssignment {
 
     public RoomSupplyAssignment() {}
 
-    public RoomSupplyAssignment(Long roomId, String roomNumber, Long itemId, String itemName, Integer quantity, String deliveredBy, String guestName, LocalDateTime createdAt) {
-        this(roomId, roomNumber, itemId, itemName, quantity, deliveredBy, guestName, "HABITACION", createdAt);
+    public RoomSupplyAssignment(Room room, Long itemId, String itemName, Integer quantity, String deliveredBy, String guestName, LocalDateTime createdAt) {
+        this(room, itemId, itemName, quantity, deliveredBy, guestName, "HABITACION", createdAt);
     }
 
-    public RoomSupplyAssignment(Long roomId, String roomNumber, Long itemId, String itemName, Integer quantity,
+    public RoomSupplyAssignment(Room room, Long itemId, String itemName, Integer quantity,
                                 String deliveredBy, String guestName, String assignmentType, LocalDateTime createdAt) {
-        this.roomId = roomId;
-        this.roomNumber = roomNumber;
+        this.room = room;
         this.itemId = itemId;
         this.itemName = itemName;
         this.quantity = quantity;
@@ -47,8 +46,10 @@ public class RoomSupplyAssignment {
     }
 
     public Long getId() { return id; }
-    public Long getRoomId() { return roomId; }
-    public String getRoomNumber() { return roomNumber; }
+    public Long getRoomId() { return room == null ? null : room.getId(); }
+    public String getRoomNumber() { return room == null ? null : room.getNumber(); }
+    @JsonIgnore
+    public Room getRoomEntity() { return room; }
     public Long getItemId() { return itemId; }
     public String getItemName() { return itemName; }
     public Integer getQuantity() { return quantity; }
@@ -58,8 +59,7 @@ public class RoomSupplyAssignment {
     public LocalDateTime getCreatedAt() { return createdAt; }
 
     public void setId(Long id) { this.id = id; }
-    public void setRoomId(Long roomId) { this.roomId = roomId; }
-    public void setRoomNumber(String roomNumber) { this.roomNumber = roomNumber; }
+    public void setRoom(Room room) { this.room = room; }
     public void setItemId(Long itemId) { this.itemId = itemId; }
     public void setItemName(String itemName) { this.itemName = itemName; }
     public void setQuantity(Integer quantity) { this.quantity = quantity; }

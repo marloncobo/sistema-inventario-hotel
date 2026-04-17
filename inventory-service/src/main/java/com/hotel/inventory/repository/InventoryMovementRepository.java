@@ -12,14 +12,14 @@ public interface InventoryMovementRepository extends JpaRepository<InventoryMove
     @Query("""
             select movement
             from InventoryMovement movement
-            where (:type is null or lower(movement.movementType) = :type)
-              and (:origin is null or lower(movement.origin) = :origin)
-              and (:roomNumber is null or lower(movement.roomNumber) = :roomNumber)
-              and (:responsible is null or lower(movement.responsible) = :responsible)
-              and (:operationalResponsible is null or lower(movement.operationalResponsible) = :operationalResponsible)
-              and (:areaName is null or lower(movement.areaName) = :areaName)
-              and (:startDate is null or movement.createdAt >= :startDate)
-              and (:endDate is null or movement.createdAt <= :endDate)
+            left join movement.area area
+            where lower(movement.movementType) like :type
+              and lower(movement.origin) like :origin
+              and coalesce(lower(movement.roomNumber), '') like :roomNumber
+              and lower(movement.responsible) like :responsible
+              and coalesce(lower(movement.operationalResponsible), '') like :operationalResponsible
+              and coalesce(lower(area.name), '') like :areaName
+              and movement.createdAt between :startDate and :endDate
             order by movement.createdAt desc
             """)
     List<InventoryMovement> search(
@@ -36,7 +36,7 @@ public interface InventoryMovementRepository extends JpaRepository<InventoryMove
     @Query("""
             select coalesce(sum(movement.quantity), 0)
             from InventoryMovement movement
-            where movement.sourceMovementId = :sourceMovementId
+            where movement.sourceMovement.id = :sourceMovementId
               and movement.movementType = 'DEVOLUCION'
               and movement.status = 'VALIDO'
             """)
@@ -44,16 +44,15 @@ public interface InventoryMovementRepository extends JpaRepository<InventoryMove
 
     @Query("""
             select new com.hotel.inventory.dto.TopUsedItemReport(
-                movement.itemId,
-                movement.itemName,
+                movement.item.id,
+                movement.item.name,
                 sum(movement.quantity)
             )
             from InventoryMovement movement
             where movement.movementType = 'SALIDA'
               and movement.status = 'VALIDO'
-              and (:startDate is null or movement.createdAt >= :startDate)
-              and (:endDate is null or movement.createdAt <= :endDate)
-            group by movement.itemId, movement.itemName
+              and movement.createdAt between :startDate and :endDate
+            group by movement.item.id, movement.item.name
             order by sum(movement.quantity) desc
             """)
     List<com.hotel.inventory.dto.TopUsedItemReport> topUsedItems(

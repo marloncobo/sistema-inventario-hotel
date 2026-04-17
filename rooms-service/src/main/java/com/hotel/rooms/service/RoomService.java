@@ -28,6 +28,9 @@ import java.util.Locale;
 
 @Service
 public class RoomService {
+    private static final LocalDateTime MIN_DATE = LocalDateTime.of(1900, 1, 1, 0, 0);
+    private static final LocalDateTime MAX_DATE = LocalDateTime.of(9999, 12, 31, 23, 59, 59);
+
     private final RoomRepository roomRepository;
     private final RoomSupplyAssignmentRepository assignmentRepository;
     private final InventoryClient inventoryClient;
@@ -115,7 +118,7 @@ public class RoomService {
         }
 
         RoomSupplyAssignment assignment = new RoomSupplyAssignment(
-                room.getId(), room.getNumber(), request.itemId(), stockResponse.itemName(),
+                room, request.itemId(), stockResponse.itemName(),
                 request.quantity(), request.deliveredBy(), request.guestName(),
                 assignmentType, LocalDateTime.now()
         );
@@ -132,32 +135,32 @@ public class RoomService {
 
     public List<RoomSupplyAssignment> getAllAssignments(String roomNumber, String assignmentType, LocalDate startDate, LocalDate endDate) {
         return assignmentRepository.search(
-                blankToNullLower(roomNumber),
-                blankToNullLower(assignmentType),
-                startDate == null ? null : startDate.atStartOfDay(),
-                endDate == null ? null : endDate.plusDays(1).atStartOfDay().minusNanos(1)
+                blankToWildcardLower(roomNumber),
+                blankToWildcardLower(assignmentType),
+                startDate == null ? MIN_DATE : startDate.atStartOfDay(),
+                endDate == null ? MAX_DATE : endDate.plusDays(1).atStartOfDay().minusNanos(1)
         );
     }
 
     public List<RoomConsumptionReport> consumptionReport(String roomNumber, String roomType, String assignmentType, LocalDate startDate, LocalDate endDate) {
         return assignmentRepository.consumptionReport(
-                blankToNullLower(roomNumber),
-                blankToNullLower(roomType),
-                blankToNullLower(assignmentType),
-                startDate == null ? null : startDate.atStartOfDay(),
-                endDate == null ? null : endDate.plusDays(1).atStartOfDay().minusNanos(1)
+                blankToWildcardLower(roomNumber),
+                blankToWildcardLower(roomType),
+                blankToWildcardLower(assignmentType),
+                startDate == null ? MIN_DATE : startDate.atStartOfDay(),
+                endDate == null ? MAX_DATE : endDate.plusDays(1).atStartOfDay().minusNanos(1)
         );
     }
 
     public List<RoomDistributionReport> distributionReport(String roomNumber, String roomType, String assignmentType,
                                                            String deliveredBy, LocalDate startDate, LocalDate endDate) {
         return assignmentRepository.distributionReport(
-                blankToNullLower(roomNumber),
-                blankToNullLower(roomType),
-                blankToNullLower(assignmentType),
-                blankToNullLower(deliveredBy),
-                startDate == null ? null : startDate.atStartOfDay(),
-                endDate == null ? null : endDate.plusDays(1).atStartOfDay().minusNanos(1)
+                blankToWildcardLower(roomNumber),
+                blankToWildcardLower(roomType),
+                blankToWildcardLower(assignmentType),
+                blankToWildcardLower(deliveredBy),
+                startDate == null ? MIN_DATE : startDate.atStartOfDay(),
+                endDate == null ? MAX_DATE : endDate.plusDays(1).atStartOfDay().minusNanos(1)
         );
     }
 
@@ -233,6 +236,10 @@ public class RoomService {
 
     private String blankToNullLower(String value) {
         return value == null || value.isBlank() ? null : value.trim().toLowerCase(Locale.ROOT);
+    }
+
+    private String blankToWildcardLower(String value) {
+        return value == null || value.isBlank() ? "%" : value.trim().toLowerCase(Locale.ROOT);
     }
 
     private String responseMessage(RestClientResponseException ex) {

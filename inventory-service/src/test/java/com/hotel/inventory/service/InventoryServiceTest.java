@@ -8,8 +8,11 @@ import com.hotel.inventory.dto.StockChangeResponse;
 import com.hotel.inventory.dto.StockEntryRequest;
 import com.hotel.inventory.exception.BusinessException;
 import com.hotel.inventory.exception.NotFoundException;
+import com.hotel.inventory.model.Category;
 import com.hotel.inventory.model.InventoryMovement;
+import com.hotel.inventory.model.Provider;
 import com.hotel.inventory.model.SupplyItem;
+import com.hotel.inventory.model.UnitOfMeasure;
 import com.hotel.inventory.repository.InventoryMovementRepository;
 import com.hotel.inventory.repository.SupplyItemRepository;
 import org.junit.jupiter.api.Test;
@@ -54,6 +57,9 @@ class InventoryServiceTest {
 
     @Test
     void createItemSavesItemAndInitialMovement() {
+        when(catalogService.ensureActiveCategory("Lenceria")).thenReturn(category("LENCERIA"));
+        when(catalogService.ensureActiveUnit("unidad")).thenReturn(unit("UND"));
+        when(catalogService.ensureActiveProvider(null)).thenReturn(null);
         when(supplyItemRepository.save(any(SupplyItem.class))).thenAnswer(invocation -> {
             SupplyItem item = invocation.getArgument(0);
             item.setId(10L);
@@ -84,6 +90,7 @@ class InventoryServiceTest {
     @Test
     void addStockIncreasesStockAndRegistersEntryMovement() {
         SupplyItem item = supplyItem(1L, "Jabon", 7, 3);
+        when(catalogService.ensureActiveProvider("Proveedor SAS")).thenReturn(provider("Proveedor SAS"));
         when(supplyItemRepository.findById(1L)).thenReturn(Optional.of(item));
         when(supplyItemRepository.save(item)).thenReturn(item);
 
@@ -165,8 +172,20 @@ class InventoryServiceTest {
     }
 
     private static SupplyItem supplyItem(Long id, String name, Integer stock, Integer minStock) {
-        SupplyItem item = new SupplyItem(name, "Categoria", "unidad", stock, minStock, true);
+        SupplyItem item = new SupplyItem(name, category("CATEGORIA"), unit("UND"), stock, minStock, true);
         item.setId(id);
         return item;
+    }
+
+    private static Category category(String code) {
+        return new Category(code, code, true);
+    }
+
+    private static UnitOfMeasure unit(String code) {
+        return new UnitOfMeasure(code, code, code, true);
+    }
+
+    private static Provider provider(String name) {
+        return new Provider("900001999", name, null, null, true);
     }
 }

@@ -35,8 +35,8 @@ public class LowStockAlertService {
     public void evaluate(SupplyItem item) {
         if (item.getStock() <= item.getMinStock()) {
             LowStockAlert alert = alertRepository.findByItemIdAndStatus(item.getId(), OPEN)
-                    .orElseGet(() -> new LowStockAlert(item.getId(), item.getName(), item.getStock(), item.getMinStock(), OPEN, LocalDateTime.now()));
-            alert.setItemName(item.getName());
+                    .orElseGet(() -> new LowStockAlert(item, item.getStock(), item.getMinStock(), OPEN, LocalDateTime.now()));
+            alert.setItem(item);
             alert.setCurrentStock(item.getStock());
             alert.setMinStock(item.getMinStock());
             alertRepository.save(alert);

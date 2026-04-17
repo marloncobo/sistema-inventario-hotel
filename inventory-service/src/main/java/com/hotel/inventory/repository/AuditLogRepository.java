@@ -12,10 +12,9 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, Long> {
     @Query("""
             select log
             from AuditLog log
-            where (:action is null or lower(log.action) = :action)
-              and (:username is null or lower(log.username) = :username)
-              and (:startDate is null or log.createdAt >= :startDate)
-              and (:endDate is null or log.createdAt <= :endDate)
+            where lower(log.action) like :action
+              and lower(log.username) like :username
+              and log.createdAt between :startDate and :endDate
             order by log.createdAt desc
             """)
     List<AuditLog> search(

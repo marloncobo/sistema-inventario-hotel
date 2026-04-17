@@ -1,5 +1,6 @@
 package com.hotel.gateway.auth;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
@@ -22,6 +23,7 @@ public class AuthService {
     private final AppUserRepository userRepository;
     private final AuditService auditService;
 
+    @Autowired
     public AuthService(
             JwtEncoder jwtEncoder,
             PasswordEncoder passwordEncoder,

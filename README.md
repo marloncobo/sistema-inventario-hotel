@@ -139,13 +139,56 @@ mvn -pl gateway-service spring-boot:run
 
 ### Con Docker
 
-Levanta todo el entorno:
+Requisitos:
+
+- Docker
+- Docker Compose v2
+
+Levanta todo el entorno desde la raiz del proyecto:
 
 ```bash
 docker compose up --build
 ```
 
-Cada Dockerfile compila su propio JAR en una etapa Maven y luego ejecuta el servicio sobre una imagen JRE.
+Esto construye los tres microservicios, crea las tres bases PostgreSQL y espera a que los contenedores esten saludables antes de iniciar los servicios dependientes.
+
+Para ejecutarlo en segundo plano:
+
+```bash
+docker compose up --build -d
+```
+
+Verifica el estado:
+
+```bash
+docker compose ps
+```
+
+Consulta logs:
+
+```bash
+docker compose logs -f gateway-service
+```
+
+Deten el entorno sin borrar datos:
+
+```bash
+docker compose down
+```
+
+Deten el entorno y borra los volumenes de PostgreSQL:
+
+```bash
+docker compose down -v
+```
+
+Cada Dockerfile compila su propio JAR en una etapa Maven y luego ejecuta el servicio sobre una imagen JRE con usuario no root y healthcheck por Actuator.
+
+El `JWT_SECRET` se comparte entre servicios desde Docker Compose. Para cambiarlo:
+
+```bash
+JWT_SECRET=una-clave-larga-y-segura docker compose up --build
+```
 
 ## Puertos
 
@@ -154,6 +197,7 @@ Cada Dockerfile compila su propio JAR en una etapa Maven y luego ejecuta el serv
 - Rooms: `8082`
 - PostgreSQL Inventory: `5433`
 - PostgreSQL Rooms: `5434`
+- PostgreSQL Gateway: `5435`
 
 ## Login y roles
 

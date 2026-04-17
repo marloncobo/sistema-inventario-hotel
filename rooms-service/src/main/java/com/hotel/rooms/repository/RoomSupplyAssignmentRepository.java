@@ -9,15 +9,20 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public interface RoomSupplyAssignmentRepository extends JpaRepository<RoomSupplyAssignment, Long> {
-    List<RoomSupplyAssignment> findByRoomId(Long roomId);
+    @Query("""
+            select assignment
+            from RoomSupplyAssignment assignment
+            where assignment.room.id = :roomId
+            order by assignment.createdAt desc
+            """)
+    List<RoomSupplyAssignment> findByRoomId(@Param("roomId") Long roomId);
 
     @Query("""
             select assignment
             from RoomSupplyAssignment assignment
-            where (:roomNumber is null or lower(assignment.roomNumber) = :roomNumber)
-              and (:assignmentType is null or lower(assignment.assignmentType) = :assignmentType)
-              and (:startDate is null or assignment.createdAt >= :startDate)
-              and (:endDate is null or assignment.createdAt <= :endDate)
+            where lower(assignment.room.number) like :roomNumber
+              and lower(assignment.assignmentType) like :assignmentType
+              and assignment.createdAt between :startDate and :endDate
             order by assignment.createdAt desc
             """)
     List<RoomSupplyAssignment> search(
@@ -29,8 +34,8 @@ public interface RoomSupplyAssignmentRepository extends JpaRepository<RoomSupply
 
     @Query("""
             select new com.hotel.rooms.dto.RoomConsumptionReport(
-                assignment.roomNumber,
-                room.type,
+                assignment.room.number,
+                assignment.room.type,
                 assignment.itemId,
                 assignment.itemName,
                 assignment.assignmentType,
@@ -38,14 +43,12 @@ public interface RoomSupplyAssignmentRepository extends JpaRepository<RoomSupply
                 sum(assignment.quantity)
             )
             from RoomSupplyAssignment assignment
-            join Room room on room.id = assignment.roomId
-            where (:roomNumber is null or lower(assignment.roomNumber) = :roomNumber)
-              and (:roomType is null or lower(room.type) = :roomType)
-              and (:assignmentType is null or lower(assignment.assignmentType) = :assignmentType)
-              and (:startDate is null or assignment.createdAt >= :startDate)
-              and (:endDate is null or assignment.createdAt <= :endDate)
-            group by assignment.roomNumber, room.type, assignment.itemId, assignment.itemName, assignment.assignmentType, assignment.deliveredBy
-            order by assignment.roomNumber asc, sum(assignment.quantity) desc
+            where lower(assignment.room.number) like :roomNumber
+              and lower(assignment.room.type) like :roomType
+              and lower(assignment.assignmentType) like :assignmentType
+              and assignment.createdAt between :startDate and :endDate
+            group by assignment.room.number, assignment.room.type, assignment.itemId, assignment.itemName, assignment.assignmentType, assignment.deliveredBy
+            order by assignment.room.number asc, sum(assignment.quantity) desc
             """)
     List<com.hotel.rooms.dto.RoomConsumptionReport> consumptionReport(
             @Param("roomNumber") String roomNumber,
@@ -57,8 +60,8 @@ public interface RoomSupplyAssignmentRepository extends JpaRepository<RoomSupply
 
     @Query("""
             select new com.hotel.rooms.dto.RoomDistributionReport(
-                assignment.roomNumber,
-                room.type,
+                assignment.room.number,
+                assignment.room.type,
                 assignment.itemId,
                 assignment.itemName,
                 assignment.quantity,
@@ -68,13 +71,11 @@ public interface RoomSupplyAssignmentRepository extends JpaRepository<RoomSupply
                 assignment.createdAt
             )
             from RoomSupplyAssignment assignment
-            join Room room on room.id = assignment.roomId
-            where (:roomNumber is null or lower(assignment.roomNumber) = :roomNumber)
-              and (:roomType is null or lower(room.type) = :roomType)
-              and (:assignmentType is null or lower(assignment.assignmentType) = :assignmentType)
-              and (:deliveredBy is null or lower(assignment.deliveredBy) = :deliveredBy)
-              and (:startDate is null or assignment.createdAt >= :startDate)
-              and (:endDate is null or assignment.createdAt <= :endDate)
+            where lower(assignment.room.number) like :roomNumber
+              and lower(assignment.room.type) like :roomType
+              and lower(assignment.assignmentType) like :assignmentType
+              and lower(assignment.deliveredBy) like :deliveredBy
+              and assignment.createdAt between :startDate and :endDate
             order by assignment.createdAt desc
             """)
     List<com.hotel.rooms.dto.RoomDistributionReport> distributionReport(

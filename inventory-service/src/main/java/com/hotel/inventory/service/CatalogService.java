@@ -119,41 +119,45 @@ public class CatalogService {
         return areaRepository.save(area);
     }
 
-    public void ensureActiveCategory(String category) {
+    public Category ensureActiveCategory(String category) {
         Category found = categoryRepository.findByCodeIgnoreCase(normalize(category))
                 .or(() -> categoryRepository.findByNameIgnoreCase(normalize(category)))
                 .orElseThrow(() -> new BusinessException("La categoria no existe en el catalogo: " + category));
         if (!Boolean.TRUE.equals(found.getActive())) {
             throw new BusinessException("La categoria esta inactiva: " + category);
         }
+        return found;
     }
 
-    public void ensureActiveUnit(String unit) {
+    public UnitOfMeasure ensureActiveUnit(String unit) {
         UnitOfMeasure found = unitRepository.findByCodeIgnoreCase(normalize(unit))
                 .or(() -> unitRepository.findByAbbreviationIgnoreCase(normalize(unit)))
                 .orElseThrow(() -> new BusinessException("La unidad no existe en el catalogo: " + unit));
         if (!Boolean.TRUE.equals(found.getActive())) {
             throw new BusinessException("La unidad esta inactiva: " + unit);
         }
+        return found;
     }
 
-    public void ensureActiveProvider(String providerName) {
+    public Provider ensureActiveProvider(String providerName) {
         if (providerName == null || providerName.isBlank()) {
-            return;
+            return null;
         }
         Provider found = providerRepository.findByNameIgnoreCase(providerName)
                 .orElseThrow(() -> new BusinessException("El proveedor no existe en el catalogo: " + providerName));
         if (!Boolean.TRUE.equals(found.getActive())) {
             throw new BusinessException("El proveedor esta inactivo: " + providerName);
         }
+        return found;
     }
 
-    public void ensureActiveArea(String areaName) {
+    public Area ensureActiveArea(String areaName) {
         Area found = areaRepository.findByNameIgnoreCase(normalize(areaName))
                 .orElseThrow(() -> new BusinessException("El area no existe en el catalogo: " + areaName));
         if (!Boolean.TRUE.equals(found.getActive())) {
             throw new BusinessException("El area esta inactiva: " + areaName);
         }
+        return found;
     }
 
     private void validateCategoryUnique(String code, String name, Long id) {
