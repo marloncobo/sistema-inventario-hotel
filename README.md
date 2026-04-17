@@ -48,6 +48,9 @@ Se encarga de las habitaciones y del historial de reparto.
 - asignar insumos a una habitacion para minibar, kit de aseo o servicio a la habitacion
 - consultar el historial de insumos entregados por habitacion
 - consultar todas las asignaciones realizadas
+- generar auditoria de cambios de habitaciones y entregas
+
+El negocio queda configurado para un hotel de 45 habitaciones; si ya existen 45 habitaciones, el backend bloquea nuevos registros.
 
 ### 3) `gateway-service`
 
@@ -76,11 +79,13 @@ Cada microservicio con datos tiene su propia base de datos:
 
 - `inventory-service` usa `inventorydb`
 - `rooms-service` usa `roomsdb`
+- `gateway-service` usa `gatewaydb` para usuarios y roles persistentes
 
-Con Docker Compose se levantan dos contenedores PostgreSQL:
+Con Docker Compose se levantan tres contenedores PostgreSQL:
 
 - `inventory-db`, expuesto en `localhost:5433`
 - `rooms-db`, expuesto en `localhost:5434`
+- `gateway-db`, expuesto en `localhost:5435`
 
 Credenciales locales por defecto:
 
@@ -108,12 +113,14 @@ Antes de ejecutar sin Docker, crea estas bases de datos en PostgreSQL:
 ```sql
 CREATE DATABASE inventorydb;
 CREATE DATABASE roomsdb;
+CREATE DATABASE gatewaydb;
 ```
 
 Por defecto los servicios intentan conectarse a:
 
 - Inventory: `jdbc:postgresql://localhost:5433/inventorydb`
 - Rooms: `jdbc:postgresql://localhost:5434/roomsdb`
+- Gateway: `jdbc:postgresql://localhost:5435/gatewaydb`
 
 Puedes cambiar la conexion con variables de entorno:
 
@@ -155,13 +162,19 @@ El login se hace desde el gateway:
 ```bash
 curl -X POST http://localhost:8080/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"username":"admin","password":"admin123"}'
+  -d '{"username":"admin","password":"Admin123"}'
 ```
 
 Usuarios de prueba:
 
-- `admin` / `admin123`: rol `ADMIN`, puede consultar y modificar.
-- `usuario` / `user123`: rol `USER`, solo puede consultar con `GET`.
+- `admin` / `Admin123`: rol `ADMIN`, puede consultar y modificar.
+- `almacen` / `Almacen123`: rol `ALMACENISTA`, gestiona inventario y proveedores.
+- `recepcion` / `Recepcion123`: rol `RECEPCION`, gestiona habitaciones.
+- `housekeeping` / `House123`: rol `HOUSEKEEPING`, gestiona entregas a habitaciones.
+- `servicio` / `Servicio123`: rol `SERVICIO`, registra entregas operativas a habitaciones.
+
+Los usuarios se guardan en base de datos desde el gateway y pueden administrarse con rol `ADMIN` en `/auth/users`.
+Los catalogos generales, bitacoras de auditoria y reportes globales de inventario quedan restringidos a `ADMIN`; proveedores tambien puede gestionarlos `ALMACENISTA`. Los reportes de habitaciones pueden consultarlos `ADMIN` y `RECEPCION`.
 
 Usa el token recibido en las demas peticiones:
 
@@ -173,9 +186,9 @@ Authorization: Bearer <token>
 
 1. `GET /rooms/api/rooms`
 2. `GET /inventory/api/inventory/items`
-3. `POST /inventory/api/inventory/items` solo `ADMIN`
-4. `POST /inventory/api/inventory/items/{id}/entries` solo `ADMIN`
-5. `POST /rooms/api/rooms/{roomId}/supplies/assign` solo `ADMIN`
+3. `POST /inventory/api/inventory/items` con `ADMIN` o `ALMACENISTA`
+4. `POST /inventory/api/inventory/items/{id}/entries` con `ADMIN` o `ALMACENISTA`
+5. `POST /rooms/api/rooms/{roomId}/supplies/assign` con `ADMIN`, `ALMACENISTA`, `HOUSEKEEPING` o `SERVICIO`
 6. `GET /inventory/api/inventory/movements`
 7. `GET /rooms/api/rooms/{roomId}/supplies`
 
@@ -183,6 +196,14 @@ Authorization: Bearer <token>
 
 Inventory:
 
+- `GET /inventory/api/inventory/catalogs/categories`
+- `POST /inventory/api/inventory/catalogs/categories`
+- `GET /inventory/api/inventory/catalogs/units`
+- `POST /inventory/api/inventory/catalogs/units`
+- `GET /inventory/api/inventory/catalogs/providers`
+- `POST /inventory/api/inventory/catalogs/providers`
+- `GET /inventory/api/inventory/catalogs/areas`
+- `POST /inventory/api/inventory/catalogs/areas`
 - `POST /inventory/api/inventory/items`
 - `GET /inventory/api/inventory/items?category=ASEO`
 - `GET /inventory/api/inventory/items/{id}`
@@ -192,7 +213,16 @@ Inventory:
 - `POST /inventory/api/inventory/items/{id}/returns`
 - `POST /inventory/api/inventory/internal/items/decrease`
 - `GET /inventory/api/inventory/items/low-stock`
-- `GET /inventory/api/inventory/movements?type=SALIDA&origin=HABITACION&roomNumber=101`
+- `GET /inventory/api/inventory/alerts/low-stock`
+- `GET /inventory/api/inventory/movements?type=SALIDA&origin=HABITACION&roomNumber=101&operationalResponsible=Camila&startDate=2026-04-01&endDate=2026-04-30`
+- `POST /inventory/api/inventory/movements/{id}/void`
+- `GET /inventory/api/inventory/reports/inventory`
+- `GET /inventory/api/inventory/reports/top-used`
+- `GET /inventory/api/inventory/reports/inventory/export?format=xlsx`
+- `GET /inventory/api/inventory/reports/inventory/export?format=pdf`
+- `GET /inventory/api/inventory/reports/top-used/export?format=xlsx`
+- `GET /inventory/api/inventory/reports/top-used/export?format=pdf`
+- `GET /inventory/api/inventory/audit?action=STOCK_EXIT&username=almacen&startDate=2026-04-01&endDate=2026-04-30`
 
 Rooms:
 
@@ -202,7 +232,21 @@ Rooms:
 - `PATCH /rooms/api/rooms/{id}/status`
 - `POST /rooms/api/rooms/{roomId}/supplies/assign`
 - `GET /rooms/api/rooms/{roomId}/supplies`
-- `GET /rooms/api/rooms/supplies`
+- `GET /rooms/api/rooms/supplies?roomNumber=101&assignmentType=MINIBAR&startDate=2026-04-01&endDate=2026-04-30`
+- `GET /rooms/api/rooms/reports/consumption?roomType=ESTANDAR&assignmentType=MINIBAR`
+- `GET /rooms/api/rooms/reports/consumption/export?format=xlsx&roomType=ESTANDAR`
+- `GET /rooms/api/rooms/reports/consumption/export?format=pdf&roomType=ESTANDAR`
+- `GET /rooms/api/rooms/reports/distribution?roomType=ESTANDAR&deliveredBy=Camila`
+- `GET /rooms/api/rooms/reports/distribution/export?format=xlsx&roomType=ESTANDAR`
+- `GET /rooms/api/rooms/reports/distribution/export?format=pdf&roomType=ESTANDAR`
+- `GET /rooms/api/rooms/audit?action=ASSIGN_SUPPLY&username=housekeeping&startDate=2026-04-01&endDate=2026-04-30`
+
+Gateway:
+
+- `GET /auth/users`
+- `POST /auth/users`
+- `PUT /auth/users/{id}`
+- `GET /auth/audit?action=LOGIN_SUCCESS&username=admin&startDate=2026-04-01&endDate=2026-04-30`
 
 ## Conexion a PostgreSQL
 
@@ -239,5 +283,4 @@ Variable incluida:
 ## Mejoras futuras
 
 - Config Server / Eureka
-- reportes
-- auditoria avanzada
+- dashboard operativo

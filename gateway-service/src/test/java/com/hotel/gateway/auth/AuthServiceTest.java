@@ -21,7 +21,7 @@ class AuthServiceTest {
 
     @Test
     void loginReturnsBearerTokenForValidCredentials() {
-        LoginResponse response = authService.login(new LoginRequest("admin", "admin123"));
+        LoginResponse response = authService.login(new LoginRequest("admin", "Admin123"));
 
         assertThat(response.token()).isNotBlank();
         assertThat(response.tokenType()).isEqualTo("Bearer");

@@ -3,6 +3,7 @@ package com.hotel.rooms.service;
 import com.hotel.rooms.client.InventoryClient;
 import com.hotel.rooms.dto.AssignSupplyRequest;
 import com.hotel.rooms.dto.CreateRoomRequest;
+import com.hotel.rooms.dto.InventoryItemResponse;
 import com.hotel.rooms.dto.StockChangeResponse;
 import com.hotel.rooms.exception.BusinessException;
 import com.hotel.rooms.exception.NotFoundException;
@@ -38,6 +39,9 @@ class RoomServiceTest {
     @Mock
     private InventoryClient inventoryClient;
 
+    @Mock
+    private AuditService auditService;
+
     @InjectMocks
     private RoomService roomService;
 
@@ -50,7 +54,7 @@ class RoomServiceTest {
             return room;
         });
 
-        Room created = roomService.createRoom(new CreateRoomRequest("201", "Estandar", "Disponible", 2, 2, null));
+        Room created = roomService.createRoom(new CreateRoomRequest("201", "Estandar", "Disponible", 2, 2, null), "admin");
 
         assertThat(created.getId()).isEqualTo(15L);
         assertThat(created.getNumber()).isEqualTo("201");
@@ -64,7 +68,7 @@ class RoomServiceTest {
     void createRoomThrowsBusinessExceptionWhenNumberAlreadyExists() {
         when(roomRepository.existsByNumber("201")).thenReturn(true);
 
-        assertThatThrownBy(() -> roomService.createRoom(new CreateRoomRequest("201", "Estandar", "Disponible", 2, 2, null)))
+        assertThatThrownBy(() -> roomService.createRoom(new CreateRoomRequest("201", "Estandar", "Disponible", 2, 2, null), "admin"))
                 .isInstanceOf(BusinessException.class)
                 .hasMessageContaining("201");
 
@@ -84,6 +88,8 @@ class RoomServiceTest {
     void assignSupplyDiscountsInventoryAndStoresAssignment() {
         Room room = room(5L, "305");
         when(roomRepository.findById(5L)).thenReturn(Optional.of(room));
+        when(inventoryClient.getItem(9L))
+                .thenReturn(new InventoryItemResponse(9L, "ASE-001", "Toallas", "ASEO", "UND", 13, true));
         when(inventoryClient.decreaseStock(any()))
                 .thenReturn(new StockChangeResponse(9L, "Toallas", 11, "ok"));
         when(assignmentRepository.save(any(RoomSupplyAssignment.class))).thenAnswer(invocation -> {
@@ -94,7 +100,8 @@ class RoomServiceTest {
 
         RoomSupplyAssignment assignment = roomService.assignSupply(
                 5L,
-                new AssignSupplyRequest(9L, 2, "Camila", "Huesped", "KIT_ASEO")
+                new AssignSupplyRequest(9L, 2, "Camila", "Huesped", "KIT_ASEO"),
+                "camila"
         );
 
         assertThat(assignment.getId()).isEqualTo(33L);
@@ -113,11 +120,14 @@ class RoomServiceTest {
     void assignSupplyThrowsBusinessExceptionWhenInventoryReturnsNoBody() {
         Room room = room(6L, "401");
         when(roomRepository.findById(6L)).thenReturn(Optional.of(room));
+        when(inventoryClient.getItem(2L))
+                .thenReturn(new InventoryItemResponse(2L, "MIN-001", "Agua", "MINIBAR", "UND", 20, true));
         when(inventoryClient.decreaseStock(any())).thenReturn(null);
 
         assertThatThrownBy(() -> roomService.assignSupply(
                 6L,
-                new AssignSupplyRequest(2L, 1, "Daniel", null, null)
+                new AssignSupplyRequest(2L, 1, "Daniel", null, null),
+                "daniel"
         ))
                 .isInstanceOf(BusinessException.class)
                 .hasMessageContaining("No hubo respuesta");
@@ -146,7 +156,8 @@ class RoomServiceTest {
 
         assertThatThrownBy(() -> roomService.assignSupply(
                 40L,
-                new AssignSupplyRequest(3L, 1, "Nora", null, null)
+                new AssignSupplyRequest(3L, 1, "Nora", null, null),
+                "nora"
         ))
                 .isInstanceOf(NotFoundException.class);
 

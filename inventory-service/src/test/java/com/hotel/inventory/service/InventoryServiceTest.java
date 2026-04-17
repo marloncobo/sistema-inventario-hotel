@@ -1,7 +1,9 @@
 package com.hotel.inventory.service;
 
+import com.hotel.inventory.client.RoomClient;
 import com.hotel.inventory.dto.CreateSupplyItemRequest;
 import com.hotel.inventory.dto.InternalStockDecreaseRequest;
+import com.hotel.inventory.dto.RoomValidationResponse;
 import com.hotel.inventory.dto.StockChangeResponse;
 import com.hotel.inventory.dto.StockEntryRequest;
 import com.hotel.inventory.exception.BusinessException;
@@ -35,6 +37,18 @@ class InventoryServiceTest {
     @Mock
     private InventoryMovementRepository movementRepository;
 
+    @Mock
+    private CatalogService catalogService;
+
+    @Mock
+    private AuditService auditService;
+
+    @Mock
+    private LowStockAlertService lowStockAlertService;
+
+    @Mock
+    private RoomClient roomClient;
+
     @InjectMocks
     private InventoryService inventoryService;
 
@@ -47,7 +61,8 @@ class InventoryServiceTest {
         });
 
         SupplyItem created = inventoryService.createItem(
-                new CreateSupplyItemRequest("LEN-100", "Toallas", null, "Lenceria", "unidad", null, 30, 5, 100)
+                new CreateSupplyItemRequest("LEN-100", "Toallas", null, "Lenceria", "unidad", null, 30, 5, 100),
+                "admin"
         );
 
         assertThat(created.getId()).isEqualTo(10L);
@@ -72,7 +87,7 @@ class InventoryServiceTest {
         when(supplyItemRepository.findById(1L)).thenReturn(Optional.of(item));
         when(supplyItemRepository.save(item)).thenReturn(item);
 
-        SupplyItem updated = inventoryService.addStock(1L, new StockEntryRequest(8, null, "Almacen", "Compra semanal"));
+        SupplyItem updated = inventoryService.addStock(1L, new StockEntryRequest(8, "Proveedor SAS", "Compra semanal"), "almacen");
 
         assertThat(updated.getStock()).isEqualTo(15);
 
@@ -90,9 +105,13 @@ class InventoryServiceTest {
         SupplyItem item = supplyItem(3L, "Shampoo", 12, 4);
         when(supplyItemRepository.findById(3L)).thenReturn(Optional.of(item));
         when(supplyItemRepository.save(item)).thenReturn(item);
+        when(roomClient.getRoomByNumber("204"))
+                .thenReturn(new RoomValidationResponse("204", "ESTANDAR", "DISPONIBLE", true));
 
         StockChangeResponse response = inventoryService.decreaseStock(
-                new InternalStockDecreaseRequest(3L, 5, "204", null, "HABITACION", "Laura", "Reposicion habitacion")
+                new InternalStockDecreaseRequest(3L, 5, "204", null, "HABITACION", "Laura", "Reposicion habitacion"),
+                "laura",
+                true
         );
 
         assertThat(response.itemId()).isEqualTo(3L);
@@ -112,7 +131,9 @@ class InventoryServiceTest {
         when(supplyItemRepository.findById(4L)).thenReturn(Optional.of(item));
 
         assertThatThrownBy(() -> inventoryService.decreaseStock(
-                new InternalStockDecreaseRequest(4L, 3, "305", null, "HABITACION", "Laura", "Reposicion habitacion")
+                new InternalStockDecreaseRequest(4L, 3, "305", null, "HABITACION", "Laura", "Reposicion habitacion"),
+                "laura",
+                true
         ))
                 .isInstanceOf(BusinessException.class)
                 .hasMessageContaining("Stock insuficiente");

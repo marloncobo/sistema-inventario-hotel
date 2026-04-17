@@ -19,6 +19,8 @@ public class Room {
     @Column(nullable = false)
     private Integer floor;
     private String observations;
+    @Column(nullable = false, columnDefinition = "boolean default true")
+    private Boolean active = true;
 
     public Room() {}
 
@@ -42,6 +44,7 @@ public class Room {
     public Integer getCapacity() { return capacity; }
     public Integer getFloor() { return floor; }
     public String getObservations() { return observations; }
+    public Boolean getActive() { return active; }
 
     public void setId(Long id) { this.id = id; }
     public void setNumber(String number) { this.number = number; }
@@ -50,4 +53,5 @@ public class Room {
     public void setCapacity(Integer capacity) { this.capacity = capacity; }
     public void setFloor(Integer floor) { this.floor = floor; }
     public void setObservations(String observations) { this.observations = observations; }
+    public void setActive(Boolean active) { this.active = active; }
 }

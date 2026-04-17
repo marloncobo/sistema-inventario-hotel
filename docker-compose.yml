@@ -33,6 +33,23 @@ services:
       timeout: 5s
       retries: 10
 
+  gateway-db:
+    image: postgres:16-alpine
+    container_name: gateway-db
+    environment:
+      POSTGRES_DB: gatewaydb
+      POSTGRES_USER: hotel
+      POSTGRES_PASSWORD: hotel
+    ports:
+      - "5435:5432"
+    volumes:
+      - gateway-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hotel -d gatewaydb"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   inventory-service:
     build:
       context: .
@@ -45,6 +62,7 @@ services:
       - "8081:8081"
     environment:
       SERVER_PORT: 8081
+      ROOMS_SERVICE_URL: http://rooms-service:8082
       SPRING_DATASOURCE_URL: jdbc:postgresql://inventory-db:5432/inventorydb
       SPRING_DATASOURCE_USERNAME: hotel
       SPRING_DATASOURCE_PASSWORD: hotel
@@ -78,13 +96,19 @@ services:
         condition: service_started
       rooms-service:
         condition: service_started
+      gateway-db:
+        condition: service_healthy
     ports:
       - "8080:8080"
     environment:
       SERVER_PORT: 8080
       INVENTORY_SERVICE_URL: http://inventory-service:8081
       ROOMS_SERVICE_URL: http://rooms-service:8082
+      SPRING_DATASOURCE_URL: jdbc:postgresql://gateway-db:5432/gatewaydb
+      SPRING_DATASOURCE_USERNAME: hotel
+      SPRING_DATASOURCE_PASSWORD: hotel
 
 volumes:
   inventory-db-data:
   rooms-db-data:
+  gateway-db-data:

@@ -1,21 +1,30 @@
 package com.hotel.inventory.service;
 
+import com.hotel.inventory.client.RoomClient;
 import com.hotel.inventory.dto.CreateSupplyItemRequest;
 import com.hotel.inventory.dto.InternalStockDecreaseRequest;
+import com.hotel.inventory.dto.InventorySummaryReport;
+import com.hotel.inventory.dto.RoomValidationResponse;
 import com.hotel.inventory.dto.StockChangeResponse;
 import com.hotel.inventory.dto.StockEntryRequest;
 import com.hotel.inventory.dto.StockReturnRequest;
+import com.hotel.inventory.dto.TopUsedItemReport;
 import com.hotel.inventory.dto.UpdateSupplyItemRequest;
+import com.hotel.inventory.dto.VoidMovementRequest;
 import com.hotel.inventory.exception.BusinessException;
 import com.hotel.inventory.exception.NotFoundException;
 import com.hotel.inventory.model.InventoryMovement;
+import com.hotel.inventory.model.LowStockAlert;
 import com.hotel.inventory.model.SupplyItem;
 import com.hotel.inventory.repository.InventoryMovementRepository;
 import com.hotel.inventory.repository.SupplyItemRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestClientException;
 
 import java.time.LocalDateTime;
+import java.time.LocalDate;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Locale;
 
@@ -23,15 +32,26 @@ import java.util.Locale;
 public class InventoryService {
     private final SupplyItemRepository supplyItemRepository;
     private final InventoryMovementRepository movementRepository;
+    private final CatalogService catalogService;
+    private final AuditService auditService;
+    private final LowStockAlertService lowStockAlertService;
+    private final RoomClient roomClient;
 
-    public InventoryService(SupplyItemRepository supplyItemRepository, InventoryMovementRepository movementRepository) {
+    public InventoryService(SupplyItemRepository supplyItemRepository, InventoryMovementRepository movementRepository,
+                            CatalogService catalogService, AuditService auditService,
+                            LowStockAlertService lowStockAlertService, RoomClient roomClient) {
         this.supplyItemRepository = supplyItemRepository;
         this.movementRepository = movementRepository;
+        this.catalogService = catalogService;
+        this.auditService = auditService;
+        this.lowStockAlertService = lowStockAlertService;
+        this.roomClient = roomClient;
     }
 
     @Transactional
-    public SupplyItem createItem(CreateSupplyItemRequest request) {
+    public SupplyItem createItem(CreateSupplyItemRequest request, String username) {
         validateUniqueItem(request.code(), request.name(), null);
+        validateCatalogs(request.category(), request.unit(), request.providerName());
         validateStockBounds(request.stock(), request.minStock(), request.maxStock());
 
         SupplyItem item = new SupplyItem(
@@ -42,8 +62,10 @@ public class InventoryService {
         SupplyItem saved = supplyItemRepository.save(item);
         if (saved.getStock() > 0) {
             movementRepository.save(buildMovement(saved, "ENTRADA", "NO_APLICA", saved.getStock(), 0,
-                    saved.getStock(), null, null, saved.getProviderName(), "sistema", "Carga inicial"));
+                    saved.getStock(), null, null, saved.getProviderName(), username, "Carga inicial"));
         }
+        auditService.record("CREATE", "SupplyItem", saved.getId(), username, saved.getCode());
+        lowStockAlertService.evaluate(saved);
         return saved;
     }
 
@@ -61,9 +83,10 @@ public class InventoryService {
     }
 
     @Transactional
-    public SupplyItem updateItem(Long id, UpdateSupplyItemRequest request) {
+    public SupplyItem updateItem(Long id, UpdateSupplyItemRequest request, String username) {
         SupplyItem item = getItem(id);
         validateUniqueItem(request.code(), request.name(), id);
+        validateCatalogs(request.category(), request.unit(), request.providerName());
         validateStockBounds(item.getStock(), request.minStock(), request.maxStock());
 
         item.setCode(normalize(request.code()));
@@ -77,32 +100,43 @@ public class InventoryService {
         if (request.active() != null) {
             item.setActive(request.active());
         }
-        return supplyItemRepository.save(item);
+        SupplyItem saved = supplyItemRepository.save(item);
+        auditService.record("UPDATE", "SupplyItem", saved.getId(), username, saved.getCode());
+        lowStockAlertService.evaluate(saved);
+        return saved;
     }
 
     @Transactional
-    public SupplyItem deactivateItem(Long id) {
+    public SupplyItem deactivateItem(Long id, String username) {
         SupplyItem item = getItem(id);
         item.setActive(false);
-        return supplyItemRepository.save(item);
+        SupplyItem saved = supplyItemRepository.save(item);
+        auditService.record("DEACTIVATE", "SupplyItem", saved.getId(), username, saved.getCode());
+        return saved;
     }
 
     @Transactional
-    public SupplyItem addStock(Long itemId, StockEntryRequest request) {
+    public SupplyItem addStock(Long itemId, StockEntryRequest request, String username) {
         SupplyItem item = getItem(itemId);
         ensureActive(item);
+        catalogService.ensureActiveProvider(request.providerName());
         int stockBefore = item.getStock();
         int stockAfter = stockBefore + request.quantity();
         validateStockBounds(stockAfter, item.getMinStock(), item.getMaxStock());
 
         item.setStock(stockAfter);
-        movementRepository.save(buildMovement(item, "ENTRADA", "NO_APLICA", request.quantity(), stockBefore,
-                stockAfter, null, null, request.providerName(), request.responsible(), request.referenceText()));
-        return supplyItemRepository.save(item);
+        InventoryMovement movement = buildMovement(item, "ENTRADA", "NO_APLICA", request.quantity(), stockBefore,
+                stockAfter, null, null, request.providerName(), username, request.referenceText());
+        movement.setOperationalResponsible(username);
+        movementRepository.save(movement);
+        SupplyItem saved = supplyItemRepository.save(item);
+        auditService.record("STOCK_ENTRY", "SupplyItem", saved.getId(), username, "Cantidad " + request.quantity());
+        lowStockAlertService.evaluate(saved);
+        return saved;
     }
 
     @Transactional
-    public StockChangeResponse decreaseStock(InternalStockDecreaseRequest request) {
+    public StockChangeResponse decreaseStock(InternalStockDecreaseRequest request, String username, boolean roomsServiceFlow) {
         SupplyItem item = getItem(request.itemId());
         ensureActive(item);
         if (item.getStock() < request.quantity()) {
@@ -110,43 +144,134 @@ public class InventoryService {
         }
 
         String origin = normalize(request.origin());
-        validateExitOrigin(origin, request.roomNumber(), request.areaName());
+        validateExitOrigin(origin, request.roomNumber(), request.areaName(), request.referenceText());
+        if ("HABITACION".equals(origin) && !roomsServiceFlow) {
+            throw new BusinessException("Las salidas a habitacion deben registrarse desde rooms-service para conservar la distribucion por habitacion");
+        }
+        validateRoomDestination(origin, request.roomNumber());
+        if ("CONSUMO_INTERNO".equals(origin)) {
+            catalogService.ensureActiveArea(request.areaName());
+        }
         int stockBefore = item.getStock();
         int stockAfter = stockBefore - request.quantity();
 
         item.setStock(stockAfter);
-        movementRepository.save(buildMovement(item, "SALIDA", origin, request.quantity(), stockBefore, stockAfter,
-                request.roomNumber(), request.areaName(), null, request.responsible(), request.referenceText()));
-        supplyItemRepository.save(item);
-        return new StockChangeResponse(item.getId(), item.getName(), item.getStock(), "Stock descontado correctamente");
+        InventoryMovement movement = buildMovement(item, "SALIDA", origin, request.quantity(), stockBefore, stockAfter,
+                request.roomNumber(), request.areaName(), null, username, request.referenceText());
+        movement.setOperationalResponsible(defaultOperationalResponsible(request.operationalResponsible(), username));
+        movementRepository.save(movement);
+        SupplyItem saved = supplyItemRepository.save(item);
+        auditService.record("STOCK_EXIT", "SupplyItem", item.getId(), username, origin + " cantidad " + request.quantity());
+        lowStockAlertService.evaluate(saved);
+        return new StockChangeResponse(saved.getId(), saved.getName(), saved.getStock(), "Stock descontado correctamente");
     }
 
     @Transactional
-    public StockChangeResponse returnStock(Long itemId, StockReturnRequest request) {
+    public StockChangeResponse returnStock(Long itemId, StockReturnRequest request, String username) {
         SupplyItem item = getItem(itemId);
         ensureActive(item);
+        InventoryMovement source = validateReturnSource(itemId, request);
         int stockBefore = item.getStock();
         int stockAfter = stockBefore + request.quantity();
         validateStockBounds(stockAfter, item.getMinStock(), item.getMaxStock());
 
         item.setStock(stockAfter);
-        movementRepository.save(buildMovement(item, "DEVOLUCION", "NO_APLICA", request.quantity(), stockBefore,
-                stockAfter, request.roomNumber(), request.areaName(), null, request.responsible(), request.referenceText()));
-        supplyItemRepository.save(item);
-        return new StockChangeResponse(item.getId(), item.getName(), item.getStock(), "Stock devuelto correctamente");
+        InventoryMovement movement = buildMovement(item, "DEVOLUCION", source == null ? "NO_APLICA" : source.getOrigin(), request.quantity(), stockBefore,
+                stockAfter, request.roomNumber(), request.areaName(), null, username, request.referenceText());
+        movement.setSourceMovementId(request.sourceMovementId());
+        movement.setOperationalResponsible(defaultOperationalResponsible(request.operationalResponsible(), username));
+        movementRepository.save(movement);
+        SupplyItem saved = supplyItemRepository.save(item);
+        auditService.record("STOCK_RETURN", "SupplyItem", item.getId(), username, "Origen movimiento " + request.sourceMovementId());
+        lowStockAlertService.evaluate(saved);
+        return new StockChangeResponse(saved.getId(), saved.getName(), saved.getStock(), "Stock devuelto correctamente");
     }
 
-    public List<InventoryMovement> listMovements(String type, String origin, String roomNumber, String responsible) {
+    public List<InventoryMovement> listMovements(String type, String origin, String roomNumber, String responsible,
+                                                 String operationalResponsible,
+                                                 String areaName, LocalDate startDate, LocalDate endDate) {
         return movementRepository.search(
                 blankToNullLower(type),
                 blankToNullLower(origin),
                 blankToNullLower(roomNumber),
-                blankToNullLower(responsible)
+                blankToNullLower(responsible),
+                blankToNullLower(operationalResponsible),
+                blankToNullLower(areaName),
+                startDate == null ? null : startDate.atStartOfDay(),
+                endDate == null ? null : endDate.plusDays(1).atStartOfDay().minusNanos(1)
         );
     }
 
     public List<SupplyItem> lowStockItems() {
         return supplyItemRepository.findLowStockItems();
+    }
+
+    public List<LowStockAlert> lowStockAlerts(Boolean openOnly) {
+        return lowStockAlertService.list(openOnly);
+    }
+
+    @Transactional
+    public InventoryMovement voidMovement(Long id, VoidMovementRequest request, String username) {
+        InventoryMovement movement = movementRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("No existe el movimiento " + id));
+        if (!"VALIDO".equals(movement.getStatus())) {
+            throw new BusinessException("El movimiento ya fue corregido o anulado");
+        }
+        if (!List.of("ENTRADA", "SALIDA", "DEVOLUCION").contains(movement.getMovementType())) {
+            throw new BusinessException("Este tipo de movimiento no se puede anular");
+        }
+
+        SupplyItem item = getItem(movement.getItemId());
+        int stockBefore = item.getStock();
+        int delta = switch (movement.getMovementType()) {
+            case "ENTRADA", "DEVOLUCION" -> -movement.getQuantity();
+            case "SALIDA" -> movement.getQuantity();
+            default -> 0;
+        };
+        int stockAfter = stockBefore + delta;
+        validateStockBounds(stockAfter, item.getMinStock(), item.getMaxStock());
+
+        item.setStock(stockAfter);
+        SupplyItem savedItem = supplyItemRepository.save(item);
+        InventoryMovement correction = buildMovement(savedItem, "AJUSTE", "CORRECCION", Math.abs(delta), stockBefore,
+                stockAfter, movement.getRoomNumber(), movement.getAreaName(), movement.getProviderName(), username,
+                "Anula movimiento " + id + ": " + request.reason());
+        correction.setSourceMovementId(id);
+        correction.setOperationalResponsible(username);
+        InventoryMovement savedCorrection = movementRepository.save(correction);
+
+        movement.setStatus("ANULADO");
+        movement.setCorrectionReason(request.reason());
+        movement.setCorrectionMovementId(savedCorrection.getId());
+        movementRepository.save(movement);
+        auditService.record("VOID_MOVEMENT", "InventoryMovement", id, username, request.reason());
+        lowStockAlertService.evaluate(savedItem);
+        return movement;
+    }
+
+    public List<InventorySummaryReport> inventoryReport(LocalDate startDate, LocalDate endDate) {
+        List<TopUsedItemReport> used = movementRepository.topUsedItems(
+                startDate == null ? null : startDate.atStartOfDay(),
+                endDate == null ? null : endDate.plusDays(1).atStartOfDay().minusNanos(1)
+        );
+        return supplyItemRepository.findAll().stream()
+                .map(item -> new InventorySummaryReport(
+                        item.getId(), item.getCode(), item.getName(), item.getCategory(), item.getUnit(),
+                        item.getStock(), item.getMinStock(), item.getMaxStock(), item.getStock() <= item.getMinStock(),
+                        BigDecimal.valueOf(used.stream()
+                                .filter(row -> row.itemId().equals(item.getId()))
+                                .findFirst()
+                                .map(TopUsedItemReport::totalQuantity)
+                                .orElse(0L))
+                ))
+                .toList();
+    }
+
+    public List<TopUsedItemReport> topUsedItems(LocalDate startDate, LocalDate endDate) {
+        return movementRepository.topUsedItems(
+                startDate == null ? null : startDate.atStartOfDay(),
+                endDate == null ? null : endDate.plusDays(1).atStartOfDay().minusNanos(1)
+        );
     }
 
     private InventoryMovement buildMovement(SupplyItem item, String type, String origin, Integer quantity,
@@ -193,7 +318,7 @@ public class InventoryService {
         }
     }
 
-    private void validateExitOrigin(String origin, String roomNumber, String areaName) {
+    private void validateExitOrigin(String origin, String roomNumber, String areaName, String referenceText) {
         if (!List.of("HABITACION", "VENTA", "CONSUMO_INTERNO", "MERMA").contains(origin)) {
             throw new BusinessException("Origen de salida no valido: " + origin);
         }
@@ -203,6 +328,62 @@ public class InventoryService {
         if ("CONSUMO_INTERNO".equals(origin) && isBlank(areaName)) {
             throw new BusinessException("Las salidas por consumo interno deben indicar un area");
         }
+        if (List.of("VENTA", "MERMA").contains(origin) && isBlank(referenceText)) {
+            throw new BusinessException("Las salidas por " + origin + " deben indicar una referencia o motivo");
+        }
+    }
+
+    private void validateRoomDestination(String origin, String roomNumber) {
+        if (!"HABITACION".equals(origin)) {
+            return;
+        }
+        try {
+            RoomValidationResponse room = roomClient.getRoomByNumber(roomNumber);
+            if (room == null || !Boolean.TRUE.equals(room.active())) {
+                throw new BusinessException("La habitacion " + roomNumber + " esta inactiva o no existe");
+            }
+            if (List.of("FUERA_DE_SERVICIO", "MANTENIMIENTO").contains(normalize(room.status()))) {
+                throw new BusinessException("La habitacion " + roomNumber + " no esta habilitada para recibir insumos");
+            }
+        } catch (BusinessException ex) {
+            throw ex;
+        } catch (RestClientException ex) {
+            throw new BusinessException("No fue posible validar la habitacion " + roomNumber + ": " + ex.getMessage());
+        }
+    }
+
+    private InventoryMovement validateReturnSource(Long itemId, StockReturnRequest request) {
+        if (request.sourceMovementId() == null) {
+            throw new BusinessException("La devolucion debe indicar el movimiento origen");
+        }
+        InventoryMovement source = movementRepository.findById(request.sourceMovementId())
+                .orElseThrow(() -> new NotFoundException("No existe el movimiento origen " + request.sourceMovementId()));
+        if (!"SALIDA".equals(source.getMovementType()) || !"VALIDO".equals(source.getStatus())) {
+            throw new BusinessException("Solo se pueden devolver salidas validas");
+        }
+        if (!source.getItemId().equals(itemId)) {
+            throw new BusinessException("La devolucion no corresponde al mismo insumo del movimiento origen");
+        }
+        if (!isBlank(request.roomNumber()) && source.getRoomNumber() != null && !request.roomNumber().equals(source.getRoomNumber())) {
+            throw new BusinessException("La habitacion de la devolucion no coincide con el movimiento origen");
+        }
+        if (!isBlank(request.areaName()) && source.getAreaName() != null && !normalize(request.areaName()).equals(normalize(source.getAreaName()))) {
+            throw new BusinessException("El area de la devolucion no coincide con el movimiento origen");
+        }
+        long alreadyReturned = movementRepository.returnedQuantityFor(source.getId());
+        if (alreadyReturned + request.quantity() > source.getQuantity()) {
+            throw new BusinessException("La devolucion supera la cantidad pendiente del movimiento origen");
+        }
+        return source;
+    }
+
+    private void validateCatalogs(String category, String unit, String providerName) {
+        if (isBlank(category) || isBlank(unit)) {
+            throw new BusinessException("Categoria y unidad son obligatorias");
+        }
+        catalogService.ensureActiveCategory(category);
+        catalogService.ensureActiveUnit(unit);
+        catalogService.ensureActiveProvider(providerName);
     }
 
     private String normalize(String value) {
@@ -215,5 +396,9 @@ public class InventoryService {
 
     private boolean isBlank(String value) {
         return value == null || value.isBlank();
+    }
+
+    private String defaultOperationalResponsible(String value, String username) {
+        return isBlank(value) ? username : value.trim();
     }
 }

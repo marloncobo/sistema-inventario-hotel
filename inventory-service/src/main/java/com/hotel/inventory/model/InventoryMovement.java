@@ -28,7 +28,11 @@ public class InventoryMovement {
     private String providerName;
     @Column(nullable = false)
     private String responsible;
+    private String operationalResponsible;
     private String referenceText;
+    private Long sourceMovementId;
+    private String correctionReason;
+    private Long correctionMovementId;
     @Column(nullable = false)
     private String status;
     @Column(nullable = false)
@@ -72,7 +76,11 @@ public class InventoryMovement {
     public String getAreaName() { return areaName; }
     public String getProviderName() { return providerName; }
     public String getResponsible() { return responsible; }
+    public String getOperationalResponsible() { return operationalResponsible; }
     public String getReferenceText() { return referenceText; }
+    public Long getSourceMovementId() { return sourceMovementId; }
+    public String getCorrectionReason() { return correctionReason; }
+    public Long getCorrectionMovementId() { return correctionMovementId; }
     public String getStatus() { return status; }
     public LocalDateTime getCreatedAt() { return createdAt; }
 
@@ -88,7 +96,11 @@ public class InventoryMovement {
     public void setAreaName(String areaName) { this.areaName = areaName; }
     public void setProviderName(String providerName) { this.providerName = providerName; }
     public void setResponsible(String responsible) { this.responsible = responsible; }
+    public void setOperationalResponsible(String operationalResponsible) { this.operationalResponsible = operationalResponsible; }
     public void setReferenceText(String referenceText) { this.referenceText = referenceText; }
+    public void setSourceMovementId(Long sourceMovementId) { this.sourceMovementId = sourceMovementId; }
+    public void setCorrectionReason(String correctionReason) { this.correctionReason = correctionReason; }
+    public void setCorrectionMovementId(Long correctionMovementId) { this.correctionMovementId = correctionMovementId; }
     public void setStatus(String status) { this.status = status; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 }

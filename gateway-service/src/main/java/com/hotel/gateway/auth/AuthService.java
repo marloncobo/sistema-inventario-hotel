@@ -12,36 +12,47 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.Map;
+import java.util.Locale;
 
 @Service
 public class AuthService {
     private final JwtEncoder jwtEncoder;
     private final PasswordEncoder passwordEncoder;
     private final long expirationMinutes;
-    private final Map<String, AppUser> users;
+    private final AppUserRepository userRepository;
+    private final AuditService auditService;
 
     public AuthService(
             JwtEncoder jwtEncoder,
             PasswordEncoder passwordEncoder,
+            AppUserRepository userRepository,
+            AuditService auditService,
             @Value("${security.jwt.expiration-minutes:120}") long expirationMinutes
     ) {
         this.jwtEncoder = jwtEncoder;
         this.passwordEncoder = passwordEncoder;
+        this.userRepository = userRepository;
+        this.auditService = auditService;
         this.expirationMinutes = expirationMinutes;
-        this.users = Map.of(
-                "admin", new AppUser("admin", passwordEncoder.encode("admin123"), List.of("ADMIN")),
-                "usuario", new AppUser("usuario", passwordEncoder.encode("user123"), List.of("USER"))
-        );
+    }
+
+    AuthService(JwtEncoder jwtEncoder, PasswordEncoder passwordEncoder, long expirationMinutes) {
+        this.jwtEncoder = jwtEncoder;
+        this.passwordEncoder = passwordEncoder;
+        this.userRepository = null;
+        this.auditService = null;
+        this.expirationMinutes = expirationMinutes;
     }
 
     public LoginResponse login(LoginRequest request) {
         if (request == null || request.username() == null || request.password() == null) {
+            recordAudit("LOGIN_FAILED", "Authentication", null, "anonimo", "Solicitud incompleta");
             throw new InvalidCredentialsException();
         }
 
-        AppUser user = users.get(request.username());
-        if (user == null || !passwordEncoder.matches(request.password(), user.password())) {
+        AppUser user = findUser(request.username());
+        if (user == null || !Boolean.TRUE.equals(user.getActive()) || !passwordEncoder.matches(request.password(), user.getPassword())) {
+            recordAudit("LOGIN_FAILED", "Authentication", null, request.username(), "Credenciales invalidas");
             throw new InvalidCredentialsException();
         }
 
@@ -51,15 +62,95 @@ public class AuthService {
                 .issuer("hotel-inventory-gateway")
                 .issuedAt(now)
                 .expiresAt(expiresAt)
-                .subject(user.username())
-                .claim("roles", user.roles())
+                .subject(user.getUsername())
+                .claim("roles", user.getRoles())
                 .build();
 
         JwsHeader headers = JwsHeader.with(MacAlgorithm.HS256).build();
         String token = jwtEncoder.encode(JwtEncoderParameters.from(headers, claims)).getTokenValue();
-        return new LoginResponse(token, "Bearer", expiresAt, user.username(), user.roles());
+        recordAudit("LOGIN_SUCCESS", "Authentication", user.getId(), user.getUsername(), "Inicio de sesion");
+        return new LoginResponse(token, "Bearer", expiresAt, user.getUsername(), user.getRoles());
     }
 
-    private record AppUser(String username, String password, List<String> roles) {
+    private AppUser findUser(String username) {
+        if (userRepository != null) {
+            return userRepository.findByUsernameIgnoreCase(username).orElse(null);
+        }
+        if ("admin".equals(username)) {
+            return new AppUser("admin", passwordEncoder.encode("Admin123"), List.of("ADMIN"), true);
+        }
+        return null;
+    }
+
+    public List<UserResponse> listUsers() {
+        return userRepository.findAll().stream().map(UserResponse::from).toList();
+    }
+
+    public UserResponse createUser(UserRequest request, String actor) {
+        if (userRepository.existsByUsernameIgnoreCase(request.username())) {
+            throw new IllegalArgumentException("Ya existe el usuario " + request.username());
+        }
+        validatePassword(request.password(), true);
+        AppUser saved = userRepository.save(new AppUser(
+                request.username().trim(),
+                passwordEncoder.encode(request.password()),
+                normalizeRoles(request.roles()),
+                request.active() == null || request.active()
+        ));
+        auditService.record("CREATE", "AppUser", saved.getId(), actor, saved.getUsername());
+        return UserResponse.from(saved);
+    }
+
+    public UserResponse updateUser(Long id, UserRequest request, String actor) {
+        AppUser user = userRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("No existe el usuario " + id));
+        if (userRepository.existsByUsernameIgnoreCaseAndIdNot(request.username(), id)) {
+            throw new IllegalArgumentException("Ya existe el usuario " + request.username());
+        }
+        user.setUsername(request.username().trim());
+        if (request.password() != null && !request.password().isBlank()) {
+            validatePassword(request.password(), false);
+            user.setPassword(passwordEncoder.encode(request.password()));
+        }
+        user.setRoles(normalizeRoles(request.roles()));
+        user.setActive(request.active() == null || request.active());
+        AppUser saved = userRepository.save(user);
+        auditService.record("UPDATE", "AppUser", saved.getId(), actor, saved.getUsername());
+        return UserResponse.from(saved);
+    }
+
+    public List<AuditLog> auditLogs(String action, String username, java.time.LocalDate startDate, java.time.LocalDate endDate) {
+        return auditService.list(action, username, startDate, endDate);
+    }
+
+    private List<String> normalizeRoles(List<String> roles) {
+        List<String> allowed = List.of("ADMIN", "USER", "ALMACENISTA", "RECEPCION", "HOUSEKEEPING", "SERVICIO");
+        List<String> normalized = roles.stream()
+                .map(role -> role.trim().toUpperCase(Locale.ROOT))
+                .distinct()
+                .toList();
+        if (!allowed.containsAll(normalized)) {
+            throw new IllegalArgumentException("Rol no permitido. Roles validos: " + allowed);
+        }
+        return normalized;
+    }
+
+    private void recordAudit(String action, String entityName, Long entityId, String username, String detail) {
+        if (auditService != null) {
+            auditService.record(action, entityName, entityId, username, detail);
+        }
+    }
+
+    private void validatePassword(String password, boolean required) {
+        if (password == null || password.isBlank()) {
+            if (required) {
+                throw new IllegalArgumentException("La contrasena es obligatoria");
+            }
+            return;
+        }
+        if (password.length() < 8
+                || password.chars().noneMatch(Character::isUpperCase)
+                || password.chars().noneMatch(Character::isDigit)) {
+            throw new IllegalArgumentException("La contrasena debe tener minimo 8 caracteres, una mayuscula y un numero");
+        }
     }
 }

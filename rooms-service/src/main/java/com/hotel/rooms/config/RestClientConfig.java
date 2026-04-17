@@ -22,6 +22,7 @@ public class RestClientConfig {
                             request.getHeaders().set(HttpHeaders.AUTHORIZATION, authorization);
                         }
                     }
+                    request.getHeaders().set("X-Rooms-Service-Flow", "true");
                     return execution.execute(request, body);
                 })
                 .build();
