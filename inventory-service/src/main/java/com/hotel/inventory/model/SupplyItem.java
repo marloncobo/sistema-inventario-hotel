@@ -15,11 +15,11 @@ public class SupplyItem {
     private String name;
     @Column(length = 500)
     private String description;
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "category_id", nullable = false, foreignKey = @ForeignKey(name = "fk_supply_items_category"))
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id", foreignKey = @ForeignKey(name = "fk_supply_items_category"))
     private Category category;
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "unit_id", nullable = false, foreignKey = @ForeignKey(name = "fk_supply_items_unit"))
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "unit_id", foreignKey = @ForeignKey(name = "fk_supply_items_unit"))
     private UnitOfMeasure unit;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "provider_id", foreignKey = @ForeignKey(name = "fk_supply_items_provider"))

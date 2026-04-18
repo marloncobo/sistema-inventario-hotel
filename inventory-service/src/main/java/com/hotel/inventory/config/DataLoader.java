@@ -13,6 +13,8 @@ import com.hotel.inventory.repository.UnitOfMeasureRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 @Configuration
 public class DataLoader {
@@ -54,5 +56,65 @@ public class DataLoader {
                 repository.save(new SupplyItem("LEN-001", "Toalla facial", "Lenceria de habitacion", lenceria, unit, hotelProvider, 40, 12, 100, true));
             }
         };
+    }
+
+    @Bean
+    @Order(1)
+    CommandLineRunner migrateLegacySupplyItemCatalogColumns(JdbcTemplate jdbcTemplate) {
+        return args -> {
+            if (columnExists(jdbcTemplate, "inventory_movements", "item_name")) {
+                jdbcTemplate.execute("alter table inventory_movements alter column item_name drop not null");
+            }
+
+            if (!columnExists(jdbcTemplate, "supply_items", "category_id")
+                    || !columnExists(jdbcTemplate, "supply_items", "unit_id")) {
+                return;
+            }
+
+            if (columnExists(jdbcTemplate, "supply_items", "category")) {
+                jdbcTemplate.update("""
+                        update supply_items si
+                        set category_id = c.id
+                        from categories c
+                        where si.category_id is null
+                          and lower(c.code) = lower(si.category)
+                        """);
+            }
+
+            if (columnExists(jdbcTemplate, "supply_items", "unit")) {
+                jdbcTemplate.update("""
+                        update supply_items si
+                        set unit_id = u.id
+                        from units_of_measure u
+                        where si.unit_id is null
+                          and (lower(u.code) = lower(si.unit) or lower(u.abbreviation) = lower(si.unit))
+                        """);
+            }
+
+            if (columnExists(jdbcTemplate, "supply_items", "provider_name")
+                    && columnExists(jdbcTemplate, "supply_items", "provider_id")) {
+                jdbcTemplate.update("""
+                        update supply_items si
+                        set provider_id = p.id
+                        from providers p
+                        where si.provider_id is null
+                          and si.provider_name is not null
+                          and lower(p.name) = lower(si.provider_name)
+                        """);
+            }
+        };
+    }
+
+    private static boolean columnExists(JdbcTemplate jdbcTemplate, String tableName, String columnName) {
+        Boolean exists = jdbcTemplate.queryForObject("""
+                select exists (
+                    select 1
+                    from information_schema.columns
+                    where table_schema = current_schema()
+                      and table_name = ?
+                      and column_name = ?
+                )
+                """, Boolean.class, tableName, columnName);
+        return Boolean.TRUE.equals(exists);
     }
 }
