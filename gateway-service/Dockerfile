@@ -18,5 +18,5 @@ COPY --from=build /workspace/gateway-service/target/*.jar app.jar
 EXPOSE 8080
 USER spring:spring
 HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=5 \
-  CMD curl --fail --silent http://localhost:8080/actuator/health >/dev/null || exit 1
+  CMD curl --fail --silent http://localhost:${PORT:-8080}/actuator/health >/dev/null || exit 1
 ENTRYPOINT ["sh","-c","java ${JAVA_OPTS:-} -jar /app/app.jar"]

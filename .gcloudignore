@@ -1,13 +1,8 @@
 .git
-.gcloudignore
-.gitignore
 .idea
 .vscode
-cloud-run
-cloudbuild.yaml
 documentos
 postman
 **/target
 **/*.log
 **/.DS_Store
-README.md

@@ -11,9 +11,11 @@ import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
+import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver;
 import org.springframework.security.web.SecurityFilterChain;
 
 import javax.crypto.spec.SecretKeySpec;
+import jakarta.servlet.http.HttpServletRequest;
 import java.nio.charset.StandardCharsets;
 
 @Configuration
@@ -37,7 +39,9 @@ public class SecurityConfig {
                         .requestMatchers("/api/rooms/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
-                .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())))
+                .oauth2ResourceServer(oauth2 -> oauth2
+                        .bearerTokenResolver(bearerTokenResolver())
+                        .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())))
                 .build();
     }
 
@@ -45,6 +49,11 @@ public class SecurityConfig {
     JwtDecoder jwtDecoder(@Value("${security.jwt.secret}") String secret) {
         SecretKeySpec key = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
         return NimbusJwtDecoder.withSecretKey(key).build();
+    }
+
+    @Bean
+    BearerTokenResolver bearerTokenResolver() {
+        return request -> tokenFromHeader(request, "Authorization", "X-Forwarded-Authorization");
     }
 
     @Bean
@@ -56,5 +65,19 @@ public class SecurityConfig {
         JwtAuthenticationConverter authenticationConverter = new JwtAuthenticationConverter();
         authenticationConverter.setJwtGrantedAuthoritiesConverter(authoritiesConverter);
         return authenticationConverter;
+    }
+
+    private String tokenFromHeader(HttpServletRequest request, String... headerNames) {
+        for (String headerName : headerNames) {
+            String value = request.getHeader(headerName);
+            if (value == null || value.isBlank()) {
+                continue;
+            }
+            if (value.regionMatches(true, 0, "Bearer ", 0, 7)) {
+                return value.substring(7);
+            }
+            return value;
+        }
+        return null;
     }
 }

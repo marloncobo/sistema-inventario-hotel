@@ -11,6 +11,8 @@ Thumbs.db
 .env
 .env.*
 !.env.example
+cloud-run/env.*.yaml
+!cloud-run/env.*.example.yaml
 
 # Docker/PostgreSQL local data
 *.pid

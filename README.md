@@ -315,6 +315,19 @@ Variable incluida:
 
 - `baseUrl = http://localhost:8080`
 
+## Cloud Run
+
+El proyecto esta preparado para Cloud Run:
+
+- los tres servicios leen el puerto desde `PORT`
+- los `Dockerfile` exponen `8080`
+- `cloudbuild.yaml` construye y publica las tres imagenes en Artifact Registry
+- `cloud-run/*.example.yaml` contiene plantillas de variables por servicio
+
+Guia de despliegue:
+
+- `cloud-run/README.md`
+
 ## Que hace cada carpeta
 
 - `inventory-service/`: logica de inventario y movimientos
