@@ -1,0 +1,1 @@
+function e(r){return r?"message"in r&&r.message?r.message:"error"in r&&r.error?r.error:"No fue posible completar la operaci\xF3n.":"No fue posible completar la operaci\xF3n."}function t(r){return!r||!("errors"in r)||!r.errors?{}:r.errors}export{e as a,t as b};
