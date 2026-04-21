@@ -11,13 +11,17 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 @Configuration
 public class RestClientConfig {
     @Bean
-    public RestClient inventoryRestClient(@Value("${services.inventory.base-url:http://localhost:8081}") String baseUrl) {
-        return RestClient.builder()
+    public RestClient inventoryRestClient(RestClient.Builder builder,
+                                          @Value("${services.inventory.base-url:http://localhost:8081}") String baseUrl) {
+        return builder
                 .baseUrl(baseUrl)
                 .requestInterceptor((request, body, execution) -> {
                     ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
                     if (attributes != null) {
                         String authorization = attributes.getRequest().getHeader(HttpHeaders.AUTHORIZATION);
+                        if (authorization == null || authorization.isBlank()) {
+                            authorization = attributes.getRequest().getHeader("X-Forwarded-Authorization");
+                        }
                         if (authorization != null && !authorization.isBlank()) {
                             request.getHeaders().set(HttpHeaders.AUTHORIZATION, authorization);
                         }
