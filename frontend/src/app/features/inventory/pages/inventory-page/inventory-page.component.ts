@@ -72,7 +72,7 @@ export class InventoryPageComponent implements OnInit {
   });
 
   protected readonly itemForm = this.fb.group({
-    code: this.fb.nonNullable.control('', [Validators.required]),
+    code: this.fb.nonNullable.control(''),
     name: this.fb.nonNullable.control('', [Validators.required]),
     description: this.fb.control(''),
     category: this.fb.nonNullable.control('', [Validators.required]),
@@ -309,7 +309,6 @@ export class InventoryPageComponent implements OnInit {
 
     const raw = this.itemForm.getRawValue();
     const basePayload = {
-      code: raw.code.trim(),
       name: raw.name.trim(),
       description: raw.description?.trim() || null,
       category: raw.category.trim(),
@@ -329,7 +328,10 @@ export class InventoryPageComponent implements OnInit {
           } as CreateSupplyItemRequest)
         : this.inventoryApi.updateItem(
             this.editingItemId()!,
-            basePayload as UpdateSupplyItemRequest
+            {
+              code: raw.code.trim(),
+              ...basePayload
+            } as UpdateSupplyItemRequest
           );
 
     request$.pipe(take(1)).subscribe({
@@ -503,14 +505,14 @@ export class InventoryPageComponent implements OnInit {
   }
 
   protected showItemError(
-    controlName: 'code' | 'name' | 'category' | 'unit' | 'stock' | 'minStock'
+    controlName: 'name' | 'category' | 'unit' | 'stock' | 'minStock'
   ): boolean {
     const control = this.itemForm.controls[controlName];
     return control.invalid && control.touched;
   }
 
   protected itemError(
-    controlName: 'code' | 'name' | 'category' | 'unit' | 'stock' | 'minStock'
+    controlName: 'name' | 'category' | 'unit' | 'stock' | 'minStock'
   ): string {
     return this.resolveControlError(this.itemForm.controls[controlName].errors);
   }

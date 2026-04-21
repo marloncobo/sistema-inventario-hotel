@@ -31,11 +31,15 @@ import java.time.LocalDate;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 public class InventoryService {
     private static final LocalDateTime MIN_DATE = LocalDateTime.of(1900, 1, 1, 0, 0);
     private static final LocalDateTime MAX_DATE = LocalDateTime.of(9999, 12, 31, 23, 59, 59);
+    private static final Pattern TRAILING_NUMBER_PATTERN = Pattern.compile("(\\d+)$");
+    private static final String ITEM_CODE_PREFIX = "INS-";
 
     private final SupplyItemRepository supplyItemRepository;
     private final InventoryMovementRepository movementRepository;
@@ -57,12 +61,13 @@ public class InventoryService {
 
     @Transactional
     public SupplyItem createItem(CreateSupplyItemRequest request, String username) {
-        validateUniqueItem(request.code(), request.name(), null);
+        String generatedCode = generateNextItemCode();
+        validateUniqueItem(generatedCode, request.name(), null);
         CatalogSelection catalogs = validateCatalogs(request.category(), request.unit(), request.providerName());
         validateStockBounds(request.stock(), request.minStock(), request.maxStock());
 
         SupplyItem item = new SupplyItem(
-                normalize(request.code()), request.name(), request.description(), catalogs.category(),
+                generatedCode, request.name(), request.description(), catalogs.category(),
                 catalogs.unit(), catalogs.provider(), request.stock(), request.minStock(),
                 request.maxStock(), true
         );
@@ -415,6 +420,26 @@ public class InventoryService {
 
     private String defaultOperationalResponsible(String value, String username) {
         return isBlank(value) ? username : value.trim();
+    }
+
+    private String generateNextItemCode() {
+        int nextSequence = supplyItemRepository.findAllCodes().stream()
+                .map(this::extractTrailingNumber)
+                .mapToInt(Integer::intValue)
+                .max()
+                .orElse(0) + 1;
+        return ITEM_CODE_PREFIX + String.format("%04d", nextSequence);
+    }
+
+    private int extractTrailingNumber(String code) {
+        if (isBlank(code)) {
+            return 0;
+        }
+        Matcher matcher = TRAILING_NUMBER_PATTERN.matcher(code.trim());
+        if (!matcher.find()) {
+            return 0;
+        }
+        return Integer.parseInt(matcher.group(1));
     }
 
     private record CatalogSelection(Category category, UnitOfMeasure unit, Provider provider) {}

@@ -126,7 +126,7 @@
             <td>{{ movement.quantity }}</td>
             <td>
               <div>{{ serviceResponsibleLabel(movement) }}</div>
-              <div class="text-xs text-slate-500">Equipo de servicio</div>
+              <div class="text-xs text-slate-500">{{ responsibleRoleLabel(movement) }}</div>
             </td>
             <td><p-tag [value]="movement.status" [severity]="canVoid(movement) ? 'info' : 'danger'"></p-tag></td>
             <td class="text-right">

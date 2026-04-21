@@ -251,15 +251,22 @@
   @switch (activeDialog()) {
     @case ('item') {
       <form [formGroup]="itemForm" class="space-y-8" (ngSubmit)="submitItem()">
-        <div class="form-grid">
+        @if (editingItemId() !== null) {
           <label class="field">
             <span>Codigo</span>
-            <input pInputText type="text" formControlName="code" />
-            @if (showItemError('code')) {
-              <small>{{ itemError('code') }}</small>
-            }
+            <input pInputText type="text" formControlName="code" readonly />
           </label>
+        } @else {
+          <article class="note-banner">
+            <i class="pi pi-hashtag"></i>
+            <div>
+              <strong>Codigo automatico</strong>
+              <p class="m-0">El sistema generara el codigo del insumo al guardarlo.</p>
+            </div>
+          </article>
+        }
 
+        <div class="form-grid">
           <label class="field">
             <span>Nombre</span>
             <input pInputText type="text" formControlName="name" />
@@ -267,9 +274,7 @@
               <small>{{ itemError('name') }}</small>
             }
           </label>
-        </div>
 
-        <div class="form-grid">
           <label class="field">
             <span>Categoria</span>
             <input pInputText type="text" formControlName="category" list="inventory-categories" />
@@ -277,7 +282,9 @@
               <small>{{ itemError('category') }}</small>
             }
           </label>
+        </div>
 
+        <div class="form-grid">
           <label class="field">
             <span>Unidad</span>
             <input pInputText type="text" formControlName="unit" list="inventory-units" />

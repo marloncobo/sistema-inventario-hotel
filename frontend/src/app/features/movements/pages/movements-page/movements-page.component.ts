@@ -142,6 +142,18 @@ export class MovementsPageComponent implements OnInit {
   protected movementTypeLabel(movement: InventoryMovement): string {
     const normalizedOrigin = (movement.origin || '').toUpperCase();
     const normalizedType = (movement.movementType || '').toUpperCase();
+    const normalizedReference = (movement.referenceText || '').toUpperCase();
+
+    if (normalizedReference.includes('SERVICIO_HABITACION')) {
+      return 'Salida';
+    }
+
+    if (
+      normalizedReference.includes('HABITACION') &&
+      !normalizedReference.includes('SERVICIO_HABITACION')
+    ) {
+      return 'Entrada';
+    }
 
     if (normalizedOrigin.includes('HABITACION') || normalizedOrigin.includes('ROOM')) {
       return 'Entrada';
@@ -166,15 +178,41 @@ export class MovementsPageComponent implements OnInit {
   protected serviceResponsibleLabel(movement: InventoryMovement): string {
     const serviceUsernames = new Set(this.serviceUsers().map((user) => user.username.toLowerCase()));
 
-    if (movement.operationalResponsible && serviceUsernames.has(movement.operationalResponsible.toLowerCase())) {
+    if (
+      movement.operationalResponsible?.trim() &&
+      serviceUsernames.has(movement.operationalResponsible.toLowerCase())
+    ) {
       return movement.operationalResponsible;
     }
 
-    if (serviceUsernames.has(movement.responsible.toLowerCase())) {
+    if (movement.responsible?.trim() && serviceUsernames.has(movement.responsible.toLowerCase())) {
       return movement.responsible;
     }
 
-    return 'Servicio';
+    if (movement.operationalResponsible?.trim()) {
+      return movement.operationalResponsible;
+    }
+
+    if (movement.responsible?.trim()) {
+      return movement.responsible;
+    }
+
+    return 'Sin responsable';
+  }
+
+  protected responsibleRoleLabel(movement: InventoryMovement): string {
+    const serviceUsernames = new Set(this.serviceUsers().map((user) => user.username.toLowerCase()));
+    const primaryResponsible = this.serviceResponsibleLabel(movement);
+
+    if (primaryResponsible !== 'Sin responsable' && serviceUsernames.has(primaryResponsible.toLowerCase())) {
+      return 'Servicio';
+    }
+
+    if (movement.responsible?.trim()) {
+      return 'Registrado por ' + movement.responsible;
+    }
+
+    return 'Sin registro';
   }
 
   protected showVoidError(): boolean {
