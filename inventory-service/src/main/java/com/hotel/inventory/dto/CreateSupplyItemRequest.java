@@ -6,7 +6,6 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 public record CreateSupplyItemRequest(
-        @NotBlank @Size(max = 40) String code,
         @NotBlank @Size(max = 180) String name,
         @Size(max = 500)
         String description,

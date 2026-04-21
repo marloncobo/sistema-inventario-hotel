@@ -60,6 +60,7 @@ class InventoryServiceTest {
         when(catalogService.ensureActiveCategory("Lenceria")).thenReturn(category("LENCERIA"));
         when(catalogService.ensureActiveUnit("unidad")).thenReturn(unit("UND"));
         when(catalogService.ensureActiveProvider(null)).thenReturn(null);
+        when(supplyItemRepository.findAllCodes()).thenReturn(List.of("LEN-001", "ASE-001"));
         when(supplyItemRepository.save(any(SupplyItem.class))).thenAnswer(invocation -> {
             SupplyItem item = invocation.getArgument(0);
             item.setId(10L);
@@ -67,11 +68,12 @@ class InventoryServiceTest {
         });
 
         SupplyItem created = inventoryService.createItem(
-                new CreateSupplyItemRequest("LEN-100", "Toallas", null, "Lenceria", "unidad", null, 30, 5, 100),
+                new CreateSupplyItemRequest("Toallas", null, "Lenceria", "unidad", null, 30, 5, 100),
                 "admin"
         );
 
         assertThat(created.getId()).isEqualTo(10L);
+        assertThat(created.getCode()).isEqualTo("INS-0002");
         assertThat(created.getName()).isEqualTo("Toallas");
         assertThat(created.getStock()).isEqualTo(30);
         assertThat(created.getActive()).isTrue();

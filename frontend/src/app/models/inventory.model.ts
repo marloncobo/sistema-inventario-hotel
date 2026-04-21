@@ -67,7 +67,6 @@ export interface InventoryMovement {
 }
 
 export interface CreateSupplyItemRequest {
-  code: string;
   name: string;
   description: string | null;
   category: string;

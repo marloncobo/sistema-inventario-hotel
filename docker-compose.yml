@@ -138,6 +138,18 @@ services:
       start_period: 40s
     restart: unless-stopped
 
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: hotel-inventory-frontend-app
+    depends_on:
+      gateway-service:
+        condition: service_healthy
+    ports:
+      - "4200:80"
+    restart: unless-stopped
+
 volumes:
   inventory-db-data:
   rooms-db-data:

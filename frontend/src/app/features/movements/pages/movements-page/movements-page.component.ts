@@ -8,7 +8,9 @@ import { InputTextModule } from 'primeng/inputtext';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { InventoryApiService } from '@core/services/api/inventory-api.service';
+import { UsersApiService } from '@core/services/api/users-api.service';
 import { NotificationService } from '@core/services/ui/notification.service';
+import type { AppUser } from '@models/app-user.model';
 import type { InventoryMovement, MovementFilters } from '@models/inventory.model';
 import { EmptyStateComponent } from '@shared/components/empty-state/empty-state.component';
 import { PageHeaderComponent } from '@shared/components/page-header/page-header.component';
@@ -31,10 +33,12 @@ import { PageHeaderComponent } from '@shared/components/page-header/page-header.
 })
 export class MovementsPageComponent implements OnInit {
   private readonly inventoryApi = inject(InventoryApiService);
+  private readonly usersApi = inject(UsersApiService);
   private readonly notificationService = inject(NotificationService);
   private readonly fb = inject(FormBuilder);
 
   protected readonly movements = signal<InventoryMovement[]>([]);
+  protected readonly serviceUsers = signal<AppUser[]>([]);
   protected readonly loading = signal(false);
   protected readonly saving = signal(false);
   protected readonly voidDialogVisible = signal(false);
@@ -63,6 +67,7 @@ export class MovementsPageComponent implements OnInit {
   );
 
   ngOnInit(): void {
+    this.loadServiceUsers();
     this.loadMovements();
   }
 
@@ -134,6 +139,82 @@ export class MovementsPageComponent implements OnInit {
     return new Date(value).toLocaleString();
   }
 
+  protected movementTypeLabel(movement: InventoryMovement): string {
+    const normalizedOrigin = (movement.origin || '').toUpperCase();
+    const normalizedType = (movement.movementType || '').toUpperCase();
+    const normalizedReference = (movement.referenceText || '').toUpperCase();
+
+    if (normalizedReference.includes('SERVICIO_HABITACION')) {
+      return 'Salida';
+    }
+
+    if (
+      normalizedReference.includes('HABITACION') &&
+      !normalizedReference.includes('SERVICIO_HABITACION')
+    ) {
+      return 'Entrada';
+    }
+
+    if (normalizedOrigin.includes('HABITACION') || normalizedOrigin.includes('ROOM')) {
+      return 'Entrada';
+    }
+
+    if (normalizedOrigin.includes('SERVICIO')) {
+      return 'Salida';
+    }
+
+    if (
+      normalizedType.includes('ENTRY') ||
+      normalizedType.includes('ENTRADA') ||
+      normalizedType.includes('RETURN') ||
+      normalizedType.includes('DEVOL')
+    ) {
+      return 'Entrada';
+    }
+
+    return 'Salida';
+  }
+
+  protected serviceResponsibleLabel(movement: InventoryMovement): string {
+    const serviceUsernames = new Set(this.serviceUsers().map((user) => user.username.toLowerCase()));
+
+    if (
+      movement.operationalResponsible?.trim() &&
+      serviceUsernames.has(movement.operationalResponsible.toLowerCase())
+    ) {
+      return movement.operationalResponsible;
+    }
+
+    if (movement.responsible?.trim() && serviceUsernames.has(movement.responsible.toLowerCase())) {
+      return movement.responsible;
+    }
+
+    if (movement.operationalResponsible?.trim()) {
+      return movement.operationalResponsible;
+    }
+
+    if (movement.responsible?.trim()) {
+      return movement.responsible;
+    }
+
+    return 'Sin responsable';
+  }
+
+  protected responsibleRoleLabel(movement: InventoryMovement): string {
+    const serviceUsernames = new Set(this.serviceUsers().map((user) => user.username.toLowerCase()));
+    const primaryResponsible = this.serviceResponsibleLabel(movement);
+
+    if (primaryResponsible !== 'Sin responsable' && serviceUsernames.has(primaryResponsible.toLowerCase())) {
+      return 'Servicio';
+    }
+
+    if (movement.responsible?.trim()) {
+      return 'Registrado por ' + movement.responsible;
+    }
+
+    return 'Sin registro';
+  }
+
   protected showVoidError(): boolean {
     const control = this.voidForm.controls.reason;
     return control.invalid && control.touched;
@@ -150,5 +231,20 @@ export class MovementsPageComponent implements OnInit {
     }
 
     return 'Valor invalido.';
+  }
+
+  private loadServiceUsers(): void {
+    this.usersApi
+      .getUsers()
+      .pipe(take(1))
+      .subscribe({
+        next: (users) =>
+          this.serviceUsers.set(
+            users.filter((user) => user.active && user.roles.includes('SERVICIO'))
+          ),
+        error: () => {
+          this.serviceUsers.set([]);
+        }
+      });
   }
 }

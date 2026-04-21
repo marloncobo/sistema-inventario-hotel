@@ -38,7 +38,7 @@ import { BreadcrumbsComponent } from '../breadcrumbs/breadcrumbs.component';
         <div class="topbar__copy">
           <span class="topbar__eyebrow">Centro operativo</span>
           <app-breadcrumbs />
-          <h2 class="topbar__headline">Panel operativo</h2>
+          <h2 class="topbar__headline">Hotel Lunara</h2>
         </div>
       </div>
     </header>
@@ -49,12 +49,12 @@ import { BreadcrumbsComponent } from '../breadcrumbs/breadcrumbs.component';
       align-items: center;
       justify-content: space-between;
       gap: 1rem;
-      padding: 1.2rem 1.35rem;
-      border-radius: 1.6rem;
-      background: rgba(255, 252, 247, 0.86);
+      padding: 1.25rem 1.5rem;
+      border-radius: 1.5rem;
+      background: rgba(255, 250, 236, 0.92);
       backdrop-filter: blur(18px);
-      border: 1px solid rgba(214, 191, 152, 0.28);
-      box-shadow: 0 20px 44px rgba(175, 132, 66, 0.1);
+      border: 1px solid rgba(191, 140, 37, 0.14);
+      box-shadow: 0 18px 45px rgba(101, 67, 33, 0.08);
     }
 
     .topbar__left,
@@ -108,9 +108,9 @@ import { BreadcrumbsComponent } from '../breadcrumbs/breadcrumbs.component';
 
     .topbar__headline {
       margin: 0.35rem 0 0;
-      color: #372e25;
-      font-family: Georgia, 'Times New Roman', serif;
-      font-size: 1.18rem;
+      color: #5b3d11;
+      font-size: 1.1rem;
+      font-family: 'Palatino Linotype', 'Book Antiqua', Georgia, serif;
     }
 
     @media (max-width: 1023px) {

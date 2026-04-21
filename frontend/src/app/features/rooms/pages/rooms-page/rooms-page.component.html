@@ -2,7 +2,7 @@
   <app-page-header
     eyebrow="Operacion"
     title="Habitaciones"
-    subtitle="Consulta habitaciones, disponibilidad y cambios de estado."
+    subtitle="Control del estado y disponibilidad de habitaciones en Hotel Lunara."
   >
     <div header-actions>
       @if (canCreate()) {
@@ -15,7 +15,7 @@
     <article class="summary-card">
       <span>Habitaciones visibles</span>
       <strong>{{ rooms().length }}</strong>
-      <small>Disponibles en tu vista</small>
+      <small>Registro activo</small>
     </article>
 
     <article class="summary-card">
@@ -27,7 +27,7 @@
     <article class="summary-card">
       <span>Activas</span>
       <strong>{{ activeCount() }}</strong>
-      <small>Listas para operacion</small>
+      <small>Backend limita el maximo operativo</small>
     </article>
   </section>
 
@@ -35,7 +35,7 @@
     <div class="app-toolbar">
       <div>
         <h3 class="m-0">Habitaciones registradas</h3>
-        <small class="text-slate-500">Consulta habitaciones y revisa sus suministros.</small>
+        <small class="text-slate-500">Seguimiento de disponibilidad y detalle operativo</small>
       </div>
 
       <div class="app-toolbar__actions">
@@ -56,7 +56,7 @@
       <app-empty-state
         icon="pi pi-building-columns"
         title="Sin habitaciones registradas"
-        message="No hay habitaciones disponibles para mostrar."
+        message="El backend aun no devolvio habitaciones activas para este usuario."
       />
     } @else {
       <p-table [value]="rooms()" [loading]="loading()" [paginator]="true" [rows]="10" responsiveLayout="scroll">
@@ -119,7 +119,7 @@
       <div class="app-toolbar">
         <div>
           <h3 class="m-0">Detalle de la habitacion {{ room.number }}</h3>
-          <small class="text-slate-500">Informacion general y suministros asociados.</small>
+          <small class="text-slate-500">Información actual y entregas registradas</small>
         </div>
 
         <button
@@ -156,7 +156,7 @@
 
       <article class="rounded-3xl border border-slate-200 bg-white p-6">
         <h4 class="m-0 text-base text-slate-900">Historial de insumos asignados</h4>
-        <p class="mt-2 text-sm text-slate-500">Suministros registrados para esta habitacion.</p>
+        <p class="mt-2 text-sm text-slate-500">Trazabilidad de insumos entregados a la habitación.</p>
 
         @if (!detailLoading() && !assignments().length) {
           <app-empty-state
