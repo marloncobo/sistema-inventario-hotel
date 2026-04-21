@@ -34,23 +34,28 @@ interface Breadcrumb {
       align-items: center;
       flex-wrap: wrap;
       gap: 0.35rem;
-      color: #64748b;
-      font-size: 0.86rem;
+      color: #8c8073;
+      font-size: 0.84rem;
     }
 
     .breadcrumbs__root,
     .breadcrumbs__link {
       color: inherit;
       text-decoration: none;
+      transition: color 0.18s ease;
+    }
+
+    .breadcrumbs__root {
+      font-weight: 700;
     }
 
     .breadcrumbs__root:hover,
     .breadcrumbs__link:hover {
-      color: #0f766e;
+      color: #a56c12;
     }
 
     .breadcrumbs__separator {
-      color: #94a3b8;
+      color: rgba(161, 145, 124, 0.75);
     }
   `
 })

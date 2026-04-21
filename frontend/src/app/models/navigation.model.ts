@@ -5,6 +5,27 @@ export interface NavigationItem {
   route: string;
   icon: string;
   description: string;
-  section: 'Principal' | 'Operación' | 'Control' | 'Configuración';
   roles: AppRole[];
+}
+
+export interface NavigationGroup {
+  title: string;
+  items: NavigationItem[];
+}
+
+export type NavigationCategoryId =
+  | 'overview'
+  | 'operations'
+  | 'control'
+  | 'analysis'
+  | 'settings';
+
+export interface NavigationCategory {
+  id: NavigationCategoryId;
+  label: string;
+  shortLabel: string;
+  icon: string;
+  eyebrow: string;
+  description: string;
+  groups: NavigationGroup[];
 }

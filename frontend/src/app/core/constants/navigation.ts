@@ -1,84 +1,158 @@
-import type { NavigationItem } from '@models/navigation.model';
+import type { NavigationCategory, NavigationItem } from '@models/navigation.model';
 
-export const APP_NAV_ITEMS: NavigationItem[] = [
+export const APP_NAV_CATEGORIES: NavigationCategory[] = [
   {
-    label: 'Dashboard',
-    route: '/dashboard',
-    icon: 'pi pi-home',
-    description: 'Vista ejecutiva con accesos rápidos y métricas iniciales.',
-    section: 'Principal',
-    roles: ['ADMIN', 'ALMACENISTA', 'RECEPCION', 'SERVICIO']
+    id: 'overview',
+    label: 'Resumen',
+    shortLabel: 'Inicio',
+    icon: 'pi pi-chart-bar',
+    eyebrow: 'Visión General',
+    description: 'Tablero de métricas principales y accesos rápidos.',
+    groups: [
+      {
+        title: 'Mando Central',
+        items: [
+          {
+            label: 'Dashboard',
+            route: '/dashboard',
+            icon: 'pi pi-th-large',
+            description: 'Vista ejecutiva del estado del hotel.',
+            roles: ['ADMIN', 'ALMACENISTA', 'RECEPCION', 'SERVICIO']
+          }
+        ]
+      }
+    ]
   },
   {
-    label: 'Usuarios',
-    route: '/usuarios',
-    icon: 'pi pi-users',
-    description: 'Administración de usuarios internos y revisión de roles.',
-    section: 'Configuración',
-    roles: ['ADMIN']
+    id: 'operations',
+    label: 'Operaciones',
+    shortLabel: 'Ops',
+    icon: 'pi pi-box',
+    eyebrow: 'Gestión Operativa',
+    description: 'Atención diaria, stock y distribución de insumos.',
+    groups: [
+      {
+        title: 'Gestión de Stock',
+        items: [
+          {
+            label: 'Inventario',
+            route: '/inventario',
+            icon: 'pi pi-warehouse',
+            description: 'Control de existencias y almacenes.',
+            roles: ['ADMIN', 'ALMACENISTA', 'SERVICIO']
+          }
+        ]
+      },
+      {
+        title: 'Servicio al Huésped',
+        items: [
+          {
+            label: 'Habitaciones',
+            route: '/habitaciones',
+            icon: 'pi pi-home',
+            description: 'Estado y control de unidades habitacionales.',
+            roles: ['ADMIN', 'ALMACENISTA', 'RECEPCION']
+          },
+          {
+            label: 'Asignaciones',
+            route: '/asignaciones',
+            icon: 'pi pi-calendar-plus',
+            description: 'Entrega de suministros a habitaciones.',
+            roles: ['ADMIN', 'ALMACENISTA', 'RECEPCION', 'SERVICIO']
+          }
+        ]
+      }
+    ]
   },
   {
-    label: 'Auditoría',
-    route: '/auditoria',
+    id: 'control',
+    label: 'Control',
+    shortLabel: 'Ctl',
     icon: 'pi pi-shield',
-    description: 'Consulta de bitácoras de autenticación, inventario y habitaciones.',
-    section: 'Control',
-    roles: ['ADMIN']
+    eyebrow: 'Seguridad y Trazabilidad',
+    description: 'Auditoría, movimientos de stock y alertas operativas.',
+    groups: [
+      {
+        title: 'Monitoreo',
+        items: [
+          {
+            label: 'Movimientos',
+            route: '/movimientos',
+            icon: 'pi pi-history',
+            description: 'Historial detallado de todas las transacciones.',
+            roles: ['ADMIN', 'ALMACENISTA']
+          },
+          {
+            label: 'Alertas',
+            route: '/alertas',
+            icon: 'pi pi-bell',
+            description: 'Notificaciones de stock bajo y anomalías.',
+            roles: ['ADMIN', 'ALMACENISTA']
+          },
+          {
+            label: 'Auditoría',
+            route: '/auditoria',
+            icon: 'pi pi-lock',
+            description: 'Bitácora técnica de seguridad y cambios.',
+            roles: ['ADMIN']
+          }
+        ]
+      }
+    ]
   },
   {
-    label: 'Catálogos',
-    route: '/catalogos',
-    icon: 'pi pi-tags',
-    description: 'Catálogos operativos de categorías, unidades, áreas y proveedores.',
-    section: 'Configuración',
-    roles: ['ADMIN', 'ALMACENISTA']
+    id: 'analysis',
+    label: 'Análisis',
+    shortLabel: 'Analítica',
+    icon: 'pi pi-sliders-h',
+    eyebrow: 'Reportes y Datos',
+    description: 'Generación de documentos y análisis de rendimiento.',
+    groups: [
+      {
+        title: 'Inteligencia',
+        items: [
+          {
+            label: 'Reportes',
+            route: '/reportes',
+            icon: 'pi pi-file-pdf',
+            description: 'Reportes operativos exportables y métricas.',
+            roles: ['ADMIN', 'RECEPCION']
+          }
+        ]
+      }
+    ]
   },
   {
-    label: 'Inventario',
-    route: '/inventario',
-    icon: 'pi pi-warehouse',
-    description: 'Gestión de insumos, stock y operaciones sobre inventario.',
-    section: 'Operación',
-    roles: ['ADMIN', 'ALMACENISTA', 'SERVICIO']
-  },
-  {
-    label: 'Movimientos',
-    route: '/movimientos',
-    icon: 'pi pi-arrow-right-arrow-left',
-    description: 'Historial de entradas, salidas, devoluciones y anulaciones.',
-    section: 'Control',
-    roles: ['ADMIN', 'ALMACENISTA']
-  },
-  {
-    label: 'Alertas',
-    route: '/alertas',
-    icon: 'pi pi-bell',
-    description: 'Seguimiento de stock bajo y alertas operativas abiertas.',
-    section: 'Control',
-    roles: ['ADMIN', 'ALMACENISTA']
-  },
-  {
-    label: 'Habitaciones',
-    route: '/habitaciones',
-    icon: 'pi pi-building',
-    description: 'Consulta, alta y control del estado operativo de habitaciones.',
-    section: 'Operación',
-    roles: ['ADMIN', 'ALMACENISTA', 'RECEPCION']
-  },
-  {
-    label: 'Asignaciones',
-    route: '/asignaciones',
-    icon: 'pi pi-send',
-    description: 'Flujos de entrega de insumos a habitación y trazabilidad.',
-    section: 'Operación',
-    roles: ['ADMIN', 'ALMACENISTA', 'RECEPCION', 'SERVICIO']
-  },
-  {
-    label: 'Reportes',
-    route: '/reportes',
-    icon: 'pi pi-chart-line',
-    description: 'Reportes operativos y exportables según el rol autorizado.',
-    section: 'Control',
-    roles: ['ADMIN', 'RECEPCION']
+    id: 'settings',
+    label: 'Configuración',
+    shortLabel: 'Conf',
+    icon: 'pi pi-cog',
+    eyebrow: 'Administración',
+    description: 'Gestión de usuarios, catálogos y parámetros base.',
+    groups: [
+      {
+        title: 'Sistema',
+        items: [
+          {
+            label: 'Usuarios',
+            route: '/usuarios',
+            icon: 'pi pi-users',
+            description: 'Control de accesos y perfiles de usuario.',
+            roles: ['ADMIN']
+          },
+          {
+            label: 'Catálogos',
+            route: '/catalogos',
+            icon: 'pi pi-list',
+            description: 'Listado de proveedores, áreas y categorías.',
+            roles: ['ADMIN', 'ALMACENISTA']
+          }
+        ]
+      }
+    ]
   }
 ];
+
+export const APP_NAV_ITEMS: NavigationItem[] = APP_NAV_CATEGORIES.flatMap((category) =>
+  category.groups.flatMap((group) => group.items)
+);

@@ -1,61 +1,45 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject } from '@angular/core';
-import { ButtonModule } from 'primeng/button';
-import { AuthService } from '@core/services/auth.service';
+import { Component, inject } from '@angular/core';
 import { LayoutService } from '@core/services/layout.service';
-import { ROLE_LABELS } from '@models/role.model';
 import { BreadcrumbsComponent } from '../breadcrumbs/breadcrumbs.component';
 
 @Component({
   selector: 'app-topbar',
   standalone: true,
-  imports: [BreadcrumbsComponent, ButtonModule, CommonModule],
+  imports: [BreadcrumbsComponent, CommonModule],
   template: `
     <header class="topbar">
       <div class="topbar__left">
-        <button
-          pButton
-          type="button"
-          icon="pi pi-bars"
-          severity="secondary"
-          variant="text"
-          aria-label="Abrir menú"
-          class="topbar__mobile"
-          (click)="layout.toggleMobileMenu()"
-        ></button>
+        <div class="topbar__actions">
+          <button
+            type="button"
+            class="topbar__icon-button topbar__mobile"
+            aria-label="Abrir menu"
+            (click)="layout.toggleMobileMenu()"
+          >
+            <i class="pi pi-bars" aria-hidden="true"></i>
+          </button>
 
-        <button
-          pButton
-          type="button"
-          [icon]="layout.sidebarCollapsed() ? 'pi pi-angle-double-right' : 'pi pi-angle-double-left'"
-          severity="secondary"
-          variant="text"
-          aria-label="Contraer menú"
-          class="topbar__desktop"
-          (click)="layout.toggleSidebar()"
-        ></button>
+          <button
+            type="button"
+            class="topbar__icon-button topbar__desktop"
+            [attr.aria-label]="layout.sidebarCollapsed() ? 'Expandir menu' : 'Contraer menu'"
+            (click)="layout.toggleSidebar()"
+          >
+            <i
+              class="pi"
+              [class.pi-angle-double-right]="layout.sidebarCollapsed()"
+              [class.pi-angle-double-left]="!layout.sidebarCollapsed()"
+              aria-hidden="true"
+            ></i>
+          </button>
+        </div>
 
-        <div>
+        <div class="topbar__copy">
+          <span class="topbar__eyebrow">Centro operativo</span>
           <app-breadcrumbs />
           <h2 class="topbar__headline">Panel operativo</h2>
         </div>
-      </div>
-
-      <div class="topbar__user">
-        <div class="topbar__identity">
-          <strong>{{ authService.username() }}</strong>
-          <span>{{ rolesLabel() }}</span>
-        </div>
-
-        <button
-          pButton
-          type="button"
-          label="Salir"
-          icon="pi pi-sign-out"
-          severity="secondary"
-          variant="outlined"
-          (click)="authService.logout()"
-        ></button>
       </div>
     </header>
   `,
@@ -65,44 +49,68 @@ import { BreadcrumbsComponent } from '../breadcrumbs/breadcrumbs.component';
       align-items: center;
       justify-content: space-between;
       gap: 1rem;
-      padding: 1.25rem 1.5rem;
-      border-radius: 1.5rem;
-      background: rgba(255, 255, 255, 0.84);
+      padding: 1.2rem 1.35rem;
+      border-radius: 1.6rem;
+      background: rgba(255, 252, 247, 0.86);
       backdrop-filter: blur(18px);
-      border: 1px solid rgba(148, 163, 184, 0.14);
-      box-shadow: 0 18px 45px rgba(15, 23, 42, 0.07);
+      border: 1px solid rgba(214, 191, 152, 0.28);
+      box-shadow: 0 20px 44px rgba(175, 132, 66, 0.1);
     }
 
     .topbar__left,
-    .topbar__user {
+    .topbar__actions {
       display: flex;
       align-items: center;
-      gap: 0.85rem;
+      gap: 0.9rem;
+    }
+
+    .topbar__icon-button {
+      border: 1px solid rgba(214, 191, 152, 0.38);
+      border-radius: 1rem;
+      cursor: pointer;
+      width: 2.9rem;
+      height: 2.9rem;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 249, 241, 0.95));
+      color: #9b6f1f;
+      box-shadow: 0 10px 24px rgba(192, 146, 45, 0.12);
+      transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease,
+        border-color 0.2s ease,
+        background-color 0.2s ease;
+    }
+
+    .topbar__icon-button:hover {
+      transform: translateY(-1px);
+      border-color: rgba(200, 146, 45, 0.42);
+      box-shadow: 0 14px 28px rgba(192, 146, 45, 0.16);
     }
 
     .topbar__mobile {
       display: none;
     }
 
+    .topbar__copy {
+      min-width: 0;
+    }
+
+    .topbar__eyebrow {
+      display: inline-block;
+      margin-bottom: 0.1rem;
+      color: #b17e29;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
     .topbar__headline {
       margin: 0.35rem 0 0;
-      color: #0f172a;
-      font-size: 1.1rem;
-    }
-
-    .topbar__identity {
-      display: grid;
-      text-align: right;
-    }
-
-    .topbar__identity strong {
-      color: #0f172a;
-      font-size: 0.95rem;
-    }
-
-    .topbar__identity span {
-      color: #64748b;
-      font-size: 0.8rem;
+      color: #372e25;
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 1.18rem;
     }
 
     @media (max-width: 1023px) {
@@ -111,7 +119,7 @@ import { BreadcrumbsComponent } from '../breadcrumbs/breadcrumbs.component';
       }
 
       .topbar__mobile {
-        display: inline-flex;
+        display: grid;
       }
 
       .topbar__desktop {
@@ -121,21 +129,9 @@ import { BreadcrumbsComponent } from '../breadcrumbs/breadcrumbs.component';
       .topbar__headline {
         font-size: 1rem;
       }
-
-      .topbar__identity {
-        display: none;
-      }
     }
   `
 })
 export class TopbarComponent {
-  protected readonly authService = inject(AuthService);
   protected readonly layout = inject(LayoutService);
-
-  protected readonly rolesLabel = computed(() =>
-    this.authService
-      .roles()
-      .map((role) => ROLE_LABELS[role])
-      .join(' · ')
-  );
 }
