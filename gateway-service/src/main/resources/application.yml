@@ -1,0 +1,46 @@
+server:
+  port: ${PORT:8080}
+
+spring:
+  application:
+    name: gateway-service
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5435/gatewaydb}
+    driver-class-name: org.postgresql.Driver
+    username: ${SPRING_DATASOURCE_USERNAME:hotel}
+    password: ${SPRING_DATASOURCE_PASSWORD:hotel}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+  cloud:
+    gateway:
+      server:
+        webflux:
+          routes:
+            - id: inventory-service
+              uri: ${INVENTORY_SERVICE_URL:http://localhost:8081}
+              predicates:
+                - Path=/inventory/**
+              filters:
+                - StripPrefix=1
+            - id: rooms-service
+              uri: ${ROOMS_SERVICE_URL:http://localhost:8082}
+              predicates:
+                - Path=/rooms/**
+              filters:
+                - StripPrefix=1
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+security:
+  cors:
+    allowed-origin-patterns: ${CORS_ALLOWED_ORIGIN_PATTERNS:http://localhost:*,https://localhost:*,http://127.0.0.1:*,https://127.0.0.1:*}
+  jwt:
+    secret: ${JWT_SECRET:hotel-inventory-demo-secret-key-32}
+    expiration-minutes: ${JWT_EXPIRATION_MINUTES:120}

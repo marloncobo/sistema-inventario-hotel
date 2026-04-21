@@ -1,0 +1,238 @@
+<div class="space-y-8">
+  <app-page-header
+    eyebrow="Control"
+    title="Reportes"
+    subtitle="Dashboard tabular de reportes operativos y exportaciones soportadas por el backend."
+  />
+
+  @if (!isAdmin()) {
+    <article class="note-banner">
+      <i class="pi pi-info-circle"></i>
+      <div>
+        <strong>Permiso real del backend</strong>
+        <p class="m-0">
+          RECEPCION puede consultar reportes de habitaciones, pero la exportacion sigue reservada a
+          ADMIN. El frontend respeta esa restriccion.
+        </p>
+      </div>
+    </article>
+  }
+
+  <section class="summary-grid">
+    <article class="summary-card">
+      <span>Reporte activo</span>
+      <strong>{{ activeReport() }}</strong>
+      <small>Seleccion actual</small>
+    </article>
+
+    <article class="summary-card">
+      <span>Registros</span>
+      <strong>{{ currentCount() }}</strong>
+      <small>Filtrados desde el backend</small>
+    </article>
+
+    <article class="summary-card">
+      <span>Total agregado</span>
+      <strong>{{ currentQuantity() }}</strong>
+      <small>Suma operativa visible</small>
+    </article>
+  </section>
+
+  <section class="surface-card space-y-8">
+    <div class="section-switcher">
+      @for (report of availableReports(); track report.key) {
+        <button
+          pButton
+          type="button"
+          [label]="report.label"
+          [severity]="activeReport() === report.key ? 'primary' : 'secondary'"
+          (click)="setReport(report.key)"
+        ></button>
+      }
+    </div>
+
+    <form [formGroup]="filtersForm" class="filters-grid" (ngSubmit)="loadReport()">
+      <label class="field">
+        <span>Fecha inicial</span>
+        <input class="field-control" type="date" formControlName="startDate" />
+      </label>
+
+      <label class="field">
+        <span>Fecha final</span>
+        <input class="field-control" type="date" formControlName="endDate" />
+      </label>
+
+      @if (activeReport() === 'consumption' || activeReport() === 'distribution') {
+        <label class="field">
+          <span>Habitacion</span>
+          <input pInputText type="text" formControlName="roomNumber" />
+        </label>
+
+        <label class="field">
+          <span>Tipo de habitacion</span>
+          <input pInputText type="text" formControlName="roomType" />
+        </label>
+
+        <label class="field">
+          <span>Tipo de asignacion</span>
+          <input pInputText type="text" formControlName="assignmentType" />
+        </label>
+      }
+
+      @if (activeReport() === 'distribution') {
+        <label class="field">
+          <span>Responsable</span>
+          <input pInputText type="text" formControlName="deliveredBy" />
+        </label>
+      }
+    </form>
+
+    <div class="app-toolbar">
+      <div>
+        <h3 class="m-0">Consulta del reporte</h3>
+        <small class="text-slate-500">Los filtros se envian sin adaptar los nombres de campos del backend.</small>
+      </div>
+
+      <div class="app-toolbar__actions">
+        <button
+          pButton
+          type="button"
+          icon="pi pi-filter"
+          label="Consultar"
+          [loading]="loading()"
+          (click)="loadReport()"
+        ></button>
+
+        @if (canExport()) {
+          @for (format of exportFormats; track format) {
+            <button
+              pButton
+              type="button"
+              [label]="'Exportar ' + format.toUpperCase()"
+              severity="secondary"
+              variant="outlined"
+              [loading]="exporting()"
+              (click)="exportReport(format)"
+            ></button>
+          }
+        }
+      </div>
+    </div>
+
+    @if (!loading() && currentCount() === 0) {
+      <app-empty-state
+        icon="pi pi-chart-line"
+        title="Sin datos para el reporte"
+        message="El backend no devolvio filas para los filtros y reporte seleccionados."
+      />
+    } @else {
+      @switch (activeReport()) {
+      @case ('inventory') {
+        <p-table [value]="inventoryReport()" [loading]="loading()" [paginator]="true" [rows]="10" responsiveLayout="scroll">
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Codigo</th>
+              <th>Item</th>
+              <th>Categoria</th>
+              <th>Unidad</th>
+              <th>Stock</th>
+              <th>Min/Max</th>
+              <th>Rotacion</th>
+              <th>Alerta</th>
+            </tr>
+          </ng-template>
+
+          <ng-template pTemplate="body" let-row>
+            <tr>
+              <td>{{ row.code }}</td>
+              <td>{{ row.name }}</td>
+              <td>{{ row.category || 'Sin categoria' }}</td>
+              <td>{{ row.unit || 'Sin unidad' }}</td>
+              <td>{{ row.currentStock }}</td>
+              <td>{{ row.minStock }} / {{ row.maxStock ?? 'N/A' }}</td>
+              <td>{{ row.turnoverQuantity }}</td>
+              <td>
+                <p-tag [value]="row.lowStock ? 'Stock bajo' : 'Normal'" [severity]="row.lowStock ? 'warn' : 'success'"></p-tag>
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      }
+
+      @case ('top-used') {
+        <p-table [value]="topUsedReport()" [loading]="loading()" [paginator]="true" [rows]="10" responsiveLayout="scroll">
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Item ID</th>
+              <th>Item</th>
+              <th>Total usado</th>
+            </tr>
+          </ng-template>
+
+          <ng-template pTemplate="body" let-row>
+            <tr>
+              <td>{{ row.itemId }}</td>
+              <td>{{ row.itemName }}</td>
+              <td>{{ row.totalQuantity }}</td>
+            </tr>
+          </ng-template>
+        </p-table>
+      }
+
+      @case ('consumption') {
+        <p-table [value]="consumptionReport()" [loading]="loading()" [paginator]="true" [rows]="10" responsiveLayout="scroll">
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Habitacion</th>
+              <th>Tipo</th>
+              <th>Item</th>
+              <th>Asignacion</th>
+              <th>Entregado por</th>
+              <th>Total</th>
+            </tr>
+          </ng-template>
+
+          <ng-template pTemplate="body" let-row>
+            <tr>
+              <td>{{ row.roomNumber }}</td>
+              <td>{{ row.roomType }}</td>
+              <td>{{ row.itemName }}</td>
+              <td>{{ row.assignmentType }}</td>
+              <td>{{ row.deliveredBy }}</td>
+              <td>{{ row.totalQuantity }}</td>
+            </tr>
+          </ng-template>
+        </p-table>
+      }
+
+      @case ('distribution') {
+        <p-table [value]="distributionReport()" [loading]="loading()" [paginator]="true" [rows]="10" responsiveLayout="scroll">
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Habitacion</th>
+              <th>Tipo</th>
+              <th>Item</th>
+              <th>Cantidad</th>
+              <th>Asignacion</th>
+              <th>Entregado por</th>
+              <th>Huesped</th>
+            </tr>
+          </ng-template>
+
+          <ng-template pTemplate="body" let-row>
+            <tr>
+              <td>{{ row.roomNumber }}</td>
+              <td>{{ row.roomType }}</td>
+              <td>{{ row.itemName }}</td>
+              <td>{{ row.quantity }}</td>
+              <td>{{ row.assignmentType }}</td>
+              <td>{{ row.deliveredBy }}</td>
+              <td>{{ row.guestName || 'Sin huesped' }}</td>
+            </tr>
+          </ng-template>
+        </p-table>
+      }
+    }
+    }
+  </section>
+</div>

@@ -1,0 +1,508 @@
+<div class="space-y-8">
+  <app-page-header
+    eyebrow="Operacion"
+    title="Inventario"
+    subtitle="Gestion completa de insumos adaptada al backend existente, sin cambiar contratos ni flujos del gateway."
+  >
+    <div header-actions>
+      @if (canManageItems()) {
+        <button pButton type="button" icon="pi pi-plus" label="Nuevo insumo" (click)="openItemDialog()"></button>
+      }
+    </div>
+  </app-page-header>
+
+  @if (!isAdmin()) {
+    <article class="note-banner">
+      <i class="pi pi-info-circle"></i>
+      <div>
+        <strong>Adaptacion por permisos reales</strong>
+        <p class="m-0">
+          Las categorias y unidades se manejan como texto cuando el rol no puede consumir catalogos
+          administrativos. El frontend se adapta sin tocar el backend.
+        </p>
+      </div>
+    </article>
+  }
+
+  <section class="summary-grid">
+    <article class="summary-card">
+      <span>Insumos visibles</span>
+      <strong>{{ filteredItems().length }}</strong>
+      <small>Consulta actual</small>
+    </article>
+
+    <article class="summary-card">
+      <span>Insumos activos</span>
+      <strong>{{ activeItemsCount() }}</strong>
+      <small>Stock operativo</small>
+    </article>
+
+    <article class="summary-card">
+      <span>Stock bajo</span>
+      <strong>{{ lowStockCount() }}</strong>
+      <small>Basado en stock vs minimo</small>
+    </article>
+  </section>
+
+  <section class="surface-card space-y-8">
+    <form [formGroup]="filtersForm" class="filters-grid" (ngSubmit)="loadItems()">
+      <label class="field">
+        <span>Busqueda</span>
+        <input pInputText type="text" formControlName="search" placeholder="Codigo, nombre o proveedor" />
+      </label>
+
+      <label class="field">
+        <span>Categoria</span>
+        <input pInputText type="text" formControlName="category" placeholder="Ej: ASEO" />
+      </label>
+    </form>
+
+    <div class="app-toolbar">
+      <div>
+        <h3 class="m-0">Listado de insumos</h3>
+        <small class="text-slate-500">GET /inventory/api/inventory/items y GET /items/:id</small>
+      </div>
+
+      <div class="app-toolbar__actions">
+        <button
+          pButton
+          type="button"
+          icon="pi pi-search"
+          label="Consultar"
+          [loading]="loading()"
+          (click)="loadItems()"
+        ></button>
+      </div>
+    </div>
+
+    @if (!loading() && !filteredItems().length) {
+      <app-empty-state
+        icon="pi pi-box"
+        title="Sin insumos visibles"
+        message="No hay items para los filtros actuales o el backend aun no registra inventario."
+      />
+    } @else {
+      <p-table [value]="filteredItems()" [loading]="loading()" [paginator]="true" [rows]="10" responsiveLayout="scroll">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Codigo</th>
+            <th>Insumo</th>
+            <th>Categoria</th>
+            <th>Stock</th>
+            <th>Proveedor</th>
+            <th>Estado</th>
+            <th class="text-right">Acciones</th>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-item>
+          <tr>
+            <td>{{ item.code }}</td>
+            <td>
+              <strong>{{ item.name }}</strong>
+              <div class="text-xs text-slate-500">{{ item.unit || 'Sin unidad' }}</div>
+            </td>
+            <td>{{ item.category || 'Sin categoria' }}</td>
+            <td>
+              <strong>{{ item.stock }}</strong>
+              <div class="text-xs text-slate-500">Min {{ item.minStock }} | Max {{ item.maxStock ?? 'N/A' }}</div>
+            </td>
+            <td>{{ item.providerName || 'Sin proveedor' }}</td>
+            <td>
+              <div class="flex flex-wrap gap-2">
+                <p-tag [value]="item.active ? 'Activo' : 'Inactivo'" [severity]="item.active ? 'success' : 'danger'"></p-tag>
+                @if (isLowStock(item)) {
+                  <p-tag value="Stock bajo" severity="warn"></p-tag>
+                }
+              </div>
+            </td>
+            <td class="text-right">
+              <div class="flex flex-wrap justify-end gap-2">
+                <button
+                  pButton
+                  type="button"
+                  icon="pi pi-eye"
+                  size="small"
+                  severity="secondary"
+                  variant="outlined"
+                  (click)="selectItem(item.id)"
+                ></button>
+
+                @if (canManageItems()) {
+                  <button
+                    pButton
+                    type="button"
+                    icon="pi pi-pen-to-square"
+                    size="small"
+                    severity="secondary"
+                    variant="outlined"
+                    (click)="openItemDialog(item)"
+                  ></button>
+
+                  <button
+                    pButton
+                    type="button"
+                    icon="pi pi-plus-circle"
+                    size="small"
+                    severity="success"
+                    variant="outlined"
+                    (click)="openEntryDialog(item)"
+                  ></button>
+                }
+
+                @if (canReturnStock()) {
+                  <button
+                    pButton
+                    type="button"
+                    icon="pi pi-undo"
+                    size="small"
+                    severity="warn"
+                    variant="outlined"
+                    (click)="openReturnDialog(item)"
+                  ></button>
+                }
+
+                @if (canManageItems()) {
+                  <button
+                    pButton
+                    type="button"
+                    icon="pi pi-minus-circle"
+                    size="small"
+                    severity="contrast"
+                    variant="outlined"
+                    (click)="openDecreaseDialog(item)"
+                  ></button>
+
+                  @if (item.active) {
+                    <button
+                      pButton
+                      type="button"
+                      icon="pi pi-ban"
+                      size="small"
+                      severity="danger"
+                      variant="outlined"
+                      (click)="deactivate(item)"
+                    ></button>
+                  }
+                }
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    }
+  </section>
+
+  @if (selectedItem(); as item) {
+    <section class="surface-card space-y-6">
+      <div class="app-toolbar">
+        <div>
+          <h3 class="m-0">Detalle del insumo</h3>
+          <small class="text-slate-500">Consulta puntual via /items/:id</small>
+        </div>
+        <button
+          pButton
+          type="button"
+          icon="pi pi-refresh"
+          label="Actualizar detalle"
+          severity="secondary"
+          variant="outlined"
+          [loading]="detailLoading()"
+          (click)="selectItem(item.id)"
+        ></button>
+      </div>
+
+      <div class="summary-grid">
+        <article class="summary-card">
+          <span>Codigo</span>
+          <strong>{{ item.code }}</strong>
+          <small>{{ item.name }}</small>
+        </article>
+
+        <article class="summary-card">
+          <span>Stock actual</span>
+          <strong>{{ item.stock }}</strong>
+          <small>Min {{ item.minStock }} | Max {{ item.maxStock ?? 'N/A' }}</small>
+        </article>
+
+        <article class="summary-card">
+          <span>Proveedor</span>
+          <strong>{{ item.providerName || 'Sin proveedor' }}</strong>
+          <small>{{ item.category || 'Sin categoria' }}</small>
+        </article>
+      </div>
+
+      <div class="grid gap-4 lg:grid-cols-2">
+        <article class="rounded-3xl border border-slate-200 bg-slate-50 p-6">
+          <h4 class="m-0 text-base text-slate-900">Descripcion</h4>
+          <p class="mt-3 text-sm text-slate-600">
+            {{ item.description || 'El backend no registra descripcion para este insumo.' }}
+          </p>
+        </article>
+
+        <article class="rounded-3xl border border-slate-200 bg-slate-50 p-6">
+          <h4 class="m-0 text-base text-slate-900">Observaciones de integracion</h4>
+          <ul class="m-0 mt-3 space-y-2 pl-5 text-sm text-slate-600">
+            <li>La categoria y la unidad se envian como texto, no como IDs.</li>
+            <li>Las devoluciones requieren un sourceMovementId valido.</li>
+            <li>La salida interna no debe usar origin=HABITACION en este frontend.</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+  }
+</div>
+
+<p-dialog
+  [(visible)]="dialogVisible"
+  [modal]="true"
+  [draggable]="false"
+  [style]="{ width: 'min(56rem, 96vw)' }"
+  [header]="dialogTitle()"
+  (onHide)="resetDialogs()"
+>
+  @switch (activeDialog()) {
+    @case ('item') {
+      <form [formGroup]="itemForm" class="space-y-8" (ngSubmit)="submitItem()">
+        <div class="form-grid">
+          <label class="field">
+            <span>Codigo</span>
+            <input pInputText type="text" formControlName="code" />
+            @if (showItemError('code')) {
+              <small>{{ itemError('code') }}</small>
+            }
+          </label>
+
+          <label class="field">
+            <span>Nombre</span>
+            <input pInputText type="text" formControlName="name" />
+            @if (showItemError('name')) {
+              <small>{{ itemError('name') }}</small>
+            }
+          </label>
+        </div>
+
+        <div class="form-grid">
+          <label class="field">
+            <span>Categoria</span>
+            <input pInputText type="text" formControlName="category" list="inventory-categories" />
+            @if (showItemError('category')) {
+              <small>{{ itemError('category') }}</small>
+            }
+          </label>
+
+          <label class="field">
+            <span>Unidad</span>
+            <input pInputText type="text" formControlName="unit" list="inventory-units" />
+            @if (showItemError('unit')) {
+              <small>{{ itemError('unit') }}</small>
+            }
+          </label>
+        </div>
+
+        <div class="form-grid">
+          <label class="field">
+            <span>Proveedor</span>
+            <input pInputText type="text" formControlName="providerName" list="inventory-providers" />
+          </label>
+
+          <label class="field">
+            <span>Stock inicial</span>
+            <input pInputText type="number" formControlName="stock" [readonly]="editingItemId() !== null" />
+            @if (showItemError('stock')) {
+              <small>{{ itemError('stock') }}</small>
+            }
+          </label>
+        </div>
+
+        <div class="form-grid">
+          <label class="field">
+            <span>Stock minimo</span>
+            <input pInputText type="number" formControlName="minStock" />
+            @if (showItemError('minStock')) {
+              <small>{{ itemError('minStock') }}</small>
+            }
+          </label>
+
+          <label class="field">
+            <span>Stock maximo</span>
+            <input pInputText type="number" formControlName="maxStock" />
+          </label>
+        </div>
+
+        <label class="field">
+          <span>Descripcion</span>
+          <textarea class="field-control field-control--textarea" formControlName="description"></textarea>
+        </label>
+
+        @if (editingItemId() !== null) {
+          <label class="flex items-center gap-3 text-sm font-medium text-slate-700">
+            <input type="checkbox" formControlName="active" />
+            Mantener item activo
+          </label>
+        }
+
+        <div class="flex justify-end gap-3">
+          <button pButton type="button" label="Cancelar" severity="secondary" variant="text" (click)="dialogVisible = false"></button>
+          <button pButton type="submit" label="Guardar" [loading]="saving()"></button>
+        </div>
+      </form>
+    }
+
+    @case ('entry') {
+      <form [formGroup]="entryForm" class="space-y-8" (ngSubmit)="submitEntry()">
+        <div class="form-grid">
+          <label class="field">
+            <span>Cantidad</span>
+            <input pInputText type="number" formControlName="quantity" />
+            @if (showEntryError('quantity')) {
+              <small>{{ entryError('quantity') }}</small>
+            }
+          </label>
+
+          <label class="field">
+            <span>Proveedor</span>
+            <input pInputText type="text" formControlName="providerName" list="inventory-providers" />
+            @if (showEntryError('providerName')) {
+              <small>{{ entryError('providerName') }}</small>
+            }
+          </label>
+        </div>
+
+        <label class="field">
+          <span>Referencia</span>
+          <textarea class="field-control field-control--textarea" formControlName="referenceText"></textarea>
+        </label>
+
+        <div class="flex justify-end gap-3">
+          <button pButton type="button" label="Cancelar" severity="secondary" variant="text" (click)="dialogVisible = false"></button>
+          <button pButton type="submit" label="Registrar entrada" [loading]="saving()"></button>
+        </div>
+      </form>
+    }
+
+    @case ('return') {
+      <form [formGroup]="returnForm" class="space-y-8" (ngSubmit)="submitReturn()">
+        <div class="form-grid">
+          <label class="field">
+            <span>Cantidad</span>
+            <input pInputText type="number" formControlName="quantity" />
+            @if (showReturnError('quantity')) {
+              <small>{{ returnError('quantity') }}</small>
+            }
+          </label>
+
+          <label class="field">
+            <span>Movimiento origen</span>
+            <input pInputText type="number" formControlName="sourceMovementId" />
+            @if (showReturnError('sourceMovementId')) {
+              <small>{{ returnError('sourceMovementId') }}</small>
+            }
+          </label>
+        </div>
+
+        <div class="form-grid">
+          <label class="field">
+            <span>Habitacion</span>
+            <input pInputText type="text" formControlName="roomNumber" />
+          </label>
+
+          <label class="field">
+            <span>Area</span>
+            <input pInputText type="text" formControlName="areaName" />
+          </label>
+        </div>
+
+        <div class="form-grid">
+          <label class="field">
+            <span>Responsable operativo</span>
+            <input pInputText type="text" formControlName="operationalResponsible" />
+          </label>
+        </div>
+
+        <label class="field">
+          <span>Referencia</span>
+          <textarea class="field-control field-control--textarea" formControlName="referenceText"></textarea>
+        </label>
+
+        <div class="flex justify-end gap-3">
+          <button pButton type="button" label="Cancelar" severity="secondary" variant="text" (click)="dialogVisible = false"></button>
+          <button pButton type="submit" label="Registrar devolucion" [loading]="saving()"></button>
+        </div>
+      </form>
+    }
+
+    @case ('decrease') {
+      <form [formGroup]="decreaseForm" class="space-y-8" (ngSubmit)="submitDecrease()">
+        <article class="note-banner">
+          <i class="pi pi-exclamation-triangle"></i>
+          <div>
+            <strong>Regla de integracion obligatoria</strong>
+            <p class="m-0">
+              Este flujo no debe enviar origin=HABITACION. Para habitaciones, el backend exige usar
+              el servicio de asignaciones en rooms-service.
+            </p>
+          </div>
+        </article>
+
+        <div class="form-grid">
+          <label class="field">
+            <span>Cantidad</span>
+            <input pInputText type="number" formControlName="quantity" />
+            @if (showDecreaseError('quantity')) {
+              <small>{{ decreaseError('quantity') }}</small>
+            }
+          </label>
+
+          <label class="field">
+            <span>Origen operativo</span>
+            <input pInputText type="text" formControlName="origin" placeholder="Ej: AREA_OPERATIVA" />
+            @if (showDecreaseError('origin')) {
+              <small>{{ decreaseError('origin') }}</small>
+            }
+          </label>
+        </div>
+
+        <div class="form-grid">
+          <label class="field">
+            <span>Area</span>
+            <input pInputText type="text" formControlName="areaName" />
+          </label>
+
+          <label class="field">
+            <span>Responsable operativo</span>
+            <input pInputText type="text" formControlName="operationalResponsible" />
+          </label>
+        </div>
+
+        <label class="field">
+          <span>Referencia</span>
+          <textarea class="field-control field-control--textarea" formControlName="referenceText"></textarea>
+        </label>
+
+        <div class="flex justify-end gap-3">
+          <button pButton type="button" label="Cancelar" severity="secondary" variant="text" (click)="dialogVisible = false"></button>
+          <button pButton type="submit" label="Registrar salida" [loading]="saving()"></button>
+        </div>
+      </form>
+    }
+  }
+</p-dialog>
+
+<datalist id="inventory-categories">
+  @for (option of categoryOptions(); track option) {
+    <option [value]="option"></option>
+  }
+</datalist>
+
+<datalist id="inventory-units">
+  @for (option of unitOptions(); track option) {
+    <option [value]="option"></option>
+  }
+</datalist>
+
+<datalist id="inventory-providers">
+  @for (option of providerOptions(); track option) {
+    <option [value]="option"></option>
+  }
+</datalist>

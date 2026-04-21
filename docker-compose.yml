@@ -1,0 +1,144 @@
+services:
+  inventory-db:
+    image: postgres:16-alpine
+    container_name: inventory-db
+    environment:
+      POSTGRES_DB: inventorydb
+      POSTGRES_USER: hotel
+      POSTGRES_PASSWORD: hotel
+    ports:
+      - "5433:5432"
+    volumes:
+      - inventory-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hotel -d inventorydb"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  rooms-db:
+    image: postgres:16-alpine
+    container_name: rooms-db
+    environment:
+      POSTGRES_DB: roomsdb
+      POSTGRES_USER: hotel
+      POSTGRES_PASSWORD: hotel
+    ports:
+      - "5434:5432"
+    volumes:
+      - rooms-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hotel -d roomsdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  gateway-db:
+    image: postgres:16-alpine
+    container_name: gateway-db
+    environment:
+      POSTGRES_DB: gatewaydb
+      POSTGRES_USER: hotel
+      POSTGRES_PASSWORD: hotel
+    ports:
+      - "5435:5432"
+    volumes:
+      - gateway-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hotel -d gatewaydb"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  inventory-service:
+    build:
+      context: .
+      dockerfile: inventory-service/Dockerfile
+    container_name: inventory-service
+    depends_on:
+      inventory-db:
+        condition: service_healthy
+    ports:
+      - "8081:8081"
+    environment:
+      PORT: 8081
+      JAVA_OPTS: -XX:MaxRAMPercentage=75
+      JWT_SECRET: ${JWT_SECRET:-hotel-inventory-demo-secret-key-32}
+      ROOMS_SERVICE_URL: http://rooms-service:8082
+      SPRING_DATASOURCE_URL: jdbc:postgresql://inventory-db:5432/inventorydb
+      SPRING_DATASOURCE_USERNAME: hotel
+      SPRING_DATASOURCE_PASSWORD: hotel
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail --silent http://localhost:8081/actuator/health >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
+    restart: unless-stopped
+
+  rooms-service:
+    build:
+      context: .
+      dockerfile: rooms-service/Dockerfile
+    container_name: rooms-service
+    depends_on:
+      inventory-service:
+        condition: service_healthy
+      rooms-db:
+        condition: service_healthy
+    ports:
+      - "8082:8082"
+    environment:
+      PORT: 8082
+      JAVA_OPTS: -XX:MaxRAMPercentage=75
+      JWT_SECRET: ${JWT_SECRET:-hotel-inventory-demo-secret-key-32}
+      INVENTORY_SERVICE_URL: http://inventory-service:8081
+      SPRING_DATASOURCE_URL: jdbc:postgresql://rooms-db:5432/roomsdb
+      SPRING_DATASOURCE_USERNAME: hotel
+      SPRING_DATASOURCE_PASSWORD: hotel
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail --silent http://localhost:8082/actuator/health >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
+    restart: unless-stopped
+
+  gateway-service:
+    build:
+      context: .
+      dockerfile: gateway-service/Dockerfile
+    container_name: gateway-service
+    depends_on:
+      inventory-service:
+        condition: service_healthy
+      rooms-service:
+        condition: service_healthy
+      gateway-db:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      PORT: 8080
+      JAVA_OPTS: -XX:MaxRAMPercentage=75
+      JWT_SECRET: ${JWT_SECRET:-hotel-inventory-demo-secret-key-32}
+      INVENTORY_SERVICE_URL: http://inventory-service:8081
+      ROOMS_SERVICE_URL: http://rooms-service:8082
+      SPRING_DATASOURCE_URL: jdbc:postgresql://gateway-db:5432/gatewaydb
+      SPRING_DATASOURCE_USERNAME: hotel
+      SPRING_DATASOURCE_PASSWORD: hotel
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail --silent http://localhost:8080/actuator/health >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
+    restart: unless-stopped
+
+volumes:
+  inventory-db-data:
+  rooms-db-data:
+  gateway-db-data:

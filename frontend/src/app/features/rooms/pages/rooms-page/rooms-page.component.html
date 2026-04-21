@@ -1,0 +1,303 @@
+<div class="space-y-8">
+  <app-page-header
+    eyebrow="Operacion"
+    title="Habitaciones"
+    subtitle="Listado operativo, alta y cambio de estado respetando las validaciones del backend."
+  >
+    <div header-actions>
+      @if (canCreate()) {
+        <button pButton type="button" icon="pi pi-plus" label="Nueva habitacion" (click)="openCreateDialog()"></button>
+      }
+    </div>
+  </app-page-header>
+
+  <section class="summary-grid">
+    <article class="summary-card">
+      <span>Habitaciones visibles</span>
+      <strong>{{ rooms().length }}</strong>
+      <small>GET /rooms/api/rooms</small>
+    </article>
+
+    <article class="summary-card">
+      <span>Disponibles</span>
+      <strong>{{ availableCount() }}</strong>
+      <small>Estado DISPONIBLE</small>
+    </article>
+
+    <article class="summary-card">
+      <span>Activas</span>
+      <strong>{{ activeCount() }}</strong>
+      <small>Backend limita el maximo operativo</small>
+    </article>
+  </section>
+
+  <section class="surface-card space-y-8">
+    <div class="app-toolbar">
+      <div>
+        <h3 class="m-0">Habitaciones registradas</h3>
+        <small class="text-slate-500">Detalle con historial de suministros cuando el backend lo devuelve.</small>
+      </div>
+
+      <div class="app-toolbar__actions">
+        <button
+          pButton
+          type="button"
+          icon="pi pi-refresh"
+          label="Recargar"
+          severity="secondary"
+          variant="outlined"
+          [loading]="loading()"
+          (click)="loadRooms()"
+        ></button>
+      </div>
+    </div>
+
+    @if (!loading() && !rooms().length) {
+      <app-empty-state
+        icon="pi pi-building-columns"
+        title="Sin habitaciones registradas"
+        message="El backend aun no devolvio habitaciones activas para este usuario."
+      />
+    } @else {
+      <p-table [value]="rooms()" [loading]="loading()" [paginator]="true" [rows]="10" responsiveLayout="scroll">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Numero</th>
+            <th>Tipo</th>
+            <th>Estado</th>
+            <th>Capacidad</th>
+            <th>Piso</th>
+            <th class="text-right">Acciones</th>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-room>
+          <tr>
+            <td>{{ room.number }}</td>
+            <td>{{ room.type }}</td>
+            <td>
+              <div class="flex flex-wrap gap-2">
+                <p-tag [value]="room.status" severity="info"></p-tag>
+                <p-tag [value]="room.active ? 'Activa' : 'Inactiva'" [severity]="room.active ? 'success' : 'danger'"></p-tag>
+              </div>
+            </td>
+            <td>{{ room.capacity }}</td>
+            <td>{{ room.floor }}</td>
+            <td class="text-right">
+              <div class="flex flex-wrap justify-end gap-2">
+                <button
+                  pButton
+                  type="button"
+                  icon="pi pi-eye"
+                  size="small"
+                  severity="secondary"
+                  variant="outlined"
+                  (click)="selectRoom(room.id)"
+                ></button>
+
+                @if (canUpdateStatus()) {
+                  <button
+                    pButton
+                    type="button"
+                    icon="pi pi-sync"
+                    size="small"
+                    severity="warn"
+                    variant="outlined"
+                    (click)="openStatusDialog(room)"
+                  ></button>
+                }
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    }
+  </section>
+
+  @if (selectedRoom(); as room) {
+    <section class="surface-card space-y-6">
+      <div class="app-toolbar">
+        <div>
+          <h3 class="m-0">Detalle de la habitacion {{ room.number }}</h3>
+          <small class="text-slate-500">Consulta via /rooms/:id y /rooms/:id/supplies</small>
+        </div>
+
+        <button
+          pButton
+          type="button"
+          icon="pi pi-refresh"
+          label="Actualizar detalle"
+          severity="secondary"
+          variant="outlined"
+          [loading]="detailLoading()"
+          (click)="selectRoom(room.id)"
+        ></button>
+      </div>
+
+      <div class="summary-grid">
+        <article class="summary-card">
+          <span>Tipo</span>
+          <strong>{{ room.type }}</strong>
+          <small>Capacidad {{ room.capacity }}</small>
+        </article>
+
+        <article class="summary-card">
+          <span>Estado</span>
+          <strong>{{ room.status }}</strong>
+          <small>Piso {{ room.floor }}</small>
+        </article>
+
+        <article class="summary-card">
+          <span>Observaciones</span>
+          <strong>{{ room.observations || 'Sin observaciones' }}</strong>
+          <small>Activo: {{ room.active ? 'Si' : 'No' }}</small>
+        </article>
+      </div>
+
+      <article class="rounded-3xl border border-slate-200 bg-white p-6">
+        <h4 class="m-0 text-base text-slate-900">Historial de insumos asignados</h4>
+        <p class="mt-2 text-sm text-slate-500">Resultado del endpoint /rooms/:id/supplies.</p>
+
+        @if (!detailLoading() && !assignments().length) {
+          <app-empty-state
+            icon="pi pi-send"
+            title="Sin historial de insumos"
+            message="La habitacion seleccionada aun no registra asignaciones de insumos."
+          />
+        } @else {
+          <p-table [value]="assignments()" [loading]="detailLoading()" [paginator]="true" [rows]="6" responsiveLayout="scroll">
+            <ng-template pTemplate="header">
+              <tr>
+                <th>Fecha</th>
+                <th>Item</th>
+                <th>Tipo</th>
+                <th>Cantidad</th>
+                <th>Entregado por</th>
+                <th>Huesped</th>
+              </tr>
+            </ng-template>
+
+            <ng-template pTemplate="body" let-assignment>
+              <tr>
+                <td>{{ formatDate(assignment.createdAt) }}</td>
+                <td>{{ assignment.itemName }}</td>
+                <td>{{ assignment.assignmentType }}</td>
+                <td>{{ assignment.quantity }}</td>
+                <td>{{ assignment.deliveredBy }}</td>
+                <td>{{ assignment.guestName || 'Sin huesped' }}</td>
+              </tr>
+            </ng-template>
+          </p-table>
+        }
+      </article>
+    </section>
+  }
+</div>
+
+<p-dialog
+  [visible]="createDialogVisible()"
+  [modal]="true"
+  [draggable]="false"
+  [style]="{ width: 'min(48rem, 96vw)' }"
+  header="Nueva habitacion"
+  (visibleChange)="createDialogVisible.set($event)"
+>
+  <form [formGroup]="createForm" class="space-y-8" (ngSubmit)="submitCreate()">
+    <div class="form-grid">
+      <label class="field">
+        <span>Numero</span>
+        <input pInputText type="text" formControlName="number" />
+        @if (showCreateError('number')) {
+          <small>{{ createError('number') }}</small>
+        }
+      </label>
+
+      <label class="field">
+        <span>Tipo</span>
+        <select class="field-control" formControlName="type">
+          @for (type of roomTypes; track type) {
+            <option [value]="type">{{ type }}</option>
+          }
+        </select>
+      </label>
+    </div>
+
+    <div class="form-grid">
+      <label class="field">
+        <span>Estado inicial</span>
+        <select class="field-control" formControlName="status">
+          @for (status of roomStatuses; track status) {
+            <option [value]="status">{{ status }}</option>
+          }
+        </select>
+      </label>
+
+      <label class="field">
+        <span>Capacidad</span>
+        <input pInputText type="number" formControlName="capacity" />
+        @if (showCreateError('capacity')) {
+          <small>{{ createError('capacity') }}</small>
+        }
+      </label>
+    </div>
+
+    <div class="form-grid">
+      <label class="field">
+        <span>Piso</span>
+        <input pInputText type="number" formControlName="floor" />
+        @if (showCreateError('floor')) {
+          <small>{{ createError('floor') }}</small>
+        }
+      </label>
+    </div>
+
+    <label class="field">
+      <span>Observaciones</span>
+      <textarea class="field-control field-control--textarea" formControlName="observations"></textarea>
+    </label>
+
+    <div class="flex justify-end gap-3">
+      <button
+        pButton
+        type="button"
+        label="Cancelar"
+        severity="secondary"
+        variant="text"
+        (click)="createDialogVisible.set(false)"
+      ></button>
+      <button pButton type="submit" label="Crear habitacion" [loading]="saving()"></button>
+    </div>
+  </form>
+</p-dialog>
+
+<p-dialog
+  [visible]="statusDialogVisible()"
+  [modal]="true"
+  [draggable]="false"
+  [style]="{ width: 'min(28rem, 96vw)' }"
+  header="Actualizar estado"
+  (visibleChange)="statusDialogVisible.set($event)"
+>
+  <form [formGroup]="statusForm" class="space-y-8" (ngSubmit)="submitStatus()">
+    <label class="field">
+      <span>Estado</span>
+      <select class="field-control" formControlName="status">
+        @for (status of roomStatuses; track status) {
+          <option [value]="status">{{ status }}</option>
+        }
+      </select>
+    </label>
+
+    <div class="flex justify-end gap-3">
+      <button
+        pButton
+        type="button"
+        label="Cancelar"
+        severity="secondary"
+        variant="text"
+        (click)="statusDialogVisible.set(false)"
+      ></button>
+      <button pButton type="submit" label="Guardar estado" [loading]="saving()"></button>
+    </div>
+  </form>
+</p-dialog>

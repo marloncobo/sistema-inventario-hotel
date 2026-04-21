@@ -1,0 +1,124 @@
+<div class="space-y-8">
+  <app-page-header
+    eyebrow="Control"
+    title="Alertas de inventario"
+    subtitle="Seguimiento de stock bajo y alertas operativas emitidas por el backend actual."
+  />
+
+  <section class="summary-grid">
+    <article class="summary-card">
+      <span>Items con stock bajo</span>
+      <strong>{{ lowStockItems().length }}</strong>
+      <small>GET /items/low-stock</small>
+    </article>
+
+    <article class="summary-card">
+      <span>Alertas visibles</span>
+      <strong>{{ alerts().length }}</strong>
+      <small>GET /alerts/low-stock</small>
+    </article>
+
+    <article class="summary-card">
+      <span>Alertas abiertas</span>
+      <strong>{{ openAlertsCount() }}</strong>
+      <small>Segun resolvedAt</small>
+    </article>
+  </section>
+
+  <section class="surface-card space-y-8">
+    <div class="app-toolbar">
+      <div>
+        <h3 class="m-0">Filtros</h3>
+        <small class="text-slate-500">El backend soporta el parametro openOnly.</small>
+      </div>
+
+      <div class="app-toolbar__actions">
+        <label class="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700">
+          <input type="checkbox" [formControl]="filtersForm.controls.openOnly" />
+          Solo alertas abiertas
+        </label>
+
+        <button
+          pButton
+          type="button"
+          icon="pi pi-refresh"
+          label="Recargar"
+          [loading]="loading()"
+          (click)="loadData()"
+        ></button>
+      </div>
+    </div>
+
+    <div class="grid gap-6 xl:grid-cols-2">
+      <article class="rounded-3xl border border-slate-200 bg-white p-6">
+        <h3 class="m-0 text-base text-slate-900">Items con stock bajo</h3>
+        <p class="mt-2 text-sm text-slate-500">Consulta operativa derivada del stock actual.</p>
+
+        @if (!loading() && !lowStockItems().length) {
+          <app-empty-state
+            icon="pi pi-inbox"
+            title="Sin items en alerta"
+            message="El backend no devolvio insumos con stock bajo para esta consulta."
+          />
+        } @else {
+          <p-table [value]="lowStockItems()" [loading]="loading()" [paginator]="true" [rows]="6" responsiveLayout="scroll">
+            <ng-template pTemplate="header">
+              <tr>
+                <th>Codigo</th>
+                <th>Nombre</th>
+                <th>Stock</th>
+                <th>Minimo</th>
+              </tr>
+            </ng-template>
+
+            <ng-template pTemplate="body" let-item>
+              <tr>
+                <td>{{ item.code }}</td>
+                <td>{{ item.name }}</td>
+                <td>{{ item.stock }}</td>
+                <td>{{ item.minStock }}</td>
+              </tr>
+            </ng-template>
+          </p-table>
+        }
+      </article>
+
+      <article class="rounded-3xl border border-slate-200 bg-white p-6">
+        <h3 class="m-0 text-base text-slate-900">Alertas emitidas</h3>
+        <p class="mt-2 text-sm text-slate-500">Bitacora de alertas segun el backend.</p>
+
+        @if (!loading() && !alerts().length) {
+          <app-empty-state
+            icon="pi pi-bell-slash"
+            title="Sin alertas disponibles"
+            message="No hay alertas de bajo stock para el filtro actual."
+          />
+        } @else {
+          <p-table [value]="alerts()" [loading]="loading()" [paginator]="true" [rows]="6" responsiveLayout="scroll">
+            <ng-template pTemplate="header">
+              <tr>
+                <th>Item</th>
+                <th>Stock</th>
+                <th>Estado</th>
+                <th>Creada</th>
+                <th>Resuelta</th>
+              </tr>
+            </ng-template>
+
+            <ng-template pTemplate="body" let-alert>
+              <tr>
+                <td>{{ alert.itemName }}</td>
+                <td>{{ alert.currentStock }} / Min {{ alert.minStock }}</td>
+                <td>
+                  <p-tag [value]="alert.status" [severity]="alert.resolvedAt ? 'success' : 'warn'"></p-tag>
+                </td>
+                <td>{{ formatDate(alert.createdAt) }}</td>
+                <td>{{ formatDate(alert.resolvedAt) }}</td>
+              </tr>
+            </ng-template>
+          </p-table>
+        }
+      </article>
+    </div>
+  </section>
+</div>

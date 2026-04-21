@@ -1,0 +1,37 @@
+substitutions:
+  _REGION: us-central1
+  _REPOSITORY: hotel-inventory
+  _TAG: latest
+
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -f
+      - inventory-service/Dockerfile
+      - -t
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/inventory-service:${_TAG}
+      - .
+
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -f
+      - rooms-service/Dockerfile
+      - -t
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/rooms-service:${_TAG}
+      - .
+
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -f
+      - gateway-service/Dockerfile
+      - -t
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/gateway-service:${_TAG}
+      - .
+
+images:
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/inventory-service:${_TAG}
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/rooms-service:${_TAG}
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/gateway-service:${_TAG}

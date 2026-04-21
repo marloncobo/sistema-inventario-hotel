@@ -1,0 +1,30 @@
+server:
+  port: ${PORT:8080}
+
+spring:
+  application:
+    name: inventory-service
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5433/inventorydb}
+    driver-class-name: org.postgresql.Driver
+    username: ${SPRING_DATASOURCE_USERNAME:hotel}
+    password: ${SPRING_DATASOURCE_PASSWORD:hotel}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+
+services:
+  rooms:
+    base-url: ${ROOMS_SERVICE_URL:http://localhost:8082}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+security:
+  jwt:
+    secret: ${JWT_SECRET:hotel-inventory-demo-secret-key-32}
