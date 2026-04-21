@@ -37,7 +37,7 @@ import { BreadcrumbsComponent } from '../breadcrumbs/breadcrumbs.component';
 
         <div>
           <app-breadcrumbs />
-          <h2 class="topbar__headline">Panel operativo</h2>
+          <h2 class="topbar__headline">Hotel Lunara</h2>
         </div>
       </div>
 
@@ -67,10 +67,10 @@ import { BreadcrumbsComponent } from '../breadcrumbs/breadcrumbs.component';
       gap: 1rem;
       padding: 1.25rem 1.5rem;
       border-radius: 1.5rem;
-      background: rgba(255, 255, 255, 0.84);
+      background: rgba(255, 250, 236, 0.92);
       backdrop-filter: blur(18px);
-      border: 1px solid rgba(148, 163, 184, 0.14);
-      box-shadow: 0 18px 45px rgba(15, 23, 42, 0.07);
+      border: 1px solid rgba(191, 140, 37, 0.14);
+      box-shadow: 0 18px 45px rgba(101, 67, 33, 0.08);
     }
 
     .topbar__left,
@@ -86,8 +86,9 @@ import { BreadcrumbsComponent } from '../breadcrumbs/breadcrumbs.component';
 
     .topbar__headline {
       margin: 0.35rem 0 0;
-      color: #0f172a;
+      color: #5b3d11;
       font-size: 1.1rem;
+      font-family: 'Palatino Linotype', 'Book Antiqua', Georgia, serif;
     }
 
     .topbar__identity {
@@ -96,12 +97,12 @@ import { BreadcrumbsComponent } from '../breadcrumbs/breadcrumbs.component';
     }
 
     .topbar__identity strong {
-      color: #0f172a;
+      color: #5b3d11;
       font-size: 0.95rem;
     }
 
     .topbar__identity span {
-      color: #64748b;
+      color: #8b6b2f;
       font-size: 0.8rem;
     }
 

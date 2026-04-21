@@ -39,7 +39,7 @@ import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
       <app-page-header
         eyebrow="Administracion"
         title="Usuarios"
-        subtitle="Administra usuarios, roles y estados de acceso."
+        subtitle="Administración de accesos y roles del equipo Hotel Lunara."
       >
         <div header-actions>
           <button pButton type="button" icon="pi pi-plus" label="Nuevo usuario" (click)="openCreate()"></button>
@@ -50,7 +50,7 @@ import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
         <article class="summary-card">
           <span>Total usuarios</span>
           <strong>{{ users().length }}</strong>
-          <small>Registros visibles en el sistema</small>
+          <small>Personas registradas en la plataforma</small>
         </article>
 
         <article class="summary-card">
@@ -68,10 +68,10 @@ import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
 
       <section class="surface-card space-y-8">
         <div class="app-toolbar">
-        <div>
-          <h3 class="m-0">Listado de usuarios</h3>
-          <small class="text-slate-500">Crea, edita y consulta usuarios.</small>
-        </div>
+          <div>
+            <h3 class="m-0">Listado de usuarios</h3>
+            <small class="text-slate-500">Creación y edición de accesos del equipo</small>
+          </div>
 
           <div class="app-toolbar__actions">
             <button

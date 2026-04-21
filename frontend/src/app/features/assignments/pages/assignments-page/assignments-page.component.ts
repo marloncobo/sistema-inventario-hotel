@@ -6,15 +6,21 @@ import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
-import { ASSIGNMENT_TYPE_OPTIONS } from '@core/constants/domain-options';
 import { AuthService } from '@core/services/auth.service';
 import { InventoryApiService } from '@core/services/api/inventory-api.service';
 import { RoomsApiService } from '@core/services/api/rooms-api.service';
+import { UsersApiService } from '@core/services/api/users-api.service';
 import { NotificationService } from '@core/services/ui/notification.service';
+import type { AppUser } from '@models/app-user.model';
 import type { SupplyItem } from '@models/inventory.model';
 import type { AssignSupplyRequest, AssignmentFilters, Room, RoomSupplyAssignment } from '@models/room.model';
 import { EmptyStateComponent } from '@shared/components/empty-state/empty-state.component';
 import { PageHeaderComponent } from '@shared/components/page-header/page-header.component';
+
+const ASSIGNMENT_FLOW_OPTIONS = [
+  { label: 'Salida', value: 'SERVICIO_HABITACION' },
+  { label: 'Entrada', value: 'HABITACION' }
+] as const;
 
 @Component({
   selector: 'app-assignments-page',
@@ -35,27 +41,27 @@ export class AssignmentsPageComponent implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly inventoryApi = inject(InventoryApiService);
   private readonly roomsApi = inject(RoomsApiService);
+  private readonly usersApi = inject(UsersApiService);
   private readonly notificationService = inject(NotificationService);
   private readonly fb = inject(FormBuilder);
 
-  protected readonly assignmentTypes = ASSIGNMENT_TYPE_OPTIONS;
+  protected readonly assignmentFlows = ASSIGNMENT_FLOW_OPTIONS;
   protected readonly rooms = signal<Room[]>([]);
   protected readonly items = signal<SupplyItem[]>([]);
+  protected readonly serviceUsers = signal<AppUser[]>([]);
   protected readonly assignments = signal<RoomSupplyAssignment[]>([]);
   protected readonly roomHistory = signal<RoomSupplyAssignment[]>([]);
   protected readonly loading = signal(false);
   protected readonly saving = signal(false);
   protected readonly historyLoading = signal(false);
-  protected readonly roomReferenceStatus = signal<string>('');
 
   protected readonly assignmentForm = this.fb.group({
     roomId: this.fb.nonNullable.control(0, [Validators.required, Validators.min(1)]),
-    roomReference: this.fb.control(''),
     itemId: this.fb.nonNullable.control(0, [Validators.required, Validators.min(1)]),
     quantity: this.fb.nonNullable.control(1, [Validators.required, Validators.min(1)]),
     deliveredBy: this.fb.nonNullable.control('', [Validators.required]),
     guestName: this.fb.control(''),
-    assignmentType: this.fb.nonNullable.control('MINIBAR', [Validators.required])
+    assignmentType: this.fb.nonNullable.control('SERVICIO_HABITACION', [Validators.required])
   });
 
   protected readonly filtersForm = this.fb.nonNullable.group({
@@ -82,7 +88,7 @@ export class AssignmentsPageComponent implements OnInit {
   }
 
   protected canBrowseRooms(): boolean {
-    return this.authService.hasAnyRole(['ADMIN', 'ALMACENISTA', 'RECEPCION']);
+    return this.rooms().length > 0;
   }
 
   protected canLoadOverview(): boolean {
@@ -92,18 +98,15 @@ export class AssignmentsPageComponent implements OnInit {
   protected loadBaseData(): void {
     this.loading.set(true);
 
-    const rooms$ = this.canBrowseRooms()
-      ? this.roomsApi.getRooms().pipe(catchError(() => of([] as Room[])))
-      : of([] as Room[]);
-
     const assignments$ = this.canLoadOverview()
       ? this.roomsApi.getAllAssignments({}).pipe(catchError(() => of([] as RoomSupplyAssignment[])))
       : of([] as RoomSupplyAssignment[]);
 
     forkJoin({
-      rooms: rooms$,
+      rooms: this.roomsApi.getRooms().pipe(catchError(() => of([] as Room[]))),
       items: this.inventoryApi.getItems().pipe(catchError(() => of([] as SupplyItem[]))),
-      assignments: assignments$
+      assignments: assignments$,
+      users: this.usersApi.getUsers().pipe(catchError(() => of([] as AppUser[])))
     })
       .pipe(take(1))
       .subscribe({
@@ -111,6 +114,30 @@ export class AssignmentsPageComponent implements OnInit {
           this.rooms.set(result.rooms);
           this.items.set(result.items.filter((item) => item.active));
           this.assignments.set(result.assignments);
+
+          const serviceUsers = result.users.filter(
+            (user) => user.active && user.roles.includes('SERVICIO')
+          );
+
+          this.serviceUsers.set(
+            serviceUsers.length
+              ? serviceUsers
+              : this.isServiceRole()
+                ? [
+                    {
+                      id: 0,
+                      username: this.authService.username(),
+                      roles: ['SERVICIO'],
+                      active: true
+                    }
+                  ]
+                : []
+          );
+
+          if (!this.assignmentForm.controls.deliveredBy.getRawValue() && this.serviceUsers().length) {
+            this.assignmentForm.controls.deliveredBy.setValue(this.serviceUsers()[0]!.username);
+          }
+
           this.loading.set(false);
         },
         error: () => {
@@ -168,28 +195,6 @@ export class AssignmentsPageComponent implements OnInit {
       });
   }
 
-  protected validateRoomReference(): void {
-    const reference = this.assignmentForm.controls.roomReference.getRawValue()?.trim();
-    if (!reference) {
-      this.roomReferenceStatus.set('');
-      return;
-    }
-
-    this.roomsApi
-      .getRoomByNumber(reference)
-      .pipe(take(1))
-      .subscribe({
-        next: (room) => {
-          this.roomReferenceStatus.set(
-            `Habitacion ${room.number}: ${room.type}, ${room.status}, ${room.active ? 'activa' : 'inactiva'}.`
-          );
-        },
-        error: () => {
-          this.roomReferenceStatus.set('No fue posible validar la habitacion en este momento.');
-        }
-      });
-  }
-
   protected submitAssignment(): void {
     if (this.assignmentForm.invalid) {
       this.assignmentForm.markAllAsTouched();
@@ -212,17 +217,15 @@ export class AssignmentsPageComponent implements OnInit {
       .subscribe({
         next: () => {
           this.saving.set(false);
-          this.notificationService.success('Asignaciones', 'Asignacion registrada.');
+          this.notificationService.success('Asignaciones', 'Asignación registrada.');
           this.assignmentForm.reset({
             roomId: this.isServiceRole() ? 0 : raw.roomId,
-            roomReference: '',
             itemId: 0,
             quantity: 1,
             deliveredBy: raw.deliveredBy,
             guestName: '',
-            assignmentType: 'MINIBAR'
+            assignmentType: raw.assignmentType
           });
-          this.roomReferenceStatus.set('');
           this.loadBaseData();
           if (this.canBrowseRooms() && this.historyForm.controls.roomId.getRawValue() > 0) {
             this.loadRoomHistory();
@@ -246,6 +249,14 @@ export class AssignmentsPageComponent implements OnInit {
     return `${item.code} · ${item.name}`;
   }
 
+  protected flowLabel(value: string | null | undefined): string {
+    if (value === 'HABITACION') {
+      return 'Entrada';
+    }
+
+    return 'Salida';
+  }
+
   protected showAssignmentError(
     controlName: 'roomId' | 'itemId' | 'quantity' | 'deliveredBy'
   ): boolean {
@@ -261,7 +272,7 @@ export class AssignmentsPageComponent implements OnInit {
 
   private resolveControlError(errors: ValidationErrors | null): string {
     if (!errors) {
-      return 'Valor invalido.';
+      return 'Valor inválido.';
     }
 
     if (errors['required']) {
@@ -269,9 +280,9 @@ export class AssignmentsPageComponent implements OnInit {
     }
 
     if (errors['min']) {
-      return 'Debes seleccionar un valor valido.';
+      return 'Debes seleccionar un valor válido.';
     }
 
-    return 'Valor invalido.';
+    return 'Valor inválido.';
   }
 }

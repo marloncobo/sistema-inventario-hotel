@@ -37,9 +37,9 @@ interface DashboardMetricCard {
   template: `
     <div class="space-y-8">
       <app-page-header
-        eyebrow="Resumen ejecutivo"
-        title="Dashboard"
-        subtitle="Consulta un resumen general segun tu perfil de acceso."
+        eyebrow="Resumen del día"
+        title="Panorama Luna"
+        subtitle="Una vista rápida del estado operativo para el equipo del hotel."
       >
         <div header-actions>
           <a
@@ -55,7 +55,7 @@ interface DashboardMetricCard {
       @if (loading()) {
         <section class="dashboard-loading">
           <p-progress-spinner strokeWidth="4" animationDuration=".7s" />
-          <p>Cargando datos permitidos para el rol actual...</p>
+          <p>Cargando la operación del hotel...</p>
         </section>
       } @else {
         <section class="dashboard-grid">
@@ -74,26 +74,28 @@ interface DashboardMetricCard {
           }
         </section>
 
-        <article class="card-surface">
-          <h3>Accesos rapidos</h3>
-          <div class="quick-actions">
-            @for (item of quickActions(); track item.route) {
-              <a [routerLink]="item.route" class="quick-actions__item">
-                <i [class]="item.icon"></i>
-                <span>
-                  <strong>{{ item.label }}</strong>
-                  <small>{{ item.description }}</small>
-                </span>
-              </a>
-            }
-          </div>
-        </article>
+        <section class="dashboard-columns">
+          <article class="card-surface">
+            <h3>Accesos rápidos</h3>
+            <div class="quick-actions">
+              @for (item of quickActions(); track item.route) {
+                <a [routerLink]="item.route" class="quick-actions__item">
+                  <i [class]="item.icon"></i>
+                  <span>
+                    <strong>{{ item.label }}</strong>
+                    <small>{{ item.description }}</small>
+                  </span>
+                </a>
+              }
+            </div>
+          </article>
+        </section>
 
         @if (!metrics().length) {
           <app-empty-state
             icon="pi pi-chart-bar"
-            title="Sin metricas para mostrar"
-            message="No hay informacion disponible para mostrar en este momento."
+            title="Sin métricas para mostrar"
+            message="Aún no hay datos suficientes para este perfil, pero la operación principal ya está disponible."
           />
         }
       }
@@ -105,7 +107,7 @@ interface DashboardMetricCard {
       justify-items: center;
       gap: 1rem;
       padding: 3rem;
-      color: #475569;
+      color: #7a6130;
     }
 
     .dashboard-grid {
@@ -121,9 +123,9 @@ interface DashboardMetricCard {
       align-items: center;
       padding: 1.4rem;
       border-radius: 1.6rem;
-      background: white;
-      border: 1px solid rgba(148, 163, 184, 0.18);
-      box-shadow: 0 24px 45px rgba(15, 23, 42, 0.06);
+      background: rgba(255, 251, 239, 0.96);
+      border: 1px solid rgba(191, 140, 37, 0.18);
+      box-shadow: 0 24px 45px rgba(101, 67, 33, 0.08);
     }
 
     .metric-card__icon {
@@ -136,50 +138,57 @@ interface DashboardMetricCard {
     }
 
     .metric-card[data-tone='emerald'] .metric-card__icon {
-      background: rgba(34, 197, 94, 0.12);
-      color: #15803d;
+      background: rgba(217, 119, 6, 0.12);
+      color: #9a670d;
     }
 
     .metric-card[data-tone='amber'] .metric-card__icon {
-      background: rgba(245, 158, 11, 0.14);
+      background: rgba(245, 158, 11, 0.16);
       color: #b45309;
     }
 
     .metric-card[data-tone='sky'] .metric-card__icon {
-      background: rgba(14, 165, 233, 0.14);
-      color: #0369a1;
+      background: rgba(234, 179, 8, 0.14);
+      color: #a16207;
     }
 
     .metric-card[data-tone='slate'] .metric-card__icon {
-      background: rgba(100, 116, 139, 0.12);
-      color: #334155;
+      background: rgba(120, 53, 15, 0.12);
+      color: #7c2d12;
     }
 
     .metric-card span,
     .metric-card small {
       display: block;
-      color: #64748b;
+      color: #8b6b2f;
     }
 
     .metric-card strong {
       display: block;
       margin: 0.25rem 0;
-      color: #0f172a;
+      color: #4a3210;
       font-size: 1.9rem;
       line-height: 1;
+      font-family: 'Palatino Linotype', 'Book Antiqua', Georgia, serif;
+    }
+
+    .dashboard-columns {
+      display: grid;
+      gap: 1rem;
+      grid-template-columns: 1fr;
     }
 
     .card-surface {
       padding: 1.5rem;
       border-radius: 1.6rem;
-      background: white;
-      border: 1px solid rgba(148, 163, 184, 0.18);
-      box-shadow: 0 24px 45px rgba(15, 23, 42, 0.06);
+      background: rgba(255, 251, 239, 0.96);
+      border: 1px solid rgba(191, 140, 37, 0.18);
+      box-shadow: 0 24px 45px rgba(101, 67, 33, 0.08);
     }
 
     .card-surface h3 {
       margin: 0 0 1rem;
-      color: #0f172a;
+      color: #4a3210;
       font-size: 1.05rem;
     }
 
@@ -195,8 +204,8 @@ interface DashboardMetricCard {
       padding: 1rem;
       border-radius: 1rem;
       text-decoration: none;
-      background: rgba(248, 250, 252, 0.95);
-      border: 1px solid rgba(148, 163, 184, 0.16);
+      background: rgba(255, 250, 237, 0.95);
+      border: 1px solid rgba(191, 140, 37, 0.16);
     }
 
     .quick-actions__item i {
@@ -205,19 +214,25 @@ interface DashboardMetricCard {
       display: grid;
       place-items: center;
       border-radius: 0.9rem;
-      background: rgba(14, 165, 233, 0.1);
-      color: #0369a1;
+      background: rgba(245, 158, 11, 0.12);
+      color: #9a670d;
     }
 
     .quick-actions__item strong {
       display: block;
-      color: #0f172a;
+      color: #4a3210;
     }
 
     .quick-actions__item small {
       margin: 0.2rem 0 0;
-      color: #64748b;
+      color: #8b6b2f;
       line-height: 1.55;
+    }
+
+    @media (max-width: 1023px) {
+      .dashboard-columns {
+        grid-template-columns: 1fr;
+      }
     }
   `
 })
@@ -229,11 +244,9 @@ export class DashboardPageComponent implements OnInit {
 
   protected readonly loading = signal(true);
   protected readonly metrics = signal<DashboardMetricCard[]>([]);
-
   protected readonly quickActions = computed(() =>
     APP_NAV_ITEMS.filter(
-      (item) =>
-        item.route !== '/dashboard' && this.authService.hasAnyRole(item.roles)
+      (item) => item.route !== '/dashboard' && this.authService.hasAnyRole(item.roles)
     ).slice(0, 6)
   );
 
@@ -246,27 +259,15 @@ export class DashboardPageComponent implements OnInit {
       ? this.usersApi.getUsers().pipe(catchError(() => of([] as AppUser[])))
       : of([] as AppUser[]);
 
-    const lowStockItems$ = this.authService.hasAnyRole([
-      'ADMIN',
-      'ALMACENISTA',
-      'SERVICIO'
-    ])
-      ? this.inventoryApi
-          .getLowStockItems()
-          .pipe(catchError(() => of([] as SupplyItem[])))
+    const lowStockItems$ = this.authService.hasAnyRole(['ADMIN', 'ALMACENISTA', 'SERVICIO'])
+      ? this.inventoryApi.getLowStockItems().pipe(catchError(() => of([] as SupplyItem[])))
       : of([] as SupplyItem[]);
 
     const alerts$ = this.authService.hasAnyRole(['ADMIN', 'ALMACENISTA'])
-      ? this.inventoryApi
-          .getLowStockAlerts(true)
-          .pipe(catchError(() => of([] as LowStockAlert[])))
+      ? this.inventoryApi.getLowStockAlerts(true).pipe(catchError(() => of([] as LowStockAlert[])))
       : of([] as LowStockAlert[]);
 
-    const rooms$ = this.authService.hasAnyRole([
-      'ADMIN',
-      'ALMACENISTA',
-      'RECEPCION'
-    ])
+    const rooms$ = this.authService.hasAnyRole(['ADMIN', 'ALMACENISTA', 'RECEPCION'])
       ? this.roomsApi.getRooms().pipe(catchError(() => of([] as Room[])))
       : of([] as Room[]);
 
@@ -284,7 +285,7 @@ export class DashboardPageComponent implements OnInit {
           cards.push({
             label: 'Usuarios registrados',
             value: String(users.length),
-            helper: 'Usuarios registrados en el sistema',
+            helper: 'Accesos disponibles para la operación',
             icon: 'pi pi-users',
             tone: 'slate'
           });
@@ -292,9 +293,9 @@ export class DashboardPageComponent implements OnInit {
 
         if (this.authService.hasAnyRole(['ADMIN', 'ALMACENISTA', 'SERVICIO'])) {
           cards.push({
-            label: 'Items con stock bajo',
+            label: 'Ítems con stock bajo',
             value: String(lowStockItems.length),
-            helper: 'Resultado de /items/low-stock',
+            helper: 'Productos que requieren atención',
             icon: 'pi pi-exclamation-circle',
             tone: 'amber'
           });
@@ -304,7 +305,7 @@ export class DashboardPageComponent implements OnInit {
           cards.push({
             label: 'Alertas abiertas',
             value: String(alerts.length),
-            helper: 'Seguimiento operativo de bajo inventario',
+            helper: 'Seguimiento operativo del día',
             icon: 'pi pi-bell',
             tone: 'emerald'
           });
@@ -314,7 +315,7 @@ export class DashboardPageComponent implements OnInit {
           cards.push({
             label: 'Habitaciones visibles',
             value: String(rooms.length),
-            helper: 'Habitaciones disponibles para tu perfil',
+            helper: 'Habitaciones activas en el hotel',
             icon: 'pi pi-building',
             tone: 'sky'
           });

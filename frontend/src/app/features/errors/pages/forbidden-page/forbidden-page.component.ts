@@ -13,7 +13,7 @@ import { EmptyStateComponent } from '@shared/components/empty-state/empty-state.
       <app-empty-state
         icon="pi pi-lock"
         title="No tienes permisos para esta vista"
-        message="Tu perfil no tiene acceso a esta vista."
+        message="El backend rechazó el acceso para el rol autenticado. El frontend mantiene la restricción y no intenta eludirla."
       />
 
       <div class="error-page__actions">
@@ -21,7 +21,7 @@ import { EmptyStateComponent } from '@shared/components/empty-state/empty-state.
         <button
           pButton
           type="button"
-          label="Cerrar sesion"
+          label="Cerrar sesión"
           severity="secondary"
           variant="outlined"
           (click)="authService.logout()"

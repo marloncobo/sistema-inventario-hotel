@@ -9,8 +9,10 @@ import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { AuthService } from '@core/services/auth.service';
 import { InventoryApiService } from '@core/services/api/inventory-api.service';
+import { UsersApiService } from '@core/services/api/users-api.service';
 import { NotificationService } from '@core/services/ui/notification.service';
 import { extractApiFieldErrors } from '@models/api-error.model';
+import type { AppUser } from '@models/app-user.model';
 import type {
   CatalogEntity,
   CreateSupplyItemRequest,
@@ -46,6 +48,7 @@ type InventoryDialog = 'item' | 'entry' | 'return' | 'decrease';
 export class InventoryPageComponent implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly inventoryApi = inject(InventoryApiService);
+  private readonly usersApi = inject(UsersApiService);
   private readonly notificationService = inject(NotificationService);
   private readonly fb = inject(FormBuilder);
 
@@ -54,6 +57,7 @@ export class InventoryPageComponent implements OnInit {
   protected readonly categories = signal<CatalogEntity[]>([]);
   protected readonly units = signal<UnitOfMeasure[]>([]);
   protected readonly providers = signal<Provider[]>([]);
+  protected readonly serviceUsers = signal<AppUser[]>([]);
   protected readonly loading = signal(false);
   protected readonly detailLoading = signal(false);
   protected readonly saving = signal(false);
@@ -150,6 +154,10 @@ export class InventoryPageComponent implements OnInit {
     this.items().forEach((entry) => entry.providerName && values.add(entry.providerName));
     return Array.from(values).sort();
   });
+
+  protected readonly serviceUserOptions = computed(() =>
+    this.serviceUsers().map((user) => user.username)
+  );
 
   ngOnInit(): void {
     this.loadReferenceData();
@@ -539,23 +547,45 @@ export class InventoryPageComponent implements OnInit {
       forkJoin({
         categories: this.inventoryApi.getCategories().pipe(catchError(() => of([] as CatalogEntity[]))),
         units: this.inventoryApi.getUnits().pipe(catchError(() => of([] as UnitOfMeasure[]))),
-        providers: this.inventoryApi.getProviders().pipe(catchError(() => of([] as Provider[])))
+        providers: this.inventoryApi.getProviders().pipe(catchError(() => of([] as Provider[]))),
+        users: this.usersApi.getUsers().pipe(catchError(() => of([] as AppUser[])))
       })
         .pipe(take(1))
         .subscribe((result) => {
           this.categories.set(result.categories);
           this.units.set(result.units);
           this.providers.set(result.providers);
+          this.serviceUsers.set(
+            result.users.filter((user) => user.active && user.roles.includes('SERVICIO'))
+          );
         });
       return;
     }
 
     if (this.canManageItems()) {
-      this.inventoryApi
-        .getProviders()
+      forkJoin({
+        providers: this.inventoryApi.getProviders().pipe(catchError(() => of([] as Provider[]))),
+        users: this.usersApi.getUsers().pipe(catchError(() => of([] as AppUser[])))
+      })
         .pipe(take(1))
-        .subscribe({ next: (providers) => this.providers.set(providers) });
+        .subscribe((result) => {
+          this.providers.set(result.providers);
+          this.serviceUsers.set(
+            result.users.filter((user) => user.active && user.roles.includes('SERVICIO'))
+          );
+        });
+      return;
     }
+
+    this.usersApi
+      .getUsers()
+      .pipe(take(1))
+      .subscribe({
+        next: (users) =>
+          this.serviceUsers.set(
+            users.filter((user) => user.active && user.roles.includes('SERVICIO'))
+          )
+      });
   }
 
   private resolveControlError(errors: ValidationErrors | null): string {

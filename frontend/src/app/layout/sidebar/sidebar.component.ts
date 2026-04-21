@@ -25,11 +25,11 @@ import { LayoutService } from '@core/services/layout.service';
       [class.sidebar--mobile-open]="layout.mobileMenuOpen()"
     >
       <div class="sidebar__brand">
-        <div class="sidebar__mark">HI</div>
+        <div class="sidebar__mark">LU</div>
         @if (!layout.sidebarCollapsed()) {
           <div>
-            <strong>Hotel Inventario</strong>
-            <p>Panel administrativo</p>
+            <strong>Hotel Lunara</strong>
+            <p>Centro de operaciones</p>
           </div>
         }
       </div>
@@ -71,7 +71,7 @@ import { LayoutService } from '@core/services/layout.service';
     .sidebar-backdrop {
       position: fixed;
       inset: 0;
-      background: rgba(15, 23, 42, 0.35);
+      background: rgba(72, 42, 8, 0.35);
       z-index: 40;
     }
 
@@ -81,12 +81,14 @@ import { LayoutService } from '@core/services/layout.service';
       width: 18rem;
       padding: 1rem;
       border-radius: 1.5rem;
-      background: linear-gradient(180deg, rgba(15, 23, 42, 0.98), rgba(30, 41, 59, 0.94));
-      color: white;
+      background:
+        radial-gradient(circle at top right, rgba(255, 214, 102, 0.25), transparent 28%),
+        linear-gradient(180deg, rgba(88, 56, 20, 0.98), rgba(120, 77, 28, 0.94));
+      color: #fff8e8;
       display: grid;
       gap: 1.5rem;
       align-content: start;
-      box-shadow: 0 28px 60px rgba(15, 23, 42, 0.28);
+      box-shadow: 0 28px 60px rgba(101, 67, 33, 0.28);
       z-index: 50;
       transition: width 0.2s ease, transform 0.2s ease;
     }
@@ -109,7 +111,7 @@ import { LayoutService } from '@core/services/layout.service';
 
     .sidebar__brand p {
       margin: 0.15rem 0 0;
-      color: rgba(226, 232, 240, 0.7);
+      color: rgba(255, 240, 196, 0.72);
       font-size: 0.78rem;
     }
 
@@ -119,8 +121,8 @@ import { LayoutService } from '@core/services/layout.service';
       display: grid;
       place-items: center;
       border-radius: 1rem;
-      background: linear-gradient(135deg, #14b8a6, #22c55e);
-      color: #052e2b;
+      background: linear-gradient(135deg, #ffe08a, #f5b82e);
+      color: #5c3b0e;
       font-weight: 800;
       letter-spacing: 0.06em;
     }
@@ -131,7 +133,7 @@ import { LayoutService } from '@core/services/layout.service';
     }
 
     .sidebar__section-title {
-      color: rgba(148, 163, 184, 0.85);
+      color: rgba(255, 228, 160, 0.85);
       font-size: 0.72rem;
       font-weight: 700;
       letter-spacing: 0.08em;
@@ -150,13 +152,13 @@ import { LayoutService } from '@core/services/layout.service';
       gap: 0.85rem;
       padding: 0.85rem 0.9rem;
       border-radius: 1rem;
-      color: rgba(226, 232, 240, 0.92);
+      color: rgba(255, 247, 223, 0.94);
       text-decoration: none;
       transition: background 0.2s ease, transform 0.2s ease;
     }
 
     .sidebar__link:hover {
-      background: rgba(45, 212, 191, 0.12);
+      background: rgba(255, 214, 102, 0.12);
       transform: translateX(2px);
     }
 
@@ -176,15 +178,15 @@ import { LayoutService } from '@core/services/layout.service';
     }
 
     .sidebar__link small {
-      color: rgba(203, 213, 225, 0.72);
+      color: rgba(255, 236, 194, 0.72);
       font-size: 0.74rem;
       line-height: 1.35;
     }
 
     .sidebar__link--active {
-      background: rgba(20, 184, 166, 0.18);
+      background: rgba(255, 214, 102, 0.18);
       color: white;
-      box-shadow: inset 0 0 0 1px rgba(94, 234, 212, 0.18);
+      box-shadow: inset 0 0 0 1px rgba(255, 225, 150, 0.18);
     }
 
     @media (max-width: 1023px) {

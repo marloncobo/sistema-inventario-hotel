@@ -2,7 +2,7 @@
   <app-page-header
     eyebrow="Operacion"
     title="Inventario"
-    subtitle="Consulta y administra los insumos del inventario."
+    subtitle="Control de insumos para la operación diaria de Hotel Lunara."
   >
     <div header-actions>
       @if (canManageItems()) {
@@ -10,19 +10,6 @@
       }
     </div>
   </app-page-header>
-
-  @if (!isAdmin()) {
-    <article class="note-banner">
-      <i class="pi pi-info-circle"></i>
-      <div>
-        <strong>Acceso segun perfil</strong>
-        <p class="m-0">
-          Las categorias y unidades se manejan como texto cuando el rol no puede consumir catalogos
-          administrativos.
-        </p>
-      </div>
-    </article>
-  }
 
   <section class="summary-grid">
     <article class="summary-card">
@@ -60,7 +47,7 @@
     <div class="app-toolbar">
       <div>
         <h3 class="m-0">Listado de insumos</h3>
-        <small class="text-slate-500">Consulta y administra los insumos registrados.</small>
+        <small class="text-slate-500">Consulta y administración de insumos activos</small>
       </div>
 
       <div class="app-toolbar__actions">
@@ -79,7 +66,7 @@
       <app-empty-state
         icon="pi pi-box"
         title="Sin insumos visibles"
-        message="No hay insumos para los filtros actuales."
+        message="No hay items para los filtros actuales o el backend aun no registra inventario."
       />
     } @else {
       <p-table [value]="filteredItems()" [loading]="loading()" [paginator]="true" [rows]="10" responsiveLayout="scroll">
@@ -198,7 +185,7 @@
       <div class="app-toolbar">
         <div>
           <h3 class="m-0">Detalle del insumo</h3>
-          <small class="text-slate-500">Consulta puntual via /items/:id</small>
+          <small class="text-slate-500">Resumen del estado actual del insumo</small>
         </div>
         <button
           pButton
@@ -236,16 +223,16 @@
         <article class="rounded-3xl border border-slate-200 bg-slate-50 p-6">
           <h4 class="m-0 text-base text-slate-900">Descripcion</h4>
           <p class="mt-3 text-sm text-slate-600">
-            {{ item.description || 'No hay descripcion registrada para este insumo.' }}
+            {{ item.description || 'El backend no registra descripcion para este insumo.' }}
           </p>
         </article>
 
-        <article class="rounded-3xl border border-slate-200 bg-slate-50 p-6">
-          <h4 class="m-0 text-base text-slate-900">Informacion adicional</h4>
-          <ul class="m-0 mt-3 space-y-2 pl-5 text-sm text-slate-600">
-            <li>Verifica categoria, unidad y proveedor antes de guardar.</li>
-            <li>Revisa los niveles minimo y maximo de stock.</li>
-            <li>Usa referencias claras al registrar movimientos.</li>
+        <article class="rounded-3xl border border-amber-200 bg-amber-50/70 p-6">
+          <h4 class="m-0 text-base text-amber-950">Resumen operativo</h4>
+          <ul class="m-0 mt-3 space-y-2 pl-5 text-sm text-amber-900">
+            <li>Consulta existencias antes de registrar movimientos.</li>
+            <li>Usa referencias claras para mantener la trazabilidad.</li>
+            <li>Gestiona las salidas a habitaciones desde el módulo de asignaciones.</li>
           </ul>
         </article>
       </div>
@@ -416,7 +403,12 @@
         <div class="form-grid">
           <label class="field">
             <span>Responsable operativo</span>
-            <input pInputText type="text" formControlName="operationalResponsible" />
+            <select class="field-control" formControlName="operationalResponsible">
+              <option value="">Selecciona un usuario de servicio</option>
+              @for (user of serviceUserOptions(); track user) {
+                <option [value]="user">{{ user }}</option>
+              }
+            </select>
           </label>
         </div>
 
@@ -437,11 +429,8 @@
         <article class="note-banner">
           <i class="pi pi-exclamation-triangle"></i>
           <div>
-            <strong>Importante</strong>
-            <p class="m-0">
-              Usa esta opcion para registrar salidas operativas. Si la salida corresponde a una
-              habitacion, gestionala desde Asignaciones.
-            </p>
+            <strong>Movimiento interno</strong>
+            <p class="m-0">Usa este formulario para salidas operativas internas distintas a habitaciones.</p>
           </div>
         </article>
 
@@ -471,7 +460,12 @@
 
           <label class="field">
             <span>Responsable operativo</span>
-            <input pInputText type="text" formControlName="operationalResponsible" />
+            <select class="field-control" formControlName="operationalResponsible">
+              <option value="">Selecciona un usuario de servicio</option>
+              @for (user of serviceUserOptions(); track user) {
+                <option [value]="user">{{ user }}</option>
+              }
+            </select>
           </label>
         </div>
 

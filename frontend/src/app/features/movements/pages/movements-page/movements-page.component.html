@@ -2,7 +2,7 @@
   <app-page-header
     eyebrow="Control"
     title="Movimientos"
-    subtitle="Consulta entradas, salidas, devoluciones y anulaciones del inventario."
+    subtitle="Historial trazable de entradas, devoluciones, salidas y anulaciones sobre el inventario de Lunara."
   />
 
   <section class="summary-grid">
@@ -38,12 +38,22 @@
 
       <label class="field">
         <span>Responsable</span>
-        <input pInputText type="text" formControlName="responsible" />
+        <select class="field-control" formControlName="responsible">
+          <option value="">Todos</option>
+          @for (user of serviceUsers(); track user.id) {
+            <option [value]="user.username">{{ user.username }}</option>
+          }
+        </select>
       </label>
 
       <label class="field">
         <span>Responsable operativo</span>
-        <input pInputText type="text" formControlName="operationalResponsible" />
+        <select class="field-control" formControlName="operationalResponsible">
+          <option value="">Todos</option>
+          @for (user of serviceUsers(); track user.id) {
+            <option [value]="user.username">{{ user.username }}</option>
+          }
+        </select>
       </label>
 
       <label class="field">
@@ -65,7 +75,7 @@
     <div class="app-toolbar">
       <div>
         <h3 class="m-0">Bitacora de movimientos</h3>
-        <small class="text-slate-500">Aplica filtros para encontrar movimientos especificos.</small>
+        <small class="text-slate-500">Consulta de entradas y salidas registradas</small>
       </div>
 
       <div class="app-toolbar__actions">
@@ -108,15 +118,15 @@
               <strong>{{ movement.itemName }}</strong>
               <div class="text-xs text-slate-500">ID {{ movement.itemId }}</div>
             </td>
-            <td>{{ movement.movementType }}</td>
+            <td>{{ movementTypeLabel(movement) }}</td>
             <td>
               <div>{{ movement.origin }}</div>
               <div class="text-xs text-slate-500">{{ movement.roomNumber || movement.areaName || 'Sin ubicacion' }}</div>
             </td>
             <td>{{ movement.quantity }}</td>
             <td>
-              <div>{{ movement.responsible }}</div>
-              <div class="text-xs text-slate-500">{{ movement.operationalResponsible || 'Sin responsable operativo' }}</div>
+              <div>{{ serviceResponsibleLabel(movement) }}</div>
+              <div class="text-xs text-slate-500">Equipo de servicio</div>
             </td>
             <td><p-tag [value]="movement.status" [severity]="canVoid(movement) ? 'info' : 'danger'"></p-tag></td>
             <td class="text-right">
