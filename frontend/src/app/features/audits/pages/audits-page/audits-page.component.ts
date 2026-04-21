@@ -29,7 +29,7 @@ type AuditScope = 'auth' | 'inventory' | 'rooms';
       <app-page-header
         eyebrow="Control"
         title="Auditoria"
-        subtitle="Consulta unificada de eventos del gateway, inventario y habitaciones."
+        subtitle="Consulta eventos y movimientos registrados en el sistema."
       />
 
       <section class="surface-card space-y-8">
@@ -84,7 +84,7 @@ type AuditScope = 'auth' | 'inventory' | 'rooms';
             <article class="summary-card">
               <span>Acciones unicas</span>
               <strong>{{ uniqueActions() }}</strong>
-              <small>Backend sin paginacion</small>
+              <small>Segun la consulta actual</small>
             </article>
           </div>
 

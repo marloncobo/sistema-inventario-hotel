@@ -2,17 +2,17 @@
   <app-page-header
     eyebrow="Operacion"
     title="Asignaciones a habitaciones"
-    subtitle="Entrega de insumos a habitaciones y trazabilidad usando exclusivamente los endpoints de rooms-service."
+    subtitle="Entrega y consulta de insumos por habitacion."
   />
 
   @if (isServiceRole()) {
     <article class="note-banner">
       <i class="pi pi-info-circle"></i>
       <div>
-        <strong>Restriccion real del backend</strong>
+        <strong>Importante</strong>
         <p class="m-0">
-          El rol SERVICIO puede asignar insumos, pero el backend no expone un flujo que resuelva
-          roomId a partir del numero de habitacion. Por eso este formulario solicita roomId manual.
+          Si no tienes la lista de habitaciones disponible, puedes ingresar el identificador de la
+          habitacion manualmente.
         </p>
       </div>
     </article>
@@ -28,7 +28,7 @@
     <article class="summary-card">
       <span>Asignaciones visibles</span>
       <strong>{{ assignments().length }}</strong>
-      <small>{{ canLoadOverview() ? 'Historial global' : 'Sin endpoint global para este rol' }}</small>
+      <small>{{ canLoadOverview() ? 'Historial general' : 'Consulta segun permisos' }}</small>
     </article>
 
     <article class="summary-card">
@@ -42,7 +42,7 @@
     <div class="app-toolbar">
       <div>
         <h3 class="m-0">Nueva asignacion</h3>
-        <small class="text-slate-500">POST /rooms/api/rooms/:roomId/supplies/assign</small>
+        <small class="text-slate-500">Completa los datos para registrar una asignacion.</small>
       </div>
     </div>
 
@@ -58,7 +58,7 @@
               }
             </select>
           } @else {
-            <input pInputText type="number" formControlName="roomId" placeholder="Ingresa roomId" />
+            <input pInputText type="number" formControlName="roomId" placeholder="Ingresa el identificador" />
           }
           @if (showAssignmentError('roomId')) {
             <small>{{ assignmentError('roomId') }}</small>
@@ -151,7 +151,7 @@
       <div class="app-toolbar">
         <div>
           <h3 class="m-0">Historial por habitacion</h3>
-          <small class="text-slate-500">GET /rooms/:roomId/supplies</small>
+          <small class="text-slate-500">Selecciona una habitacion para consultar su historial.</small>
         </div>
       </div>
 
@@ -244,7 +244,7 @@
       <div class="app-toolbar">
         <div>
           <h3 class="m-0">Historial global de asignaciones</h3>
-          <small class="text-slate-500">GET /rooms/api/rooms/supplies</small>
+          <small class="text-slate-500">Consulta general de asignaciones registradas.</small>
         </div>
 
         <div class="app-toolbar__actions">

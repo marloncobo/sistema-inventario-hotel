@@ -28,8 +28,8 @@ import { LayoutService } from '@core/services/layout.service';
         <div class="sidebar__mark">HI</div>
         @if (!layout.sidebarCollapsed()) {
           <div>
-            <strong>Hotel Inventory Hub</strong>
-            <p>Gateway localhost:8080</p>
+            <strong>Hotel Inventario</strong>
+            <p>Panel administrativo</p>
           </div>
         }
       </div>

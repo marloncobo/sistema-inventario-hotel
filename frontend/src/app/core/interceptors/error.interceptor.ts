@@ -26,14 +26,14 @@ export const errorInterceptor: HttpInterceptorFn = (request, next) => {
       if (error.status === 0) {
         const shouldNotify = uiStateService.reportIssue({
           kind: 'offline',
-          title: 'Gateway no disponible',
-          detail: 'No fue posible comunicarse con http://localhost:8080.'
+          title: 'Servicio no disponible',
+          detail: 'No fue posible conectar con el sistema en este momento.'
         });
 
         if (shouldNotify) {
           notificationService.error(
-            'Gateway no disponible',
-            'No fue posible comunicarse con http://localhost:8080.'
+            'Servicio no disponible',
+            'No fue posible conectar con el sistema en este momento.'
           );
         }
       } else if (error.status === 401) {

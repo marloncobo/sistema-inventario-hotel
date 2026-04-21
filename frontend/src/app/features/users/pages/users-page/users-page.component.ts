@@ -39,7 +39,7 @@ import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
       <app-page-header
         eyebrow="Administracion"
         title="Usuarios"
-        subtitle="Gestion de usuarios del gateway sin modificar contratos ni seguridad del backend."
+        subtitle="Administra usuarios, roles y estados de acceso."
       >
         <div header-actions>
           <button pButton type="button" icon="pi pi-plus" label="Nuevo usuario" (click)="openCreate()"></button>
@@ -50,7 +50,7 @@ import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
         <article class="summary-card">
           <span>Total usuarios</span>
           <strong>{{ users().length }}</strong>
-          <small>Registros visibles desde /auth/users</small>
+          <small>Registros visibles en el sistema</small>
         </article>
 
         <article class="summary-card">
@@ -68,10 +68,10 @@ import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
 
       <section class="surface-card space-y-8">
         <div class="app-toolbar">
-          <div>
-            <h3 class="m-0">Listado de usuarios</h3>
-            <small class="text-slate-500">Alta y edicion sobre el gateway actual.</small>
-          </div>
+        <div>
+          <h3 class="m-0">Listado de usuarios</h3>
+          <small class="text-slate-500">Crea, edita y consulta usuarios.</small>
+        </div>
 
           <div class="app-toolbar__actions">
             <button

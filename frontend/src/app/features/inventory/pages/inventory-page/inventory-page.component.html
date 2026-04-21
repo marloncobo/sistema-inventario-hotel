@@ -2,7 +2,7 @@
   <app-page-header
     eyebrow="Operacion"
     title="Inventario"
-    subtitle="Gestion completa de insumos adaptada al backend existente, sin cambiar contratos ni flujos del gateway."
+    subtitle="Consulta y administra los insumos del inventario."
   >
     <div header-actions>
       @if (canManageItems()) {
@@ -15,10 +15,10 @@
     <article class="note-banner">
       <i class="pi pi-info-circle"></i>
       <div>
-        <strong>Adaptacion por permisos reales</strong>
+        <strong>Acceso segun perfil</strong>
         <p class="m-0">
           Las categorias y unidades se manejan como texto cuando el rol no puede consumir catalogos
-          administrativos. El frontend se adapta sin tocar el backend.
+          administrativos.
         </p>
       </div>
     </article>
@@ -60,7 +60,7 @@
     <div class="app-toolbar">
       <div>
         <h3 class="m-0">Listado de insumos</h3>
-        <small class="text-slate-500">GET /inventory/api/inventory/items y GET /items/:id</small>
+        <small class="text-slate-500">Consulta y administra los insumos registrados.</small>
       </div>
 
       <div class="app-toolbar__actions">
@@ -79,7 +79,7 @@
       <app-empty-state
         icon="pi pi-box"
         title="Sin insumos visibles"
-        message="No hay items para los filtros actuales o el backend aun no registra inventario."
+        message="No hay insumos para los filtros actuales."
       />
     } @else {
       <p-table [value]="filteredItems()" [loading]="loading()" [paginator]="true" [rows]="10" responsiveLayout="scroll">
@@ -236,16 +236,16 @@
         <article class="rounded-3xl border border-slate-200 bg-slate-50 p-6">
           <h4 class="m-0 text-base text-slate-900">Descripcion</h4>
           <p class="mt-3 text-sm text-slate-600">
-            {{ item.description || 'El backend no registra descripcion para este insumo.' }}
+            {{ item.description || 'No hay descripcion registrada para este insumo.' }}
           </p>
         </article>
 
         <article class="rounded-3xl border border-slate-200 bg-slate-50 p-6">
-          <h4 class="m-0 text-base text-slate-900">Observaciones de integracion</h4>
+          <h4 class="m-0 text-base text-slate-900">Informacion adicional</h4>
           <ul class="m-0 mt-3 space-y-2 pl-5 text-sm text-slate-600">
-            <li>La categoria y la unidad se envian como texto, no como IDs.</li>
-            <li>Las devoluciones requieren un sourceMovementId valido.</li>
-            <li>La salida interna no debe usar origin=HABITACION en este frontend.</li>
+            <li>Verifica categoria, unidad y proveedor antes de guardar.</li>
+            <li>Revisa los niveles minimo y maximo de stock.</li>
+            <li>Usa referencias claras al registrar movimientos.</li>
           </ul>
         </article>
       </div>
@@ -437,10 +437,10 @@
         <article class="note-banner">
           <i class="pi pi-exclamation-triangle"></i>
           <div>
-            <strong>Regla de integracion obligatoria</strong>
+            <strong>Importante</strong>
             <p class="m-0">
-              Este flujo no debe enviar origin=HABITACION. Para habitaciones, el backend exige usar
-              el servicio de asignaciones en rooms-service.
+              Usa esta opcion para registrar salidas operativas. Si la salida corresponde a una
+              habitacion, gestionala desde Asignaciones.
             </p>
           </div>
         </article>

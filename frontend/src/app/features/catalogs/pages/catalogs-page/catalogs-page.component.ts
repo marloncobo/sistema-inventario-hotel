@@ -35,7 +35,7 @@ type CatalogSection = 'categories' | 'units' | 'providers' | 'areas';
       <app-page-header
         eyebrow="Configuracion"
         title="Catalogos"
-        subtitle="Catalogos maestros del inventario respetando exactamente los endpoints existentes."
+        subtitle="Administra las listas base del inventario."
       >
         <div header-actions>
           <button
@@ -52,10 +52,10 @@ type CatalogSection = 'categories' | 'units' | 'providers' | 'areas';
         <article class="note-banner">
           <i class="pi pi-info-circle"></i>
           <div>
-            <strong>Restriccion de backend</strong>
+            <strong>Acceso limitado</strong>
             <p class="m-0">
-              El rol ALMACENISTA solo puede administrar proveedores. Categorias, unidades y areas
-              permanecen ocultas sin alterar seguridad ni rutas del backend.
+              Con este perfil solo puedes administrar proveedores. Las demas listas no estan
+              disponibles.
             </p>
           </div>
         </article>
@@ -66,19 +66,19 @@ type CatalogSection = 'categories' | 'units' | 'providers' | 'areas';
           <article class="summary-card">
             <span>Categorias</span>
             <strong>{{ categories().length }}</strong>
-            <small>GET /catalogs/categories</small>
+            <small>Registros disponibles</small>
           </article>
 
           <article class="summary-card">
             <span>Unidades</span>
             <strong>{{ units().length }}</strong>
-            <small>GET /catalogs/units</small>
+            <small>Registros disponibles</small>
           </article>
 
           <article class="summary-card">
             <span>Areas</span>
             <strong>{{ areas().length }}</strong>
-            <small>GET /catalogs/areas</small>
+            <small>Registros disponibles</small>
           </article>
         }
 
@@ -105,7 +105,7 @@ type CatalogSection = 'categories' | 'units' | 'providers' | 'areas';
         <div class="app-toolbar">
           <div>
             <h3 class="m-0">{{ currentSectionLabel() }}</h3>
-            <small class="text-slate-500">{{ currentSectionEndpoint() }}</small>
+            <small class="text-slate-500">Gestiona los registros de esta seccion.</small>
           </div>
 
           <div class="app-toolbar__actions">
@@ -414,19 +414,6 @@ export class CatalogsPageComponent implements OnInit {
   protected setActiveSection(section: CatalogSection): void {
     this.activeSection.set(section);
     this.loadSection(section);
-  }
-
-  protected currentSectionEndpoint(): string {
-    switch (this.activeSection()) {
-      case 'categories':
-        return 'GET /inventory/api/inventory/catalogs/categories';
-      case 'units':
-        return 'GET /inventory/api/inventory/catalogs/units';
-      case 'areas':
-        return 'GET /inventory/api/inventory/catalogs/areas';
-      default:
-        return 'GET /inventory/api/inventory/catalogs/providers';
-    }
   }
 
   protected openCreate(section: CatalogSection): void {

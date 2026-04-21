@@ -185,7 +185,7 @@ export class AssignmentsPageComponent implements OnInit {
           );
         },
         error: () => {
-          this.roomReferenceStatus.set('No se pudo validar la habitacion con el endpoint actual.');
+          this.roomReferenceStatus.set('No fue posible validar la habitacion en este momento.');
         }
       });
   }
