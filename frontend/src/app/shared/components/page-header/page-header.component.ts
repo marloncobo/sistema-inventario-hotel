@@ -6,7 +6,9 @@ import { Component, input } from '@angular/core';
   template: `
     <section class="page-header">
       <div>
-        <span class="page-header__eyebrow">{{ eyebrow() }}</span>
+        @if (eyebrow()) {
+          <span class="page-header__eyebrow">{{ eyebrow() }}</span>
+        }
         <h1 class="page-header__title">{{ title() }}</h1>
         @if (subtitle()) {
           <p class="page-header__subtitle">{{ subtitle() }}</p>

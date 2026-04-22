@@ -1,7 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
-import { catchError, forkJoin, of, take } from 'rxjs';
+import { catchError, forkJoin, of, startWith, take } from 'rxjs';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { TableModule } from 'primeng/table';
@@ -35,7 +36,8 @@ const ASSIGNMENT_FLOW_OPTIONS = [
     TableModule,
     TagModule
   ],
-  templateUrl: './assignments-page.component.html'
+  templateUrl: './assignments-page.component.html',
+  styleUrls: ['./assignments-page.component.css']
 })
 export class AssignmentsPageComponent implements OnInit {
   private readonly authService = inject(AuthService);
@@ -74,10 +76,44 @@ export class AssignmentsPageComponent implements OnInit {
   protected readonly historyForm = this.fb.nonNullable.group({
     roomId: [0]
   });
+  protected readonly overviewFiltersValue = toSignal(
+    this.filtersForm.valueChanges.pipe(startWith(this.filtersForm.getRawValue())),
+    { initialValue: this.filtersForm.getRawValue() }
+  );
 
   protected readonly totalAssignedQuantity = computed(() =>
     this.assignments().reduce((total, entry) => total + entry.quantity, 0)
   );
+  protected readonly outgoingAssignmentsCount = computed(
+    () => this.assignments().filter((entry) => entry.assignmentType !== 'HABITACION').length
+  );
+  protected readonly incomingAssignmentsCount = computed(
+    () => this.assignments().filter((entry) => entry.assignmentType === 'HABITACION').length
+  );
+  protected readonly activeOverviewFilters = computed(() => {
+    const filters = this.overviewFiltersValue();
+    const chips: string[] = [];
+    const roomNumber = filters.roomNumber?.trim() ?? '';
+
+    if (roomNumber) {
+      chips.push(`Habitacion: ${roomNumber}`);
+    }
+
+    if (filters.assignmentType) {
+      chips.push(`Movimiento: ${this.flowLabel(filters.assignmentType)}`);
+    }
+
+    if (filters.startDate) {
+      chips.push(`Desde: ${filters.startDate}`);
+    }
+
+    if (filters.endDate) {
+      chips.push(`Hasta: ${filters.endDate}`);
+    }
+
+    return chips;
+  });
+  protected readonly activeOverviewFilterCount = computed(() => this.activeOverviewFilters().length);
 
   ngOnInit(): void {
     this.loadBaseData();
@@ -255,6 +291,24 @@ export class AssignmentsPageComponent implements OnInit {
     }
 
     return 'Salida';
+  }
+
+  protected flowSeverity(value: string | null | undefined): 'info' | 'warn' {
+    if (value === 'HABITACION') {
+      return 'info';
+    }
+
+    return 'warn';
+  }
+
+  protected clearOverviewFilters(): void {
+    this.filtersForm.reset({
+      roomNumber: '',
+      assignmentType: '',
+      startDate: '',
+      endDate: ''
+    });
+    this.loadAssignments();
   }
 
   protected showAssignmentError(

@@ -1,0 +1,319 @@
+.movements-page {
+  max-width: 1360px;
+  margin: 0 auto;
+  padding-bottom: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+.movements-summary-card {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 1rem;
+  min-height: 132px;
+}
+
+.movements-summary-card__icon {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: rgba(200, 146, 45, 0.1);
+  color: #c8922d;
+  font-size: 1.15rem;
+}
+
+.movements-summary-card__content {
+  min-width: 0;
+}
+
+.movements-summary-card__content strong {
+  display: block;
+}
+
+.movements-workbench {
+  padding: 0;
+  overflow: hidden;
+}
+
+.movements-filter-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding: 1.25rem;
+  border-bottom: 1px solid rgba(214, 191, 152, 0.18);
+}
+
+.movements-filter-shell__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.movements-filter-shell__header h3 {
+  margin: 0;
+  color: #3d2b1f;
+  font-size: 1.05rem;
+}
+
+.movements-filter-shell__header p {
+  margin: 0.35rem 0 0;
+  color: #8a7867;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.movements-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.55rem 0.85rem;
+  border-radius: 999px;
+  background: rgba(200, 146, 45, 0.1);
+  color: #a36f16;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
+.movements-filters-grid {
+  gap: 1rem 1.25rem;
+}
+
+.movements-filter-shell__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
+
+.movements-active-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  padding: 0 1.25rem 1.15rem;
+  border-bottom: 1px solid rgba(214, 191, 152, 0.18);
+}
+
+.movements-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.45rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(200, 146, 45, 0.08);
+  color: #8f6724;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.movements-result-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem;
+  background: linear-gradient(180deg, rgba(253, 251, 247, 0.96), rgba(255, 255, 255, 0.94));
+  border-bottom: 1px solid rgba(214, 191, 152, 0.18);
+}
+
+.movements-result-head__identity {
+  display: flex;
+  align-items: center;
+  gap: 0.95rem;
+  min-width: 0;
+}
+
+.movements-result-head__icon {
+  width: 2.9rem;
+  height: 2.9rem;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: rgba(200, 146, 45, 0.1);
+  color: #c8922d;
+  flex-shrink: 0;
+}
+
+.movements-result-head__identity h3 {
+  margin: 0;
+  color: #3d2b1f;
+  font-size: 1.12rem;
+}
+
+.movements-result-head__identity p {
+  margin: 0.2rem 0 0;
+  color: #8a7867;
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
+.movements-result-head__stats {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.7rem;
+}
+
+.movements-result-head__stats span,
+.movement-type-chip,
+.movement-quantity {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.movements-result-head__stats span {
+  padding: 0.45rem 0.72rem;
+  background: rgba(154, 138, 120, 0.08);
+  color: #766553;
+}
+
+.movements-table-wrap {
+  overflow: hidden;
+  background: white;
+}
+
+.movement-date {
+  color: #5f4a38;
+  font-weight: 600;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  white-space: nowrap;
+}
+
+.movement-entity {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.movement-entity strong {
+  color: #3d2b1f;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.movement-entity span {
+  color: #9a8a78;
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.movement-type-chip {
+  padding: 0.42rem 0.78rem;
+  background: rgba(220, 252, 231, 0.9);
+  color: #166534;
+}
+
+.movement-type-chip--exit {
+  background: rgba(219, 234, 254, 0.9);
+  color: #1d4ed8;
+}
+
+.movement-quantity {
+  padding: 0.42rem 0.7rem;
+  background: rgba(200, 146, 45, 0.12);
+  color: #9b6d18;
+}
+
+.movements-dialog-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+      padding-top: 0.25rem;
+}
+
+.movements-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+:host ::ng-deep app-page-header .page-header {
+  padding-bottom: 0;
+  margin-bottom: 0;
+  border-bottom: none;
+  align-items: center;
+}
+
+:host ::ng-deep .movements-table .p-datatable-table {
+  min-width: 62rem;
+}
+
+:host ::ng-deep .movements-table .p-datatable-thead > tr > th {
+  padding: 1rem 1.15rem;
+  background: #fdfbf7;
+  color: #7b6754;
+  font-size: 0.73rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+:host ::ng-deep .movements-table .p-datatable-tbody > tr > td {
+  padding: 1rem 1.15rem;
+  vertical-align: middle;
+}
+
+:host ::ng-deep .movements-table .p-datatable-tbody > tr:last-child > td {
+  border-bottom: none;
+}
+
+:host ::ng-deep .movements-table .p-paginator {
+  border: none;
+  border-top: 1px solid rgba(214, 191, 152, 0.18);
+  padding: 0.95rem 1.15rem;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+:host ::ng-deep .movements-table .p-paginator-current {
+  color: #8a7867;
+  font-size: 0.82rem;
+}
+
+@media (max-width: 960px) {
+  .movements-filter-shell__header,
+  .movements-result-head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .movements-filter-shell__actions,
+  .movements-result-head__stats {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 720px) {
+  .movements-summary-card {
+    grid-template-columns: 1fr;
+    align-items: flex-start;
+  }
+
+  .movements-filter-shell,
+  .movements-result-head {
+    padding-inline: 1rem;
+  }
+
+  .movements-active-filters {
+    padding-inline: 1rem;
+  }
+
+  .movements-filter-shell__actions > * {
+    width: 100%;
+  }
+
+  .movements-dialog-actions {
+    flex-direction: column-reverse;
+  }
+}

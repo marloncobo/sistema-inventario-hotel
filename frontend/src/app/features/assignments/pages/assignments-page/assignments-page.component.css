@@ -1,0 +1,382 @@
+.assignments-page {
+  max-width: 1360px;
+  margin: 0 auto;
+  padding-bottom: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.85rem;
+}
+
+.assignments-summary {
+  gap: 1.1rem;
+}
+
+.assignments-summary-card {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 1.05rem;
+  min-height: 140px;
+}
+
+.assignments-summary-card__icon {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: rgba(200, 146, 45, 0.1);
+  color: #c8922d;
+  font-size: 1.1rem;
+}
+
+.assignments-summary-card__content {
+  min-width: 0;
+}
+
+.assignments-summary-card__content span {
+  display: block;
+}
+
+.assignments-summary-card__content strong {
+  display: block;
+}
+
+.assignments-summary-card__content small {
+  display: block;
+  margin-top: 0.45rem;
+  line-height: 1.5;
+}
+
+.assignments-block {
+  padding: 0;
+  overflow: hidden;
+}
+
+.assignments-section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem 1.25rem;
+  padding: 1.35rem 1.5rem 1.2rem;
+  background: linear-gradient(180deg, rgba(253, 251, 247, 0.96), rgba(255, 255, 255, 0.94));
+  border-bottom: 1px solid rgba(214, 191, 152, 0.18);
+}
+
+.assignments-section-head--form {
+  border-bottom: none;
+  padding-bottom: 1rem;
+}
+
+.assignments-section-head--results {
+  padding-top: 1.2rem;
+}
+
+.assignments-section-head__identity {
+  display: flex;
+  align-items: center;
+  gap: 0.95rem;
+  min-width: 0;
+}
+
+.assignments-section-head__icon {
+  width: 2.9rem;
+  height: 2.9rem;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: rgba(200, 146, 45, 0.1);
+  color: #c8922d;
+  flex-shrink: 0;
+}
+
+.assignments-section-head__identity h3 {
+  margin: 0;
+  color: #3d2b1f;
+  font-size: 1.08rem;
+}
+
+.assignments-section-head__identity p {
+  margin: 0.24rem 0 0;
+  color: #8a7867;
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
+.assignments-badge,
+.assignment-room-chip,
+.assignment-quantity,
+.assignment-person,
+.assignments-chip,
+.assignments-stats span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  border-radius: 999px;
+  font-size: 0.77rem;
+  font-weight: 700;
+}
+
+.assignments-badge {
+  gap: 0.5rem;
+  padding: 0.52rem 0.82rem;
+  background: rgba(200, 146, 45, 0.1);
+  color: #a36f16;
+}
+
+.assignments-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.35rem;
+  padding: 0 1.5rem 1.5rem;
+}
+
+.assignments-form-grid {
+  gap: 1rem 1.25rem;
+}
+
+.assignments-form .field small,
+.assignments-history-controls .field small,
+.assignments-filter-shell .field small {
+  color: #b45309;
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.assignments-form__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding-top: 0.15rem;
+}
+
+.assignments-history-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 1rem 1.25rem;
+  align-items: end;
+  padding: 1.35rem 1.5rem 1.2rem;
+}
+
+.assignments-history-controls__actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.assignments-filter-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  padding: 1.45rem 1.5rem 1.25rem;
+  border-bottom: 1px solid rgba(214, 191, 152, 0.18);
+  background: linear-gradient(180deg, rgba(253, 251, 247, 0.96), rgba(255, 255, 255, 0.92));
+}
+
+.assignments-filter-shell__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem 1.5rem;
+}
+
+.assignments-filter-shell__copy {
+  min-width: 0;
+}
+
+.assignments-section-kicker {
+  display: inline-flex;
+  margin-bottom: 0.55rem;
+  color: #a36f16;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.assignments-filter-shell__copy h3 {
+  margin: 0;
+  color: #3d2b1f;
+  font-size: 1.08rem;
+}
+
+.assignments-filter-shell__copy p {
+  margin: 0.4rem 0 0;
+  color: #8a7867;
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
+.assignments-filters-grid {
+  gap: 1rem 1.25rem;
+}
+
+.assignments-filter-shell__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.assignments-active-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  padding: 0 1.5rem 1.2rem;
+  border-bottom: 1px solid rgba(214, 191, 152, 0.18);
+}
+
+.assignments-chip {
+  padding: 0.45rem 0.75rem;
+  background: rgba(200, 146, 45, 0.08);
+  color: #8f6724;
+}
+
+.assignments-stats {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.7rem;
+}
+
+.assignments-stats span {
+  padding: 0.45rem 0.72rem;
+  background: rgba(154, 138, 120, 0.08);
+  color: #766553;
+}
+
+.assignments-table-wrap {
+  overflow: hidden;
+  background: white;
+}
+
+.assignment-date {
+  color: #5f4a38;
+  font-weight: 600;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  white-space: nowrap;
+}
+
+.assignment-entity {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.assignment-entity strong {
+  color: #3d2b1f;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.assignment-entity span {
+  color: #9a8a78;
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.assignment-room-chip {
+  padding: 0.42rem 0.74rem;
+  background: rgba(200, 146, 45, 0.08);
+  color: #8e641c;
+}
+
+.assignment-quantity {
+  padding: 0.42rem 0.7rem;
+  background: rgba(220, 252, 231, 0.9);
+  color: #166534;
+}
+
+.assignment-person {
+  padding: 0.42rem 0.72rem;
+  background: rgba(219, 234, 254, 0.9);
+  color: #1d4ed8;
+}
+
+:host ::ng-deep app-page-header .page-header {
+  padding-bottom: 0;
+  margin-bottom: 0;
+  border-bottom: none;
+  align-items: center;
+}
+
+:host ::ng-deep .assignments-table .p-datatable-table {
+  min-width: 60rem;
+}
+
+:host ::ng-deep .assignments-table .p-datatable-thead > tr > th {
+  padding: 1rem 1.15rem;
+  background: #fdfbf7;
+  color: #7b6754;
+  font-size: 0.73rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+:host ::ng-deep .assignments-table .p-datatable-tbody > tr > td {
+  padding: 1rem 1.15rem;
+  vertical-align: middle;
+}
+
+:host ::ng-deep .assignments-table .p-datatable-tbody > tr:last-child > td {
+  border-bottom: none;
+}
+
+:host ::ng-deep .assignments-table .p-paginator {
+  border: none;
+  border-top: 1px solid rgba(214, 191, 152, 0.18);
+  padding: 0.95rem 1.15rem;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+:host ::ng-deep .assignments-table .p-paginator-current {
+  color: #8a7867;
+  font-size: 0.82rem;
+}
+
+@media (max-width: 960px) {
+  .assignments-section-head,
+  .assignments-filter-shell__header,
+  .assignments-history-controls {
+    grid-template-columns: 1fr;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .assignments-filter-shell__actions,
+  .assignments-history-controls__actions,
+  .assignments-stats {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 720px) {
+  .assignments-summary-card {
+    grid-template-columns: 1fr;
+    align-items: flex-start;
+  }
+
+  .assignments-section-head,
+  .assignments-form,
+  .assignments-history-controls,
+  .assignments-filter-shell {
+    padding-inline: 1rem;
+  }
+
+  .assignments-active-filters {
+    padding-inline: 1rem;
+  }
+
+  .assignments-filter-shell__actions > *,
+  .assignments-history-controls__actions > *,
+  .assignments-form__actions > * {
+    width: 100%;
+  }
+
+  .assignments-form__actions {
+    justify-content: stretch;
+  }
+}

@@ -33,12 +33,10 @@
 
 /* Header Pixel-Perfect */
 .sidebar__header {
-  padding: 1.5rem 1.5rem 1.25rem;
+  padding: 1.25rem 1.25rem 1rem;
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 1.2rem;
-  border-bottom: 1px solid var(--border-color);
   margin-bottom: 0.5rem;
 }
 
@@ -51,52 +49,15 @@
 
 .sidebar__brand {
   display: flex;
-  align-items: center;
-  gap: 1.2rem;
-}
-
-.sidebar__logo-wrap {
-  width: 4rem;
-  height: 4rem;
-  display: flex;
-  align-items: center;
   justify-content: center;
-  position: relative;
-  transition: transform 0.3s ease;
+  align-items: center;
 }
 
-.sidebar__logo-wrap:hover {
-  transform: scale(1.05) rotate(2deg);
-}
-
-.sidebar__logo-svg {
-  width: 100%;
-  height: 100%;
-}
-
-.sidebar__brand-text {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.sidebar__brand-main {
-  font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
-  font-size: 1.7rem;
-  font-weight: 600;
-  color: #1a1a1a;
-  letter-spacing: -0.01em;
-  line-height: 1;
-}
-
-.sidebar__brand-sub {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  font-size: 0.6rem;
-  font-weight: 700;
-  letter-spacing: 0.15em;
-  color: var(--accent-gold);
-  text-transform: uppercase;
-  opacity: 0.9;
+.sidebar__brand-image {
+  display: block;
+  width: min(10.5rem, 100%);
+  height: auto;
+  filter: drop-shadow(0 18px 38px rgba(200, 146, 45, 0.34));
 }
 
 /* Navigation List */
@@ -226,12 +187,6 @@
   white-space: nowrap;
   text-overflow: ellipsis;
   overflow: hidden;
-}
-
-.sidebar__user-status {
-  font-size: 0.7rem;
-  color: #10b981; /* Success green */
-  font-weight: 500;
 }
 
 .sidebar__logout {

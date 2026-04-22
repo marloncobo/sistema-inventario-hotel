@@ -1,7 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { take } from 'rxjs';
+import { startWith, take } from 'rxjs';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
@@ -29,7 +30,8 @@ import { PageHeaderComponent } from '@shared/components/page-header/page-header.
     TableModule,
     TagModule
   ],
-  templateUrl: './movements-page.component.html'
+  templateUrl: './movements-page.component.html',
+  styleUrls: ['./movements-page.component.css']
 })
 export class MovementsPageComponent implements OnInit {
   private readonly inventoryApi = inject(InventoryApiService);
@@ -54,6 +56,10 @@ export class MovementsPageComponent implements OnInit {
     startDate: [''],
     endDate: ['']
   });
+  protected readonly filtersValue = toSignal(
+    this.filtersForm.valueChanges.pipe(startWith(this.filtersForm.getRawValue())),
+    { initialValue: this.filtersForm.getRawValue() }
+  );
 
   protected readonly voidForm = this.fb.nonNullable.group({
     reason: ['', [Validators.required, Validators.minLength(4)]]
@@ -65,6 +71,57 @@ export class MovementsPageComponent implements OnInit {
         ['ANULADO', 'VOIDED', 'VOID'].includes(movement.status.toUpperCase())
       ).length
   );
+  protected readonly entryCount = computed(
+    () => this.movements().filter((movement) => this.movementTypeLabel(movement) === 'Entrada').length
+  );
+  protected readonly exitCount = computed(
+    () => this.movements().filter((movement) => this.movementTypeLabel(movement) === 'Salida').length
+  );
+  protected readonly activeFilterChips = computed(() => {
+    const filters = this.filtersValue();
+    const chips: string[] = [];
+    const type = filters.type?.trim() || '';
+    const origin = filters.origin?.trim() || '';
+    const roomNumber = filters.roomNumber?.trim() || '';
+    const responsible = filters.responsible?.trim() || '';
+    const operationalResponsible = filters.operationalResponsible?.trim() || '';
+    const areaName = filters.areaName?.trim() || '';
+
+    if (type) {
+      chips.push(`Tipo: ${type}`);
+    }
+
+    if (origin) {
+      chips.push(`Origen: ${origin}`);
+    }
+
+    if (roomNumber) {
+      chips.push(`Habitacion: ${roomNumber}`);
+    }
+
+    if (responsible) {
+      chips.push(`Responsable: ${responsible}`);
+    }
+
+    if (operationalResponsible) {
+      chips.push(`Responsable operativo: ${operationalResponsible}`);
+    }
+
+    if (areaName) {
+      chips.push(`Area: ${areaName}`);
+    }
+
+    if (filters.startDate) {
+      chips.push(`Desde: ${filters.startDate}`);
+    }
+
+    if (filters.endDate) {
+      chips.push(`Hasta: ${filters.endDate}`);
+    }
+
+    return chips;
+  });
+  protected readonly activeFilterCount = computed(() => this.activeFilterChips().length);
 
   ngOnInit(): void {
     this.loadServiceUsers();
@@ -97,6 +154,19 @@ export class MovementsPageComponent implements OnInit {
           this.loading.set(false);
         }
       });
+  }
+
+  protected clearFilters(): void {
+    this.filtersForm.reset({
+      type: '',
+      origin: '',
+      roomNumber: '',
+      responsible: '',
+      operationalResponsible: '',
+      areaName: '',
+      startDate: '',
+      endDate: ''
+    });
   }
 
   protected canVoid(movement: InventoryMovement): boolean {
@@ -137,6 +207,18 @@ export class MovementsPageComponent implements OnInit {
 
   protected formatDate(value: string): string {
     return new Date(value).toLocaleString();
+  }
+
+  protected formatMetric(value: number): string {
+    return new Intl.NumberFormat('es-CO').format(value);
+  }
+
+  protected locationLabel(movement: InventoryMovement): string {
+    return movement.roomNumber || movement.areaName || 'Sin ubicacion';
+  }
+
+  protected statusSeverity(movement: InventoryMovement): 'info' | 'danger' {
+    return this.canVoid(movement) ? 'info' : 'danger';
   }
 
   protected movementTypeLabel(movement: InventoryMovement): string {

@@ -179,6 +179,48 @@ h3 { font-size: 1.35rem; }
   font-size: 0.9rem;
 }
 
+.inventory-page app-page-header .page-header {
+  padding-bottom: 0;
+  margin-bottom: 0;
+  border-bottom: none;
+  align-items: center;
+}
+
+.inventory-table .p-datatable-table {
+  min-width: 68rem;
+}
+
+.inventory-table .p-datatable-thead > tr > th {
+  padding: 1rem 1.15rem;
+  background: #fdfbf7;
+  color: #7b6754;
+  font-size: 0.73rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.inventory-table .p-datatable-tbody > tr > td {
+  padding: 1rem 1.15rem;
+  vertical-align: middle;
+}
+
+.inventory-table .p-datatable-tbody > tr:last-child > td {
+  border-bottom: none;
+}
+
+.inventory-table .p-paginator {
+  border: none;
+  border-top: 1px solid rgba(214, 191, 152, 0.18);
+  padding: 0.95rem 1.15rem;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.inventory-table .p-paginator-current {
+  color: #8a7867;
+  font-size: 0.82rem;
+}
+
 /* Form Design - Clean & Aligned */
 .field {
   display: flex;

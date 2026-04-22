@@ -22,7 +22,8 @@ import { PageHeaderComponent } from '@shared/components/page-header/page-header.
     TableModule,
     TagModule
   ],
-  templateUrl: './alerts-page.component.html'
+  templateUrl: './alerts-page.component.html',
+  styleUrls: ['./alerts-page.component.css']
 })
 export class AlertsPageComponent implements OnInit {
   private readonly inventoryApi = inject(InventoryApiService);
@@ -38,6 +39,9 @@ export class AlertsPageComponent implements OnInit {
 
   protected readonly openAlertsCount = computed(
     () => this.alerts().filter((entry) => !entry.resolvedAt).length
+  );
+  protected readonly resolvedAlertsCount = computed(
+    () => this.alerts().filter((entry) => !!entry.resolvedAt).length
   );
 
   ngOnInit(): void {
@@ -75,5 +79,9 @@ export class AlertsPageComponent implements OnInit {
 
   protected formatDate(value: string | null): string {
     return value ? new Date(value).toLocaleString() : 'Pendiente';
+  }
+
+  protected openOnlyEnabled(): boolean {
+    return this.filtersForm.controls.openOnly.getRawValue();
   }
 }

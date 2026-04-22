@@ -1,44 +1,154 @@
-<div class="space-y-8">
+<div class="rooms-page">
   <app-page-header
     eyebrow="Operacion"
     title="Habitaciones"
-    subtitle="Control del estado y disponibilidad de habitaciones en Hotel Lunara."
+    subtitle="Control del estado, disponibilidad y detalle operativo de habitaciones en Hotel Lunara."
   >
-    <div header-actions>
+    <div header-actions class="rooms-header-actions">
       @if (canCreate()) {
         <button pButton type="button" icon="pi pi-plus" label="Nueva habitacion" (click)="openCreateDialog()"></button>
       }
     </div>
   </app-page-header>
 
-  <section class="summary-grid">
-    <article class="summary-card">
-      <span>Habitaciones visibles</span>
-      <strong>{{ rooms().length }}</strong>
-      <small>Registro activo</small>
+  <section class="summary-grid rooms-summary">
+    <article class="summary-card rooms-summary-card">
+      <div class="rooms-summary-card__icon">
+        <i class="pi pi-building"></i>
+      </div>
+      <div class="rooms-summary-card__content">
+        <span>Habitaciones visibles</span>
+        <strong>{{ rooms().length }}</strong>
+        <small>Registro operativo cargado para esta vista.</small>
+      </div>
     </article>
 
-    <article class="summary-card">
-      <span>Disponibles</span>
-      <strong>{{ availableCount() }}</strong>
-      <small>Estado DISPONIBLE</small>
+    <article class="summary-card rooms-summary-card">
+      <div class="rooms-summary-card__icon">
+        <i class="pi pi-check-circle"></i>
+      </div>
+      <div class="rooms-summary-card__content">
+        <span>Disponibles</span>
+        <strong>{{ availableCount() }}</strong>
+        <small>Habitaciones con estado listo para asignacion.</small>
+      </div>
     </article>
 
-    <article class="summary-card">
-      <span>Activas</span>
-      <strong>{{ activeCount() }}</strong>
-      <small>Backend limita el maximo operativo</small>
+    <article class="summary-card rooms-summary-card">
+      <div class="rooms-summary-card__icon">
+        <i class="pi pi-bolt"></i>
+      </div>
+      <div class="rooms-summary-card__content">
+        <span>Activas</span>
+        <strong>{{ activeCount() }}</strong>
+        <small>Unidades habilitadas dentro del maximo operativo.</small>
+      </div>
+    </article>
+
+    <article class="summary-card rooms-summary-card">
+      <div class="rooms-summary-card__icon">
+        <i class="pi pi-sort-alt"></i>
+      </div>
+      <div class="rooms-summary-card__content">
+        <span>Pisos visibles</span>
+        <strong>{{ floorCount() }}</strong>
+        <small>Distribucion organizada por niveles para esta vista.</small>
+      </div>
     </article>
   </section>
 
-  <section class="surface-card space-y-8">
-    <div class="app-toolbar">
-      <div>
-        <h3 class="m-0">Habitaciones registradas</h3>
-        <small class="text-slate-500">Seguimiento de disponibilidad y detalle operativo</small>
+  <section class="surface-card rooms-layout-board">
+    <div class="rooms-layout-head">
+      <div class="rooms-layout-head__identity">
+        <div class="rooms-layout-head__icon">
+          <i class="pi pi-sitemap"></i>
+        </div>
+        <div>
+          <h3>Distribucion de habitaciones</h3>
+          <p>Vista ordenada por piso y numero para ubicar rapido cada espacio operativo.</p>
+        </div>
       </div>
 
-      <div class="app-toolbar__actions">
+      <div class="rooms-layout-head__stats">
+        <span>{{ floorCount() }} pisos</span>
+        <span>{{ occupiedCount() }} ocupadas</span>
+        <span>{{ unavailableCount() }} no disponibles</span>
+      </div>
+    </div>
+
+    @if (!loading() && !orderedRooms().length) {
+      <app-empty-state
+        icon="pi pi-building-columns"
+        title="Sin distribucion disponible"
+        message="Cuando existan habitaciones registradas, aqui veras el orden por piso."
+      />
+    } @else {
+      <div class="rooms-layout-grid">
+        @for (section of floorSections(); track section.floor) {
+          <article class="floor-section">
+            <div class="floor-section__head">
+              <div>
+                <h4>Piso {{ section.floor }}</h4>
+                <p>{{ section.total }} habitaciones ordenadas para consulta rapida.</p>
+              </div>
+
+              <div class="floor-section__stats">
+                <span>{{ section.available }} disponibles</span>
+                <span>{{ section.active }} activas</span>
+              </div>
+            </div>
+
+            <div class="floor-section__rooms">
+              @for (room of section.rooms; track room.id) {
+                <button
+                  type="button"
+                  class="room-tile"
+                  [class.room-tile--selected]="selectedRoom()?.id === room.id"
+                  [class.room-tile--available]="room.status === 'DISPONIBLE'"
+                  [class.room-tile--occupied]="room.status === 'OCUPADA'"
+                  [class.room-tile--blocked]="room.status !== 'DISPONIBLE' && room.status !== 'OCUPADA'"
+                  [class.room-tile--inactive]="!room.active"
+                  (click)="selectRoom(room.id)"
+                >
+                  <div class="room-tile__head">
+                    <span class="room-number-chip">{{ room.number }}</span>
+                    <span class="room-tile__capacity">{{ room.capacity }} pax</span>
+                  </div>
+
+                  <div class="room-tile__body">
+                    <strong>{{ room.type }}</strong>
+                    <span>{{ roomTileSubtitle(room) }}</span>
+                  </div>
+
+                  <div class="room-tile__tags">
+                    <p-tag [value]="room.status" [severity]="roomStatusSeverity(room.status)"></p-tag>
+                    <p-tag
+                      [value]="room.active ? 'Activa' : 'Inactiva'"
+                      [severity]="room.active ? 'success' : 'danger'"
+                    ></p-tag>
+                  </div>
+                </button>
+              }
+            </div>
+          </article>
+        }
+      </div>
+    }
+  </section>
+
+  <section class="surface-card rooms-workbench">
+    <div class="rooms-result-head">
+      <div class="rooms-result-head__identity">
+        <div class="rooms-result-head__icon">
+          <i class="pi pi-th-large"></i>
+        </div>
+        <div>
+          <h3>Habitaciones registradas</h3>
+          <p>Consulta general de disponibilidad, estado operativo y acceso al detalle de cada habitacion.</p>
+        </div>
+      </div>
+
+      <div class="rooms-result-head__actions">
         <button
           pButton
           type="button"
@@ -52,143 +162,221 @@
       </div>
     </div>
 
-    @if (!loading() && !rooms().length) {
-      <app-empty-state
-        icon="pi pi-building-columns"
-        title="Sin habitaciones registradas"
-        message="El backend aun no devolvio habitaciones activas para este usuario."
-      />
-    } @else {
-      <p-table [value]="rooms()" [loading]="loading()" [paginator]="true" [rows]="10" responsiveLayout="scroll">
-        <ng-template pTemplate="header">
-          <tr>
-            <th>Numero</th>
-            <th>Tipo</th>
-            <th>Estado</th>
-            <th>Capacidad</th>
-            <th>Piso</th>
-            <th class="text-right">Acciones</th>
-          </tr>
-        </ng-template>
+    <div class="rooms-result-stats">
+      <span>{{ rooms().length }} visibles</span>
+      <span>{{ floorCount() }} pisos</span>
+      <span>{{ availableCount() }} disponibles</span>
+      <span>{{ activeCount() }} activas</span>
+      @if (selectedRoom(); as room) {
+        <span>Detalle {{ room.number }}</span>
+      }
+    </div>
 
-        <ng-template pTemplate="body" let-room>
-          <tr>
-            <td>{{ room.number }}</td>
-            <td>{{ room.type }}</td>
-            <td>
-              <div class="flex flex-wrap gap-2">
-                <p-tag [value]="room.status" severity="info"></p-tag>
-                <p-tag [value]="room.active ? 'Activa' : 'Inactiva'" [severity]="room.active ? 'success' : 'danger'"></p-tag>
-              </div>
-            </td>
-            <td>{{ room.capacity }}</td>
-            <td>{{ room.floor }}</td>
-            <td class="text-right">
-              <div class="flex flex-wrap justify-end gap-2">
-                <button
-                  pButton
-                  type="button"
-                  icon="pi pi-eye"
-                  size="small"
-                  severity="secondary"
-                  variant="outlined"
-                  (click)="selectRoom(room.id)"
-                ></button>
+    <div class="rooms-table-wrap">
+      @if (!loading() && !rooms().length) {
+        <app-empty-state
+          icon="pi pi-building-columns"
+          title="Sin habitaciones registradas"
+          message="El backend aun no devolvio habitaciones activas para este usuario."
+        />
+      } @else {
+        <p-table
+          [value]="orderedRooms()"
+          [loading]="loading()"
+          [paginator]="true"
+          [rows]="10"
+          [rowsPerPageOptions]="[10, 20, 50]"
+          [showCurrentPageReport]="true"
+          currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} habitaciones"
+          responsiveLayout="scroll"
+          styleClass="rooms-table"
+        >
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Numero</th>
+              <th>Tipo</th>
+              <th>Estado</th>
+              <th>Capacidad</th>
+              <th>Piso</th>
+              <th class="text-right">Acciones</th>
+            </tr>
+          </ng-template>
 
-                @if (canUpdateStatus()) {
+          <ng-template pTemplate="body" let-room>
+            <tr>
+              <td><span class="room-number-chip">{{ room.number }}</span></td>
+              <td>
+                <div class="room-entity">
+                  <strong>{{ room.type }}</strong>
+                  <span>{{ room.active ? 'Habitacion activa' : 'Habitacion inactiva' }}</span>
+                </div>
+              </td>
+              <td>
+                <div class="room-status-stack">
+                  <p-tag [value]="room.status" [severity]="roomStatusSeverity(room.status)"></p-tag>
+                  <p-tag
+                    [value]="room.active ? 'Activa' : 'Inactiva'"
+                    [severity]="room.active ? 'success' : 'danger'"
+                  ></p-tag>
+                </div>
+              </td>
+              <td><span class="room-capacity">{{ room.capacity }} personas</span></td>
+              <td><span class="room-floor">Piso {{ room.floor }}</span></td>
+              <td class="text-right">
+                <div class="room-actions">
                   <button
                     pButton
                     type="button"
-                    icon="pi pi-sync"
+                    icon="pi pi-eye"
                     size="small"
-                    severity="warn"
+                    severity="secondary"
                     variant="outlined"
-                    (click)="openStatusDialog(room)"
+                    (click)="selectRoom(room.id)"
                   ></button>
-                }
-              </div>
-            </td>
-          </tr>
-        </ng-template>
-      </p-table>
-    }
+
+                  @if (canUpdateStatus()) {
+                    <button
+                      pButton
+                      type="button"
+                      icon="pi pi-sync"
+                      size="small"
+                      severity="warn"
+                      variant="outlined"
+                      (click)="openStatusDialog(room)"
+                    ></button>
+                  }
+                </div>
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      }
+    </div>
   </section>
 
   @if (selectedRoom(); as room) {
-    <section class="surface-card space-y-6">
-      <div class="app-toolbar">
-        <div>
-          <h3 class="m-0">Detalle de la habitacion {{ room.number }}</h3>
-          <small class="text-slate-500">Información actual y entregas registradas</small>
+    <section class="surface-card room-detail">
+      <div class="room-detail-head">
+        <div class="room-detail-head__identity">
+          <div class="room-detail-head__icon">
+            <i class="pi pi-home"></i>
+          </div>
+          <div>
+            <h3>Detalle de la habitacion {{ room.number }}</h3>
+            <p>Informacion actual, estado operativo y trazabilidad de insumos asociados.</p>
+          </div>
         </div>
 
-        <button
-          pButton
-          type="button"
-          icon="pi pi-refresh"
-          label="Actualizar detalle"
-          severity="secondary"
-          variant="outlined"
-          [loading]="detailLoading()"
-          (click)="selectRoom(room.id)"
-        ></button>
+        <div class="room-detail-head__meta">
+          <p-tag [value]="room.status" [severity]="roomStatusSeverity(room.status)"></p-tag>
+          <p-tag [value]="room.active ? 'Activa' : 'Inactiva'" [severity]="room.active ? 'success' : 'danger'"></p-tag>
+          <button
+            pButton
+            type="button"
+            icon="pi pi-refresh"
+            label="Actualizar detalle"
+            severity="secondary"
+            variant="outlined"
+            [loading]="detailLoading()"
+            (click)="selectRoom(room.id)"
+          ></button>
+        </div>
       </div>
 
-      <div class="summary-grid">
-        <article class="summary-card">
+      <div class="summary-grid room-detail-summary">
+        <article class="summary-card room-detail-card">
           <span>Tipo</span>
           <strong>{{ room.type }}</strong>
-          <small>Capacidad {{ room.capacity }}</small>
+          <small>Capacidad para {{ room.capacity }} personas.</small>
         </article>
 
-        <article class="summary-card">
-          <span>Estado</span>
-          <strong>{{ room.status }}</strong>
-          <small>Piso {{ room.floor }}</small>
+        <article class="summary-card room-detail-card">
+          <span>Ubicacion</span>
+          <strong>Piso {{ room.floor }}</strong>
+          <small>Estado actual: {{ room.status }}</small>
         </article>
 
-        <article class="summary-card">
+        <article class="summary-card room-detail-card">
           <span>Observaciones</span>
           <strong>{{ room.observations || 'Sin observaciones' }}</strong>
           <small>Activo: {{ room.active ? 'Si' : 'No' }}</small>
         </article>
+
+        <article class="summary-card room-detail-card">
+          <span>Historial visible</span>
+          <strong>{{ orderedAssignments().length }}</strong>
+          <small>Asignaciones cargadas para esta habitacion.</small>
+        </article>
       </div>
 
-      <article class="rounded-3xl border border-slate-200 bg-white p-6">
-        <h4 class="m-0 text-base text-slate-900">Historial de insumos asignados</h4>
-        <p class="mt-2 text-sm text-slate-500">Trazabilidad de insumos entregados a la habitación.</p>
+      <article class="room-detail-panel">
+        <div class="room-detail-panel__header">
+          <div class="room-detail-panel__identity">
+            <div class="room-detail-panel__icon">
+              <i class="pi pi-send"></i>
+            </div>
+            <div>
+              <h4>Historial de insumos asignados</h4>
+              <p>Trazabilidad de entregas y devoluciones registradas en la habitacion.</p>
+            </div>
+          </div>
 
-        @if (!detailLoading() && !assignments().length) {
-          <app-empty-state
-            icon="pi pi-send"
-            title="Sin historial de insumos"
-            message="La habitacion seleccionada aun no registra asignaciones de insumos."
-          />
-        } @else {
-          <p-table [value]="assignments()" [loading]="detailLoading()" [paginator]="true" [rows]="6" responsiveLayout="scroll">
-            <ng-template pTemplate="header">
-              <tr>
-                <th>Fecha</th>
-                <th>Item</th>
-                <th>Tipo</th>
-                <th>Cantidad</th>
-                <th>Entregado por</th>
-                <th>Huesped</th>
-              </tr>
-            </ng-template>
+          <span class="room-detail-panel__badge">{{ orderedAssignments().length }} movimientos</span>
+        </div>
 
-            <ng-template pTemplate="body" let-assignment>
-              <tr>
-                <td>{{ formatDate(assignment.createdAt) }}</td>
-                <td>{{ assignment.itemName }}</td>
-                <td>{{ assignment.assignmentType }}</td>
-                <td>{{ assignment.quantity }}</td>
-                <td>{{ assignment.deliveredBy }}</td>
-                <td>{{ assignment.guestName || 'Sin huesped' }}</td>
-              </tr>
-            </ng-template>
-          </p-table>
-        }
+        <div class="rooms-table-wrap">
+          @if (!detailLoading() && !orderedAssignments().length) {
+            <app-empty-state
+              icon="pi pi-send"
+              title="Sin historial de insumos"
+              message="La habitacion seleccionada aun no registra asignaciones de insumos."
+            />
+          } @else {
+            <p-table
+              [value]="orderedAssignments()"
+              [loading]="detailLoading()"
+              [paginator]="true"
+              [rows]="6"
+              [rowsPerPageOptions]="[6, 12, 24]"
+              [showCurrentPageReport]="true"
+              currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} movimientos"
+              responsiveLayout="scroll"
+              styleClass="rooms-table rooms-table--detail"
+            >
+              <ng-template pTemplate="header">
+                <tr>
+                  <th>Fecha</th>
+                  <th>Item</th>
+                  <th>Movimiento</th>
+                  <th>Cantidad</th>
+                  <th>Entregado por</th>
+                  <th>Huesped</th>
+                </tr>
+              </ng-template>
+
+              <ng-template pTemplate="body" let-assignment>
+                <tr>
+                  <td><span class="room-date">{{ formatDate(assignment.createdAt) }}</span></td>
+                  <td>
+                    <div class="room-entity">
+                      <strong>{{ assignment.itemName }}</strong>
+                      <span>Registro asociado a la habitacion</span>
+                    </div>
+                  </td>
+                  <td>
+                    <p-tag
+                      [value]="assignmentFlowLabel(assignment.assignmentType)"
+                      [severity]="assignmentFlowSeverity(assignment.assignmentType)"
+                    ></p-tag>
+                  </td>
+                  <td><span class="room-capacity">{{ assignment.quantity }} uds</span></td>
+                  <td><span class="room-person">{{ assignment.deliveredBy }}</span></td>
+                  <td>{{ assignment.guestName || 'Sin huesped' }}</td>
+                </tr>
+              </ng-template>
+            </p-table>
+          }
+        </div>
       </article>
     </section>
   }
@@ -202,7 +390,7 @@
   header="Nueva habitacion"
   (visibleChange)="createDialogVisible.set($event)"
 >
-  <form [formGroup]="createForm" class="space-y-8" (ngSubmit)="submitCreate()">
+  <form [formGroup]="createForm" class="rooms-dialog-form" (ngSubmit)="submitCreate()">
     <div class="form-grid">
       <label class="field">
         <span>Numero</span>
@@ -256,7 +444,7 @@
       <textarea class="field-control field-control--textarea" formControlName="observations"></textarea>
     </label>
 
-    <div class="flex justify-end gap-3">
+    <div class="rooms-dialog-actions">
       <button
         pButton
         type="button"
@@ -278,7 +466,7 @@
   header="Actualizar estado"
   (visibleChange)="statusDialogVisible.set($event)"
 >
-  <form [formGroup]="statusForm" class="space-y-8" (ngSubmit)="submitStatus()">
+  <form [formGroup]="statusForm" class="rooms-dialog-form" (ngSubmit)="submitStatus()">
     <label class="field">
       <span>Estado</span>
       <select class="field-control" formControlName="status">
@@ -288,7 +476,7 @@
       </select>
     </label>
 
-    <div class="flex justify-end gap-3">
+    <div class="rooms-dialog-actions">
       <button
         pButton
         type="button"

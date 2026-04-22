@@ -16,39 +16,11 @@
   <!-- Header: Branding Pixel-Perfect -->
   <header class="sidebar__header">
     <div class="sidebar__brand">
-      <div class="sidebar__logo-wrap">
-        <svg class="sidebar__logo-svg" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <linearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="#f5d061" />
-              <stop offset="45%" stop-color="#c8922d" />
-              <stop offset="55%" stop-color="#b8862d" />
-              <stop offset="100%" stop-color="#996515" />
-            </linearGradient>
-            <filter id="starGlow" x="-50%" y="-50%" width="200%" height="200%">
-              <feGaussianBlur stdDeviation="1.2" result="blur" />
-              <feComposite in="SourceGraphic" in2="blur" operator="over" />
-            </filter>
-          </defs>
-
-          <!-- Luxury Halos -->
-          <circle cx="50" cy="50" r="48" stroke="url(#goldGradient)" stroke-width="0.15" stroke-opacity="0.1"/>
-          <circle cx="50" cy="50" r="40" stroke="url(#goldGradient)" stroke-width="0.25" stroke-opacity="0.15"/>
-          <circle cx="50" cy="50" r="32" stroke="url(#goldGradient)" stroke-width="0.35" stroke-opacity="0.2"/>
-
-          <!-- High-End Tapered Crescent -->
-          <path d="M78 50C78 65.464 65.464 78 50 78C34.536 78 22 65.464 22 50C22 34.536 34.536 22 50 22C51.5 22 53 22.2 54.4 22.5C46.8 26 42 34.5 42 43C42 54.6 51.4 64 63 64C69.5 64 75 59.5 77.5 53C77.8 52 78 51 78 50Z" fill="url(#goldGradient)"/>
-
-          <!-- Radiant Sparkle -->
-          <g filter="url(#starGlow)">
-            <path d="M63 26C63 26 63.5 33.5 65.5 35.5C67.5 37.5 75 38 75 38C75 38 67.5 38.5 65.5 40.5C63.5 42.5 63 50 63 50C63 50 62.5 42.5 60.5 40.5C58.5 38.5 51 38 51 38C51 38 58.5 37.5 60.5 35.5C62.5 33.5 63 26 63 26Z" fill="url(#goldGradient)"/>
-          </g>
-        </svg>
-      </div>
-      <div class="sidebar__brand-text">
-        <span class="sidebar__brand-main">Lunara</span>
-        <span class="sidebar__brand-sub">HOTEL MANAGEMENT</span>
-      </div>
+      <img
+        class="sidebar__brand-image"
+        src="/images/lunara-login-logo-cropped.png"
+        alt="Logo de Lunara"
+      />
     </div>
   </header>
 
@@ -89,11 +61,10 @@
       <div class="sidebar__user-avatar">
         {{ username().charAt(0).toUpperCase() }}
       </div>
-      <div class="sidebar__user-info">
-        <span class="sidebar__user-name">{{ username() }}</span>
-        <span class="sidebar__user-status">En línea</span>
-      </div>
+    <div class="sidebar__user-info">
+      <span class="sidebar__user-name">{{ username() }}</span>
     </div>
+  </div>
 
     <button type="button" class="sidebar__logout" (click)="logout()" title="Cerrar sesión">
       <i class="pi pi-sign-out"></i>

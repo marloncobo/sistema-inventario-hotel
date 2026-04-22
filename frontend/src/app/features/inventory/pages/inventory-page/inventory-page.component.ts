@@ -28,6 +28,13 @@ import { PageHeaderComponent } from '@shared/components/page-header/page-header.
 import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
 
 type InventoryDialog = 'item' | 'entry' | 'return' | 'decrease';
+type InventorySection = {
+  category: string;
+  total: number;
+  lowStock: number;
+  outOfStock: number;
+  items: SupplyItem[];
+};
 
 @Component({
   selector: 'app-inventory-page',
@@ -43,7 +50,8 @@ type InventoryDialog = 'item' | 'entry' | 'return' | 'decrease';
     TableModule,
     TagModule
   ],
-  templateUrl: './inventory-page.component.html'
+  templateUrl: './inventory-page.component.html',
+  styleUrls: ['./inventory-page.component.css']
 })
 export class InventoryPageComponent implements OnInit {
   private readonly authService = inject(AuthService);
@@ -126,13 +134,70 @@ export class InventoryPageComponent implements OnInit {
     });
   });
 
+  protected readonly orderedItems = computed(() =>
+    [...this.filteredItems()].sort((left, right) => this.compareItems(left, right))
+  );
+
+  protected readonly categorySections = computed<InventorySection[]>(() => {
+    const sections = new Map<string, SupplyItem[]>();
+
+    for (const item of this.orderedItems()) {
+      const category = this.itemCategoryLabel(item);
+      const items = sections.get(category) ?? [];
+      items.push(item);
+      sections.set(category, items);
+    }
+
+    return Array.from(sections.entries())
+      .map(([category, items]) => ({
+        category,
+        total: items.length,
+        lowStock: items.filter((item) => this.isLowStock(item) && item.stock > 0).length,
+        outOfStock: items.filter((item) => item.stock === 0).length,
+        items
+      }))
+      .sort((left, right) => this.compareSections(left, right));
+  });
+
   protected readonly activeItemsCount = computed(
-    () => this.filteredItems().filter((item) => item.active).length
+    () => this.orderedItems().filter((item) => item.active).length
   );
 
   protected readonly lowStockCount = computed(
-    () => this.filteredItems().filter((item) => this.isLowStock(item)).length
+    () => this.orderedItems().filter((item) => this.isLowStock(item)).length
   );
+
+  protected readonly visibleCategoryCount = computed(() => this.categorySections().length);
+
+  protected readonly outOfStockCount = computed(
+    () => this.orderedItems().filter((item) => item.stock === 0).length
+  );
+  protected readonly stableStockCount = computed(
+    () =>
+      this.orderedItems().filter(
+        (item) => item.active && item.stock > 0 && !this.isLowStock(item)
+      ).length
+  );
+  protected readonly prioritySections = computed(() => this.categorySections().slice(0, 4));
+  protected readonly activeFilterSummary = computed(() => {
+    const filters: string[] = [];
+    const search = this.filtersForm.controls.search.getRawValue().trim();
+    const category = this.filtersForm.controls.category.getRawValue().trim();
+
+    if (search) {
+      filters.push(`Busqueda: ${search}`);
+    }
+
+    if (category) {
+      filters.push(`Categoria: ${category}`);
+    }
+
+    if (!filters.length) {
+      filters.push('Sin filtros activos');
+    }
+
+    return filters;
+  });
 
   protected readonly categoryOptions = computed(() => {
     const values = new Set<string>();
@@ -180,6 +245,42 @@ export class InventoryPageComponent implements OnInit {
     return item.stock <= item.minStock;
   }
 
+  protected itemCategoryLabel(item: SupplyItem): string {
+    return item.category?.trim() || 'Sin categoria';
+  }
+
+  protected itemStockStatusLabel(item: SupplyItem): string {
+    if (!item.active) {
+      return 'Inactivo';
+    }
+
+    if (item.stock === 0) {
+      return 'Agotado';
+    }
+
+    if (this.isLowStock(item)) {
+      return 'Stock bajo';
+    }
+
+    return 'Stock estable';
+  }
+
+  protected itemStockStatusSeverity(item: SupplyItem): 'success' | 'warn' | 'danger' {
+    if (!item.active || item.stock === 0) {
+      return 'danger';
+    }
+
+    if (this.isLowStock(item)) {
+      return 'warn';
+    }
+
+    return 'success';
+  }
+
+  protected itemStockRange(item: SupplyItem): string {
+    return `Min ${item.minStock} | Max ${item.maxStock ?? 'N/A'}`;
+  }
+
   protected dialogTitle(): string {
     switch (this.activeDialog()) {
       case 'entry':
@@ -204,6 +305,12 @@ export class InventoryPageComponent implements OnInit {
       .subscribe({
         next: (items) => {
           this.items.set(items);
+          const currentSelectedItemId = this.selectedItem()?.id;
+          if (currentSelectedItemId) {
+            this.selectedItem.set(
+              items.find((item) => item.id === currentSelectedItemId) ?? null
+            );
+          }
           this.loading.set(false);
         },
         error: () => {
@@ -409,7 +516,10 @@ export class InventoryPageComponent implements OnInit {
           this.saving.set(false);
           this.dialogVisible = false;
           this.resetDialogs();
-          this.notificationService.success('Inventario', response.message || 'Devolucion registrada.');
+          this.notificationService.success(
+            'Inventario',
+            response.message || 'Devolucion registrada.'
+          );
           this.loadItems();
           this.selectItem(currentItemId);
         },
@@ -455,7 +565,10 @@ export class InventoryPageComponent implements OnInit {
           this.saving.set(false);
           this.dialogVisible = false;
           this.resetDialogs();
-          this.notificationService.success('Inventario', response.message || 'Salida registrada.');
+          this.notificationService.success(
+            'Inventario',
+            response.message || 'Salida registrada.'
+          );
           this.loadItems();
           this.selectItem(currentItemId);
         },
@@ -547,9 +660,13 @@ export class InventoryPageComponent implements OnInit {
   private loadReferenceData(): void {
     if (this.isAdmin()) {
       forkJoin({
-        categories: this.inventoryApi.getCategories().pipe(catchError(() => of([] as CatalogEntity[]))),
+        categories: this.inventoryApi
+          .getCategories()
+          .pipe(catchError(() => of([] as CatalogEntity[]))),
         units: this.inventoryApi.getUnits().pipe(catchError(() => of([] as UnitOfMeasure[]))),
-        providers: this.inventoryApi.getProviders().pipe(catchError(() => of([] as Provider[]))),
+        providers: this.inventoryApi
+          .getProviders()
+          .pipe(catchError(() => of([] as Provider[]))),
         users: this.usersApi.getUsers().pipe(catchError(() => of([] as AppUser[])))
       })
         .pipe(take(1))
@@ -566,7 +683,9 @@ export class InventoryPageComponent implements OnInit {
 
     if (this.canManageItems()) {
       forkJoin({
-        providers: this.inventoryApi.getProviders().pipe(catchError(() => of([] as Provider[]))),
+        providers: this.inventoryApi
+          .getProviders()
+          .pipe(catchError(() => of([] as Provider[]))),
         users: this.usersApi.getUsers().pipe(catchError(() => of([] as AppUser[])))
       })
         .pipe(take(1))
@@ -608,5 +727,59 @@ export class InventoryPageComponent implements OnInit {
     }
 
     return 'Valor invalido.';
+  }
+
+  private compareItems(left: SupplyItem, right: SupplyItem): number {
+    const categoryDifference = this.itemCategoryLabel(left).localeCompare(
+      this.itemCategoryLabel(right),
+      undefined,
+      { sensitivity: 'base' }
+    );
+
+    if (categoryDifference !== 0) {
+      return categoryDifference;
+    }
+
+    const stockPriorityDifference = this.stockPriority(left) - this.stockPriority(right);
+    if (stockPriorityDifference !== 0) {
+      return stockPriorityDifference;
+    }
+
+    return left.name.localeCompare(right.name, undefined, { sensitivity: 'base' });
+  }
+
+  private stockPriority(item: SupplyItem): number {
+    if (!item.active) {
+      return 3;
+    }
+
+    if (item.stock === 0) {
+      return 0;
+    }
+
+    if (this.isLowStock(item)) {
+      return 1;
+    }
+
+    return 2;
+  }
+
+  private compareSections(left: InventorySection, right: InventorySection): number {
+    const outDifference = right.outOfStock - left.outOfStock;
+    if (outDifference !== 0) {
+      return outDifference;
+    }
+
+    const lowDifference = right.lowStock - left.lowStock;
+    if (lowDifference !== 0) {
+      return lowDifference;
+    }
+
+    const totalDifference = right.total - left.total;
+    if (totalDifference !== 0) {
+      return totalDifference;
+    }
+
+    return left.category.localeCompare(right.category, undefined, { sensitivity: 'base' });
   }
 }

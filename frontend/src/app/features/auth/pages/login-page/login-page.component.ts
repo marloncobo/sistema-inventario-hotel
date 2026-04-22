@@ -33,21 +33,11 @@ import { CommonModule } from '@angular/common';
         <div class="login-main__content">
           <header class="login-header">
             <div class="brand">
-              <svg class="brand__logo" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                  <linearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stop-color="#f5d061" />
-                    <stop offset="45%" stop-color="#c8922d" />
-                    <stop offset="55%" stop-color="#b8862d" />
-                    <stop offset="100%" stop-color="#996515" />
-                  </linearGradient>
-                </defs>
-                <path d="M78 50C78 65.464 65.464 78 50 78C34.536 78 22 65.464 22 50C22 34.536 34.536 22 50 22C51.5 22 53 22.2 54.4 22.5C46.8 26 42 34.5 42 43C42 54.6 51.4 64 63 64C69.5 64 75 59.5 77.5 53C77.8 52 78 51 78 50Z" fill="url(#goldGradient)"/>
-              </svg>
-              <div class="brand__text">
-                <span class="brand__name">Lunara</span>
-                <span class="brand__tagline">HOTEL MANAGEMENT</span>
-              </div>
+              <img
+                class="brand__image"
+                src="/images/lunara-login-logo.png"
+                alt="Logo de Lunara"
+              />
             </div>
           </header>
 
@@ -177,9 +167,10 @@ import { CommonModule } from '@angular/common';
 
     /* Right Section Styles */
     .login-main {
-      padding: 3rem;
+      padding: 2.5rem 3rem 2rem;
       display: grid;
-      place-items: center;
+      justify-items: center;
+      align-items: center;
       background: linear-gradient(135deg, #ffffff 0%, #fffbf2 100%);
       position: relative;
       z-index: 10;
@@ -191,39 +182,30 @@ import { CommonModule } from '@angular/common';
       max-width: 400px;
       display: flex;
       flex-direction: column;
-      gap: 3.5rem;
+      gap: 1.1rem;
+      transform: translateY(-1.9rem);
+    }
+
+    .login-header {
+      display: flex;
+      justify-content: center;
+      margin-bottom: -1.7rem;
     }
 
     .brand {
       display: flex;
       align-items: center;
-      gap: 1rem;
+      justify-content: center;
     }
 
-    .brand__logo {
-      width: 3rem;
-      height: 3rem;
-    }
-
-    .brand__text {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .brand__name {
-      font-family: 'Palatino Linotype', serif;
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: #4a3210;
-      letter-spacing: -0.02em;
-    }
-
-    .brand__tagline {
-      font-size: 0.65rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.2em;
-      color: #c8922d;
+    .brand__image {
+      display: block;
+      width: min(18rem, 100%);
+      height: auto;
+      background: transparent;
+      border-radius: 0;
+      box-shadow: none;
+      filter: drop-shadow(0 18px 38px rgba(200, 146, 45, 0.34));
     }
 
     .login-card__header h1 {
@@ -231,18 +213,21 @@ import { CommonModule } from '@angular/common';
       font-size: 2.25rem;
       color: #3d2b1f;
       margin: 0 0 0.5rem;
+      text-align: center;
     }
 
     .login-card__header p {
+      margin: 0;
       color: #8b6b2f;
       font-size: 0.95rem;
+      text-align: center;
     }
 
     .login-form {
       display: flex;
       flex-direction: column;
       gap: 1.75rem;
-      margin-top: 2rem;
+      margin-top: 1.35rem;
     }
 
     .field {
@@ -352,6 +337,10 @@ import { CommonModule } from '@angular/common';
       }
       .login-main {
         padding: 2rem;
+      }
+
+      .login-main__content {
+        transform: none;
       }
     }
   `

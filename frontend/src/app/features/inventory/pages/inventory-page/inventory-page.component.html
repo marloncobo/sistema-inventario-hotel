@@ -1,38 +1,254 @@
-<div class="space-y-8">
+<div class="inventory-page">
   <app-page-header
     eyebrow="Operacion"
     title="Inventario"
-    subtitle="Control de insumos para la operación diaria de Hotel Lunara."
+    subtitle="Control de insumos para la operacion diaria de Hotel Lunara."
   >
-    <div header-actions>
+    <div header-actions class="inventory-header-actions">
       @if (canManageItems()) {
         <button pButton type="button" icon="pi pi-plus" label="Nuevo insumo" (click)="openItemDialog()"></button>
       }
     </div>
   </app-page-header>
 
-  <section class="summary-grid">
-    <article class="summary-card">
-      <span>Insumos visibles</span>
-      <strong>{{ filteredItems().length }}</strong>
-      <small>Consulta actual</small>
+  <section class="summary-grid inventory-summary">
+    <article class="summary-card inventory-summary-card">
+      <div class="inventory-summary-card__icon inventory-panel-icon">
+        <i class="pi pi-box"></i>
+      </div>
+      <div class="inventory-summary-card__content">
+        <span>Insumos visibles</span>
+        <strong>{{ orderedItems().length }}</strong>
+        <small>Consulta actual con filtros aplicados.</small>
+      </div>
     </article>
 
-    <article class="summary-card">
-      <span>Insumos activos</span>
-      <strong>{{ activeItemsCount() }}</strong>
-      <small>Stock operativo</small>
+    <article class="summary-card inventory-summary-card">
+      <div class="inventory-summary-card__icon inventory-panel-icon">
+        <i class="pi pi-sitemap"></i>
+      </div>
+      <div class="inventory-summary-card__content">
+        <span>Categorias</span>
+        <strong>{{ visibleCategoryCount() }}</strong>
+        <small>Bloques ordenados para ubicar cada insumo rapido.</small>
+      </div>
     </article>
 
-    <article class="summary-card">
-      <span>Stock bajo</span>
-      <strong>{{ lowStockCount() }}</strong>
-      <small>Basado en stock vs minimo</small>
+    <article class="summary-card inventory-summary-card">
+      <div class="inventory-summary-card__icon inventory-panel-icon">
+        <i class="pi pi-exclamation-circle"></i>
+      </div>
+      <div class="inventory-summary-card__content">
+        <span>Stock bajo</span>
+        <strong>{{ lowStockCount() }}</strong>
+        <small>Items en seguimiento por minimo configurado.</small>
+      </div>
+    </article>
+
+    <article class="summary-card inventory-summary-card">
+      <div class="inventory-summary-card__icon inventory-panel-icon">
+        <i class="pi pi-ban"></i>
+      </div>
+      <div class="inventory-summary-card__content">
+        <span>Agotados</span>
+        <strong>{{ outOfStockCount() }}</strong>
+        <small>Insumos sin existencias disponibles.</small>
+      </div>
     </article>
   </section>
 
-  <section class="surface-card space-y-8">
-    <form [formGroup]="filtersForm" class="filters-grid" (ngSubmit)="loadItems()">
+  <section class="surface-card inventory-layout-board">
+    <div class="inventory-layout-head inventory-panel-head">
+      <div class="inventory-layout-head__identity inventory-panel-identity">
+        <div class="inventory-layout-head__icon inventory-panel-icon">
+          <i class="pi pi-clone"></i>
+        </div>
+        <div class="inventory-panel-copy">
+          <h3>Distribucion del inventario</h3>
+          <p>Vista agrupada por categoria y prioridad de stock para ordenar mejor los espacios.</p>
+        </div>
+      </div>
+
+      <div class="inventory-layout-head__stats inventory-inline-actions inventory-inline-actions--end">
+        <span>{{ visibleCategoryCount() }} categorias</span>
+        <span>{{ activeItemsCount() }} activos</span>
+        <span>{{ lowStockCount() }} en alerta</span>
+      </div>
+    </div>
+
+    @if (!loading() && !orderedItems().length) {
+      <app-empty-state
+        icon="pi pi-box"
+        title="Sin inventario visible"
+        message="No hay insumos para los filtros actuales o el backend aun no registra inventario."
+      />
+    } @else {
+      <div class="inventory-layout-body">
+        <div class="inventory-layout-grid">
+          @for (section of categorySections(); track section.category) {
+            <article class="inventory-category-section">
+              <div class="inventory-category-section__head">
+                <div>
+                  <h4>{{ section.category }}</h4>
+                  <p>{{ section.total }} insumos organizados en esta categoria.</p>
+                </div>
+
+                <div class="inventory-category-section__stats">
+                  <span>{{ section.lowStock }} bajos</span>
+                  <span>{{ section.outOfStock }} agotados</span>
+                </div>
+              </div>
+
+              <div class="inventory-category-section__items">
+                @for (item of section.items; track item.id) {
+                  <button
+                    type="button"
+                    class="inventory-tile"
+                    [class.inventory-tile--selected]="selectedItem()?.id === item.id"
+                    [class.inventory-tile--low]="isLowStock(item) && item.stock > 0 && item.active"
+                    [class.inventory-tile--out]="item.stock === 0"
+                    [class.inventory-tile--inactive]="!item.active"
+                    (click)="selectItem(item.id)"
+                  >
+                    <div class="inventory-tile__head">
+                      <span class="inventory-code-chip">{{ item.code }}</span>
+                      <span class="inventory-tile__stock">{{ item.stock }} {{ item.unit || 'uds' }}</span>
+                    </div>
+
+                    <div class="inventory-tile__body">
+                      <strong>{{ item.name }}</strong>
+                      <span>{{ item.providerName || 'Sin proveedor asignado' }}</span>
+                    </div>
+
+                    <div class="inventory-tile__meta">
+                      <span>{{ itemStockRange(item) }}</span>
+                      <span>{{ item.unit || 'Sin unidad' }}</span>
+                    </div>
+
+                    <div class="inventory-tile__tags">
+                      <p-tag
+                        [value]="itemStockStatusLabel(item)"
+                        [severity]="itemStockStatusSeverity(item)"
+                      ></p-tag>
+                      <p-tag
+                        [value]="item.active ? 'Activo' : 'Inactivo'"
+                        [severity]="item.active ? 'success' : 'danger'"
+                      ></p-tag>
+                    </div>
+                  </button>
+                }
+              </div>
+            </article>
+          }
+        </div>
+
+        <aside class="inventory-layout-side">
+          <article class="summary-card inventory-focus-card">
+            <div class="inventory-focus-card__head">
+              <div>
+                <span>Prioridades</span>
+                <strong>Categorias en seguimiento</strong>
+                <small>El orden superior muestra primero donde hay agotados o faltantes.</small>
+              </div>
+            </div>
+
+            <div class="inventory-focus-list">
+              @for (section of prioritySections(); track section.category) {
+                <article class="inventory-focus-item">
+                  <div class="inventory-focus-item__body">
+                    <strong>{{ section.category }}</strong>
+                    <small>{{ section.total }} insumos monitoreados.</small>
+                  </div>
+
+                  <div class="inventory-focus-item__stats">
+                    @if (section.outOfStock) {
+                      <span class="inventory-focus-pill inventory-focus-pill--danger">
+                        {{ section.outOfStock }} agotados
+                      </span>
+                    }
+                    @if (section.lowStock) {
+                      <span class="inventory-focus-pill inventory-focus-pill--warn">
+                        {{ section.lowStock }} bajos
+                      </span>
+                    }
+                    @if (!section.outOfStock && !section.lowStock) {
+                      <span class="inventory-focus-pill inventory-focus-pill--success">Estable</span>
+                    }
+                  </div>
+                </article>
+              }
+            </div>
+          </article>
+
+          <article class="summary-card inventory-focus-card inventory-focus-card--accent">
+            <div class="inventory-focus-card__head">
+              <div>
+                <span>Cobertura</span>
+                <strong>Balance actual</strong>
+                <small>Resumen corto del estado general y los filtros activos en la vista.</small>
+              </div>
+            </div>
+
+            <div class="summary-grid inventory-focus-metrics">
+              <article class="summary-card inventory-focus-metric">
+                <span>Estables</span>
+                <strong>{{ stableStockCount() }}</strong>
+                <small>Items activos sin riesgo inmediato.</small>
+              </article>
+
+              <article class="summary-card inventory-focus-metric">
+                <span>Agotados</span>
+                <strong>{{ outOfStockCount() }}</strong>
+                <small>Items sin existencias disponibles.</small>
+              </article>
+            </div>
+
+            <div class="inventory-focus-tags">
+              @for (tag of activeFilterSummary(); track tag) {
+                <span>{{ tag }}</span>
+              }
+            </div>
+
+            @if (selectedItem(); as item) {
+              <div class="inventory-focus-selected">
+                <span>Seleccion actual</span>
+                <strong>{{ item.name }}</strong>
+                <small>{{ itemCategoryLabel(item) }} | {{ itemStockRange(item) }}</small>
+              </div>
+            }
+          </article>
+        </aside>
+      </div>
+    }
+  </section>
+
+  <section class="surface-card inventory-workbench">
+    <div class="inventory-workbench__head inventory-panel-head">
+      <div class="inventory-workbench__identity inventory-panel-identity">
+        <div class="inventory-workbench__icon inventory-panel-icon">
+          <i class="pi pi-table"></i>
+        </div>
+        <div class="inventory-panel-copy">
+          <h3>Listado de insumos</h3>
+          <p>Consulta detallada con filtros, estados y accesos a operaciones del inventario.</p>
+        </div>
+      </div>
+
+      <div class="inventory-workbench__actions inventory-inline-actions inventory-inline-actions--end">
+        <button
+          pButton
+          type="button"
+          icon="pi pi-refresh"
+          label="Recargar"
+          severity="secondary"
+          variant="outlined"
+          [loading]="loading()"
+          (click)="loadItems()"
+        ></button>
+      </div>
+    </div>
+
+    <form [formGroup]="filtersForm" class="inventory-filters" (ngSubmit)="loadItems()">
       <label class="field">
         <span>Busqueda</span>
         <input pInputText type="text" formControlName="search" placeholder="Codigo, nombre o proveedor" />
@@ -42,197 +258,238 @@
         <span>Categoria</span>
         <input pInputText type="text" formControlName="category" placeholder="Ej: ASEO" />
       </label>
+
+      <div class="inventory-filters__actions inventory-inline-actions">
+        <button pButton type="submit" icon="pi pi-search" label="Consultar" [loading]="loading()"></button>
+      </div>
     </form>
 
-    <div class="app-toolbar">
-      <div>
-        <h3 class="m-0">Listado de insumos</h3>
-        <small class="text-slate-500">Consulta y administración de insumos activos</small>
-      </div>
-
-      <div class="app-toolbar__actions">
-        <button
-          pButton
-          type="button"
-          icon="pi pi-search"
-          label="Consultar"
-          [loading]="loading()"
-          (click)="loadItems()"
-        ></button>
-      </div>
+    <div class="inventory-result-stats">
+      <span>{{ orderedItems().length }} visibles</span>
+      <span>{{ visibleCategoryCount() }} categorias</span>
+      <span>{{ activeItemsCount() }} activos</span>
+      <span>{{ stableStockCount() }} estables</span>
+      @if (selectedItem(); as item) {
+        <span>Detalle {{ item.code }}</span>
+      }
     </div>
 
-    @if (!loading() && !filteredItems().length) {
-      <app-empty-state
-        icon="pi pi-box"
-        title="Sin insumos visibles"
-        message="No hay items para los filtros actuales o el backend aun no registra inventario."
-      />
-    } @else {
-      <p-table [value]="filteredItems()" [loading]="loading()" [paginator]="true" [rows]="10" responsiveLayout="scroll">
-        <ng-template pTemplate="header">
-          <tr>
-            <th>Codigo</th>
-            <th>Insumo</th>
-            <th>Categoria</th>
-            <th>Stock</th>
-            <th>Proveedor</th>
-            <th>Estado</th>
-            <th class="text-right">Acciones</th>
-          </tr>
-        </ng-template>
+    <div class="inventory-table-wrap">
+      @if (!loading() && !orderedItems().length) {
+        <app-empty-state
+          icon="pi pi-box"
+          title="Sin insumos visibles"
+          message="No hay items para los filtros actuales o el backend aun no registra inventario."
+        />
+      } @else {
+        <p-table
+          [value]="orderedItems()"
+          [loading]="loading()"
+          [paginator]="true"
+          [rows]="10"
+          [rowsPerPageOptions]="[10, 20, 50]"
+          [showCurrentPageReport]="true"
+          currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} insumos"
+          responsiveLayout="scroll"
+          styleClass="inventory-table"
+        >
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Codigo</th>
+              <th>Insumo</th>
+              <th>Categoria</th>
+              <th>Stock</th>
+              <th>Proveedor</th>
+              <th>Estado</th>
+              <th class="text-right">Acciones</th>
+            </tr>
+          </ng-template>
 
-        <ng-template pTemplate="body" let-item>
-          <tr>
-            <td>{{ item.code }}</td>
-            <td>
-              <strong>{{ item.name }}</strong>
-              <div class="text-xs text-slate-500">{{ item.unit || 'Sin unidad' }}</div>
-            </td>
-            <td>{{ item.category || 'Sin categoria' }}</td>
-            <td>
-              <strong>{{ item.stock }}</strong>
-              <div class="text-xs text-slate-500">Min {{ item.minStock }} | Max {{ item.maxStock ?? 'N/A' }}</div>
-            </td>
-            <td>{{ item.providerName || 'Sin proveedor' }}</td>
-            <td>
-              <div class="flex flex-wrap gap-2">
-                <p-tag [value]="item.active ? 'Activo' : 'Inactivo'" [severity]="item.active ? 'success' : 'danger'"></p-tag>
-                @if (isLowStock(item)) {
-                  <p-tag value="Stock bajo" severity="warn"></p-tag>
-                }
-              </div>
-            </td>
-            <td class="text-right">
-              <div class="flex flex-wrap justify-end gap-2">
-                <button
-                  pButton
-                  type="button"
-                  icon="pi pi-eye"
-                  size="small"
-                  severity="secondary"
-                  variant="outlined"
-                  (click)="selectItem(item.id)"
-                ></button>
-
-                @if (canManageItems()) {
+          <ng-template pTemplate="body" let-item>
+            <tr>
+              <td><span class="inventory-code-chip">{{ item.code }}</span></td>
+              <td>
+                <div class="inventory-entity">
+                  <strong>{{ item.name }}</strong>
+                  <span>{{ item.unit || 'Sin unidad registrada' }}</span>
+                </div>
+              </td>
+              <td><span class="inventory-category-chip">{{ itemCategoryLabel(item) }}</span></td>
+              <td>
+                <div class="inventory-stock-cell">
+                  <strong>{{ item.stock }}</strong>
+                  <span>{{ itemStockRange(item) }}</span>
+                </div>
+              </td>
+              <td>
+                <div class="inventory-entity">
+                  <strong>{{ item.providerName || 'Sin proveedor' }}</strong>
+                  <span>{{ item.active ? 'Operacion habilitada' : 'Operacion restringida' }}</span>
+                </div>
+              </td>
+              <td>
+                <div class="inventory-status-stack">
+                  <p-tag
+                    [value]="itemStockStatusLabel(item)"
+                    [severity]="itemStockStatusSeverity(item)"
+                  ></p-tag>
+                  <p-tag
+                    [value]="item.active ? 'Activo' : 'Inactivo'"
+                    [severity]="item.active ? 'success' : 'danger'"
+                  ></p-tag>
+                </div>
+              </td>
+              <td class="text-right">
+                <div class="inventory-actions">
                   <button
                     pButton
                     type="button"
-                    icon="pi pi-pen-to-square"
+                    icon="pi pi-eye"
                     size="small"
                     severity="secondary"
                     variant="outlined"
-                    (click)="openItemDialog(item)"
+                    (click)="selectItem(item.id)"
                   ></button>
 
-                  <button
-                    pButton
-                    type="button"
-                    icon="pi pi-plus-circle"
-                    size="small"
-                    severity="success"
-                    variant="outlined"
-                    (click)="openEntryDialog(item)"
-                  ></button>
-                }
-
-                @if (canReturnStock()) {
-                  <button
-                    pButton
-                    type="button"
-                    icon="pi pi-undo"
-                    size="small"
-                    severity="warn"
-                    variant="outlined"
-                    (click)="openReturnDialog(item)"
-                  ></button>
-                }
-
-                @if (canManageItems()) {
-                  <button
-                    pButton
-                    type="button"
-                    icon="pi pi-minus-circle"
-                    size="small"
-                    severity="contrast"
-                    variant="outlined"
-                    (click)="openDecreaseDialog(item)"
-                  ></button>
-
-                  @if (item.active) {
+                  @if (canManageItems()) {
                     <button
                       pButton
                       type="button"
-                      icon="pi pi-ban"
+                      icon="pi pi-pen-to-square"
                       size="small"
-                      severity="danger"
+                      severity="secondary"
                       variant="outlined"
-                      (click)="deactivate(item)"
+                      (click)="openItemDialog(item)"
+                    ></button>
+
+                    <button
+                      pButton
+                      type="button"
+                      icon="pi pi-plus-circle"
+                      size="small"
+                      severity="success"
+                      variant="outlined"
+                      (click)="openEntryDialog(item)"
                     ></button>
                   }
-                }
-              </div>
-            </td>
-          </tr>
-        </ng-template>
-      </p-table>
-    }
+
+                  @if (canReturnStock()) {
+                    <button
+                      pButton
+                      type="button"
+                      icon="pi pi-undo"
+                      size="small"
+                      severity="warn"
+                      variant="outlined"
+                      (click)="openReturnDialog(item)"
+                    ></button>
+                  }
+
+                  @if (canManageItems()) {
+                    <button
+                      pButton
+                      type="button"
+                      icon="pi pi-minus-circle"
+                      size="small"
+                      severity="contrast"
+                      variant="outlined"
+                      (click)="openDecreaseDialog(item)"
+                    ></button>
+
+                    @if (item.active) {
+                      <button
+                        pButton
+                        type="button"
+                        icon="pi pi-ban"
+                        size="small"
+                        severity="danger"
+                        variant="outlined"
+                        (click)="deactivate(item)"
+                      ></button>
+                    }
+                  }
+                </div>
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      }
+    </div>
   </section>
 
   @if (selectedItem(); as item) {
-    <section class="surface-card space-y-6">
-      <div class="app-toolbar">
-        <div>
-          <h3 class="m-0">Detalle del insumo</h3>
-          <small class="text-slate-500">Resumen del estado actual del insumo</small>
+    <section class="surface-card inventory-detail">
+      <div class="inventory-detail__head inventory-panel-head">
+        <div class="inventory-detail__identity inventory-panel-identity">
+          <div class="inventory-detail__icon inventory-panel-icon">
+            <i class="pi pi-verified"></i>
+          </div>
+          <div class="inventory-panel-copy">
+            <h3>Detalle del insumo {{ item.code }}</h3>
+            <p>Resumen actual del estado operativo, categoria y referencias del insumo.</p>
+          </div>
         </div>
-        <button
-          pButton
-          type="button"
-          icon="pi pi-refresh"
-          label="Actualizar detalle"
-          severity="secondary"
-          variant="outlined"
-          [loading]="detailLoading()"
-          (click)="selectItem(item.id)"
-        ></button>
+
+        <div class="inventory-detail__meta inventory-inline-actions inventory-inline-actions--end">
+          <p-tag
+            [value]="itemStockStatusLabel(item)"
+            [severity]="itemStockStatusSeverity(item)"
+          ></p-tag>
+          <p-tag
+            [value]="item.active ? 'Activo' : 'Inactivo'"
+            [severity]="item.active ? 'success' : 'danger'"
+          ></p-tag>
+          <button
+            pButton
+            type="button"
+            icon="pi pi-refresh"
+            label="Actualizar detalle"
+            severity="secondary"
+            variant="outlined"
+            [loading]="detailLoading()"
+            (click)="selectItem(item.id)"
+          ></button>
+        </div>
       </div>
 
-      <div class="summary-grid">
-        <article class="summary-card">
+      <div class="summary-grid inventory-detail-summary">
+        <article class="summary-card inventory-detail-card">
           <span>Codigo</span>
           <strong>{{ item.code }}</strong>
           <small>{{ item.name }}</small>
         </article>
 
-        <article class="summary-card">
+        <article class="summary-card inventory-detail-card">
           <span>Stock actual</span>
           <strong>{{ item.stock }}</strong>
-          <small>Min {{ item.minStock }} | Max {{ item.maxStock ?? 'N/A' }}</small>
+          <small>{{ itemStockRange(item) }}</small>
         </article>
 
-        <article class="summary-card">
+        <article class="summary-card inventory-detail-card">
+          <span>Categoria</span>
+          <strong>{{ itemCategoryLabel(item) }}</strong>
+          <small>{{ item.unit || 'Sin unidad' }}</small>
+        </article>
+
+        <article class="summary-card inventory-detail-card">
           <span>Proveedor</span>
           <strong>{{ item.providerName || 'Sin proveedor' }}</strong>
-          <small>{{ item.category || 'Sin categoria' }}</small>
+          <small>{{ item.active ? 'Disponible para movimientos' : 'Inactivo' }}</small>
         </article>
       </div>
 
-      <div class="grid gap-4 lg:grid-cols-2">
-        <article class="rounded-3xl border border-slate-200 bg-slate-50 p-6">
-          <h4 class="m-0 text-base text-slate-900">Descripcion</h4>
-          <p class="mt-3 text-sm text-slate-600">
-            {{ item.description || 'El backend no registra descripcion para este insumo.' }}
-          </p>
+      <div class="inventory-detail-panels">
+        <article class="inventory-detail-panel">
+          <h4>Descripcion</h4>
+          <p>{{ item.description || 'El backend no registra descripcion para este insumo.' }}</p>
         </article>
 
-        <article class="rounded-3xl border border-amber-200 bg-amber-50/70 p-6">
-          <h4 class="m-0 text-base text-amber-950">Resumen operativo</h4>
-          <ul class="m-0 mt-3 space-y-2 pl-5 text-sm text-amber-900">
+        <article class="inventory-detail-panel inventory-detail-panel--accent">
+          <h4>Resumen operativo</h4>
+          <ul>
             <li>Consulta existencias antes de registrar movimientos.</li>
             <li>Usa referencias claras para mantener la trazabilidad.</li>
-            <li>Gestiona las salidas a habitaciones desde el módulo de asignaciones.</li>
+            <li>Gestiona las salidas a habitaciones desde el modulo de asignaciones.</li>
           </ul>
         </article>
       </div>
@@ -250,18 +507,18 @@
 >
   @switch (activeDialog()) {
     @case ('item') {
-      <form [formGroup]="itemForm" class="space-y-8" (ngSubmit)="submitItem()">
+      <form [formGroup]="itemForm" class="inventory-dialog-form" (ngSubmit)="submitItem()">
         @if (editingItemId() !== null) {
           <label class="field">
             <span>Codigo</span>
             <input pInputText type="text" formControlName="code" readonly />
           </label>
         } @else {
-          <article class="note-banner">
+          <article class="inventory-note-banner">
             <i class="pi pi-hashtag"></i>
             <div>
               <strong>Codigo automatico</strong>
-              <p class="m-0">El sistema generara el codigo del insumo al guardarlo.</p>
+              <p>El sistema generara el codigo del insumo al guardarlo.</p>
             </div>
           </article>
         }
@@ -330,21 +587,28 @@
         </label>
 
         @if (editingItemId() !== null) {
-          <label class="flex items-center gap-3 text-sm font-medium text-slate-700">
+          <label class="inventory-checkbox">
             <input type="checkbox" formControlName="active" />
-            Mantener item activo
+            <span>Mantener item activo</span>
           </label>
         }
 
-        <div class="flex justify-end gap-3">
-          <button pButton type="button" label="Cancelar" severity="secondary" variant="text" (click)="dialogVisible = false"></button>
+        <div class="inventory-dialog-actions inventory-inline-actions inventory-inline-actions--end">
+          <button
+            pButton
+            type="button"
+            label="Cancelar"
+            severity="secondary"
+            variant="text"
+            (click)="dialogVisible = false"
+          ></button>
           <button pButton type="submit" label="Guardar" [loading]="saving()"></button>
         </div>
       </form>
     }
 
     @case ('entry') {
-      <form [formGroup]="entryForm" class="space-y-8" (ngSubmit)="submitEntry()">
+      <form [formGroup]="entryForm" class="inventory-dialog-form" (ngSubmit)="submitEntry()">
         <div class="form-grid">
           <label class="field">
             <span>Cantidad</span>
@@ -368,15 +632,22 @@
           <textarea class="field-control field-control--textarea" formControlName="referenceText"></textarea>
         </label>
 
-        <div class="flex justify-end gap-3">
-          <button pButton type="button" label="Cancelar" severity="secondary" variant="text" (click)="dialogVisible = false"></button>
+        <div class="inventory-dialog-actions inventory-inline-actions inventory-inline-actions--end">
+          <button
+            pButton
+            type="button"
+            label="Cancelar"
+            severity="secondary"
+            variant="text"
+            (click)="dialogVisible = false"
+          ></button>
           <button pButton type="submit" label="Registrar entrada" [loading]="saving()"></button>
         </div>
       </form>
     }
 
     @case ('return') {
-      <form [formGroup]="returnForm" class="space-y-8" (ngSubmit)="submitReturn()">
+      <form [formGroup]="returnForm" class="inventory-dialog-form" (ngSubmit)="submitReturn()">
         <div class="form-grid">
           <label class="field">
             <span>Cantidad</span>
@@ -424,20 +695,27 @@
           <textarea class="field-control field-control--textarea" formControlName="referenceText"></textarea>
         </label>
 
-        <div class="flex justify-end gap-3">
-          <button pButton type="button" label="Cancelar" severity="secondary" variant="text" (click)="dialogVisible = false"></button>
+        <div class="inventory-dialog-actions inventory-inline-actions inventory-inline-actions--end">
+          <button
+            pButton
+            type="button"
+            label="Cancelar"
+            severity="secondary"
+            variant="text"
+            (click)="dialogVisible = false"
+          ></button>
           <button pButton type="submit" label="Registrar devolucion" [loading]="saving()"></button>
         </div>
       </form>
     }
 
     @case ('decrease') {
-      <form [formGroup]="decreaseForm" class="space-y-8" (ngSubmit)="submitDecrease()">
-        <article class="note-banner">
+      <form [formGroup]="decreaseForm" class="inventory-dialog-form" (ngSubmit)="submitDecrease()">
+        <article class="inventory-note-banner">
           <i class="pi pi-exclamation-triangle"></i>
           <div>
             <strong>Movimiento interno</strong>
-            <p class="m-0">Usa este formulario para salidas operativas internas distintas a habitaciones.</p>
+            <p>Usa este formulario para salidas operativas internas distintas a habitaciones.</p>
           </div>
         </article>
 
@@ -481,8 +759,15 @@
           <textarea class="field-control field-control--textarea" formControlName="referenceText"></textarea>
         </label>
 
-        <div class="flex justify-end gap-3">
-          <button pButton type="button" label="Cancelar" severity="secondary" variant="text" (click)="dialogVisible = false"></button>
+        <div class="inventory-dialog-actions inventory-inline-actions inventory-inline-actions--end">
+          <button
+            pButton
+            type="button"
+            label="Cancelar"
+            severity="secondary"
+            variant="text"
+            (click)="dialogVisible = false"
+          ></button>
           <button pButton type="submit" label="Registrar salida" [loading]="saving()"></button>
         </div>
       </form>
