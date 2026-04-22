@@ -97,6 +97,21 @@ h3 { font-size: 1.35rem; }
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
 }
 
+.dashboard-page,
+.inventory-page,
+.rooms-page,
+.movements-page,
+.reports-page,
+.alerts-page,
+.assignments-page,
+.audits-page,
+.catalogs-page {
+  width: 100%;
+  max-width: 1700px !important;
+  margin: 0 auto !important;
+  padding: 3rem 4rem 2rem !important;
+}
+
 .summary-card {
   padding: 1.75rem;
   border-radius: var(--app-rounded);
@@ -308,10 +323,36 @@ h3 { font-size: 1.35rem; }
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
 }
 
+@media (max-width: 1200px) {
+  .dashboard-page,
+  .inventory-page,
+  .rooms-page,
+  .movements-page,
+  .reports-page,
+  .alerts-page,
+  .assignments-page,
+  .audits-page,
+  .catalogs-page {
+    padding: 2rem 2rem 2rem !important;
+  }
+}
+
 @media (max-width: 768px) {
   .surface-card { padding: 1.25rem; }
   .summary-grid { gap: 1rem; }
   .summary-card { padding: 1.25rem; }
+
+  .dashboard-page,
+  .inventory-page,
+  .rooms-page,
+  .movements-page,
+  .reports-page,
+  .alerts-page,
+  .assignments-page,
+  .audits-page,
+  .catalogs-page {
+    padding: 1.5rem 1rem 2rem !important;
+  }
 }
 
 /* User Card Specialized Styles */

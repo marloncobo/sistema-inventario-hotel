@@ -6,9 +6,6 @@ import { Component, input } from '@angular/core';
   template: `
     <section class="page-header">
       <div>
-        @if (eyebrow()) {
-          <span class="page-header__eyebrow">{{ eyebrow() }}</span>
-        }
         <h1 class="page-header__title">{{ title() }}</h1>
         @if (subtitle()) {
           <p class="page-header__subtitle">{{ subtitle() }}</p>
@@ -30,20 +27,6 @@ import { Component, input } from '@angular/core';
       padding-bottom: 2rem;
       margin-bottom: 2.5rem;
       border-bottom: 1px solid var(--app-border);
-    }
-
-    .page-header__eyebrow {
-      display: inline-flex;
-      align-items: center;
-      padding: 0.35rem 0.85rem;
-      border-radius: 999px;
-      background: var(--app-gold-soft);
-      color: var(--app-gold);
-      font-size: 0.7rem;
-      font-weight: 800;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      margin-bottom: 1rem;
     }
 
     .page-header__title {
@@ -82,7 +65,7 @@ import { Component, input } from '@angular/core';
   `
 })
 export class PageHeaderComponent {
-  readonly eyebrow = input('Vista principal');
+  readonly eyebrow = input('');
   readonly title = input.required<string>();
   readonly subtitle = input('');
 }
