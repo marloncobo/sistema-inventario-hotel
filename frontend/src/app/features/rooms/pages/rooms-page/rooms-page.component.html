@@ -61,49 +61,6 @@
       </div>
     </form>
 
-    <div class="rooms-selector-bar">
-      <div class="rooms-selector-copy">
-        <span class="rooms-selector-copy__label">Seleccion actual</span>
-        @if (selectedRoom(); as room) {
-          <strong>Hab. {{ room.number }} lista para detalle</strong>
-        } @else {
-          <strong>Sin habitacion seleccionada</strong>
-        }
-      </div>
-
-      <div class="rooms-selector-controls">
-        <label class="rooms-picker">
-          <span class="rooms-picker__label">Ir a habitacion</span>
-          <input
-            pInputText
-            type="text"
-            class="rooms-picker__input"
-            list="room-picker-options"
-            placeholder="Ej. 203"
-            [value]="quickRoomNumber()"
-            (input)="onQuickRoomInput($event)"
-            (keydown.enter)="selectRoomFromQuickPicker()"
-          />
-        </label>
-
-        <datalist id="room-picker-options">
-          @for (room of selectableRooms(); track room.id) {
-            <option [value]="room.number">{{ quickRoomLabel(room) }}</option>
-          }
-        </datalist>
-
-        <button
-          pButton
-          type="button"
-          label="Seleccionar"
-          severity="secondary"
-          variant="outlined"
-          [disabled]="!quickRoomNumber().trim()"
-          (click)="selectRoomFromQuickPicker()"
-        ></button>
-      </div>
-    </div>
-
     @if (!loading() && !filteredRooms().length) {
       <div class="rooms-table-empty">
         <app-empty-state
@@ -126,11 +83,10 @@
         >
           <ng-template pTemplate="header">
             <tr>
-              <th style="width: 32%">Habitacion</th>
-              <th style="width: 24%">Perfil</th>
-              <th style="width: 18%">Estado</th>
-              <th style="width: 10%">Piso</th>
-              <th style="width: 16%">Acciones</th>
+              <th style="width: 38%">Habitacion</th>
+              <th style="width: 26%">Perfil</th>
+              <th style="width: 22%">Estado</th>
+              <th style="width: 14%">Piso</th>
             </tr>
           </ng-template>
 
@@ -157,45 +113,34 @@
 
               <td>
                 <div class="room-status-cell">
-                  <p-tag [value]="roomStatusLabel(room.status)" [severity]="roomStatusSeverity(room.status)"></p-tag>
-                  <small>{{ room.active ? 'Activa' : 'Inactiva' }}</small>
+                  <span class="room-status-inline">
+                    <span
+                      class="room-status-inline__dot"
+                      [class.room-status-inline__dot--available]="room.status === 'DISPONIBLE'"
+                      [class.room-status-inline__dot--occupied]="room.status === 'OCUPADA'"
+                      [class.room-status-inline__dot--other]="room.status !== 'DISPONIBLE' && room.status !== 'OCUPADA'"
+                    ></span>
+                    <span
+                      class="room-status-inline__label"
+                      [class.room-status-inline__label--available]="room.status === 'DISPONIBLE'"
+                      [class.room-status-inline__label--occupied]="room.status === 'OCUPADA'"
+                      [class.room-status-inline__label--other]="room.status !== 'DISPONIBLE' && room.status !== 'OCUPADA'"
+                    >
+                      {{ roomStatusLabel(room.status) }}
+                    </span>
+                  </span>
+                  <span class="room-status-meta" [class.room-status-meta--active]="room.active">
+                    <span
+                      class="room-status-meta__dot"
+                      [class.room-status-meta__dot--active]="room.active"
+                    ></span>
+                    {{ room.active ? 'Activa' : 'Inactiva' }}
+                  </span>
                 </div>
               </td>
 
               <td>
                 <span class="rooms-table-muted">{{ room.floor }}</span>
-              </td>
-
-              <td>
-                <div class="actions-cell" (click)="$event.stopPropagation()">
-                  <button
-                    type="button"
-                    class="btn-action btn-action--select"
-                    [class.btn-action--selected]="isRoomSelected(room)"
-                    [attr.aria-label]="isRoomSelected(room) ? 'Habitacion seleccionada' : 'Seleccionar habitacion'"
-                    [title]="isRoomSelected(room) ? 'Habitacion seleccionada' : 'Seleccionar habitacion'"
-                    (click)="selectRoom(room.id)"
-                  >
-                    <i
-                      class="pi"
-                      [class.pi-check-circle]="isRoomSelected(room)"
-                      [class.pi-eye]="!isRoomSelected(room)"
-                      aria-hidden="true"
-                    ></i>
-                  </button>
-
-                  @if (canUpdateStatus()) {
-                    <button
-                      type="button"
-                      class="btn-action edit"
-                      aria-label="Cambiar estado"
-                      title="Cambiar estado"
-                      (click)="openStatusDialog(room)"
-                    >
-                      <i class="pi pi-sync" aria-hidden="true"></i>
-                    </button>
-                  }
-                </div>
               </td>
             </tr>
           </ng-template>
@@ -279,14 +224,21 @@
           </div>
 
           <div class="rooms-detail-panel__actions">
-            <span
-              class="rooms-status-pill"
-              [class.rooms-status-pill--success]="room.status === 'DISPONIBLE'"
-              [class.rooms-status-pill--danger]="room.status === 'OCUPADA'"
-              [class.rooms-status-pill--warn]="room.status !== 'DISPONIBLE' && room.status !== 'OCUPADA'"
-            >
-              <span class="rooms-status-pill__dot"></span>
-              {{ roomStatusLabel(room.status) }}
+            <span class="room-status-inline room-status-inline--detail">
+              <span
+                class="room-status-inline__dot"
+                [class.room-status-inline__dot--available]="room.status === 'DISPONIBLE'"
+                [class.room-status-inline__dot--occupied]="room.status === 'OCUPADA'"
+                [class.room-status-inline__dot--other]="room.status !== 'DISPONIBLE' && room.status !== 'OCUPADA'"
+              ></span>
+              <span
+                class="room-status-inline__label"
+                [class.room-status-inline__label--available]="room.status === 'DISPONIBLE'"
+                [class.room-status-inline__label--occupied]="room.status === 'OCUPADA'"
+                [class.room-status-inline__label--other]="room.status !== 'DISPONIBLE' && room.status !== 'OCUPADA'"
+              >
+                {{ roomStatusLabel(room.status) }}
+              </span>
             </span>
 
             @if (canUpdateStatus()) {
@@ -343,10 +295,10 @@
             </article>
 
             <article class="rooms-detail-metric">
-              <i class="pi pi-search" aria-hidden="true"></i>
+              <i class="pi pi-id-card" aria-hidden="true"></i>
               <div>
-                <span>Busqueda rapida</span>
-                <strong>{{ quickRoomLabel(room) }}</strong>
+                <span>Numero</span>
+                <strong>Hab. {{ room.number }}</strong>
               </div>
             </article>
           </div>
@@ -421,6 +373,16 @@
   </ng-template>
 
   <form [formGroup]="createForm" class="rooms-dialog-form" (ngSubmit)="submitCreate()">
+    @if (createSubmitError(); as error) {
+      <article class="validation-banner validation-banner--danger">
+        <strong>
+          <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
+          Corrige los datos de la habitacion
+        </strong>
+        <p>{{ error }}</p>
+      </article>
+    }
+
     <section class="rooms-dialog-section">
       <div class="rooms-dialog-section__head">
         <span class="rooms-dialog-section__icon">
@@ -435,7 +397,14 @@
       <div class="form-grid pp-form-grid-2">
         <label class="field">
           <span>Numero</span>
-          <input pInputText type="text" formControlName="number" placeholder="101" />
+          <input
+            pInputText
+            type="text"
+            formControlName="number"
+            placeholder="101"
+            maxlength="3"
+            inputmode="numeric"
+          />
           @if (showCreateError('number')) {
             <small>{{ createError('number') }}</small>
           }
@@ -475,7 +444,7 @@
 
         <label class="field">
           <span>Capacidad</span>
-          <input pInputText type="number" formControlName="capacity" />
+          <input pInputText type="number" formControlName="capacity" [appMinNumber]="1" />
           @if (showCreateError('capacity')) {
             <small>{{ createError('capacity') }}</small>
           }
@@ -485,7 +454,7 @@
       <div class="form-grid pp-form-grid-2">
         <label class="field">
           <span>Piso</span>
-          <input pInputText type="number" formControlName="floor" />
+          <input pInputText type="number" formControlName="floor" [appMinNumber]="1" />
           @if (showCreateError('floor')) {
             <small>{{ createError('floor') }}</small>
           }
@@ -498,7 +467,11 @@
           class="field-control field-control--textarea"
           formControlName="observations"
           placeholder="Notas internas para recepcion o limpieza"
+          maxlength="500"
         ></textarea>
+        @if (showCreateError('observations')) {
+          <small>{{ createError('observations') }}</small>
+        }
       </label>
     </section>
 
@@ -531,6 +504,16 @@
   </ng-template>
 
   <form [formGroup]="statusForm" class="rooms-dialog-form" (ngSubmit)="submitStatus()">
+    @if (statusSubmitError(); as error) {
+      <article class="validation-banner validation-banner--danger">
+        <strong>
+          <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
+          No fue posible actualizar el estado
+        </strong>
+        <p>{{ error }}</p>
+      </article>
+    }
+
     <section class="rooms-dialog-section">
       <div class="rooms-dialog-section__head">
         <span class="rooms-dialog-section__icon">

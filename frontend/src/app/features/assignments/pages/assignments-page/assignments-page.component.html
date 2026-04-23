@@ -71,6 +71,16 @@
     </div>
 
     <form [formGroup]="assignmentForm" class="assignments-form" (ngSubmit)="submitAssignment()">
+      @if (submitError(); as error) {
+        <article class="validation-banner validation-banner--danger">
+          <strong>
+            <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
+            No fue posible guardar el movimiento
+          </strong>
+          <p>{{ error }}</p>
+        </article>
+      }
+
       <div class="assignments-form-layout">
         <section class="pp-form-group assignments-form-panel" aria-labelledby="asg-dest">
           <div class="pp-form-group__head">
@@ -88,7 +98,13 @@
                   }
                 </select>
               } @else {
-                <input pInputText type="number" formControlName="roomId" placeholder="Ingresa el identificador de habitacion" />
+                <input
+                  pInputText
+                  type="number"
+                  formControlName="roomId"
+                  placeholder="Ingresa el identificador de habitacion"
+                  [appMinNumber]="1"
+                />
               }
               @if (showAssignmentError('roomId')) {
                 <small>{{ assignmentError('roomId') }}</small>
@@ -118,7 +134,7 @@
           <div class="form-grid assignments-form-grid pp-form-grid-2">
             <label class="field">
               <span>Cantidad</span>
-              <input pInputText type="number" formControlName="quantity" />
+              <input pInputText type="number" formControlName="quantity" [appMinNumber]="1" />
               @if (showAssignmentError('quantity')) {
                 <small>{{ assignmentError('quantity') }}</small>
               }
@@ -150,7 +166,16 @@
 
             <label class="field">
               <span>Huesped</span>
-              <input pInputText type="text" formControlName="guestName" placeholder="Nombre de apoyo para la entrega" />
+              <input
+                pInputText
+                type="text"
+                formControlName="guestName"
+                placeholder="Nombre de apoyo para la entrega"
+                maxlength="120"
+              />
+              @if (showAssignmentError('guestName')) {
+                <small>{{ assignmentError('guestName') }}</small>
+              }
             </label>
           </div>
         </section>

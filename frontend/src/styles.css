@@ -497,6 +497,45 @@ h3 { font-size: 1.35rem; }
   letter-spacing: 0.02em;
 }
 
+.validation-banner {
+  display: grid;
+  gap: 0.55rem;
+  padding: 0.95rem 1rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(200, 146, 45, 0.28);
+  background: linear-gradient(135deg, rgba(255, 250, 240, 0.98), rgba(255, 255, 255, 0.98));
+  color: #7c5d18;
+}
+
+.validation-banner strong {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: #8f6817;
+  font-size: 0.92rem;
+}
+
+.validation-banner p,
+.validation-banner ul {
+  margin: 0;
+  color: #8a735c;
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
+.validation-banner ul {
+  padding-left: 1.1rem;
+}
+
+.validation-banner--danger {
+  border-color: rgba(220, 38, 38, 0.18);
+  background: linear-gradient(135deg, rgba(254, 242, 242, 0.98), rgba(255, 251, 235, 0.98));
+}
+
+.validation-banner--danger strong {
+  color: #b45309;
+}
+
 .field-control, .p-inputtext, .p-multiselect, .p-password input {
   width: 100%;
   padding: 0.75rem 1rem;

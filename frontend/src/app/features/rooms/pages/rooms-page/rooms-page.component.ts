@@ -13,9 +13,10 @@ import { ROOM_STATUS_OPTIONS, ROOM_TYPES } from '@core/constants/domain-options'
 import { AuthService } from '@core/services/auth.service';
 import { RoomsApiService } from '@core/services/api/rooms-api.service';
 import { NotificationService } from '@core/services/ui/notification.service';
-import { extractApiFieldErrors } from '@models/api-error.model';
+import { extractApiErrorMessage, extractApiFieldErrors } from '@models/api-error.model';
 import type { CreateRoomRequest, Room, RoomSupplyAssignment } from '@models/room.model';
 import { EmptyStateComponent } from '@shared/components/empty-state/empty-state.component';
+import { MinNumberDirective } from '@shared/directives/min-number.directive';
 import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
 
 @Component({
@@ -29,7 +30,8 @@ import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
     InputTextModule,
     TableModule,
     EmptyStateComponent,
-    TagModule
+    TagModule,
+    MinNumberDirective
   ],
   templateUrl: './rooms-page.component.html',
   styleUrls: ['./rooms-page.component.css', '../../../../shared/styles/premium-panels.css']
@@ -51,8 +53,9 @@ export class RoomsPageComponent implements OnInit {
   protected readonly createDialogVisible = signal(false);
   protected readonly statusDialogVisible = signal(false);
   protected readonly statusTargetRoom = signal<Room | null>(null);
+  protected readonly createSubmitError = signal<string | null>(null);
+  protected readonly statusSubmitError = signal<string | null>(null);
   protected readonly currentPage = signal(1);
-  protected readonly quickRoomNumber = signal('');
   protected readonly pageSize = 10;
 
   protected readonly filtersForm = this.fb.nonNullable.group({
@@ -72,16 +75,12 @@ export class RoomsPageComponent implements OnInit {
     status: this.fb.nonNullable.control('DISPONIBLE', [Validators.required]),
     capacity: this.fb.nonNullable.control(2, [Validators.required, Validators.min(1)]),
     floor: this.fb.nonNullable.control(1, [Validators.required, Validators.min(1)]),
-    observations: this.fb.control('')
+    observations: this.fb.control('', [Validators.maxLength(500)])
   });
 
   protected readonly statusForm = this.fb.nonNullable.group({
     status: ['DISPONIBLE', [Validators.required]]
   });
-
-  protected readonly selectableRooms = computed(() =>
-    [...this.rooms()].sort((left, right) => this.compareRooms(left, right))
-  );
 
   protected readonly filteredRooms = computed(() => {
     const { search, status, floor } = this.filtersValue();
@@ -203,30 +202,6 @@ export class RoomsPageComponent implements OnInit {
     });
   }
 
-  protected onQuickRoomInput(event: Event): void {
-    this.quickRoomNumber.set((event.target as HTMLInputElement).value);
-  }
-
-  protected selectRoomFromQuickPicker(): void {
-    const lookup = this.normalizeRoomLookup(this.quickRoomNumber());
-    if (!lookup) {
-      return;
-    }
-
-    const match = this.selectableRooms().find((room) => {
-      const label = `${room.number} ${this.roomTypeLabel(room.type)} piso ${room.floor}`.toLowerCase();
-      return room.number.toLowerCase() === lookup || label.includes(lookup);
-    });
-
-    if (!match) {
-      this.notificationService.warn('Habitaciones', 'No encontramos esa habitacion.');
-      return;
-    }
-
-    this.focusRoom(match);
-    this.selectRoom(match.id);
-  }
-
   protected onRoomRowSelect(event: TableRowSelectEvent<Room>): void {
     const row = event.data;
     if (!row || Array.isArray(row)) {
@@ -255,7 +230,6 @@ export class RoomsPageComponent implements OnInit {
           this.assignments.set(result.assignments);
 
           if (result.room) {
-            this.quickRoomNumber.set(result.room.number);
             this.currentPage.set(this.resolvePageForRoom(result.room.id));
           }
 
@@ -272,15 +246,8 @@ export class RoomsPageComponent implements OnInit {
     this.currentPage.set(safePage);
   }
 
-  protected isRoomSelected(room: Room): boolean {
-    return this.selectedRoom()?.id === room.id;
-  }
-
-  protected quickRoomLabel(room: Room): string {
-    return `Hab. ${room.number} - ${this.roomTypeLabel(room.type)} - Piso ${room.floor}`;
-  }
-
   protected openCreateDialog(): void {
+    this.createSubmitError.set(null);
     this.createForm.reset({
       number: '',
       type: 'ESTANDAR',
@@ -293,13 +260,24 @@ export class RoomsPageComponent implements OnInit {
   }
 
   protected submitCreate(): void {
+    this.createSubmitError.set(null);
+    this.clearCustomCreateError('capacity', 'familyCapacity');
+
+    const raw = this.createForm.getRawValue();
+    if (raw.type === 'FAMILIAR' && raw.capacity < 3) {
+      this.createForm.controls.capacity.setErrors({
+        ...(this.createForm.controls.capacity.errors ?? {}),
+        familyCapacity: true
+      });
+      this.createForm.controls.capacity.markAsTouched();
+    }
+
     if (this.createForm.invalid) {
       this.createForm.markAllAsTouched();
       return;
     }
 
     this.saving.set(true);
-    const raw = this.createForm.getRawValue();
     const payload: CreateRoomRequest = {
       number: raw.number.trim(),
       type: raw.type,
@@ -322,20 +300,37 @@ export class RoomsPageComponent implements OnInit {
           this.assignments.set([]);
           this.loadRooms();
         },
-        error: (error) => {
-          this.saving.set(false);
-          applyServerValidationErrors(this.createForm, extractApiFieldErrors(error.error));
+      error: (error) => {
+        this.saving.set(false);
+        const fieldErrors = extractApiFieldErrors(error.error);
+        if (Object.keys(fieldErrors).length) {
+          applyServerValidationErrors(this.createForm, fieldErrors);
+          this.createSubmitError.set('Revisa los campos marcados antes de guardar.');
+          return;
         }
-      });
+
+        const message = extractApiErrorMessage(error.error);
+        this.createSubmitError.set(message);
+        if (message.toLowerCase().includes('numero')) {
+          this.createForm.controls.number.setErrors({
+            ...(this.createForm.controls.number.errors ?? {}),
+            server: message
+          });
+          this.createForm.controls.number.markAsTouched();
+        }
+      }
+    });
   }
 
   protected openStatusDialog(room: Room): void {
+    this.statusSubmitError.set(null);
     this.statusTargetRoom.set(room);
     this.statusForm.reset({ status: room.status });
     this.statusDialogVisible.set(true);
   }
 
   protected submitStatus(): void {
+    this.statusSubmitError.set(null);
     const room = this.statusTargetRoom();
     if (this.statusForm.invalid || !room) {
       this.statusForm.markAllAsTouched();
@@ -358,8 +353,9 @@ export class RoomsPageComponent implements OnInit {
             this.selectRoom(updatedRoom.id);
           }
         },
-        error: () => {
+        error: (error) => {
           this.saving.set(false);
+          this.statusSubmitError.set(extractApiErrorMessage(error.error));
         }
       });
   }
@@ -379,18 +375,6 @@ export class RoomsPageComponent implements OnInit {
     return this.formatLabel(type);
   }
 
-  protected roomStatusSeverity(status: string): 'success' | 'warn' | 'danger' {
-    if (status === 'DISPONIBLE') {
-      return 'success';
-    }
-
-    if (status === 'OCUPADA') {
-      return 'danger';
-    }
-
-    return 'warn';
-  }
-
   protected assignmentFlowLabel(value: string | null | undefined): string {
     return value === 'HABITACION' ? 'Entrada' : 'Salida';
   }
@@ -400,20 +384,19 @@ export class RoomsPageComponent implements OnInit {
   }
 
   protected showCreateError(
-    controlName: 'number' | 'type' | 'status' | 'capacity' | 'floor'
+    controlName: 'number' | 'type' | 'status' | 'capacity' | 'floor' | 'observations'
   ): boolean {
     const control = this.createForm.controls[controlName];
     return control.invalid && control.touched;
   }
 
   protected createError(
-    controlName: 'number' | 'type' | 'status' | 'capacity' | 'floor'
+    controlName: 'number' | 'type' | 'status' | 'capacity' | 'floor' | 'observations'
   ): string {
     return this.resolveControlError(this.createForm.controls[controlName].errors);
   }
 
   private focusRoom(room: Room): void {
-    this.quickRoomNumber.set(room.number);
     this.filtersForm.patchValue({
       search: room.number,
       status: '',
@@ -439,6 +422,19 @@ export class RoomsPageComponent implements OnInit {
     return normalized.charAt(0).toUpperCase() + normalized.slice(1);
   }
 
+  private clearCustomCreateError(
+    controlName: 'capacity',
+    errorKey: 'familyCapacity'
+  ): void {
+    const control = this.createForm.controls[controlName];
+    if (!control.errors?.[errorKey]) {
+      return;
+    }
+
+    const { [errorKey]: _removed, ...rest } = control.errors;
+    control.setErrors(Object.keys(rest).length ? rest : null);
+  }
+
   private resolveControlError(errors: ValidationErrors | null): string {
     if (!errors) {
       return 'Valor invalido.';
@@ -458,6 +454,14 @@ export class RoomsPageComponent implements OnInit {
 
     if (errors['min']) {
       return 'Debe ser mayor o igual al minimo permitido.';
+    }
+
+    if (errors['familyCapacity']) {
+      return 'La habitacion familiar debe tener capacidad minima de 3 personas.';
+    }
+
+    if (errors['maxlength']) {
+      return `No puede superar ${errors['maxlength'].requiredLength} caracteres.`;
     }
 
     return 'Valor invalido.';

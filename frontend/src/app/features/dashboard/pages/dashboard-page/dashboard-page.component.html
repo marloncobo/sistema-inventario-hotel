@@ -1,58 +1,48 @@
 <div class="dashboard-page">
   <app-page-header
-    eyebrow="Resumen del dia"
-    title="Panorama Luna"
-    subtitle="Una vista rapida del estado operativo para coordinar inventario, habitaciones y seguimiento."
-  >
-    <div header-actions class="dashboard-header-actions">
-      @if (primaryAction(); as action) {
-        <a
-          pButton
-          [routerLink]="action.route"
-          [label]="action.label"
-          [icon]="action.icon"
-          iconPos="right"
-        ></a>
-      }
-    </div>
-  </app-page-header>
+    eyebrow="Panel principal"
+    title="Dashboard operativo"
+    subtitle="Resumen limpio de inventario, habitaciones y actividad reciente con los datos principales del backend."
+  />
 
   @if (loading()) {
     <section class="surface-card dashboard-loading">
       <p-progress-spinner strokeWidth="4" animationDuration=".7s" />
-      <p>Cargando el panorama operativo del hotel...</p>
+      <p>Cargando el estado principal de la operacion...</p>
     </section>
-  } @else if (!metrics().length && !accessSections().length) {
-    <app-empty-state
-      icon="pi pi-chart-bar"
-      title="Sin metricas para mostrar"
-      message="Aun no hay datos suficientes para este perfil, pero la operacion principal sigue disponible."
-    />
   } @else {
-    <section class="surface-card dashboard-hero">
-      <div class="dashboard-hero__main">
-        <span class="dashboard-kicker">Centro de control</span>
+    <section class="surface-card dashboard-overview">
+      <div class="dashboard-overview__main">
+        <span class="dashboard-kicker">{{ todayLabel }}</span>
         <h3>{{ heroTitle() }}</h3>
         <p>{{ heroMessage() }}</p>
 
-        <div class="dashboard-hero__chips">
-          <span>{{ moduleCount() }} modulos habilitados</span>
-          <span>{{ quickActions().length }} accesos rapidos</span>
-          <span>{{ metrics().length }} metricas visibles</span>
+        <div class="dashboard-chip-row">
+          @for (chip of overviewChips(); track chip.label) {
+            <article class="dashboard-chip">
+              <span>{{ chip.label }}</span>
+              <strong>{{ chip.value }}</strong>
+            </article>
+          }
         </div>
       </div>
 
-      <div class="dashboard-hero__panel">
-        <span class="dashboard-panel__eyebrow">Prioridades del turno</span>
+      <div class="dashboard-overview__side">
+        <div class="dashboard-panel-head">
+          <div>
+            <h3>Radar inmediato</h3>
+            <p>Lo principal para revisar sin repetir accesos del sidebar.</p>
+          </div>
+        </div>
 
-        <div class="dashboard-priority-list">
-          @for (item of priorityItems(); track item.label) {
-            <article class="dashboard-priority-item" [attr.data-tone]="item.tone">
-              <div class="dashboard-priority-item__icon">
+        <div class="dashboard-focus-list">
+          @for (item of focusItems(); track item.label) {
+            <article class="dashboard-focus-item" [attr.data-tone]="item.tone">
+              <div class="dashboard-focus-item__icon">
                 <i [class]="item.icon"></i>
               </div>
 
-              <div>
+              <div class="dashboard-focus-item__content">
                 <strong>{{ item.label }}</strong>
                 <small>{{ item.detail }}</small>
               </div>
@@ -63,14 +53,14 @@
     </section>
 
     @if (metrics().length) {
-      <section class="summary-grid dashboard-metrics admin-kpi-row">
+      <section class="dashboard-metrics">
         @for (card of metrics(); track card.label) {
-          <article class="summary-card dashboard-summary-card" [attr.data-tone]="card.tone">
-            <div class="dashboard-summary-card__icon">
+          <article class="surface-card dashboard-metric-card" [attr.data-tone]="card.tone">
+            <div class="dashboard-metric-card__icon">
               <i [class]="card.icon"></i>
             </div>
 
-            <div class="dashboard-summary-card__content">
+            <div class="dashboard-metric-card__content">
               <span>{{ card.label }}</span>
               <strong>{{ card.value }}</strong>
               <small>{{ card.helper }}</small>
@@ -80,102 +70,163 @@
       </section>
     }
 
-    <section class="dashboard-board admin-content-block">
-      <article class="surface-card dashboard-map">
-        <div class="dashboard-panel-head">
-          <div>
-            <h3>Mapa operativo</h3>
-            <p>Los modulos se agrupan por frentes para que la navegacion quede mas ordenada.</p>
-          </div>
-        </div>
-
-        <div class="dashboard-section-grid">
-          @for (section of accessSections(); track section.id) {
-            <article class="dashboard-section-card">
-              <div class="dashboard-section-card__head">
-                <div class="dashboard-section-card__icon">
-                  <i [class]="section.icon"></i>
-                </div>
-
-                <div>
-                  <span>{{ section.eyebrow }}</span>
-                  <h4>{{ section.label }}</h4>
-                </div>
-              </div>
-
-              <p>{{ section.description }}</p>
-
-              <div class="dashboard-link-list">
-                @for (item of section.items; track item.route) {
-                  <a [routerLink]="item.route" class="dashboard-link-item">
-                    <div class="dashboard-link-item__body">
-                      <strong>{{ item.label }}</strong>
-                      <small>{{ item.description }}</small>
-                    </div>
-
-                    <i class="pi pi-arrow-up-right"></i>
-                  </a>
-                }
-              </div>
-            </article>
-          }
-        </div>
-      </article>
-
-      <aside class="dashboard-stack">
-        <article class="surface-card dashboard-quick-card">
+    <section class="dashboard-grid">
+      @if (canViewInventory()) {
+        <article class="surface-card dashboard-panel">
           <div class="dashboard-panel-head">
             <div>
-              <h3>Accesos rapidos</h3>
-              <p>Entradas directas a las vistas que mas se usan durante la jornada.</p>
+              <h3>Inventario</h3>
+              <p>Salud general del stock, cobertura visible y puntos con presion.</p>
             </div>
+
+            <span class="dashboard-inline-badge">{{ inventoryCoverageBadge() }}</span>
           </div>
 
-          <div class="dashboard-quick-list">
-            @for (item of quickActions(); track item.route) {
-              <a [routerLink]="item.route" class="dashboard-quick-list__item">
-                <div class="dashboard-quick-list__icon">
-                  <i [class]="item.icon"></i>
-                </div>
-
-                <div class="dashboard-quick-list__body">
-                  <strong>{{ item.label }}</strong>
-                  <small>{{ item.description }}</small>
-                </div>
-              </a>
+          <div class="dashboard-stat-grid">
+            @for (stat of inventoryStats(); track stat.label) {
+              <article class="dashboard-stat-card" [attr.data-tone]="stat.tone">
+                <span>{{ stat.label }}</span>
+                <strong>{{ stat.value }}</strong>
+                <small>{{ stat.helper }}</small>
+              </article>
             }
           </div>
-        </article>
 
-        <article class="surface-card dashboard-status-card">
+          <div class="dashboard-subsection-head">
+            <strong>Vigilancia inmediata</strong>
+            <span>Items con menor margen visible</span>
+          </div>
+
+          @if (watchlistItems().length) {
+            <div class="dashboard-watch-list">
+              @for (item of watchlistItems(); track item.title) {
+                <article class="dashboard-watch-item" [attr.data-tone]="item.tone">
+                  <strong>{{ item.title }}</strong>
+                  <span>{{ item.meta }}</span>
+                  <small>{{ item.helper }}</small>
+                </article>
+              }
+            </div>
+          } @else {
+            <p class="dashboard-empty-inline">No hay insumos en observacion dentro de lo visible para este perfil.</p>
+          }
+        </article>
+      }
+
+      @if (canViewRooms()) {
+        <article class="surface-card dashboard-panel">
           <div class="dashboard-panel-head">
             <div>
-              <h3>Estado del panel</h3>
-              <p>Resumen corto para priorizar por volumen, accesos y visibilidad.</p>
+              <h3>Habitaciones</h3>
+              <p>Disponibilidad real y distribucion del estado operativo.</p>
             </div>
+
+            <span class="dashboard-inline-badge">{{ roomAvailabilityBadge() }}</span>
           </div>
 
-          <div class="dashboard-status-grid">
-            <article class="dashboard-status-item">
-              <span>Modulos</span>
-              <strong>{{ moduleCount() }}</strong>
-              <small>Secciones habilitadas segun tu perfil.</small>
-            </article>
-
-            <article class="dashboard-status-item">
-              <span>Metricas</span>
-              <strong>{{ metrics().length }}</strong>
-              <small>Indicadores cargados para este rol.</small>
-            </article>
-
-            <article class="dashboard-status-item">
-              <span>Focos</span>
-              <strong>{{ priorityItems().length }}</strong>
-              <small>Temas visibles para revisar primero.</small>
-            </article>
+          <div class="dashboard-stat-grid">
+            @for (stat of roomStats(); track stat.label) {
+              <article class="dashboard-stat-card" [attr.data-tone]="stat.tone">
+                <span>{{ stat.label }}</span>
+                <strong>{{ stat.value }}</strong>
+                <small>{{ stat.helper }}</small>
+              </article>
+            }
           </div>
+
+          <div class="dashboard-subsection-head">
+            <strong>Distribucion por estado</strong>
+            <span>{{ activeRoomsCount() }} activas</span>
+          </div>
+
+          @if (roomStatusBreakdown().length) {
+            <div class="dashboard-distribution-list">
+              @for (item of roomStatusBreakdown(); track item.label) {
+                <article class="dashboard-distribution-item" [attr.data-tone]="item.tone">
+                  <div class="dashboard-distribution-item__head">
+                    <strong>{{ item.label }}</strong>
+                    <span>{{ item.value }} · {{ item.share }}%</span>
+                  </div>
+
+                  <div class="dashboard-distribution-track">
+                    <span [style.width.%]="item.share"></span>
+                  </div>
+                </article>
+              }
+            </div>
+          } @else {
+            <p class="dashboard-empty-inline">No hay habitaciones activas visibles para resumir en este momento.</p>
+          }
         </article>
-      </aside>
+      }
+    </section>
+
+    <section class="dashboard-grid dashboard-grid--activity">
+      @if (canViewMovements()) {
+        <article class="surface-card dashboard-panel">
+          <div class="dashboard-panel-head">
+            <div>
+              <h3>Movimientos recientes</h3>
+              <p>Trazabilidad cargada para los ultimos {{ activityWindowDays }} dias.</p>
+            </div>
+
+            <span class="dashboard-inline-badge">{{ snapshot().movements.length }} cargados</span>
+          </div>
+
+          @if (recentMovements().length) {
+            <div class="dashboard-feed-list">
+              @for (movement of recentMovements(); track movement.id) {
+                <article class="dashboard-feed-item">
+                  <div class="dashboard-feed-item__main">
+                    <strong>{{ movement.itemName }}</strong>
+                    <small>{{ formatMovementContext(movement) }}</small>
+                  </div>
+
+                  <div class="dashboard-feed-item__meta">
+                    <span class="dashboard-pill">{{ movement.quantity }} uds</span>
+                    <small>{{ formatDateTime(movement.createdAt) }}</small>
+                  </div>
+                </article>
+              }
+            </div>
+          } @else {
+            <p class="dashboard-empty-inline">Sin movimientos recientes dentro de la ventana cargada.</p>
+          }
+        </article>
+      }
+
+      @if (canViewAssignments()) {
+        <article class="surface-card dashboard-panel">
+          <div class="dashboard-panel-head">
+            <div>
+              <h3>Asignaciones recientes</h3>
+              <p>Entrega de insumos a habitaciones dentro de la ultima ventana operativa.</p>
+            </div>
+
+            <span class="dashboard-inline-badge">{{ todayAssignmentsCount() }} hoy</span>
+          </div>
+
+          @if (recentAssignments().length) {
+            <div class="dashboard-feed-list">
+              @for (assignment of recentAssignments(); track assignment.id) {
+                <article class="dashboard-feed-item">
+                  <div class="dashboard-feed-item__main">
+                    <strong>{{ assignment.itemName }}</strong>
+                    <small>{{ formatAssignmentContext(assignment) }}</small>
+                  </div>
+
+                  <div class="dashboard-feed-item__meta">
+                    <span class="dashboard-pill">{{ assignment.quantity }} uds</span>
+                    <small>{{ formatDateTime(assignment.createdAt) }}</small>
+                  </div>
+                </article>
+              }
+            </div>
+          } @else {
+            <p class="dashboard-empty-inline">Sin asignaciones recientes dentro de la ventana cargada.</p>
+          }
+        </article>
+      }
     </section>
   }
 </div>

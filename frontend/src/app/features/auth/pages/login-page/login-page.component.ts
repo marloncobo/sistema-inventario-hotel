@@ -63,6 +63,16 @@ import { CommonModule } from '@angular/common';
               </div>
 
               <form [formGroup]="form" (ngSubmit)="submit()" class="login-form">
+                @if (submitError(); as error) {
+                  <article class="validation-banner validation-banner--danger">
+                    <strong>
+                      <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
+                      No fue posible iniciar sesion
+                    </strong>
+                    <p>{{ error }}</p>
+                  </article>
+                }
+
                 <div class="field">
                   <label for="username">Usuario</label>
                   <div class="input-wrapper">
@@ -419,6 +429,7 @@ export class LoginPageComponent {
   private readonly notificationService = inject(NotificationService);
 
   protected readonly isSubmitting = signal(false);
+  protected readonly submitError = signal<string | null>(null);
 
   protected readonly form = this.fb.nonNullable.group({
     username: ['', [Validators.required]],
@@ -426,6 +437,8 @@ export class LoginPageComponent {
   });
 
   protected submit(): void {
+    this.submitError.set(null);
+
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
@@ -442,7 +455,10 @@ export class LoginPageComponent {
           this.isSubmitting.set(false);
           void this.router.navigate(['/dashboard']);
         },
-        error: () => {
+        error: (error: unknown) => {
+          this.submitError.set(
+            error instanceof Error ? error.message : 'Verifica el usuario y la contraseÃ±a.'
+          );
           this.isSubmitting.set(false);
         }
       });

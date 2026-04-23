@@ -12,7 +12,7 @@ import { AuthService } from '@core/services/auth.service';
 import { InventoryApiService } from '@core/services/api/inventory-api.service';
 import { UsersApiService } from '@core/services/api/users-api.service';
 import { NotificationService } from '@core/services/ui/notification.service';
-import { extractApiFieldErrors } from '@models/api-error.model';
+import { extractApiErrorMessage, extractApiFieldErrors } from '@models/api-error.model';
 import type { AppUser } from '@models/app-user.model';
 import type {
   CatalogEntity,
@@ -25,6 +25,8 @@ import type {
   UpdateSupplyItemRequest
 } from '@models/inventory.model';
 import { EmptyStateComponent } from '@shared/components/empty-state/empty-state.component';
+import { MinNumberDirective } from '@shared/directives/min-number.directive';
+import { notBlankValidator } from '@shared/utils/app-validators.util';
 import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
 
 type InventoryDialog = 'item' | 'entry' | 'return' | 'decrease';
@@ -45,7 +47,8 @@ const ITEM_FORM_STEP_TOTAL = 3;
     DrawerModule,
     InputTextModule,
     EmptyStateComponent,
-    TagModule
+    TagModule,
+    MinNumberDirective
   ],
   templateUrl: './inventory-page.component.html',
   styleUrls: ['./inventory-page.component.css', '../../../../shared/styles/premium-panels.css']
@@ -71,6 +74,7 @@ export class InventoryPageComponent implements OnInit {
   protected readonly loading = signal(false);
   protected readonly detailLoading = signal(false);
   protected readonly saving = signal(false);
+  protected readonly dialogSubmitError = signal<string | null>(null);
   protected readonly activeDialog = signal<InventoryDialog>('item');
   protected readonly editingItemId = signal<number | null>(null);
   protected readonly operationItemId = signal<number | null>(null);
@@ -86,11 +90,15 @@ export class InventoryPageComponent implements OnInit {
 
   protected readonly itemForm = this.fb.group({
     code: this.fb.nonNullable.control(''),
-    name: this.fb.nonNullable.control('', [Validators.required]),
-    description: this.fb.control(''),
-    category: this.fb.nonNullable.control('', [Validators.required]),
-    unit: this.fb.nonNullable.control('', [Validators.required]),
-    providerName: this.fb.control(''),
+    name: this.fb.nonNullable.control('', [
+      Validators.required,
+      notBlankValidator,
+      Validators.maxLength(180)
+    ]),
+    description: this.fb.control('', [Validators.maxLength(500)]),
+    category: this.fb.nonNullable.control('', [Validators.required, notBlankValidator]),
+    unit: this.fb.nonNullable.control('', [Validators.required, notBlankValidator]),
+    providerName: this.fb.control('', [Validators.maxLength(180)]),
     stock: this.fb.nonNullable.control(0, [Validators.required, Validators.min(0)]),
     minStock: this.fb.nonNullable.control(0, [Validators.required, Validators.min(0)]),
     maxStock: this.fb.control<number | null>(null, [Validators.min(0)]),
@@ -99,26 +107,26 @@ export class InventoryPageComponent implements OnInit {
 
   protected readonly entryForm = this.fb.group({
     quantity: this.fb.nonNullable.control(1, [Validators.required, Validators.min(1)]),
-    providerName: this.fb.nonNullable.control('', [Validators.required]),
-    referenceText: this.fb.control('')
+    providerName: this.fb.nonNullable.control('', [Validators.required, notBlankValidator]),
+    referenceText: this.fb.control('', [Validators.maxLength(500)])
   });
 
   protected readonly returnForm = this.fb.group({
     quantity: this.fb.nonNullable.control(1, [Validators.required, Validators.min(1)]),
-    roomNumber: this.fb.control(''),
-    areaName: this.fb.control(''),
-    operationalResponsible: this.fb.control(''),
-    referenceText: this.fb.control(''),
+    roomNumber: this.fb.control('', [Validators.pattern(/^\d{3}$/)]),
+    areaName: this.fb.control('', [Validators.maxLength(120)]),
+    operationalResponsible: this.fb.control('', [Validators.maxLength(120)]),
+    referenceText: this.fb.control('', [Validators.maxLength(500)]),
     sourceMovementId: this.fb.nonNullable.control(0, [Validators.required, Validators.min(1)])
   });
 
   protected readonly decreaseForm = this.fb.group({
     quantity: this.fb.nonNullable.control(1, [Validators.required, Validators.min(1)]),
-    roomNumber: this.fb.control(''),
-    areaName: this.fb.control(''),
-    origin: this.fb.nonNullable.control('', [Validators.required]),
-    operationalResponsible: this.fb.control(''),
-    referenceText: this.fb.control('')
+    roomNumber: this.fb.control('', [Validators.pattern(/^\d{3}$/)]),
+    areaName: this.fb.control('', [Validators.maxLength(120)]),
+    origin: this.fb.nonNullable.control('', [Validators.required, notBlankValidator]),
+    operationalResponsible: this.fb.control('', [Validators.maxLength(120)]),
+    referenceText: this.fb.control('', [Validators.maxLength(500)])
   });
 
   protected readonly filteredItems = computed(() => {
@@ -524,6 +532,7 @@ export class InventoryPageComponent implements OnInit {
   }
 
   protected openItemDialog(item?: SupplyItem): void {
+    this.dialogSubmitError.set(null);
     this.activeDialog.set('item');
     this.itemFormStep.set(1);
     this.editingItemId.set(item?.id ?? null);
@@ -544,6 +553,7 @@ export class InventoryPageComponent implements OnInit {
   }
 
   protected openEntryDialog(item: SupplyItem): void {
+    this.dialogSubmitError.set(null);
     this.activeDialog.set('entry');
     this.operationItemId.set(item.id);
     this.entryForm.reset({
@@ -555,6 +565,7 @@ export class InventoryPageComponent implements OnInit {
   }
 
   protected openReturnDialog(item: SupplyItem): void {
+    this.dialogSubmitError.set(null);
     this.activeDialog.set('return');
     this.operationItemId.set(item.id);
     this.returnForm.reset({
@@ -569,6 +580,7 @@ export class InventoryPageComponent implements OnInit {
   }
 
   protected openDecreaseDialog(item: SupplyItem): void {
+    this.dialogSubmitError.set(null);
     this.activeDialog.set('decrease');
     this.operationItemId.set(item.id);
     this.decreaseForm.reset({
@@ -651,12 +663,34 @@ export class InventoryPageComponent implements OnInit {
   }
 
   protected submitItem(): void {
+    this.dialogSubmitError.set(null);
+    this.clearCustomItemErrors();
+
+    const raw = this.itemForm.getRawValue();
+    if (raw.maxStock !== null && raw.maxStock < raw.minStock) {
+      this.itemForm.controls.maxStock.setErrors({
+        ...(this.itemForm.controls.maxStock.errors ?? {}),
+        maxBelowMin: true
+      });
+      this.itemForm.controls.maxStock.markAsTouched();
+    }
+
+    if (
+      this.editingItemId() === null &&
+      raw.maxStock !== null &&
+      raw.stock > raw.maxStock
+    ) {
+      this.itemForm.controls.stock.setErrors({
+        ...(this.itemForm.controls.stock.errors ?? {}),
+        stockAboveMax: true
+      });
+      this.itemForm.controls.stock.markAsTouched();
+    }
+
     if (this.itemForm.invalid) {
       this.itemForm.markAllAsTouched();
       return;
     }
-
-    const raw = this.itemForm.getRawValue();
     const basePayload = {
       name: raw.name.trim(),
       description: raw.description?.trim() || null,
@@ -697,12 +731,20 @@ export class InventoryPageComponent implements OnInit {
       },
       error: (error) => {
         this.saving.set(false);
-        applyServerValidationErrors(this.itemForm, extractApiFieldErrors(error.error));
+        const fieldErrors = extractApiFieldErrors(error.error);
+        if (Object.keys(fieldErrors).length) {
+          applyServerValidationErrors(this.itemForm, fieldErrors);
+          this.dialogSubmitError.set('Revisa los campos marcados antes de guardar.');
+          return;
+        }
+
+        this.dialogSubmitError.set(extractApiErrorMessage(error.error));
       }
     });
   }
 
   protected submitEntry(): void {
+    this.dialogSubmitError.set(null);
     if (this.entryForm.invalid || this.operationItemId() === null) {
       this.entryForm.markAllAsTouched();
       return;
@@ -732,12 +774,20 @@ export class InventoryPageComponent implements OnInit {
         },
         error: (error) => {
           this.saving.set(false);
-          applyServerValidationErrors(this.entryForm, extractApiFieldErrors(error.error));
+          const fieldErrors = extractApiFieldErrors(error.error);
+          if (Object.keys(fieldErrors).length) {
+            applyServerValidationErrors(this.entryForm, fieldErrors);
+            this.dialogSubmitError.set('Revisa los campos marcados antes de registrar la entrada.');
+            return;
+          }
+
+          this.dialogSubmitError.set(extractApiErrorMessage(error.error));
         }
       });
   }
 
   protected submitReturn(): void {
+    this.dialogSubmitError.set(null);
     const currentItemId = this.operationItemId();
     if (this.returnForm.invalid || currentItemId === null) {
       this.returnForm.markAllAsTouched();
@@ -773,12 +823,20 @@ export class InventoryPageComponent implements OnInit {
         },
         error: (error) => {
           this.saving.set(false);
-          applyServerValidationErrors(this.returnForm, extractApiFieldErrors(error.error));
+          const fieldErrors = extractApiFieldErrors(error.error);
+          if (Object.keys(fieldErrors).length) {
+            applyServerValidationErrors(this.returnForm, fieldErrors);
+            this.dialogSubmitError.set('Revisa los campos marcados antes de confirmar la devolucion.');
+            return;
+          }
+
+          this.dialogSubmitError.set(extractApiErrorMessage(error.error));
         }
       });
   }
 
   protected submitDecrease(): void {
+    this.dialogSubmitError.set(null);
     const currentItemId = this.operationItemId();
     if (this.decreaseForm.invalid || currentItemId === null) {
       this.decreaseForm.markAllAsTouched();
@@ -791,6 +849,7 @@ export class InventoryPageComponent implements OnInit {
         server: 'Debes usar el modulo de asignaciones para habitaciones.'
       });
       this.decreaseForm.controls.origin.markAsTouched();
+      this.dialogSubmitError.set('Debes usar el modulo de asignaciones para habitaciones.');
       return;
     }
 
@@ -820,12 +879,20 @@ export class InventoryPageComponent implements OnInit {
         },
         error: (error) => {
           this.saving.set(false);
-          applyServerValidationErrors(this.decreaseForm, extractApiFieldErrors(error.error));
+          const fieldErrors = extractApiFieldErrors(error.error);
+          if (Object.keys(fieldErrors).length) {
+            applyServerValidationErrors(this.decreaseForm, fieldErrors);
+            this.dialogSubmitError.set('Revisa los campos marcados antes de registrar la salida.');
+            return;
+          }
+
+          this.dialogSubmitError.set(extractApiErrorMessage(error.error));
         }
       });
   }
 
   protected resetDialogs(): void {
+    this.dialogSubmitError.set(null);
     this.editingItemId.set(null);
     this.operationItemId.set(null);
     this.itemFormStep.set(1);
@@ -877,6 +944,7 @@ export class InventoryPageComponent implements OnInit {
       | 'minStock'
       | 'maxStock'
       | 'providerName'
+      | 'description'
   ): boolean {
     const control = this.itemForm.controls[controlName];
     return control.invalid && control.touched;
@@ -891,35 +959,73 @@ export class InventoryPageComponent implements OnInit {
       | 'minStock'
       | 'maxStock'
       | 'providerName'
+      | 'description'
   ): string {
     return this.resolveControlError(this.itemForm.controls[controlName].errors);
   }
 
-  protected showEntryError(controlName: 'quantity' | 'providerName'): boolean {
+  protected showEntryError(controlName: 'quantity' | 'providerName' | 'referenceText'): boolean {
     const control = this.entryForm.controls[controlName];
     return control.invalid && control.touched;
   }
 
-  protected entryError(controlName: 'quantity' | 'providerName'): string {
+  protected entryError(controlName: 'quantity' | 'providerName' | 'referenceText'): string {
     return this.resolveControlError(this.entryForm.controls[controlName].errors);
   }
 
-  protected showReturnError(controlName: 'quantity' | 'sourceMovementId'): boolean {
+  protected showReturnError(
+    controlName:
+      | 'quantity'
+      | 'sourceMovementId'
+      | 'roomNumber'
+      | 'areaName'
+      | 'operationalResponsible'
+      | 'referenceText'
+  ): boolean {
     const control = this.returnForm.controls[controlName];
     return control.invalid && control.touched;
   }
 
-  protected returnError(controlName: 'quantity' | 'sourceMovementId'): string {
+  protected returnError(
+    controlName:
+      | 'quantity'
+      | 'sourceMovementId'
+      | 'roomNumber'
+      | 'areaName'
+      | 'operationalResponsible'
+      | 'referenceText'
+  ): string {
     return this.resolveControlError(this.returnForm.controls[controlName].errors);
   }
 
-  protected showDecreaseError(controlName: 'quantity' | 'origin'): boolean {
+  protected showDecreaseError(
+    controlName:
+      | 'quantity'
+      | 'origin'
+      | 'roomNumber'
+      | 'areaName'
+      | 'operationalResponsible'
+      | 'referenceText'
+  ): boolean {
     const control = this.decreaseForm.controls[controlName];
     return control.invalid && control.touched;
   }
 
-  protected decreaseError(controlName: 'quantity' | 'origin'): string {
+  protected decreaseError(
+    controlName:
+      | 'quantity'
+      | 'origin'
+      | 'roomNumber'
+      | 'areaName'
+      | 'operationalResponsible'
+      | 'referenceText'
+  ): string {
     return this.resolveControlError(this.decreaseForm.controls[controlName].errors);
+  }
+
+  private clearCustomItemErrors(): void {
+    this.clearControlError(this.itemForm.controls.stock, 'stockAboveMax');
+    this.clearControlError(this.itemForm.controls.maxStock, 'maxBelowMin');
   }
 
   private loadReferenceData(): void {
@@ -974,6 +1080,15 @@ export class InventoryPageComponent implements OnInit {
       });
   }
 
+  private clearControlError(control: { errors: ValidationErrors | null; setErrors: (errors: ValidationErrors | null) => void }, key: string): void {
+    if (!control.errors?.[key]) {
+      return;
+    }
+
+    const { [key]: _removed, ...rest } = control.errors;
+    control.setErrors(Object.keys(rest).length ? rest : null);
+  }
+
   private resolveControlError(errors: ValidationErrors | null): string {
     if (!errors) {
       return 'Valor invalido.';
@@ -987,8 +1102,28 @@ export class InventoryPageComponent implements OnInit {
       return 'Este campo es obligatorio.';
     }
 
+    if (errors['blank']) {
+      return 'No puede quedar en blanco.';
+    }
+
     if (errors['min']) {
       return 'Debe ser mayor o igual al minimo permitido.';
+    }
+
+    if (errors['pattern']) {
+      return 'Debe tener exactamente 3 digitos.';
+    }
+
+    if (errors['maxlength']) {
+      return `No puede superar ${errors['maxlength'].requiredLength} caracteres.`;
+    }
+
+    if (errors['maxBelowMin']) {
+      return 'El stock maximo debe ser mayor o igual al stock minimo.';
+    }
+
+    if (errors['stockAboveMax']) {
+      return 'El stock inicial no puede superar el stock maximo configurado.';
     }
 
     return 'Valor invalido.';

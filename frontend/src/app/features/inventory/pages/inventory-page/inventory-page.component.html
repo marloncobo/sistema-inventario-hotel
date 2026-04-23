@@ -22,8 +22,8 @@
   <section class="inventory-workbench">
     <div class="inventory-layout">
       <div class="inventory-layout__main">
-        <div class="inv-stat-strip pp-metric-strip" aria-label="Resumen del inventario">
-          <article class="pp-metric-card inv-indicator-card">
+        <div class="summary-grid inv-stat-strip admin-kpi-row" aria-label="Resumen del inventario">
+          <article class="summary-card inv-indicator-card">
             <span class="inv-indicator-card__icon inv-indicator-card__icon--catalog" aria-hidden="true">
               <svg viewBox="0 0 24 24">
                 <path d="M12 3 20 7.5v9L12 21l-8-4.5v-9L12 3Z" />
@@ -38,7 +38,7 @@
             </div>
           </article>
 
-          <article class="pp-metric-card inv-indicator-card">
+          <article class="summary-card inv-indicator-card">
             <span class="inv-indicator-card__icon inv-indicator-card__icon--active" aria-hidden="true">
               <svg viewBox="0 0 24 24">
                 <rect x="4" y="5" width="16" height="15" rx="3" />
@@ -54,7 +54,7 @@
             </div>
           </article>
 
-          <article class="pp-metric-card inv-indicator-card">
+          <article class="summary-card inv-indicator-card">
             <span class="inv-indicator-card__icon inv-indicator-card__icon--warn" aria-hidden="true">
               <svg viewBox="0 0 24 24">
                 <circle cx="12" cy="12" r="8" />
@@ -69,7 +69,7 @@
             </div>
           </article>
 
-          <article class="pp-metric-card inv-indicator-card">
+          <article class="summary-card inv-indicator-card">
             <span class="inv-indicator-card__icon inv-indicator-card__icon--danger" aria-hidden="true">
               <svg viewBox="0 0 24 24">
                 <path d="M7 6h10l3 3v9H4V9l3-3Z" />
@@ -355,159 +355,199 @@
     [(visible)]="dialogVisible"
     [modal]="true"
     [draggable]="false"
-    [style]="{ width: 'min(56rem, 94vw)' }"
+    [style]="{ width: 'min(82rem, 96vw)' }"
     (onHide)="resetDialogs()"
     styleClass="inventory-item-wizard"
   >
     <ng-template pTemplate="header">
-      <div class="inventory-drawer__title-wrap">
-        <span class="inventory-drawer__title">{{ itemDrawerTitle() }}</span>
-        <p class="inventory-drawer__subtitle">
-          Conserva el catalogo, los limites de stock y los datos de proveedor.
+      <div class="inventory-wizard-header">
+        <span class="inventory-wizard-header__title">{{ itemDrawerTitle() }}</span>
+        <p class="inventory-wizard-header__subtitle">
+          {{ editingItemId() === null ? 'Crea un insumo en 3 pasos' : 'Actualiza el insumo en 3 pasos' }}
         </p>
       </div>
     </ng-template>
 
-    <form [formGroup]="itemForm" class="inventory-drawer-form" (ngSubmit)="onItemFormSubmit()">
-      <div class="inventory-drawer__summary">
-        @if (editingItemId() !== null) {
-          <div class="inventory-drawer__avatar" aria-hidden="true">
-            {{ (itemForm.controls.name.getRawValue() || '?').charAt(0).toUpperCase() }}
-          </div>
-        } @else {
-          <div class="inventory-drawer__summary-icon" aria-hidden="true">
-            <i class="pi pi-box"></i>
-          </div>
-        }
-
-        <div class="inventory-drawer__summary-body">
-          <strong>{{ editingItemId() === null ? 'Alta de insumo' : 'Edicion de insumo' }}</strong>
-          <span class="inventory-drawer__summary-hint">
-            {{
-              editingItemId() === null
-                ? 'Tres pasos: identificacion, stock y datos adicionales.'
-                : 'Actualiza la ficha sin alterar el flujo operativo del catalogo.'
-            }}
-          </span>
-        </div>
-
-        <div class="inventory-drawer__summary-meta">
-          <span class="inventory-drawer__summary-chip">
-            {{
-              editingItemId() === null
-                ? 'Nuevo registro'
-                : 'Codigo ' + (itemForm.controls.code.getRawValue() || '-')
-            }}
-          </span>
-          <span class="inventory-drawer__summary-chip">
-            Paso {{ itemFormStep() }} de {{ itemFormStepTotal }}
-          </span>
-        </div>
-      </div>
+    <form [formGroup]="itemForm" class="inventory-wizard-form" (ngSubmit)="onItemFormSubmit()">
+      @if (dialogSubmitError(); as error) {
+        <article class="validation-banner validation-banner--danger">
+          <strong>
+            <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
+            Corrige la informacion del insumo
+          </strong>
+          <p>{{ error }}</p>
+        </article>
+      }
 
       <div
-        class="inv-drawer-progress"
+        class="inventory-wizard-stepper"
         role="progressbar"
         [attr.aria-valuenow]="itemFormStep()"
         aria-valuemin="1"
         [attr.aria-valuemax]="itemFormStepTotal"
       >
-        <div class="inv-drawer-progress__track">
-          <div class="inv-drawer-progress__fill" [style.width.%]="itemFormProgressPercent()"></div>
-        </div>
+        <nav class="inventory-wizard-stepper__nav" aria-label="Pasos del formulario">
+          @for (step of itemFormSteps; track step; let last = $last) {
+            <div class="inventory-wizard-step-shell">
+              <button
+                type="button"
+                class="inventory-wizard-step"
+                [class.inventory-wizard-step--active]="itemFormStep() === step"
+                [class.inventory-wizard-step--done]="itemFormStep() > step"
+                [disabled]="itemFormStep() < step"
+                [attr.aria-current]="itemFormStep() === step ? 'step' : null"
+                (click)="goItemFormStep(step)"
+              >
+                <span class="inventory-wizard-step__bubble">{{ step }}</span>
+                <span class="inventory-wizard-step__label">{{ itemFormStepTitle(step) }}</span>
+              </button>
 
-        <nav class="inv-drawer-steps" aria-label="Pasos del formulario">
-          @for (step of itemFormSteps; track step) {
-            <button
-              type="button"
-              class="inv-drawer-step"
-              [class.inv-drawer-step--active]="itemFormStep() === step"
-              [class.inv-drawer-step--done]="itemFormStep() > step"
-              [disabled]="itemFormStep() <= step"
-              (click)="goItemFormStep(step)"
-            >
-              <span class="inv-drawer-step__number">{{ step }}</span>
-              <span class="inv-drawer-step__text">{{ itemFormStepTitle(step) }}</span>
-            </button>
+              @if (!last) {
+                <span class="inventory-wizard-step__connector" aria-hidden="true"></span>
+              }
+            </div>
           }
         </nav>
       </div>
 
-      <p class="inventory-drawer__step-caption">
-        Paso {{ itemFormStep() }} de {{ itemFormStepTotal }} - {{ itemFormStepTitle(itemFormStep()) }}
-      </p>
-
-      <div class="inventory-drawer__body">
+      <div class="inventory-wizard-body">
         @if (itemFormStep() === 1) {
-          <section class="inventory-drawer__section" aria-labelledby="inv-step-1">
-            <div class="inventory-drawer__section-head" id="inv-step-1">
-              <h4>Identificacion</h4>
-              <p>Nombre, categoria y unidad base del insumo.</p>
+          <section class="inventory-wizard-panel" aria-labelledby="inv-step-1">
+            <div class="inventory-wizard-panel__head" id="inv-step-1">
+              <h3>Identificacion</h3>
+              <p>Completa la informacion basica del insumo.</p>
             </div>
 
-            <div class="inventory-form-card inventory-form-card--emphasis">
+            <div class="inventory-wizard-panel__content">
               @if (editingItemId() !== null) {
-                <label class="field">
-                  <span>Codigo</span>
-                  <input pInputText type="text" formControlName="code" readonly />
+                <label class="inventory-wizard-field inventory-wizard-field--full">
+                  <span class="inventory-wizard-field__label">Codigo</span>
+                  <span class="inventory-wizard-control inventory-wizard-control--readonly">
+                    <span class="inventory-wizard-control__icon">
+                      <i class="pi pi-tag" aria-hidden="true"></i>
+                    </span>
+                    <input
+                      pInputText
+                      type="text"
+                      formControlName="code"
+                      readonly
+                      class="inventory-wizard-control__input"
+                    />
+                  </span>
                 </label>
               }
 
-              <label class="field">
-                <span>Nombre</span>
-                <input pInputText type="text" formControlName="name" placeholder="Ej. Detergente liquido" />
+              <label class="inventory-wizard-field inventory-wizard-field--full">
+                <span class="inventory-wizard-field__label">Nombre del insumo</span>
+                <span
+                  class="inventory-wizard-control"
+                  [class.inventory-wizard-control--invalid]="showItemError('name')"
+                >
+                  <span class="inventory-wizard-control__icon">
+                    <i class="pi pi-box" aria-hidden="true"></i>
+                  </span>
+                  <input
+                    pInputText
+                    type="text"
+                    formControlName="name"
+                    placeholder="Ej. Detergente liquido"
+                    maxlength="180"
+                    class="inventory-wizard-control__input"
+                  />
+                </span>
                 @if (showItemError('name')) {
-                  <small class="error-text">{{ itemError('name') }}</small>
+                  <small class="inventory-wizard-field__error">{{ itemError('name') }}</small>
                 }
               </label>
 
-              <div class="form-grid inventory-form-grid-tight">
-                <label class="field">
-                  <span>Categoria</span>
-                  <input
-                    pInputText
-                    type="text"
-                    formControlName="category"
-                    list="inventory-categories"
-                    placeholder="Ej. ASEO"
-                  />
+              <div class="inventory-wizard-grid inventory-wizard-grid--2">
+                <label class="inventory-wizard-field">
+                  <span class="inventory-wizard-field__label">Categoria</span>
+                  <span
+                    class="inventory-wizard-control inventory-wizard-control--select"
+                    [class.inventory-wizard-control--invalid]="showItemError('category')"
+                  >
+                    <span class="inventory-wizard-control__icon">
+                      <i class="pi pi-tag" aria-hidden="true"></i>
+                    </span>
+                    <input
+                      pInputText
+                      type="text"
+                      formControlName="category"
+                      list="inventory-categories"
+                      placeholder="Selecciona una categoria"
+                      class="inventory-wizard-control__input"
+                    />
+                    <i class="pi pi-angle-down inventory-wizard-control__chevron" aria-hidden="true"></i>
+                  </span>
                   @if (showItemError('category')) {
-                    <small class="error-text">{{ itemError('category') }}</small>
+                    <small class="inventory-wizard-field__error">{{ itemError('category') }}</small>
                   }
                 </label>
 
-                <label class="field">
-                  <span>Unidad</span>
-                  <input
-                    pInputText
-                    type="text"
-                    formControlName="unit"
-                    list="inventory-units"
-                    placeholder="Ej. UND"
-                  />
+                <label class="inventory-wizard-field">
+                  <span class="inventory-wizard-field__label">Unidad de medida</span>
+                  <span
+                    class="inventory-wizard-control inventory-wizard-control--select"
+                    [class.inventory-wizard-control--invalid]="showItemError('unit')"
+                  >
+                    <span class="inventory-wizard-control__icon">
+                      <i class="pi pi-list" aria-hidden="true"></i>
+                    </span>
+                    <input
+                      pInputText
+                      type="text"
+                      formControlName="unit"
+                      list="inventory-units"
+                      placeholder="Selecciona una unidad"
+                      class="inventory-wizard-control__input"
+                    />
+                    <i class="pi pi-angle-down inventory-wizard-control__chevron" aria-hidden="true"></i>
+                  </span>
                   @if (showItemError('unit')) {
-                    <small class="error-text">{{ itemError('unit') }}</small>
+                    <small class="inventory-wizard-field__error">{{ itemError('unit') }}</small>
                   }
                 </label>
+              </div>
+
+              <div class="inventory-wizard-note">
+                <span class="inventory-wizard-note__icon">
+                  <i class="pi pi-info-circle" aria-hidden="true"></i>
+                </span>
+                <p>Un buen nombre y categoria facilitan la busqueda y control de tus insumos.</p>
               </div>
             </div>
           </section>
         }
 
         @if (itemFormStep() === 2) {
-          <section class="inventory-drawer__section" aria-labelledby="inv-step-2">
-            <div class="inventory-drawer__section-head" id="inv-step-2">
-              <h4>Stock y limites</h4>
+          <section class="inventory-wizard-panel" aria-labelledby="inv-step-2">
+            <div class="inventory-wizard-panel__head" id="inv-step-2">
+              <h3>Stock y limites</h3>
               <p>Define existencias iniciales y el rango de control del insumo.</p>
             </div>
 
-            <div class="inventory-form-card inventory-form-card--emphasis">
+            <div class="inventory-wizard-panel__content">
               @if (editingItemId() === null) {
-                <label class="field">
-                  <span>Stock inicial</span>
-                  <input pInputText type="number" formControlName="stock" />
+                <label class="inventory-wizard-field inventory-wizard-field--full">
+                  <span class="inventory-wizard-field__label">Stock inicial</span>
+                  <span
+                    class="inventory-wizard-control"
+                    [class.inventory-wizard-control--invalid]="showItemError('stock')"
+                  >
+                    <span class="inventory-wizard-control__icon">
+                      <i class="pi pi-box" aria-hidden="true"></i>
+                    </span>
+                  <input
+                    pInputText
+                    type="number"
+                    formControlName="stock"
+                    [appMinNumber]="0"
+                    class="inventory-wizard-control__input"
+                  />
+                  </span>
                   @if (showItemError('stock')) {
-                    <small class="error-text">{{ itemError('stock') }}</small>
+                    <small class="inventory-wizard-field__error">{{ itemError('stock') }}</small>
                   }
                 </label>
               } @else {
@@ -517,89 +557,113 @@
                 </div>
               }
 
-              <div class="form-grid inventory-form-grid-tight">
-                <label class="field">
-                  <span>Minimo</span>
-                  <input pInputText type="number" formControlName="minStock" />
+              <div class="inventory-wizard-grid inventory-wizard-grid--2">
+                <label class="inventory-wizard-field">
+                  <span class="inventory-wizard-field__label">Minimo</span>
+                  <span
+                    class="inventory-wizard-control"
+                    [class.inventory-wizard-control--invalid]="showItemError('minStock')"
+                  >
+                    <span class="inventory-wizard-control__icon">
+                      <i class="pi pi-arrow-down" aria-hidden="true"></i>
+                    </span>
+                    <input
+                      pInputText
+                      type="number"
+                      formControlName="minStock"
+                      [appMinNumber]="0"
+                      class="inventory-wizard-control__input"
+                    />
+                  </span>
                   @if (showItemError('minStock')) {
-                    <small class="error-text">{{ itemError('minStock') }}</small>
+                    <small class="inventory-wizard-field__error">{{ itemError('minStock') }}</small>
                   }
                 </label>
 
-                <label class="field">
-                  <span>Maximo</span>
-                  <input pInputText type="number" formControlName="maxStock" placeholder="Opcional" />
+                <label class="inventory-wizard-field">
+                  <span class="inventory-wizard-field__label">Maximo</span>
+                  <span
+                    class="inventory-wizard-control"
+                    [class.inventory-wizard-control--invalid]="showItemError('maxStock')"
+                  >
+                    <span class="inventory-wizard-control__icon">
+                      <i class="pi pi-arrow-up" aria-hidden="true"></i>
+                    </span>
+                    <input
+                      pInputText
+                      type="number"
+                      formControlName="maxStock"
+                      placeholder="Opcional"
+                      [appMinNumber]="0"
+                      class="inventory-wizard-control__input"
+                    />
+                  </span>
                   @if (showItemError('maxStock')) {
-                    <small class="error-text">{{ itemError('maxStock') }}</small>
+                    <small class="inventory-wizard-field__error">{{ itemError('maxStock') }}</small>
                   }
                 </label>
+              </div>
+
+              <div class="inventory-wizard-note">
+                <span class="inventory-wizard-note__icon">
+                  <i class="pi pi-info-circle" aria-hidden="true"></i>
+                </span>
+                <p>Los limites correctos ayudan a detectar faltantes y sobrestock con mas rapidez.</p>
               </div>
             </div>
           </section>
         }
 
-        @if (itemFormStep() === 2) {
-          <div class="inventory-drawer__preview">
-            <div class="inventory-drawer__preview-grid">
-              <article class="inventory-drawer__preview-item">
-                <span>Stock base</span>
-                <strong>
-                  {{
-                    editingItemId() === null
-                      ? itemForm.controls.stock.getRawValue()
-                      : 'Gestionado por operaciones'
-                  }}
-                </strong>
-              </article>
-
-              <article class="inventory-drawer__preview-item">
-                <span>Minimo</span>
-                <strong>{{ itemForm.controls.minStock.getRawValue() }}</strong>
-              </article>
-
-              <article class="inventory-drawer__preview-item">
-                <span>Maximo</span>
-                <strong>{{ itemForm.controls.maxStock.getRawValue() ?? 'Sin tope' }}</strong>
-              </article>
-
-              <article class="inventory-drawer__preview-item">
-                <span>Modo</span>
-                <strong>{{ editingItemId() === null ? 'Alta inicial' : 'Edicion segura' }}</strong>
-              </article>
-            </div>
-          </div>
-        }
-
         @if (itemFormStep() === 3) {
-          <section class="inventory-drawer__section" aria-labelledby="inv-step-3">
-            <div class="inventory-drawer__section-head" id="inv-step-3">
-              <h4>Proveedor y notas</h4>
+          <section class="inventory-wizard-panel" aria-labelledby="inv-step-3">
+            <div class="inventory-wizard-panel__head" id="inv-step-3">
+              <h3>Proveedor y notas</h3>
               <p>Completa los datos de trazabilidad y contexto del insumo.</p>
             </div>
 
-            <div class="inventory-form-card">
-              <label class="field">
-                <span>Proveedor</span>
-                <input
-                  pInputText
-                  type="text"
-                  formControlName="providerName"
-                  list="inventory-providers"
-                  placeholder="Nombre del proveedor"
-                />
+            <div class="inventory-wizard-panel__content">
+              <label class="inventory-wizard-field inventory-wizard-field--full">
+                <span class="inventory-wizard-field__label">Proveedor</span>
+                <span
+                  class="inventory-wizard-control inventory-wizard-control--select"
+                  [class.inventory-wizard-control--invalid]="showItemError('providerName')"
+                >
+                  <span class="inventory-wizard-control__icon">
+                    <i class="pi pi-briefcase" aria-hidden="true"></i>
+                  </span>
+                  <input
+                    pInputText
+                    type="text"
+                    formControlName="providerName"
+                    list="inventory-providers"
+                    placeholder="Nombre del proveedor"
+                    maxlength="180"
+                    class="inventory-wizard-control__input"
+                  />
+                  <i class="pi pi-angle-down inventory-wizard-control__chevron" aria-hidden="true"></i>
+                </span>
                 @if (showItemError('providerName')) {
-                  <small class="error-text">{{ itemError('providerName') }}</small>
+                  <small class="inventory-wizard-field__error">{{ itemError('providerName') }}</small>
                 }
               </label>
 
-              <label class="field">
-                <span>Descripcion</span>
-                <textarea
-                  class="field-control field-control--textarea"
-                  rows="5"
-                  formControlName="description"
-                  placeholder="Observaciones, uso o ubicacion"
-                ></textarea>
+              <label class="inventory-wizard-field inventory-wizard-field--full">
+                <span class="inventory-wizard-field__label">Descripcion</span>
+                <span class="inventory-wizard-textarea">
+                  <span class="inventory-wizard-textarea__icon">
+                    <i class="pi pi-file-edit" aria-hidden="true"></i>
+                  </span>
+                  <textarea
+                    rows="5"
+                    formControlName="description"
+                    placeholder="Observaciones, uso o ubicacion"
+                    maxlength="500"
+                    class="inventory-wizard-textarea__input"
+                  ></textarea>
+                </span>
+                @if (showItemError('description')) {
+                  <small class="inventory-wizard-field__error">{{ itemError('description') }}</small>
+                }
               </label>
 
               @if (editingItemId() !== null) {
@@ -608,22 +672,30 @@
                   <span>Insumo activo en catalogo</span>
                 </label>
               }
+
+              <div class="inventory-wizard-note">
+                <span class="inventory-wizard-note__icon">
+                  <i class="pi pi-info-circle" aria-hidden="true"></i>
+                </span>
+                <p>Registrar proveedor y notas mejora la trazabilidad de cada insumo.</p>
+              </div>
             </div>
           </section>
         }
       </div>
 
-      <div class="inventory-drawer__footer">
+      <div class="inventory-wizard-footer">
         <button
           pButton
           type="button"
           label="Cancelar"
           severity="secondary"
-          variant="text"
+          variant="outlined"
+          class="inventory-wizard-btn inventory-wizard-btn--secondary"
           (click)="dialogVisible = false"
         ></button>
 
-        <div class="inventory-drawer__footer-actions">
+        <div class="inventory-wizard-footer__actions">
           @if (itemFormStep() > 1) {
             <button
               pButton
@@ -632,6 +704,7 @@
               icon="pi pi-angle-left"
               severity="secondary"
               variant="outlined"
+              class="inventory-wizard-btn inventory-wizard-btn--ghost"
               (click)="prevItemFormStep()"
             ></button>
           }
@@ -641,8 +714,9 @@
               pButton
               type="button"
               label="Siguiente"
-              icon="pi pi-angle-right"
+              icon="pi pi-arrow-right"
               iconPos="right"
+              class="inventory-wizard-btn inventory-wizard-btn--primary"
               (click)="nextItemFormStep()"
             ></button>
           } @else {
@@ -651,6 +725,7 @@
               type="submit"
               [label]="editingItemId() === null ? 'Crear insumo' : 'Guardar cambios'"
               icon="pi pi-check"
+              class="inventory-wizard-btn inventory-wizard-btn--primary"
               [loading]="saving()"
             ></button>
           }
@@ -673,6 +748,16 @@
     @switch (activeDialog()) {
       @case ('entry') {
         <form [formGroup]="entryForm" class="inventory-dialog-form" (ngSubmit)="submitEntry()">
+          @if (dialogSubmitError(); as error) {
+            <article class="validation-banner validation-banner--danger">
+              <strong>
+                <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
+                No fue posible registrar la entrada
+              </strong>
+              <p>{{ error }}</p>
+            </article>
+          }
+
           @if (selectedItem(); as current) {
             <div class="inventory-dialog-spotlight">
               <div class="inventory-dialog-spotlight__copy">
@@ -696,7 +781,7 @@
             <div class="form-grid pp-form-grid-2">
               <label class="field">
                 <span>Cantidad</span>
-                <input pInputText type="number" formControlName="quantity" />
+                <input pInputText type="number" formControlName="quantity" [appMinNumber]="1" />
                 @if (showEntryError('quantity')) {
                   <small class="error-text">{{ entryError('quantity') }}</small>
                 }
@@ -704,7 +789,12 @@
 
               <label class="field">
                 <span>Proveedor</span>
-                <input pInputText type="text" formControlName="providerName" list="inventory-providers" />
+                <input
+                  pInputText
+                  type="text"
+                  formControlName="providerName"
+                  list="inventory-providers"
+                />
                 @if (showEntryError('providerName')) {
                   <small class="error-text">{{ entryError('providerName') }}</small>
                 }
@@ -713,7 +803,15 @@
 
             <label class="field">
               <span>Referencia</span>
-              <textarea class="field-control field-control--textarea" rows="3" formControlName="referenceText"></textarea>
+              <textarea
+                class="field-control field-control--textarea"
+                rows="3"
+                formControlName="referenceText"
+                maxlength="500"
+              ></textarea>
+              @if (showEntryError('referenceText')) {
+                <small class="error-text">{{ entryError('referenceText') }}</small>
+              }
             </label>
           </section>
 
@@ -734,6 +832,16 @@
 
       @case ('return') {
         <form [formGroup]="returnForm" class="inventory-dialog-form" (ngSubmit)="submitReturn()">
+          @if (dialogSubmitError(); as error) {
+            <article class="validation-banner validation-banner--danger">
+              <strong>
+                <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
+                No fue posible registrar la devolucion
+              </strong>
+              <p>{{ error }}</p>
+            </article>
+          }
+
           @if (selectedItem(); as current) {
             <div class="inventory-dialog-spotlight">
               <div class="inventory-dialog-spotlight__copy">
@@ -757,7 +865,7 @@
             <div class="form-grid pp-form-grid-2">
               <label class="field">
                 <span>Cantidad</span>
-                <input pInputText type="number" formControlName="quantity" />
+                <input pInputText type="number" formControlName="quantity" [appMinNumber]="1" />
                 @if (showReturnError('quantity')) {
                   <small class="error-text">{{ returnError('quantity') }}</small>
                 }
@@ -765,7 +873,7 @@
 
               <label class="field">
                 <span>Movimiento</span>
-                <input pInputText type="number" formControlName="sourceMovementId" />
+                <input pInputText type="number" formControlName="sourceMovementId" [appMinNumber]="1" />
                 @if (showReturnError('sourceMovementId')) {
                   <small class="error-text">{{ returnError('sourceMovementId') }}</small>
                 }
@@ -775,12 +883,18 @@
             <div class="form-grid pp-form-grid-2">
               <label class="field">
                 <span>Habitacion</span>
-                <input pInputText type="text" formControlName="roomNumber" />
+                <input pInputText type="text" formControlName="roomNumber" maxlength="3" inputmode="numeric" />
+                @if (showReturnError('roomNumber')) {
+                  <small class="error-text">{{ returnError('roomNumber') }}</small>
+                }
               </label>
 
               <label class="field">
                 <span>Area</span>
-                <input pInputText type="text" formControlName="areaName" />
+                <input pInputText type="text" formControlName="areaName" maxlength="120" />
+                @if (showReturnError('areaName')) {
+                  <small class="error-text">{{ returnError('areaName') }}</small>
+                }
               </label>
             </div>
 
@@ -792,11 +906,22 @@
                   <option [value]="user">{{ user }}</option>
                 }
               </select>
+              @if (showReturnError('operationalResponsible')) {
+                <small class="error-text">{{ returnError('operationalResponsible') }}</small>
+              }
             </label>
 
             <label class="field">
               <span>Nota</span>
-              <textarea class="field-control field-control--textarea" rows="3" formControlName="referenceText"></textarea>
+              <textarea
+                class="field-control field-control--textarea"
+                rows="3"
+                formControlName="referenceText"
+                maxlength="500"
+              ></textarea>
+              @if (showReturnError('referenceText')) {
+                <small class="error-text">{{ returnError('referenceText') }}</small>
+              }
             </label>
           </section>
 
@@ -817,6 +942,16 @@
 
       @case ('decrease') {
         <form [formGroup]="decreaseForm" class="inventory-dialog-form" (ngSubmit)="submitDecrease()">
+          @if (dialogSubmitError(); as error) {
+            <article class="validation-banner validation-banner--danger">
+              <strong>
+                <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
+                No fue posible registrar la salida
+              </strong>
+              <p>{{ error }}</p>
+            </article>
+          }
+
           @if (selectedItem(); as current) {
             <div class="inventory-dialog-spotlight">
               <div class="inventory-dialog-spotlight__copy">
@@ -840,7 +975,7 @@
             <div class="form-grid pp-form-grid-2">
               <label class="field">
                 <span>Cantidad</span>
-                <input pInputText type="number" formControlName="quantity" />
+                <input pInputText type="number" formControlName="quantity" [appMinNumber]="1" />
                 @if (showDecreaseError('quantity')) {
                   <small class="error-text">{{ decreaseError('quantity') }}</small>
                 }
@@ -858,7 +993,10 @@
             <div class="form-grid pp-form-grid-2">
               <label class="field">
                 <span>Area</span>
-                <input pInputText type="text" formControlName="areaName" />
+                <input pInputText type="text" formControlName="areaName" maxlength="120" />
+                @if (showDecreaseError('areaName')) {
+                  <small class="error-text">{{ decreaseError('areaName') }}</small>
+                }
               </label>
 
               <label class="field">
@@ -869,12 +1007,23 @@
                     <option [value]="user">{{ user }}</option>
                   }
                 </select>
+                @if (showDecreaseError('operationalResponsible')) {
+                  <small class="error-text">{{ decreaseError('operationalResponsible') }}</small>
+                }
               </label>
             </div>
 
             <label class="field">
               <span>Nota</span>
-              <textarea class="field-control field-control--textarea" rows="3" formControlName="referenceText"></textarea>
+              <textarea
+                class="field-control field-control--textarea"
+                rows="3"
+                formControlName="referenceText"
+                maxlength="500"
+              ></textarea>
+              @if (showDecreaseError('referenceText')) {
+                <small class="error-text">{{ decreaseError('referenceText') }}</small>
+              }
             </label>
           </section>
 

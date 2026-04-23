@@ -11,9 +11,10 @@ import { TableModule } from 'primeng/table';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { UsersApiService } from '@core/services/api/users-api.service';
 import { NotificationService } from '@core/services/ui/notification.service';
-import { extractApiFieldErrors } from '@models/api-error.model';
+import { extractApiErrorMessage, extractApiFieldErrors } from '@models/api-error.model';
 import type { AppUser } from '@models/app-user.model';
 import { ROLE_LABELS, type AppRole } from '@models/role.model';
+import { notBlankValidator, passwordStrengthValidator } from '@shared/utils/app-validators.util';
 import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
 
 @Component({
@@ -42,8 +43,8 @@ import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
       </header>
 
       <!-- Summary Stats Section -->
-      <div class="stats-grid">
-        <div class="stat-card">
+      <div class="stats-grid summary-grid admin-kpi-row">
+        <div class="stat-card summary-card">
           <div class="stat-icon-wrapper">
              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="stat-svg"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
           </div>
@@ -54,8 +55,8 @@ import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
           </div>
         </div>
         
-        <div class="stat-card">
-          <div class="stat-icon-wrapper" style="background: rgba(245, 208, 97, 0.1); color: #c8922d;">
+        <div class="stat-card summary-card">
+          <div class="stat-icon-wrapper">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="stat-svg"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><path d="M12 8v4"></path><path d="M12 16h.01"></path></svg>
           </div>
           <div class="stat-content">
@@ -65,8 +66,8 @@ import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
           </div>
         </div>
 
-        <div class="stat-card">
-          <div class="stat-icon-wrapper" style="background: rgba(100, 116, 139, 0.05); color: #64748b;">
+        <div class="stat-card summary-card">
+          <div class="stat-icon-wrapper">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="stat-svg"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
           </div>
           <div class="stat-content">
@@ -229,6 +230,16 @@ import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
         }
 
         <div class="form-body">
+          @if (submitError(); as error) {
+            <article class="validation-banner validation-banner--danger">
+              <strong>
+                <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
+                Corrige la informacion del usuario
+              </strong>
+              <p>{{ error }}</p>
+            </article>
+          }
+
           <div class="lunara-field">
             <label>NOMBRE COMPLETO *</label>
             <input pInputText formControlName="username" placeholder="Juan López" />
@@ -348,85 +359,88 @@ import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
     /* Stats Grid */
     .stats-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 1.5rem;
+      margin-top: 0.25rem;
       margin-bottom: 2.5rem;
     }
 
     .stat-card {
-      position: relative;
-      overflow: hidden;
-      background: linear-gradient(180deg, rgba(255, 255, 255, 0.995), rgba(252, 250, 246, 0.97));
-      border: 1px solid rgba(219, 178, 102, 0.55);
-      border-radius: 1.55rem;
-      padding: 1.65rem;
-      display: flex;
-      gap: 1.25rem;
+      display: grid;
+      grid-template-columns: auto 1fr;
       align-items: center;
-      box-shadow:
-        inset 0 1px 0 rgba(223, 189, 120, 0.45),
-        0 16px 34px rgba(61, 43, 31, 0.035);
-      transition:
-        transform 0.22s ease,
-        box-shadow 0.22s ease,
-        border-color 0.22s ease;
+      gap: 1rem;
+      min-height: 132px;
     }
 
     .stat-card:hover {
       transform: translateY(-2px);
-      border-color: rgba(200, 146, 45, 0.7);
-      box-shadow:
-        inset 0 1px 0 rgba(223, 189, 120, 0.55),
-        0 20px 38px rgba(61, 43, 31, 0.055);
+      box-shadow: 0 12px 30px rgba(61, 43, 31, 0.05);
     }
 
     .stat-icon-wrapper {
-      width: 3.5rem;
-      height: 3.5rem;
+      width: 3rem;
+      height: 3rem;
       border-radius: 999px;
-      background: rgba(247, 241, 232, 0.95);
+      background: rgba(200, 146, 45, 0.1);
       border: 1px solid rgba(200, 146, 45, 0.1);
       color: #c8922d;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      display: grid;
+      place-items: center;
     }
 
     .stat-svg {
-      width: 1.5rem;
-      height: 1.5rem;
+      width: 1.15rem;
+      height: 1.15rem;
     }
 
     .stat-content {
-      display: flex;
-      flex-direction: column;
-      gap: 0.1rem;
+      min-width: 0;
     }
 
     .stat-label {
-      font-size: 0.65rem;
+      display: block;
+      font-size: 0.75rem;
       font-weight: 700;
-      color: #8e8e8e;
+      color: #8a735c;
       text-transform: uppercase;
-      letter-spacing: 0.08em;
+      letter-spacing: 0.1em;
     }
 
     .stat-value {
+      display: block;
       font-family: var(--app-font-serif, 'Playfair Display', serif);
-      font-size: 2.5rem;
-      color: #1a1a1a;
+      font-size: 2.25rem;
+      color: var(--app-brown, #1a1a1a);
       line-height: 1;
-      margin: 0.2rem 0;
+      margin: 0.25rem 0;
     }
 
     .stat-sub {
-      font-size: 0.75rem;
-      color: #8a735c;
+      display: block;
+      font-size: 0.8rem;
+      color: #a3907d;
       font-weight: 500;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      max-width: 200px;
+      max-width: 240px;
+    }
+
+    @media (max-width: 1100px) {
+      .stats-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 720px) {
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .stat-card {
+        padding: 1.25rem;
+      }
     }
 
     /* Table Container */
@@ -1004,6 +1018,7 @@ export class UsersPageComponent implements OnInit {
   protected readonly loading = signal(false);
   protected readonly saving = signal(false);
   protected readonly editingUser = signal<AppUser | null>(null);
+  protected readonly submitError = signal<string | null>(null);
   protected readonly searchQuery = signal('');
   protected readonly roleFilter = signal<AppRole | ''>('');
   protected readonly statusFilter = signal<boolean | null>(null);
@@ -1053,8 +1068,8 @@ export class UsersPageComponent implements OnInit {
   );
 
   protected readonly form = this.fb.nonNullable.group({
-    username: ['', [Validators.required]],
-    password: ['', [Validators.minLength(8)]],
+    username: ['', [Validators.required, notBlankValidator]],
+    password: ['', [Validators.minLength(8), passwordStrengthValidator]],
     roles: [[] as AppRole[], [Validators.required]],
     active: [true]
   });
@@ -1092,6 +1107,7 @@ export class UsersPageComponent implements OnInit {
   }
 
   protected openCreate(): void {
+    this.submitError.set(null);
     this.editingUser.set(null);
     this.form.reset({
       username: '',
@@ -1103,6 +1119,7 @@ export class UsersPageComponent implements OnInit {
   }
 
   protected openEdit(user: AppUser): void {
+    this.submitError.set(null);
     this.editingUser.set(user);
     this.form.reset({
       username: user.username,
@@ -1114,6 +1131,8 @@ export class UsersPageComponent implements OnInit {
   }
 
   protected submit(): void {
+    this.submitError.set(null);
+
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
@@ -1153,12 +1172,37 @@ export class UsersPageComponent implements OnInit {
       },
       error: (error) => {
         this.saving.set(false);
-        applyServerValidationErrors(this.form, extractApiFieldErrors(error.error));
+        const fieldErrors = extractApiFieldErrors(error.error);
+        if (Object.keys(fieldErrors).length) {
+          applyServerValidationErrors(this.form, fieldErrors);
+          this.submitError.set('Revisa los campos marcados antes de guardar.');
+          return;
+        }
+
+        const message = extractApiErrorMessage(error.error);
+        this.submitError.set(message);
+
+        if (message.toLowerCase().includes('usuario')) {
+          this.form.controls.username.setErrors({
+            ...(this.form.controls.username.errors ?? {}),
+            server: message
+          });
+          this.form.controls.username.markAsTouched();
+        }
+
+        if (message.toLowerCase().includes('contrasena')) {
+          this.form.controls.password.setErrors({
+            ...(this.form.controls.password.errors ?? {}),
+            server: message
+          });
+          this.form.controls.password.markAsTouched();
+        }
       }
     });
   }
 
   protected resetForm(): void {
+    this.submitError.set(null);
     this.editingUser.set(null);
     this.form.reset({
       username: '',
@@ -1212,8 +1256,16 @@ export class UsersPageComponent implements OnInit {
       return 'Este campo es obligatorio.';
     }
 
+    if (control.errors?.['blank']) {
+      return 'No puede quedar en blanco.';
+    }
+
     if (control.errors?.['minlength']) {
       return 'Debe tener al menos 8 caracteres.';
+    }
+
+    if (control.errors?.['passwordStrength']) {
+      return 'Debe tener minimo 8 caracteres, una mayuscula y un numero.';
     }
 
     return 'Valor invalido.';
