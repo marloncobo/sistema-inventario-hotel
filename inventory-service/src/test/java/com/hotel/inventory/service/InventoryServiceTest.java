@@ -22,6 +22,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -73,7 +74,7 @@ class InventoryServiceTest {
         );
 
         assertThat(created.getId()).isEqualTo(10L);
-        assertThat(created.getCode()).isEqualTo("INS-0002");
+        assertThat(created.getCode()).isEqualTo("INS-0001");
         assertThat(created.getName()).isEqualTo("Toallas");
         assertThat(created.getStock()).isEqualTo(30);
         assertThat(created.getActive()).isTrue();
@@ -87,6 +88,26 @@ class InventoryServiceTest {
         assertThat(movement.getMovementType()).isEqualTo("ENTRADA");
         assertThat(movement.getQuantity()).isEqualTo(30);
         assertThat(movement.getCreatedAt()).isNotNull();
+    }
+
+    @Test
+    void createItemIgnoresInvalidOrOverflowingCodesWhenGeneratingSequence() {
+        when(catalogService.ensureActiveCategory("Lenceria")).thenReturn(category("LENCERIA"));
+        when(catalogService.ensureActiveUnit("unidad")).thenReturn(unit("UND"));
+        when(catalogService.ensureActiveProvider(null)).thenReturn(null);
+        when(supplyItemRepository.findAllCodes()).thenReturn(Arrays.asList("INS-0007", "abc-1776524030739", "INS-1776524030739", null));
+        when(supplyItemRepository.save(any(SupplyItem.class))).thenAnswer(invocation -> {
+            SupplyItem item = invocation.getArgument(0);
+            item.setId(11L);
+            return item;
+        });
+
+        SupplyItem created = inventoryService.createItem(
+                new CreateSupplyItemRequest("Sabanas", null, "Lenceria", "unidad", null, 10, 2, 50),
+                "admin"
+        );
+
+        assertThat(created.getCode()).isEqualTo("INS-0008");
     }
 
     @Test
