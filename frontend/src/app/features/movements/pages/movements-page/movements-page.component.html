@@ -3,7 +3,28 @@
     eyebrow="Control"
     title="Movimientos"
     subtitle="Historial trazable de entradas, devoluciones, salidas y anulaciones sobre el inventario de Lunara."
-  />
+  >
+    <div header-actions class="movements-header-actions">
+      <button
+        pButton
+        type="submit"
+        form="movements-filter-form"
+        icon="pi pi-filter"
+        label="Consultar"
+        [loading]="loading()"
+      ></button>
+
+      <button
+        pButton
+        type="button"
+        icon="pi pi-eraser"
+        label="Limpiar"
+        severity="secondary"
+        variant="outlined"
+        (click)="clearFilters()"
+      ></button>
+    </div>
+  </app-page-header>
 
   <section class="summary-grid movements-summary admin-kpi-row">
     <article class="summary-card movements-summary-card">
@@ -51,42 +72,47 @@
     </article>
   </section>
 
-  <section class="surface-card movements-workbench admin-content-block">
-    <form [formGroup]="filtersForm" class="movements-filter-shell admin-filter-block" (ngSubmit)="loadMovements()">
-      <div class="movements-filter-shell__header">
-        <div>
-          <h3>Filtros de consulta</h3>
-          <p>Refina por tipo, origen, ubicacion, responsables o fechas antes de consultar la bitacora.</p>
+  <section class="surface-card movements-filter-card">
+    <form
+      id="movements-filter-form"
+      [formGroup]="filtersForm"
+      class="movements-filter-form"
+      (ngSubmit)="loadMovements()"
+    >
+      <div class="movements-section-head">
+        <div class="movements-section-head__identity">
+          <div class="movements-section-head__icon">
+            <i class="pi pi-filter"></i>
+          </div>
+
+          <div class="movements-section-head__copy">
+            <h3>Filtros de consulta</h3>
+            <p>Define los criterios para buscar movimientos.</p>
+          </div>
         </div>
 
-        <span class="movements-badge">
-          <i class="pi pi-history"></i>
+        <span class="movements-counter">
           {{ formatMetric(activeFilterCount()) }} filtros activos
         </span>
       </div>
 
-      <div class="filters-grid movements-filters-grid">
-        <label class="field">
-          <span>Tipo</span>
-          <input pInputText type="text" formControlName="type" placeholder="Entrada, salida, devolucion..." />
-        </label>
-
-        <label class="field">
-          <span>Origen</span>
-          <input pInputText type="text" formControlName="origin" placeholder="Servicio, habitacion, almacen..." />
-        </label>
-
+      <div class="movements-filters-grid movements-filters-grid--primary">
         <label class="field">
           <span>Habitacion</span>
-          <input pInputText type="text" formControlName="roomNumber" placeholder="Ej: 204" />
+          <select class="field-control" formControlName="roomNumber">
+            <option value="">Todas</option>
+            @for (room of roomOptions(); track room) {
+              <option [value]="room">{{ room }}</option>
+            }
+          </select>
         </label>
 
         <label class="field">
           <span>Responsable</span>
           <select class="field-control" formControlName="responsible">
             <option value="">Todos</option>
-            @for (user of serviceUsers(); track user.id) {
-              <option [value]="user.username">{{ user.username }}</option>
+            @for (user of responsibleOptions(); track user) {
+              <option [value]="user">{{ user }}</option>
             }
           </select>
         </label>
@@ -95,15 +121,20 @@
           <span>Responsable operativo</span>
           <select class="field-control" formControlName="operationalResponsible">
             <option value="">Todos</option>
-            @for (user of serviceUsers(); track user.id) {
-              <option [value]="user.username">{{ user.username }}</option>
+            @for (user of operationalResponsibleOptions(); track user) {
+              <option [value]="user">{{ user }}</option>
             }
           </select>
         </label>
 
         <label class="field">
           <span>Area</span>
-          <input pInputText type="text" formControlName="areaName" placeholder="Area operativa" />
+          <select class="field-control" formControlName="areaName">
+            <option value="">Todas</option>
+            @for (area of areaOptions(); track area) {
+              <option [value]="area">{{ area }}</option>
+            }
+          </select>
         </label>
 
         <label class="field">
@@ -117,25 +148,37 @@
         </label>
       </div>
 
-      <div class="movements-filter-shell__actions">
-        <button
-          pButton
-          type="submit"
-          icon="pi pi-filter"
-          label="Consultar"
-          [loading]="loading()"
-        ></button>
+      @if (advancedFiltersVisible()) {
+        <div class="movements-filters-grid movements-filters-grid--advanced">
+          <label class="field">
+            <span>Tipo</span>
+            <select class="field-control" formControlName="type">
+              <option value="">Todos</option>
+              @for (option of typeOptions(); track option.value) {
+                <option [value]="option.value">{{ option.label }}</option>
+              }
+            </select>
+          </label>
 
-        <button
-          pButton
-          type="button"
-          icon="pi pi-eraser"
-          label="Limpiar"
-          severity="secondary"
-          variant="outlined"
-          (click)="clearFilters()"
-        ></button>
-      </div>
+          <label class="field">
+            <span>Origen</span>
+            <select class="field-control" formControlName="origin">
+              <option value="">Todos</option>
+              @for (option of originOptions(); track option.value) {
+                <option [value]="option.value">{{ option.label }}</option>
+              }
+            </select>
+          </label>
+        </div>
+      }
+
+      <button type="button" class="movements-more-filters" (click)="toggleAdvancedFilters()">
+        <i class="pi" [class.pi-angle-down]="!advancedFiltersVisible()" [class.pi-angle-up]="advancedFiltersVisible()"></i>
+        <span>{{ advancedFiltersVisible() ? 'Ocultar filtros extra' : 'Mas filtros' }}</span>
+        @if (advancedFilterCount() > 0) {
+          <small>{{ formatMetric(advancedFilterCount()) }}</small>
+        }
+      </button>
     </form>
 
     @if (activeFilterCount() > 0) {
@@ -145,32 +188,50 @@
         }
       </div>
     }
+  </section>
 
-    <div class="movements-result-head">
-      <div class="movements-result-head__identity">
-        <div class="movements-result-head__icon">
-          <i class="pi pi-history"></i>
-        </div>
+  <section class="surface-card movements-logbook">
+    <div class="movements-logbook__head">
+      <div class="movements-section-head movements-section-head--compact">
+        <div class="movements-section-head__identity">
+          <div class="movements-section-head__icon">
+            <i class="pi pi-history"></i>
+          </div>
 
-        <div>
-          <h3>Bitacora de movimientos</h3>
-          <p>Consulta de entradas y salidas registradas con su ubicacion, responsables y estado.</p>
+          <div class="movements-section-head__copy">
+            <h3>Bitacora de movimientos</h3>
+            <p>Registro de entradas y salidas segun los filtros seleccionados.</p>
+          </div>
         </div>
       </div>
 
-      <div class="movements-result-head__stats">
-        <span>{{ formatMetric(movements().length) }} registros</span>
-        <span>{{ formatMetric(voidedCount()) }} anulados</span>
+      <div class="movements-logbook__meta">
+        <span class="movements-counter">{{ formatMetric(movements().length) }} registros</span>
+        <span class="movements-counter movements-counter--soft">{{ formatMetric(entryCount()) }} entradas</span>
+        <span class="movements-counter movements-counter--soft">{{ formatMetric(exitCount()) }} salidas</span>
+
+        <button
+          pButton
+          type="button"
+          icon="pi pi-refresh"
+          severity="secondary"
+          variant="text"
+          [rounded]="true"
+          [loading]="loading()"
+          (click)="loadMovements()"
+        ></button>
       </div>
     </div>
 
     <div class="movements-table-wrap admin-table-block">
       @if (!loading() && !movements().length) {
-        <app-empty-state
-          icon="pi pi-history"
-          title="Sin movimientos"
-          message="No hubo resultados para los filtros consultados."
-        />
+        <div class="movements-empty-state">
+          <div class="movements-empty-state__icon">
+            <i class="pi pi-inbox"></i>
+          </div>
+          <strong>Sin movimientos</strong>
+          <p>No se encontraron registros con los filtros seleccionados.</p>
+        </div>
       } @else {
         <p-table
           [value]="movements()"
@@ -185,12 +246,13 @@
         >
           <ng-template pTemplate="header">
             <tr>
-              <th>Fecha</th>
+              <th>Fecha y hora</th>
               <th>Item</th>
               <th>Tipo</th>
-              <th>Origen</th>
-              <th>Cantidad</th>
-              <th>Responsables</th>
+              <th>Habitacion</th>
+              <th>Area</th>
+              <th>Responsable</th>
+              <th>Responsable operativo</th>
               <th>Estado</th>
               <th class="text-right">Acciones</th>
             </tr>
@@ -202,28 +264,36 @@
               <td>
                 <div class="movement-entity">
                   <strong>{{ movement.itemName }}</strong>
-                  <span>ID {{ movement.itemId }}</span>
+                  <span>{{ itemMetaLabel(movement) }}</span>
                 </div>
               </td>
               <td>
-                <span class="movement-type-chip" [class.movement-type-chip--exit]="movementTypeLabel(movement) === 'Salida'">
+                <span
+                  class="movement-type-chip"
+                  [class.movement-type-chip--exit]="movementTypeLabel(movement) === 'Salida'"
+                >
                   {{ movementTypeLabel(movement) }}
                 </span>
               </td>
+              <td><span class="movement-text">{{ roomLabel(movement) }}</span></td>
+              <td><span class="movement-text">{{ areaLabel(movement) }}</span></td>
               <td>
                 <div class="movement-entity">
-                  <strong>{{ movement.origin }}</strong>
-                  <span>{{ locationLabel(movement) }}</span>
+                  <strong>{{ responsibleLabel(movement) }}</strong>
+                  <span>Responsable del registro</span>
                 </div>
               </td>
-              <td><span class="movement-quantity">{{ formatMetric(movement.quantity) }}</span></td>
               <td>
                 <div class="movement-entity">
-                  <strong>{{ serviceResponsibleLabel(movement) }}</strong>
-                  <span>{{ responsibleRoleLabel(movement) }}</span>
+                  <strong>{{ operationalResponsibleLabel(movement) }}</strong>
+                  <span>{{ operationalHintLabel(movement) }}</span>
                 </div>
               </td>
-              <td><p-tag [value]="movement.status" [severity]="statusSeverity(movement)"></p-tag></td>
+              <td>
+                <span class="movement-status-pill" [attr.data-tone]="statusTone(movement)">
+                  {{ statusLabel(movement) }}
+                </span>
+              </td>
               <td class="text-right">
                 @if (canVoid(movement)) {
                   <button
@@ -236,6 +306,8 @@
                     variant="outlined"
                     (click)="openVoidDialog(movement)"
                   ></button>
+                } @else {
+                  <span class="movement-action-muted">Sin accion</span>
                 }
               </td>
             </tr>

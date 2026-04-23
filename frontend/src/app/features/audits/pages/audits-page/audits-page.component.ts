@@ -24,7 +24,7 @@ const AUDIT_SCOPE_META: Record<
   auth: {
     label: 'Autenticacion',
     icon: 'pi pi-shield',
-    description: 'Eventos de acceso, validacion de sesiones y cambios ligados al gateway.'
+    description: 'Eventos de acceso, validacion de sesiones y cambios de seguridad.'
   },
   inventory: {
     label: 'Inventario',
@@ -55,7 +55,7 @@ const AUDIT_SCOPE_META: Record<
       <app-page-header
         eyebrow="Control"
         title="Auditoria"
-        subtitle="Consulta unificada de eventos del gateway, inventario y habitaciones."
+        subtitle="Consulta unificada de eventos de acceso, inventario y habitaciones."
       />
 
       <section class="summary-grid audits-summary admin-kpi-row">

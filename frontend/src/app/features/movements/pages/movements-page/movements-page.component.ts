@@ -7,14 +7,17 @@ import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
 import { TableModule } from 'primeng/table';
-import { TagModule } from 'primeng/tag';
 import { InventoryApiService } from '@core/services/api/inventory-api.service';
 import { UsersApiService } from '@core/services/api/users-api.service';
 import { NotificationService } from '@core/services/ui/notification.service';
 import type { AppUser } from '@models/app-user.model';
 import type { InventoryMovement, MovementFilters } from '@models/inventory.model';
-import { EmptyStateComponent } from '@shared/components/empty-state/empty-state.component';
 import { PageHeaderComponent } from '@shared/components/page-header/page-header.component';
+
+interface SelectOption {
+  value: string;
+  label: string;
+}
 
 @Component({
   selector: 'app-movements-page',
@@ -25,10 +28,8 @@ import { PageHeaderComponent } from '@shared/components/page-header/page-header.
     ButtonModule,
     DialogModule,
     InputTextModule,
-    EmptyStateComponent,
     PageHeaderComponent,
-    TableModule,
-    TagModule
+    TableModule
   ],
   templateUrl: './movements-page.component.html',
   styleUrls: ['./movements-page.component.css']
@@ -38,13 +39,23 @@ export class MovementsPageComponent implements OnInit {
   private readonly usersApi = inject(UsersApiService);
   private readonly notificationService = inject(NotificationService);
   private readonly fb = inject(FormBuilder);
+  private readonly numberFormatter = new Intl.NumberFormat('es-CO');
+  private readonly dateTimeFormatter = new Intl.DateTimeFormat('es-CO', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit'
+  });
 
   protected readonly movements = signal<InventoryMovement[]>([]);
+  protected readonly filterSourceMovements = signal<InventoryMovement[]>([]);
   protected readonly serviceUsers = signal<AppUser[]>([]);
   protected readonly loading = signal(false);
   protected readonly saving = signal(false);
   protected readonly voidDialogVisible = signal(false);
   protected readonly selectedMovement = signal<InventoryMovement | null>(null);
+  protected readonly advancedFiltersVisible = signal(false);
 
   protected readonly filtersForm = this.fb.nonNullable.group({
     type: [''],
@@ -76,6 +87,30 @@ export class MovementsPageComponent implements OnInit {
   );
   protected readonly exitCount = computed(
     () => this.movements().filter((movement) => this.movementTypeLabel(movement) === 'Salida').length
+  );
+  protected readonly roomOptions = computed(() =>
+    this.uniqueSorted(this.optionSource().map((movement) => movement.roomNumber))
+  );
+  protected readonly areaOptions = computed(() =>
+    this.uniqueSorted(this.optionSource().map((movement) => movement.areaName))
+  );
+  protected readonly responsibleOptions = computed(() =>
+    this.uniqueSorted([
+      ...this.optionSource().map((movement) => movement.responsible),
+      ...this.serviceUsers().map((user) => user.username)
+    ])
+  );
+  protected readonly operationalResponsibleOptions = computed(() =>
+    this.uniqueSorted([
+      ...this.optionSource().map((movement) => movement.operationalResponsible),
+      ...this.serviceUsers().map((user) => user.username)
+    ])
+  );
+  protected readonly typeOptions = computed<SelectOption[]>(() =>
+    this.buildOptions(this.optionSource().map((movement) => movement.movementType))
+  );
+  protected readonly originOptions = computed<SelectOption[]>(() =>
+    this.buildOptions(this.optionSource().map((movement) => movement.origin))
   );
   protected readonly activeFilterChips = computed(() => {
     const filters = this.filtersValue();
@@ -122,6 +157,20 @@ export class MovementsPageComponent implements OnInit {
     return chips;
   });
   protected readonly activeFilterCount = computed(() => this.activeFilterChips().length);
+  protected readonly advancedFilterCount = computed(() => {
+    const filters = this.filtersValue();
+    let count = 0;
+
+    if (filters.type?.trim()) {
+      count += 1;
+    }
+
+    if (filters.origin?.trim()) {
+      count += 1;
+    }
+
+    return count;
+  });
 
   ngOnInit(): void {
     this.loadServiceUsers();
@@ -148,6 +197,11 @@ export class MovementsPageComponent implements OnInit {
       .subscribe({
         next: (movements) => {
           this.movements.set(movements);
+
+          if (!this.activeFilterCount() || !this.filterSourceMovements().length) {
+            this.filterSourceMovements.set(movements);
+          }
+
           this.loading.set(false);
         },
         error: () => {
@@ -167,6 +221,12 @@ export class MovementsPageComponent implements OnInit {
       startDate: '',
       endDate: ''
     });
+    this.advancedFiltersVisible.set(false);
+    this.loadMovements();
+  }
+
+  protected toggleAdvancedFilters(): void {
+    this.advancedFiltersVisible.update((value) => !value);
   }
 
   protected canVoid(movement: InventoryMovement): boolean {
@@ -206,11 +266,11 @@ export class MovementsPageComponent implements OnInit {
   }
 
   protected formatDate(value: string): string {
-    return new Date(value).toLocaleString();
+    return this.dateTimeFormatter.format(new Date(value));
   }
 
   protected formatMetric(value: number): string {
-    return new Intl.NumberFormat('es-CO').format(value);
+    return this.numberFormatter.format(value);
   }
 
   protected locationLabel(movement: InventoryMovement): string {
@@ -219,6 +279,10 @@ export class MovementsPageComponent implements OnInit {
 
   protected statusSeverity(movement: InventoryMovement): 'info' | 'danger' {
     return this.canVoid(movement) ? 'info' : 'danger';
+  }
+
+  protected filterOptionLabel(value: string): string {
+    return this.formatLabel(value);
   }
 
   protected movementTypeLabel(movement: InventoryMovement): string {
@@ -255,6 +319,43 @@ export class MovementsPageComponent implements OnInit {
     }
 
     return 'Salida';
+  }
+
+  protected itemMetaLabel(movement: InventoryMovement): string {
+    const fragments = [this.filterOptionLabel(movement.origin)];
+    fragments.push(`${this.formatMetric(movement.quantity)} uds`);
+    fragments.push(`Stock final ${this.formatMetric(movement.stockAfter)}`);
+    return fragments.join(' | ');
+  }
+
+  protected roomLabel(movement: InventoryMovement): string {
+    return movement.roomNumber?.trim() || 'Sin habitacion';
+  }
+
+  protected areaLabel(movement: InventoryMovement): string {
+    return movement.areaName?.trim() || 'Sin area';
+  }
+
+  protected responsibleLabel(movement: InventoryMovement): string {
+    return movement.responsible?.trim() || 'Sin registro';
+  }
+
+  protected operationalResponsibleLabel(movement: InventoryMovement): string {
+    return movement.operationalResponsible?.trim() || 'Sin asignar';
+  }
+
+  protected operationalHintLabel(movement: InventoryMovement): string {
+    return movement.operationalResponsible?.trim()
+      ? 'Seguimiento operativo'
+      : 'Sin responsable operativo';
+  }
+
+  protected statusLabel(movement: InventoryMovement): string {
+    return this.formatLabel(movement.status);
+  }
+
+  protected statusTone(movement: InventoryMovement): 'active' | 'danger' {
+    return this.canVoid(movement) ? 'active' : 'danger';
   }
 
   protected serviceResponsibleLabel(movement: InventoryMovement): string {
@@ -328,5 +429,49 @@ export class MovementsPageComponent implements OnInit {
           this.serviceUsers.set([]);
         }
       });
+  }
+
+  private optionSource(): InventoryMovement[] {
+    return this.filterSourceMovements().length ? this.filterSourceMovements() : this.movements();
+  }
+
+  private buildOptions(values: Array<string | null | undefined>): SelectOption[] {
+    return this.uniqueSorted(values).map((value) => ({
+      value,
+      label: this.formatLabel(value)
+    }));
+  }
+
+  private uniqueSorted(values: Array<string | null | undefined>): string[] {
+    const unique = new Map<string, string>();
+
+    for (const value of values) {
+      const trimmed = value?.trim();
+      if (!trimmed) {
+        continue;
+      }
+
+      const key = trimmed.toLowerCase();
+      if (!unique.has(key)) {
+        unique.set(key, trimmed);
+      }
+    }
+
+    return Array.from(unique.values()).sort((left, right) =>
+      left.localeCompare(right, 'es-CO', { numeric: true, sensitivity: 'base' })
+    );
+  }
+
+  private formatLabel(value: string | null | undefined): string {
+    if (!value) {
+      return 'Sin dato';
+    }
+
+    return value
+      .toLowerCase()
+      .replace(/[_-]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .replace(/\b\w/g, (letter) => letter.toUpperCase());
   }
 }

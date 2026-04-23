@@ -48,8 +48,8 @@ export class App {
       .subscribe((event) => {
         if (this.isChunkLoadError(event.error)) {
           this.notificationService.warn(
-            'Recargando aplicacion',
-            'Se detecto un recurso desactualizado del frontend. La pagina se recargara.'
+            'Actualizando aplicacion',
+            'Se detecto un recurso desactualizado. La pagina se recargara.'
           );
           this.safeReloadForChunkError();
           return;
@@ -90,9 +90,9 @@ export class App {
     if (alreadyRetried) {
       this.uiStateService.reportIssue({
         kind: 'server',
-        title: 'Frontend desactualizado',
+        title: 'Actualizacion pendiente',
         detail:
-          'La navegacion fallo por recursos del frontend inconsistentes. Limpia cache del navegador y vuelve a cargar la pagina.'
+          'La aplicacion detecto archivos desactualizados. Limpia la cache del navegador y vuelve a cargar la pagina.'
       });
       return;
     }

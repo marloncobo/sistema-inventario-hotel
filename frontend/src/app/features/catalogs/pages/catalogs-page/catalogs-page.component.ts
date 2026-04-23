@@ -117,10 +117,10 @@ const SORT_OPTIONS: Array<{ value: CatalogSortOption; label: string }> = [
         <article class="note-banner">
           <i class="pi pi-info-circle"></i>
           <div>
-            <strong>Restriccion de backend</strong>
+            <strong>Acceso por perfil</strong>
             <p>
-              El rol ALMACENISTA solo puede administrar proveedores. Las demas secciones se mantienen
-              ocultas sin alterar rutas ni seguridad del backend.
+              El rol ALMACENISTA solo puede administrar proveedores. Las demas secciones estan
+              disponibles solo para perfiles autorizados.
             </p>
           </div>
         </article>

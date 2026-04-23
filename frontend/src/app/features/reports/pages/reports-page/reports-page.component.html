@@ -2,17 +2,17 @@
   <app-page-header
     eyebrow="Analisis"
     title="Reportes"
-    subtitle="Consulta reportes operativos y exportaciones respaldadas por el backend desde un panel mas ordenado."
+    subtitle="Consulta reportes operativos y exportaciones desde un panel mas ordenado."
   />
 
   @if (!isAdmin()) {
     <article class="note-banner">
       <i class="pi pi-info-circle"></i>
       <div>
-        <strong>Permiso real del backend</strong>
+        <strong>Permisos de exportacion</strong>
         <p>
-          RECEPCION puede consultar reportes de habitaciones, pero la exportacion sigue reservada a
-          ADMIN. El frontend respeta esa restriccion.
+          RECEPCION puede consultar reportes de habitaciones, pero la exportacion esta disponible
+          solo para ADMIN.
         </p>
       </div>
     </article>
@@ -193,7 +193,7 @@
         <app-empty-state
           icon="pi pi-chart-line"
           title="Sin datos para el reporte"
-          message="El backend no devolvio filas para los filtros y reporte seleccionados."
+          message="No se encontraron registros para los filtros y el reporte seleccionados."
         />
       } @else {
         @switch (activeReport()) {

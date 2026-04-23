@@ -52,9 +52,9 @@ export const routes: Routes = [
           title: 'Usuarios',
           breadcrumb: 'Usuarios',
           roles: ['ADMIN'],
-          summary: 'Gestión administrativa de usuarios, activación y revisión de roles del gateway.',
+          summary: 'Gestion administrativa de usuarios, activacion de cuentas y revision de roles.',
           endpoint: 'GET /auth/users · POST /auth/users · PUT /auth/users/{id}',
-          note: 'La contraseña y los roles deben respetar exactamente las validaciones ya existentes en el backend.'
+          note: 'Asigna credenciales seguras y el perfil correcto para cada usuario.'
         }
       },
       {
@@ -71,7 +71,7 @@ export const routes: Routes = [
           summary: 'Consulta centralizada de bitácoras de autenticación, inventario y habitaciones.',
           endpoint:
             'GET /auth/audit · GET /inventory/api/inventory/audit · GET /rooms/api/rooms/audit',
-          note: 'Los filtros deben viajar como query params `action`, `username`, `startDate`, `endDate` sin alterar contratos.'
+          note: 'Puedes filtrar la consulta por accion, usuario y rango de fechas.'
         }
       },
       {
@@ -88,7 +88,7 @@ export const routes: Routes = [
           summary: 'Catálogos maestros para categorías, unidades, proveedores y áreas.',
           endpoint:
             'GET/POST/PUT /inventory/api/inventory/catalogs/categories|units|providers|areas',
-          note: 'Solo proveedores están habilitados para ALMACENISTA; categorías, unidades y áreas siguen siendo ADMIN.'
+          note: 'El perfil ALMACENISTA administra proveedores; las demas secciones quedan reservadas para administracion.'
         }
       },
       {
@@ -105,7 +105,7 @@ export const routes: Routes = [
           summary: 'Base para listado, detalle, creación, edición y operaciones sobre insumos.',
           endpoint:
             'GET /items · GET /items/{id} · POST /items · PUT /items/{id} · PATCH /items/{id}/deactivate · POST /items/{id}/entries · POST /items/{id}/returns',
-          note: 'El frontend no debe usar `/internal/items/decrease` con `origin=HABITACION`; ese flujo debe salir desde rooms-service.'
+          note: 'Las salidas y devoluciones deben registrarse desde el flujo operativo correspondiente.'
         }
       },
       {
@@ -122,7 +122,7 @@ export const routes: Routes = [
           summary: 'Historial trazable de entradas, salidas, devoluciones y anulaciones.',
           endpoint:
             'GET /inventory/api/inventory/movements · POST /inventory/api/inventory/movements/{id}/void',
-          note: 'Los filtros admitidos por backend son `type`, `origin`, `roomNumber`, `responsible`, `operationalResponsible`, `areaName`, `startDate`, `endDate`.'
+          note: 'Puedes filtrar por tipo, origen, habitacion, responsable, area y rango de fechas.'
         }
       },
       {
@@ -139,7 +139,7 @@ export const routes: Routes = [
           summary: 'Seguimiento operativo del stock bajo y alertas abiertas del inventario.',
           endpoint:
             'GET /inventory/api/inventory/items/low-stock · GET /inventory/api/inventory/alerts/low-stock',
-          note: 'La consulta de alertas soporta `openOnly`; el frontend debe respetar ese comportamiento.'
+          note: 'Puedes alternar entre alertas abiertas o historial completo segun la necesidad de seguimiento.'
         }
       },
       {
@@ -156,7 +156,7 @@ export const routes: Routes = [
           summary: 'Base del módulo de consulta, alta y actualización de estado operativo de habitaciones.',
           endpoint:
             'POST /rooms/api/rooms · GET /rooms/api/rooms · GET /rooms/api/rooms/{id} · PATCH /rooms/api/rooms/{id}/status',
-          note: 'El backend solo permite 45 habitaciones activas y valida tipos/estados concretos; el frontend debe anticipar esas reglas.'
+          note: 'La disponibilidad y los estados operativos se validan automaticamente para mantener consistencia.'
         }
       },
       {
@@ -173,7 +173,7 @@ export const routes: Routes = [
           summary: 'Base de la entrega de insumos a habitaciones y del historial de asignaciones.',
           endpoint:
             'POST /rooms/api/rooms/{roomId}/supplies/assign · GET /rooms/api/rooms/{roomId}/supplies · GET /rooms/api/rooms/supplies',
-          note: 'Restricción real del backend: SERVICIO puede asignar, pero no tiene endpoint que resuelva `roomId` por número ni puede listar habitaciones.'
+          note: 'El personal de servicio puede registrar entregas segun los permisos y el flujo operativo disponible.'
         }
       },
       {
@@ -187,10 +187,10 @@ export const routes: Routes = [
           title: 'Reportes',
           breadcrumb: 'Reportes',
           roles: ['ADMIN', 'RECEPCION'],
-          summary: 'Dashboard de reportes inventario/habitaciones y exportaciones del backend.',
+          summary: 'Consulta reportes de inventario y habitaciones con opciones de exportacion.',
           endpoint:
             'GET /inventory/api/inventory/reports/* · GET /rooms/api/rooms/reports/* · endpoints /export?format=xlsx|csv|pdf',
-          note: 'La exportación de reportes de habitaciones está restringida a ADMIN por seguridad del backend.'
+          note: 'La exportacion de reportes de habitaciones esta disponible solo para administradores.'
         }
       },
       {

@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { take } from 'rxjs';
 import { ButtonModule } from 'primeng/button';
 import { TableModule } from 'primeng/table';
@@ -15,7 +15,7 @@ import { PageHeaderComponent } from '@shared/components/page-header/page-header.
   standalone: true,
   imports: [
     CommonModule,
-    ReactiveFormsModule,
+    RouterLink,
     ButtonModule,
     EmptyStateComponent,
     PageHeaderComponent,
@@ -27,15 +27,11 @@ import { PageHeaderComponent } from '@shared/components/page-header/page-header.
 })
 export class AlertsPageComponent implements OnInit {
   private readonly inventoryApi = inject(InventoryApiService);
-  private readonly fb = inject(FormBuilder);
 
   protected readonly lowStockItems = signal<SupplyItem[]>([]);
   protected readonly alerts = signal<LowStockAlert[]>([]);
   protected readonly loading = signal(false);
-
-  protected readonly filtersForm = this.fb.nonNullable.group({
-    openOnly: [true]
-  });
+  protected readonly alertsWorkbenchTab = signal<'emitted' | 'lowStock'>('emitted');
 
   protected readonly openAlertsCount = computed(
     () => this.alerts().filter((entry) => !entry.resolvedAt).length
@@ -50,7 +46,6 @@ export class AlertsPageComponent implements OnInit {
 
   protected loadData(): void {
     this.loading.set(true);
-    const openOnly = this.filtersForm.controls.openOnly.getRawValue();
 
     this.inventoryApi
       .getLowStockItems()
@@ -59,7 +54,7 @@ export class AlertsPageComponent implements OnInit {
         next: (items) => {
           this.lowStockItems.set(items);
           this.inventoryApi
-            .getLowStockAlerts(openOnly)
+            .getLowStockAlerts(true)
             .pipe(take(1))
             .subscribe({
               next: (alerts) => {
@@ -77,11 +72,11 @@ export class AlertsPageComponent implements OnInit {
       });
   }
 
-  protected formatDate(value: string | null): string {
-    return value ? new Date(value).toLocaleString() : 'Pendiente';
+  protected formatAlertRowDate(value: string | null): string {
+    return value ? new Date(value).toLocaleString() : '—';
   }
 
-  protected openOnlyEnabled(): boolean {
-    return this.filtersForm.controls.openOnly.getRawValue();
+  protected setAlertsWorkbenchTab(tab: 'emitted' | 'lowStock'): void {
+    this.alertsWorkbenchTab.set(tab);
   }
 }

@@ -9,9 +9,9 @@ import { AuthService } from '@core/services/auth.service';
 import type { AppUser } from '@models/app-user.model';
 import type { InventoryMovement, LowStockAlert, SupplyItem } from '@models/inventory.model';
 import type { Room, RoomSupplyAssignment } from '@models/room.model';
-import { PageHeaderComponent } from '@shared/components/page-header/page-header.component';
 
-type DashboardTone = 'gold' | 'amber' | 'emerald' | 'sky' | 'slate' | 'rose';
+type DashboardTone = 'emerald' | 'gold' | 'amber' | 'rose' | 'slate';
+type DashboardArt = 'box' | 'bed' | 'bell' | 'chart' | 'shield' | 'door' | 'clipboard' | 'package';
 
 interface DashboardSnapshot {
   users: AppUser[];
@@ -23,51 +23,47 @@ interface DashboardSnapshot {
   assignments: RoomSupplyAssignment[];
 }
 
-interface DashboardChip {
-  label: string;
-  value: string;
-}
-
-interface DashboardMetricCard {
-  label: string;
-  value: string;
-  helper: string;
-  icon: string;
-  tone: DashboardTone;
-}
-
-interface DashboardFocusItem {
-  label: string;
-  detail: string;
-  icon: string;
-  tone: DashboardTone;
-}
-
-interface DashboardStatItem {
+interface DashboardKpiCard {
   label: string;
   value: string;
   helper: string;
   tone: DashboardTone;
+  art: DashboardArt;
 }
 
-interface DashboardDistributionItem {
+interface DashboardBreakdownItem {
   label: string;
   value: number;
   share: number;
+  helper: string;
   tone: DashboardTone;
 }
 
-interface DashboardWatchItem {
+interface DashboardInsight {
   title: string;
-  meta: string;
-  helper: string;
+  text: string;
+  tone: DashboardTone;
+  art: DashboardArt;
+}
+
+interface DashboardActivityItem {
+  id: number;
+  title: string;
+  detail: string;
+  badge: string;
+  stamp: string;
+}
+
+interface DashboardStatusBanner {
+  title: string;
+  text: string;
   tone: DashboardTone;
 }
 
 @Component({
   selector: 'app-dashboard-page',
   standalone: true,
-  imports: [CommonModule, ProgressSpinnerModule, PageHeaderComponent],
+  imports: [CommonModule, ProgressSpinnerModule],
   templateUrl: './dashboard-page.component.html',
   styleUrls: ['./dashboard-page.component.css']
 })
@@ -77,14 +73,10 @@ export class DashboardPageComponent implements OnInit {
   private readonly inventoryApi = inject(InventoryApiService);
   private readonly roomsApi = inject(RoomsApiService);
   private readonly numberFormatter = new Intl.NumberFormat('es-CO');
-  private readonly dayFormatter = new Intl.DateTimeFormat('es-CO', {
-    weekday: 'long',
+  private readonly headerDateFormatter = new Intl.DateTimeFormat('es-CO', {
     day: 'numeric',
-    month: 'long'
-  });
-  private readonly shortDateFormatter = new Intl.DateTimeFormat('es-CO', {
-    day: 'numeric',
-    month: 'short'
+    month: 'long',
+    year: 'numeric'
   });
   private readonly dateTimeFormatter = new Intl.DateTimeFormat('es-CO', {
     day: 'numeric',
@@ -95,8 +87,7 @@ export class DashboardPageComponent implements OnInit {
   protected readonly activityWindowDays = 7;
 
   protected readonly loading = signal(true);
-  protected readonly todayLabel = this.capitalize(this.dayFormatter.format(new Date()));
-  protected readonly activityWindowLabel = `Ultimos ${this.activityWindowDays} dias`;
+  protected readonly todayLabel = this.capitalize(this.headerDateFormatter.format(new Date()));
   protected readonly snapshot = signal<DashboardSnapshot>({
     users: [],
     items: [],
@@ -124,28 +115,55 @@ export class DashboardPageComponent implements OnInit {
     this.authService.hasAnyRole(['ADMIN', 'ALMACENISTA', 'RECEPCION', 'SERVICIO'])
   );
 
-  protected readonly activeUsersCount = computed(
-    () => this.snapshot().users.filter((user) => user.active).length
-  );
+  protected readonly visibleItemsCount = computed(() => this.snapshot().items.length);
   protected readonly activeItemsCount = computed(
     () => this.snapshot().items.filter((item) => item.active).length
   );
   protected readonly inactiveItemsCount = computed(
     () => this.snapshot().items.filter((item) => !item.active).length
   );
+  protected readonly lowStockCount = computed(() => this.snapshot().lowStockItems.length);
+  protected readonly openAlertsCount = computed(() => this.snapshot().alerts.length);
+  protected readonly stableItemsCount = computed(() =>
+    Math.max(this.activeItemsCount() - this.lowStockCount(), 0)
+  );
+  protected readonly inventoryCoveragePercentage = computed(() => {
+    const activeItems = this.activeItemsCount();
+
+    if (!activeItems) {
+      return 0;
+    }
+
+    return Math.max(Math.round((this.stableItemsCount() / activeItems) * 100), 0);
+  });
+
+  protected readonly visibleRoomsCount = computed(() => this.snapshot().rooms.length);
   protected readonly activeRoomsCount = computed(
     () => this.snapshot().rooms.filter((room) => room.active).length
   );
   protected readonly inactiveRoomsCount = computed(
     () => this.snapshot().rooms.filter((room) => !room.active).length
   );
-  protected readonly readyRoomsCount = computed(
+  protected readonly availableRoomsCount = computed(
     () =>
       this.snapshot().rooms.filter((room) => room.active && this.isAvailableStatus(room.status))
         .length
   );
   protected readonly committedRoomsCount = computed(() =>
-    Math.max(this.activeRoomsCount() - this.readyRoomsCount(), 0)
+    Math.max(this.activeRoomsCount() - this.availableRoomsCount(), 0)
+  );
+  protected readonly roomAvailabilityPercentage = computed(() => {
+    const activeRooms = this.activeRoomsCount();
+
+    if (!activeRooms) {
+      return 0;
+    }
+
+    return Math.round((this.availableRoomsCount() / activeRooms) * 100);
+  });
+
+  protected readonly activeUsersCount = computed(
+    () => this.snapshot().users.filter((user) => user.active).length
   );
   protected readonly todayAssignmentsCount = computed(
     () => this.snapshot().assignments.filter((assignment) => this.isToday(assignment.createdAt)).length
@@ -154,470 +172,453 @@ export class DashboardPageComponent implements OnInit {
     () => this.snapshot().movements.length + this.snapshot().assignments.length
   );
 
-  protected readonly heroTitle = computed(() => {
-    const alerts = this.snapshot().alerts.length;
-    const lowStock = this.snapshot().lowStockItems.length;
-    const committedRooms = this.committedRoomsCount();
+  protected readonly displayName = computed(() =>
+    this.formatDisplayName(this.authService.username() || 'admin')
+  );
+
+  protected readonly headerSummary = computed(() => {
+    const coverage = this.inventoryCoveragePercentage();
+    const availableRooms = this.availableRoomsCount();
+    const alerts = this.openAlertsCount();
+    const lowStock = this.lowStockCount();
     const recentActivity = this.recentActivityCount();
 
-    if (alerts > 0) {
-      return 'Hay alertas abiertas que requieren seguimiento inmediato';
+    if (this.canViewInventory() && this.canViewRooms()) {
+      if (alerts > 0) {
+        return `${this.formatNumber(alerts)} alertas abiertas, ${coverage}% de cobertura visible y ${this.formatNumber(availableRooms)} habitaciones disponibles para operar.`;
+      }
+
+      if (lowStock > 0) {
+        return `${this.formatNumber(availableRooms)} habitaciones siguen disponibles y el inventario mantiene ${coverage}% de cobertura, con ${this.formatNumber(lowStock)} insumos en seguimiento.`;
+      }
+
+      return `${this.formatNumber(availableRooms)} habitaciones listas, cobertura de inventario en ${coverage}% y ${this.formatNumber(recentActivity)} eventos recientes en la ultima semana.`;
     }
-
-    if (lowStock > 0 && committedRooms > 0) {
-      return 'Inventario y habitaciones tienen frentes activos para revisar';
-    }
-
-    if (recentActivity > 0) {
-      return 'La operacion tiene actividad reciente y control visible';
-    }
-
-    return 'Panel principal limpio con el estado operativo esencial';
-  });
-
-  protected readonly heroMessage = computed(() => {
-    const fragments: string[] = [];
-    const alerts = this.snapshot().alerts.length;
-    const lowStock = this.snapshot().lowStockItems.length;
-    const committedRooms = this.committedRoomsCount();
-    const todayAssignments = this.todayAssignmentsCount();
-
-    if (alerts > 0) {
-      fragments.push(`${this.formatNumber(alerts)} alertas abiertas`);
-    }
-
-    if (lowStock > 0) {
-      fragments.push(`${this.formatNumber(lowStock)} insumos bajo minimo`);
-    }
-
-    if (this.canViewRooms() && committedRooms > 0) {
-      fragments.push(`${this.formatNumber(committedRooms)} habitaciones no disponibles`);
-    }
-
-    if (this.canViewAssignments() && todayAssignments > 0) {
-      fragments.push(`${this.formatNumber(todayAssignments)} asignaciones registradas hoy`);
-    }
-
-    if (!fragments.length) {
-      return 'La vista prioriza lo principal del backend y deja por fuera los accesos que ya viven en el sidebar.';
-    }
-
-    return `El foco de este momento esta en ${this.joinWithAnd(fragments)}.`;
-  });
-
-  protected readonly overviewChips = computed<DashboardChip[]>(() => {
-    const chips: DashboardChip[] = [];
 
     if (this.canViewInventory()) {
-      chips.push({
-        label: 'Insumos activos',
-        value: this.formatNumber(this.activeItemsCount())
+      if (lowStock > 0) {
+        return `La cobertura visible esta en ${coverage}% y hay ${this.formatNumber(lowStock)} insumos bajo minimo para revisar.`;
+      }
+
+      return `La salud del inventario se mantiene estable con ${coverage}% de cobertura sobre ${this.formatNumber(this.activeItemsCount())} insumos activos.`;
+    }
+
+    if (this.canViewRooms()) {
+      return `${this.formatNumber(availableRooms)} habitaciones disponibles y ${this.formatNumber(this.committedRoomsCount())} comprometidas en la vista actual.`;
+    }
+
+    if (this.canViewAssignments()) {
+      return `${this.formatNumber(this.todayAssignmentsCount())} asignaciones registradas hoy y ${this.formatNumber(recentActivity)} eventos recientes en los ultimos ${this.activityWindowDays} dias.`;
+    }
+
+    return 'Consulta el estado esencial del sistema sin repetir los modulos del menu lateral.';
+  });
+
+  protected readonly statusChipLabel = computed(() => {
+    const tone = this.statusBanner().tone;
+
+    if (tone === 'rose') {
+      return 'Requiere seguimiento';
+    }
+
+    if (tone === 'gold' || tone === 'amber') {
+      return 'Bajo control';
+    }
+
+    return 'Operacion estable';
+  });
+
+  protected readonly inventoryHealthTone = computed<DashboardTone>(() => {
+    const coverage = this.inventoryCoveragePercentage();
+
+    if (!this.activeItemsCount()) {
+      return 'slate';
+    }
+
+    if (this.openAlertsCount() > 0 || coverage < 80) {
+      return 'rose';
+    }
+
+    if (this.lowStockCount() > 0 || coverage < 95) {
+      return 'amber';
+    }
+
+    return 'emerald';
+  });
+
+  protected readonly inventoryCoverageHelper = computed(() => {
+    if (!this.canViewInventory()) {
+      return '';
+    }
+
+    if (!this.activeItemsCount()) {
+      return 'Sin insumos activos visibles';
+    }
+
+    if (this.lowStockCount() > 0) {
+      return `${this.formatNumber(this.stableItemsCount())} de ${this.formatNumber(this.activeItemsCount())} insumos activos sobre minimo`;
+    }
+
+    return `${this.formatNumber(this.activeItemsCount())} insumos activos con cobertura estable`;
+  });
+
+  protected readonly kpiCards = computed<DashboardKpiCard[]>(() => {
+    const cards: DashboardKpiCard[] = [];
+
+    if (this.canViewInventory()) {
+      cards.push({
+        label: 'Cobertura de inventario',
+        value: `${this.inventoryCoveragePercentage()}%`,
+        helper: this.inventoryCoverageHelper(),
+        tone: this.inventoryHealthTone(),
+        art: 'box'
       });
     }
 
     if (this.canViewRooms()) {
-      chips.push({
-        label: 'Habitaciones activas',
-        value: this.formatNumber(this.activeRoomsCount())
-      });
-    }
-
-    if (this.canViewUsers()) {
-      chips.push({
-        label: 'Usuarios activos',
-        value: this.formatNumber(this.activeUsersCount())
-      });
-    }
-
-    if (this.canViewAssignments() || this.canViewMovements()) {
-      chips.push({
-        label: this.activityWindowLabel,
-        value: this.formatNumber(this.recentActivityCount())
-      });
-    }
-
-    return chips;
-  });
-
-  protected readonly metrics = computed<DashboardMetricCard[]>(() => {
-    const cards: DashboardMetricCard[] = [];
-
-    if (this.canViewUsers()) {
       cards.push({
-        label: 'Usuarios activos',
-        value: this.formatNumber(this.activeUsersCount()),
-        helper: 'Perfiles habilitados para operar hoy',
-        icon: 'pi pi-users',
-        tone: 'slate'
-      });
-    }
-
-    if (this.canViewInventory()) {
-      cards.push({
-        label: 'Insumos visibles',
-        value: this.formatNumber(this.activeItemsCount()),
-        helper: 'Base activa del inventario cargado',
-        icon: 'pi pi-box',
-        tone: 'gold'
+        label: 'Habitaciones disponibles',
+        value: this.formatNumber(this.availableRoomsCount()),
+        helper: this.activeRoomsCount()
+          ? `${this.roomAvailabilityPercentage()}% de las activas listas para operar`
+          : 'Sin habitaciones activas visibles',
+        tone: this.availableRoomsCount() > 0 ? 'emerald' : 'slate',
+        art: 'bed'
       });
     }
 
     if (this.canViewAlerts()) {
       cards.push({
         label: 'Alertas abiertas',
-        value: this.formatNumber(this.snapshot().alerts.length),
-        helper: 'Seguimiento actual del stock bajo',
-        icon: 'pi pi-bell',
-        tone: this.snapshot().alerts.length > 0 ? 'rose' : 'emerald'
+        value: this.formatNumber(this.openAlertsCount()),
+        helper:
+          this.openAlertsCount() > 0
+            ? 'Hay seguimiento pendiente de inventario'
+            : 'No hay alertas activas en este momento',
+        tone: this.openAlertsCount() > 0 ? 'rose' : 'emerald',
+        art: 'bell'
       });
     } else if (this.canViewInventory()) {
       cards.push({
         label: 'Stock bajo',
-        value: this.formatNumber(this.snapshot().lowStockItems.length),
-        helper: 'Insumos por debajo del minimo visible',
-        icon: 'pi pi-exclamation-triangle',
-        tone: this.snapshot().lowStockItems.length > 0 ? 'amber' : 'emerald'
+        value: this.formatNumber(this.lowStockCount()),
+        helper:
+          this.lowStockCount() > 0
+            ? 'Insumos por debajo del minimo visible'
+            : 'No hay quiebres visibles de stock',
+        tone: this.lowStockCount() > 0 ? 'amber' : 'emerald',
+        art: 'shield'
       });
     }
 
-    if (this.canViewRooms()) {
-      cards.push({
-        label: 'Habitaciones listas',
-        value: this.formatNumber(this.readyRoomsCount()),
-        helper: `${this.formatNumber(this.committedRoomsCount())} en uso o atencion`,
-        icon: 'pi pi-home',
-        tone: this.committedRoomsCount() > 0 ? 'amber' : 'emerald'
-      });
-    }
-
-    if (this.canViewAssignments() || this.canViewMovements()) {
+    if (this.canViewMovements() || this.canViewAssignments()) {
       cards.push({
         label: 'Actividad reciente',
         value: this.formatNumber(this.recentActivityCount()),
-        helper: `Movimientos y asignaciones de los ${this.activityWindowDays} dias cargados`,
-        icon: 'pi pi-clock',
-        tone: 'sky'
+        helper: `Movimientos y asignaciones en ${this.activityWindowDays} dias`,
+        tone: this.recentActivityCount() > 0 ? 'gold' : 'slate',
+        art: 'chart'
       });
     }
 
-    return cards;
+    return cards.slice(0, 4);
   });
 
-  protected readonly focusItems = computed<DashboardFocusItem[]>(() => {
-    const items: DashboardFocusItem[] = [];
-    const alerts = this.snapshot().alerts.length;
-    const lowStock = this.snapshot().lowStockItems.length;
-    const committedRooms = this.committedRoomsCount();
-    const todayAssignments = this.todayAssignmentsCount();
-
-    if (this.canViewAlerts()) {
-      items.push(
-        alerts > 0
-          ? {
-              label: 'Alertas abiertas',
-              detail: `${this.formatNumber(alerts)} pendientes de seguimiento operativo`,
-              icon: 'pi pi-bell',
-              tone: 'rose'
-            }
-          : {
-              label: 'Alertas controladas',
-              detail: 'No hay alertas abiertas en la vista actual',
-              icon: 'pi pi-check-circle',
-              tone: 'emerald'
-            }
-      );
-    }
-
-    if (this.canViewInventory()) {
-      items.push(
-        lowStock > 0
-          ? {
-              label: 'Stock bajo',
-              detail: `${this.formatNumber(lowStock)} insumos siguen por debajo del minimo`,
-              icon: 'pi pi-exclamation-triangle',
-              tone: 'amber'
-            }
-          : {
-              label: 'Cobertura estable',
-              detail: 'No se detectan insumos bajo minimo en lo visible',
-              icon: 'pi pi-shield',
-              tone: 'emerald'
-            }
-      );
-    }
-
-    if (this.canViewRooms()) {
-      items.push(
-        committedRooms > 0
-          ? {
-              label: 'Habitaciones comprometidas',
-              detail: `${this.formatNumber(committedRooms)} no estan disponibles de inmediato`,
-              icon: 'pi pi-building',
-              tone: 'gold'
-            }
-          : {
-              label: 'Habitaciones disponibles',
-              detail: 'Las visibles estan listas o sin presion operativa',
-              icon: 'pi pi-home',
-              tone: 'emerald'
-            }
-      );
-    }
-
-    if (this.canViewAssignments()) {
-      items.push(
-        todayAssignments > 0
-          ? {
-              label: 'Asignaciones del dia',
-              detail: `${this.formatNumber(todayAssignments)} entregas registradas en la fecha actual`,
-              icon: 'pi pi-send',
-              tone: 'sky'
-            }
-          : {
-              label: 'Sin asignaciones hoy',
-              detail: 'No hay nuevas entregas en la fecha actual',
-              icon: 'pi pi-calendar',
-              tone: 'slate'
-            }
-      );
-    }
-
-    if (this.canViewUsers()) {
-      items.push({
-        label: 'Equipo habilitado',
-        detail: `${this.formatNumber(this.activeUsersCount())} usuarios activos en el sistema`,
-        icon: 'pi pi-users',
-        tone: 'slate'
-      });
-    }
-
-    return items.slice(0, 4);
-  });
-
-  protected readonly inventoryStats = computed<DashboardStatItem[]>(() => {
-    if (!this.canViewInventory()) {
-      return [];
-    }
-
-    const activeItems = this.activeItemsCount();
-    const lowStock = this.snapshot().lowStockItems.length;
-    const stableItems = Math.max(activeItems - lowStock, 0);
-    const coverage = activeItems > 0 ? Math.round((stableItems / activeItems) * 100) : 0;
-
-    return [
-      {
-        label: 'Items activos',
-        value: this.formatNumber(activeItems),
-        helper: 'Referencias visibles y habilitadas',
-        tone: 'gold'
-      },
-      {
-        label: 'Stock bajo',
-        value: this.formatNumber(lowStock),
-        helper: lowStock > 0 ? 'Requieren reposicion o revision' : 'Sin presion inmediata',
-        tone: lowStock > 0 ? 'amber' : 'emerald'
-      },
-      {
-        label: 'Cobertura',
-        value: `${coverage}%`,
-        helper: `${this.formatNumber(stableItems)} items por encima del minimo`,
-        tone: 'emerald'
-      },
-      {
-        label: 'Inactivos',
-        value: this.formatNumber(this.inactiveItemsCount()),
-        helper: 'Referencias fuera de uso operativo',
-        tone: 'slate'
-      }
-    ];
-  });
-
-  protected readonly inventoryCoverageBadge = computed(() => {
-    const activeItems = this.activeItemsCount();
-    const lowStock = this.snapshot().lowStockItems.length;
-
-    if (!activeItems) {
-      return 'Sin inventario cargado';
-    }
-
-    return `${Math.max(Math.round(((activeItems - lowStock) / activeItems) * 100), 0)}% estable`;
-  });
-
-  protected readonly roomStats = computed<DashboardStatItem[]>(() => {
+  protected readonly roomBreakdown = computed<DashboardBreakdownItem[]>(() => {
     if (!this.canViewRooms()) {
       return [];
     }
 
+    const totalRooms = this.visibleRoomsCount();
+
+    if (!totalRooms) {
+      return [];
+    }
+
     return [
       {
-        label: 'Habitaciones activas',
-        value: this.formatNumber(this.activeRoomsCount()),
-        helper: 'Unidades visibles en el backend',
-        tone: 'gold'
-      },
-      {
         label: 'Disponibles',
-        value: this.formatNumber(this.readyRoomsCount()),
+        value: this.availableRoomsCount(),
+        share: this.calculateShare(this.availableRoomsCount(), totalRooms),
         helper: 'Listas para operacion inmediata',
         tone: 'emerald'
       },
       {
         label: 'Comprometidas',
-        value: this.formatNumber(this.committedRoomsCount()),
-        helper: 'En uso o en atencion',
-        tone: this.committedRoomsCount() > 0 ? 'amber' : 'emerald'
+        value: this.committedRoomsCount(),
+        share: this.calculateShare(this.committedRoomsCount(), totalRooms),
+        helper:
+          this.committedRoomsCount() > 0 ? 'En uso o bajo atencion' : 'Sin presion operativa hoy',
+        tone: this.committedRoomsCount() > 0 ? 'gold' : 'slate'
       },
       {
         label: 'Inactivas',
-        value: this.formatNumber(this.inactiveRoomsCount()),
-        helper: 'Fuera de visibilidad operativa',
-        tone: 'slate'
+        value: this.inactiveRoomsCount(),
+        share: this.calculateShare(this.inactiveRoomsCount(), totalRooms),
+        helper:
+          this.inactiveRoomsCount() > 0 ? 'Fuera de circulacion' : 'Sin habitaciones inactivas',
+        tone: this.inactiveRoomsCount() > 0 ? 'slate' : 'emerald'
       }
     ];
   });
 
-  protected readonly roomAvailabilityBadge = computed(() => {
-    const activeRooms = this.activeRoomsCount();
+  protected readonly roomPanoramaChart = computed(() => {
+    const totalRooms = this.visibleRoomsCount();
 
-    if (!activeRooms) {
-      return 'Sin habitaciones activas';
+    if (!totalRooms) {
+      return 'conic-gradient(from -90deg, #ede7dc 0 100%)';
     }
 
-    return `${Math.round((this.readyRoomsCount() / activeRooms) * 100)}% disponibles`;
+    const availableShare = this.calculateShare(this.availableRoomsCount(), totalRooms);
+    const committedShare = this.calculateShare(this.committedRoomsCount(), totalRooms);
+    const committedStop = availableShare + committedShare;
+
+    return `conic-gradient(from -90deg, #63b97c 0 ${availableShare}%, #d9b86f ${availableShare}% ${committedStop}%, #ddd5c9 ${committedStop}% 100%)`;
   });
 
-  protected readonly roomStatusBreakdown = computed<DashboardDistributionItem[]>(() => {
-    if (!this.canViewRooms()) {
-      return [];
+  protected readonly operationalHighlightTitle = computed(() => {
+    if (this.openAlertsCount() > 0) {
+      return `${this.formatNumber(this.openAlertsCount())} alertas requieren revision`;
     }
 
-    const activeRooms = this.snapshot().rooms.filter((room) => room.active);
-    const total = activeRooms.length;
-
-    if (!total) {
-      return [];
+    if (this.committedRoomsCount() > 0) {
+      return `${this.formatNumber(this.committedRoomsCount())} habitaciones siguen comprometidas`;
     }
 
-    const counts = new Map<string, number>();
-
-    for (const room of activeRooms) {
-      const label = this.formatLabel(room.status);
-      counts.set(label, (counts.get(label) ?? 0) + 1);
+    if (this.lowStockCount() > 0) {
+      return `${this.formatNumber(this.lowStockCount())} insumos bajo seguimiento`;
     }
 
-    return Array.from(counts.entries())
-      .map(([label, value]) => ({
-        label,
-        value,
-        share: Math.round((value / total) * 100),
-        tone: this.toneForRoomStatus(label)
-      }))
-      .sort((left, right) => right.value - left.value);
+    return 'Operacion en equilibrio';
   });
 
-  protected readonly watchlistItems = computed<DashboardWatchItem[]>(() => {
-    if (!this.canViewInventory()) {
-      return [];
+  protected readonly operationalHighlightText = computed(() => {
+    if (this.openAlertsCount() > 0) {
+      return 'Conviene revisar los insumos criticos antes de que impacten la operacion diaria.';
     }
 
-    if (this.canViewAlerts() && this.snapshot().alerts.length) {
-      return this.snapshot()
-        .alerts
-        .slice()
-        .sort((left, right) => {
-          if (left.currentStock === right.currentStock) {
-            return this.toTimestamp(right.createdAt) - this.toTimestamp(left.createdAt);
-          }
-
-          return left.currentStock - right.currentStock;
-        })
-        .slice(0, 4)
-        .map((alert) => ({
-          title: alert.itemName,
-          meta: `Stock ${this.formatNumber(alert.currentStock)} / minimo ${this.formatNumber(alert.minStock)}`,
-          helper: `Abierta ${this.formatShortDate(alert.createdAt)}`,
-          tone: alert.currentStock === 0 ? 'rose' : 'amber'
-        }));
+    if (this.committedRoomsCount() > 0) {
+      return `Aun quedan ${this.formatNumber(this.availableRoomsCount())} habitaciones listas para atencion inmediata.`;
     }
 
-    return this.snapshot()
-      .lowStockItems
-      .slice()
-      .sort((left, right) => left.stock - right.stock)
-      .slice(0, 4)
-      .map((item) => ({
-        title: item.name,
-        meta: `Stock ${this.formatNumber(item.stock)} / minimo ${this.formatNumber(item.minStock)}`,
-        helper: item.providerName || item.category || 'Pendiente de reposicion',
-        tone: item.stock === 0 ? 'rose' : 'amber'
-      }));
+    if (this.lowStockCount() > 0) {
+      return 'La cobertura sigue controlada, pero hay puntos de reposicion que no conviene dejar crecer.';
+    }
+
+    return 'Inventario, habitaciones y actividad reciente se mantienen dentro de una lectura estable.';
   });
 
-  protected readonly recentMovements = computed(() =>
+  protected readonly importantToday = computed<DashboardInsight[]>(() => {
+    const insights: DashboardInsight[] = [];
+
+    if (this.canViewAlerts()) {
+      insights.push(
+        this.openAlertsCount() > 0
+          ? {
+              title: `${this.formatNumber(this.openAlertsCount())} alertas abiertas`,
+              text: 'Hay insumos con seguimiento pendiente por debajo del minimo visible.',
+              tone: 'rose',
+              art: 'bell'
+            }
+          : {
+              title: 'Operacion estable',
+              text: 'No hay alertas abiertas en el sistema.',
+              tone: 'emerald',
+              art: 'shield'
+            }
+      );
+    }
+
+    if (this.canViewInventory()) {
+      insights.push(
+        this.lowStockCount() > 0
+          ? {
+              title: 'Cobertura en seguimiento',
+              text: `${this.formatNumber(this.stableItemsCount())} de ${this.formatNumber(this.activeItemsCount())} insumos activos siguen sobre minimo.`,
+              tone: this.inventoryHealthTone(),
+              art: 'box'
+            }
+          : {
+              title: 'Cobertura estable',
+              text: `Los ${this.formatNumber(this.activeItemsCount())} insumos activos visibles mantienen stock suficiente.`,
+              tone: 'emerald',
+              art: 'box'
+            }
+      );
+    }
+
+    if (this.canViewRooms()) {
+      insights.push(
+        this.committedRoomsCount() > 0
+          ? {
+              title: `${this.formatNumber(this.committedRoomsCount())} habitaciones comprometidas`,
+              text: `Se encuentran en uso o en atencion, mientras ${this.formatNumber(this.availableRoomsCount())} siguen disponibles.`,
+              tone: 'gold',
+              art: 'door'
+            }
+          : {
+              title: 'Disponibilidad despejada',
+              text: `Las ${this.formatNumber(this.availableRoomsCount())} habitaciones activas estan listas para operar.`,
+              tone: 'emerald',
+              art: 'bed'
+            }
+      );
+    }
+
+    if (this.canViewAssignments()) {
+      insights.push(
+        this.todayAssignmentsCount() > 0
+          ? {
+              title: `${this.formatNumber(this.todayAssignmentsCount())} asignaciones hoy`,
+              text: 'Hay nuevas entregas registradas en la fecha actual.',
+              tone: 'gold',
+              art: 'clipboard'
+            }
+          : {
+              title: 'Sin asignaciones nuevas',
+              text: 'No hay entregas registradas hoy.',
+              tone: 'slate',
+              art: 'clipboard'
+            }
+      );
+    }
+
+    if (this.canViewUsers() && insights.length < 4) {
+      insights.push({
+        title: `${this.formatNumber(this.activeUsersCount())} usuarios activos`,
+        text: 'El equipo habilitado para operar se mantiene disponible.',
+        tone: 'slate',
+        art: 'chart'
+      });
+    }
+
+    return insights.slice(0, 4);
+  });
+
+  protected readonly movementItems = computed<DashboardActivityItem[]>(() =>
     this.snapshot()
       .movements
       .slice()
       .sort((left, right) => this.toTimestamp(right.createdAt) - this.toTimestamp(left.createdAt))
-      .slice(0, 5)
+      .slice(0, 4)
+      .map((movement) => ({
+        id: movement.id,
+        title: movement.itemName,
+        detail: this.formatMovementDetail(movement),
+        badge: `${this.formatNumber(movement.quantity)} uds`,
+        stamp: this.formatDateTime(movement.createdAt)
+      }))
   );
 
-  protected readonly recentAssignments = computed(() =>
+  protected readonly assignmentItems = computed<DashboardActivityItem[]>(() =>
     this.snapshot()
       .assignments
       .slice()
       .sort((left, right) => this.toTimestamp(right.createdAt) - this.toTimestamp(left.createdAt))
-      .slice(0, 5)
+      .slice(0, 4)
+      .map((assignment) => ({
+        id: assignment.id,
+        title: assignment.itemName,
+        detail: this.formatAssignmentDetail(assignment),
+        badge: `${this.formatNumber(assignment.quantity)} uds`,
+        stamp: this.formatDateTime(assignment.createdAt)
+      }))
+  );
+
+  protected readonly statusBanner = computed<DashboardStatusBanner>(() => {
+    if (this.openAlertsCount() > 0) {
+      if (this.canViewInventory() && this.canViewRooms()) {
+        return {
+          title: 'Hay frentes que conviene revisar hoy',
+          text: `${this.formatNumber(this.openAlertsCount())} alertas abiertas y ${this.formatNumber(this.committedRoomsCount())} habitaciones comprometidas mantienen la operacion bajo seguimiento.`,
+          tone: 'rose'
+        };
+      }
+
+      if (this.canViewInventory()) {
+        return {
+          title: 'Hay frentes que conviene revisar hoy',
+          text: `${this.formatNumber(this.openAlertsCount())} alertas abiertas mantienen el inventario visible bajo seguimiento.`,
+          tone: 'rose'
+        };
+      }
+
+      return {
+        title: 'Hay frentes que conviene revisar hoy',
+        text: 'La operacion requiere seguimiento porque hay eventos activos que todavia no se han resuelto.',
+        tone: 'rose'
+      };
+    }
+
+    if (this.lowStockCount() > 0 || this.committedRoomsCount() > 0) {
+      if (this.canViewInventory() && this.canViewRooms()) {
+        return {
+          title: 'El sistema se mantiene estable',
+          text: `${this.formatNumber(this.availableRoomsCount())} habitaciones siguen disponibles y el inventario conserva ${this.inventoryCoveragePercentage()}% de cobertura visible.`,
+          tone: this.committedRoomsCount() > 0 ? 'gold' : 'amber'
+        };
+      }
+
+      if (this.canViewInventory()) {
+        return {
+          title: 'El sistema se mantiene estable',
+          text: `La cobertura visible se mantiene en ${this.inventoryCoveragePercentage()}% con ${this.formatNumber(this.lowStockCount())} insumos bajo seguimiento.`,
+          tone: 'amber'
+        };
+      }
+
+      if (this.canViewRooms()) {
+        return {
+          title: 'El sistema se mantiene estable',
+          text: `${this.formatNumber(this.availableRoomsCount())} habitaciones siguen disponibles y ${this.formatNumber(this.committedRoomsCount())} permanecen comprometidas.`,
+          tone: 'gold'
+        };
+      }
+
+      return {
+        title: 'El sistema se mantiene estable',
+        text: `La actividad reciente permanece bajo control dentro de la ventana de ${this.activityWindowDays} dias.`,
+        tone: 'gold'
+      };
+    }
+
+    if (this.canViewInventory() && !this.canViewRooms()) {
+      return {
+        title: 'Todo en orden por ahora',
+        text: `El inventario visible se mantiene estable con ${this.inventoryCoveragePercentage()}% de cobertura y sin alertas abiertas.`,
+        tone: 'emerald'
+      };
+    }
+
+    if (this.canViewRooms() && !this.canViewInventory()) {
+      return {
+        title: 'Todo en orden por ahora',
+        text: `${this.formatNumber(this.availableRoomsCount())} habitaciones se mantienen disponibles en la vista actual.`,
+        tone: 'emerald'
+      };
+    }
+
+    return {
+      title: 'Todo en orden por ahora',
+      text: 'Inventario, habitaciones y actividad reciente se mantienen estables dentro de la vista actual.',
+      tone: 'emerald'
+    };
+  });
+
+  protected readonly bannerLeftArt = computed<DashboardArt>(() =>
+    this.canViewRooms() ? 'bed' : 'shield'
+  );
+
+  protected readonly bannerRightArt = computed<DashboardArt>(() =>
+    this.canViewInventory() ? 'package' : 'chart'
   );
 
   ngOnInit(): void {
     this.loadDashboard();
   }
 
-  protected formatLabel(value: string | null | undefined): string {
-    if (!value) {
-      return 'Sin dato';
-    }
-
-    return value
-      .toLowerCase()
-      .replace(/[_-]+/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim()
-      .replace(/\b\w/g, (letter) => letter.toUpperCase());
-  }
-
-  protected formatDateTime(value: string): string {
-    return this.dateTimeFormatter.format(new Date(value));
-  }
-
-  protected formatMovementContext(movement: InventoryMovement): string {
-    const fragments = [this.formatLabel(movement.movementType)];
-
-    if (movement.roomNumber) {
-      fragments.push(`Hab. ${movement.roomNumber}`);
-    } else if (movement.areaName) {
-      fragments.push(movement.areaName);
-    } else if (movement.providerName) {
-      fragments.push(movement.providerName);
-    } else if (movement.origin) {
-      fragments.push(this.formatLabel(movement.origin));
-    }
-
-    fragments.push(`Stock final ${this.formatNumber(movement.stockAfter)}`);
-
-    return fragments.join(' · ');
-  }
-
-  protected formatAssignmentContext(assignment: RoomSupplyAssignment): string {
-    const fragments = [`Hab. ${assignment.roomNumber}`, this.formatLabel(assignment.assignmentType)];
-
-    if (assignment.guestName) {
-      fragments.push(assignment.guestName);
-    }
-
-    fragments.push(`Entrega: ${assignment.deliveredBy}`);
-
-    return fragments.join(' · ');
+  protected formatNumber(value: number): string {
+    return this.numberFormatter.format(value);
   }
 
   private loadDashboard(): void {
@@ -666,39 +667,64 @@ export class DashboardPageComponent implements OnInit {
       });
   }
 
+  private formatMovementDetail(movement: InventoryMovement): string {
+    const fragments = [this.formatLabel(movement.movementType)];
+
+    if (movement.roomNumber) {
+      fragments.push(`Hab. ${movement.roomNumber}`);
+    } else if (movement.areaName) {
+      fragments.push(movement.areaName);
+    } else if (movement.providerName) {
+      fragments.push(movement.providerName);
+    } else if (movement.origin) {
+      fragments.push(this.formatLabel(movement.origin));
+    }
+
+    fragments.push(`Stock final ${this.formatNumber(movement.stockAfter)}`);
+
+    return fragments.join(' | ');
+  }
+
+  private formatAssignmentDetail(assignment: RoomSupplyAssignment): string {
+    const fragments = [`Hab. ${assignment.roomNumber}`, this.formatLabel(assignment.assignmentType)];
+
+    if (assignment.guestName) {
+      fragments.push(assignment.guestName);
+    }
+
+    fragments.push(`Entrega: ${assignment.deliveredBy}`);
+
+    return fragments.join(' | ');
+  }
+
+  private calculateShare(value: number, total: number): number {
+    if (!total) {
+      return 0;
+    }
+
+    return Math.round((value / total) * 100);
+  }
+
+  private formatDateTime(value: string): string {
+    return this.dateTimeFormatter.format(new Date(value));
+  }
+
   private isAvailableStatus(status: string | null | undefined): boolean {
     const normalized = this.normalizeValue(status);
     return normalized.includes('disponible') || normalized.includes('libre');
   }
 
-  private toneForRoomStatus(status: string): DashboardTone {
-    const normalized = this.normalizeValue(status);
-
-    if (normalized.includes('disponible') || normalized.includes('libre')) {
-      return 'emerald';
+  private formatLabel(value: string | null | undefined): string {
+    if (!value) {
+      return 'Sin dato';
     }
 
-    if (normalized.includes('ocup')) {
-      return 'gold';
-    }
-
-    if (
-      normalized.includes('limpieza') ||
-      normalized.includes('aseo') ||
-      normalized.includes('prepar')
-    ) {
-      return 'sky';
-    }
-
-    if (
-      normalized.includes('mantenimiento') ||
-      normalized.includes('bloque') ||
-      normalized.includes('fuera')
-    ) {
-      return 'rose';
-    }
-
-    return 'slate';
+    return value
+      .toLowerCase()
+      .replace(/[_-]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .replace(/\b\w/g, (letter) => letter.toUpperCase());
   }
 
   private normalizeValue(value: string | null | undefined): string {
@@ -714,12 +740,11 @@ export class DashboardPageComponent implements OnInit {
       .trim();
   }
 
-  private formatShortDate(value: string): string {
-    return this.shortDateFormatter.format(new Date(value));
-  }
-
-  private formatNumber(value: number): string {
-    return this.numberFormatter.format(value);
+  private formatDisplayName(value: string): string {
+    return value
+      .replace(/[._-]+/g, ' ')
+      .trim()
+      .replace(/\s+/g, ' ');
   }
 
   private toTimestamp(value: string): number {
@@ -741,14 +766,6 @@ export class DashboardPageComponent implements OnInit {
     const date = new Date();
     date.setDate(date.getDate() - (this.activityWindowDays - 1));
     return this.toDateKey(date);
-  }
-
-  private joinWithAnd(items: string[]): string {
-    if (items.length <= 1) {
-      return items[0] ?? '';
-    }
-
-    return `${items.slice(0, -1).join(', ')} y ${items.at(-1)}`;
   }
 
   private capitalize(value: string): string {

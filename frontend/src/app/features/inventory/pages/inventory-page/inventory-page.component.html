@@ -222,17 +222,10 @@
   [(visible)]="detailVisible"
   position="right"
   [modal]="false"
-  [style]="{ width: 'min(26rem, 100vw)', border: 'none' }"
+  [style]="{ width: 'min(30rem, 100vw)', border: 'none' }"
   (onHide)="detailVisible = false"
   class="inventory-detail-drawer"
 >
-  <ng-template pTemplate="header">
-    <div class="inventory-detail-drawer__title-wrap">
-      <span class="inventory-detail-drawer__title">Detalle del insumo</span>
-      <p class="inventory-detail-drawer__subtitle">Consulta stock, estado y acciones rapidas.</p>
-    </div>
-  </ng-template>
-
   <section class="inv-detail-card inv-detail-card--drawer" aria-live="polite">
     @if (detailLoading()) {
       <div class="inv-detail-state inv-detail-state--loading">
@@ -240,20 +233,20 @@
         <span>Cargando detalle...</span>
       </div>
     } @else if (selectedItem(); as item) {
-      <header class="inv-detail-card__top">
-        <span class="inv-detail-card__code">{{ item.code }}</span>
+      <header class="inv-detail-hero">
+        <section class="inv-detail-card__identity">
+          <span class="inv-detail-card__code">{{ item.code }}</span>
+          <h3 class="inv-detail-card__title">{{ item.name }}</h3>
+          <p class="inv-detail-card__meta">
+            {{ itemCategoryLabel(item) }} &middot; {{ itemUnitLabel(item) }}
+          </p>
+        </section>
+
         <span class="inv-detail-card__status" [attr.data-state]="itemStatusTone(item)">
-          {{ itemStockStatusLabel(item) }}
+          <span>{{ itemStockStatusLabel(item) }}</span>
           <span class="inv-detail-card__status-dot" aria-hidden="true"></span>
         </span>
       </header>
-
-      <section class="inv-detail-card__identity">
-        <h3 class="inv-detail-card__title">{{ item.name }}</h3>
-        <p class="inv-detail-card__meta">
-          {{ itemCategoryLabel(item) }} &middot; {{ itemUnitLabel(item) }}
-        </p>
-      </section>
 
       <section class="inv-detail-stock-card inv-detail-stock-card--flat">
         <div class="inv-detail-stock-card__main">
@@ -262,81 +255,96 @@
             <span>{{ itemUnitLabel(item) }}</span>
           </div>
 
+          <span class="inv-detail-stock-card__divider" aria-hidden="true"></span>
+
           <div class="inv-detail-stock-card__limits">
-            <div>
-              <span>Minimo: {{ item.minStock }}</span>
-            </div>
-            <div>
-              <span>Maximo: {{ maxStockLabel(item) }}</span>
-            </div>
+            <span>Minimo: {{ item.minStock }}</span>
+            <span>Maximo: {{ maxStockLabel(item) }}</span>
+            <small class="inv-detail-stock-card__caption">Disponibilidad actual</small>
           </div>
         </div>
-        <small class="inv-detail-stock-card__caption">Disponibilidad actual</small>
       </section>
 
-      <div class="inv-detail-info-list">
+      <section class="inv-detail-info-list">
         <article class="inv-detail-info-row">
-          <i class="pi pi-briefcase" aria-hidden="true"></i>
-          <span>Proveedor</span>
-          <strong>{{ itemProviderLabel(item) }}</strong>
-        </article>
-
-        <article class="inv-detail-info-row">
-          <i class="pi pi-check-circle" aria-hidden="true"></i>
-          <span>Activo</span>
-          <strong>{{ item.active ? 'Si' : 'No' }}</strong>
-        </article>
-      </div>
-
-      <section class="inv-detail-section">
-        <h4 class="inv-detail-section__title">Descripcion</h4>
-        <p class="inv-detail-section__text">{{ itemDescriptionLabel(item) }}</p>
-      </section>
-
-      @if (canManageItems() || canReturnStock()) {
-        <section class="inv-detail-section">
-          <h4 class="inv-detail-section__title">Acciones rapidas</h4>
-
-          <div class="inv-quick-actions">
-            @if (canManageItems()) {
-              <button type="button" class="inv-quick-action" (click)="openEntryDialog(item)">
-                <i class="pi pi-download" aria-hidden="true"></i>
-                <span>Entrada</span>
-              </button>
-
-              <button type="button" class="inv-quick-action" (click)="openDecreaseDialog(item)">
-                <i class="pi pi-upload" aria-hidden="true"></i>
-                <span>Salida</span>
-              </button>
-            }
-
-            @if (canReturnStock()) {
-              <button type="button" class="inv-quick-action" (click)="openReturnDialog(item)">
-                <i class="pi pi-refresh" aria-hidden="true"></i>
-                <span>Devolucion</span>
-              </button>
-            }
-
-            @if (canManageItems()) {
-              <button type="button" class="inv-quick-action" (click)="openItemDialog(item)">
-                <i class="pi pi-pencil" aria-hidden="true"></i>
-                <span>Editar</span>
-              </button>
-            }
+          <div class="inv-detail-info-row__label">
+            <i class="pi pi-briefcase" aria-hidden="true"></i>
+            <span>Proveedor</span>
           </div>
 
-          @if (canManageItems() && item.active) {
-            <button type="button" class="inv-detail-deactivate" (click)="deactivate(item)">
-              <i class="pi pi-ban" aria-hidden="true"></i>
-              Desactivar insumo
-            </button>
-          } @else if (canManageItems()) {
-            <button type="button" class="inv-detail-activate" (click)="activate(item)">
-              <i class="pi pi-check-circle" aria-hidden="true"></i>
-              Activar insumo
-            </button>
-          }
+          <div class="inv-detail-info-row__value">
+            <strong>{{ itemProviderLabel(item) }}</strong>
+            <i class="pi pi-angle-right" aria-hidden="true"></i>
+          </div>
+        </article>
+
+        <article class="inv-detail-info-row">
+          <div class="inv-detail-info-row__label">
+            <i class="pi pi-check-circle" aria-hidden="true"></i>
+            <span>Activo</span>
+          </div>
+
+          <div class="inv-detail-info-row__value">
+            <span class="inv-detail-info-pill" [class.inv-detail-info-pill--muted]="!item.active">
+              {{ item.active ? 'Si' : 'No' }}
+            </span>
+          </div>
+        </article>
+      </section>
+
+      <section class="inv-detail-panel">
+        <section class="inv-detail-section">
+          <h4 class="inv-detail-section__title">Descripcion</h4>
+          <p class="inv-detail-section__text">{{ itemDescriptionLabel(item) }}</p>
         </section>
+
+        @if (canManageItems() || canReturnStock()) {
+          <div class="inv-detail-panel__divider" aria-hidden="true"></div>
+
+          <section class="inv-detail-section">
+            <h4 class="inv-detail-section__title">Acciones rapidas</h4>
+
+            <div class="inv-quick-actions">
+              @if (canManageItems()) {
+                <button type="button" class="inv-quick-action" (click)="openEntryDialog(item)">
+                  <i class="pi pi-download" aria-hidden="true"></i>
+                  <span>Entrada</span>
+                </button>
+
+                <button type="button" class="inv-quick-action" (click)="openDecreaseDialog(item)">
+                  <i class="pi pi-upload" aria-hidden="true"></i>
+                  <span>Salida</span>
+                </button>
+              }
+
+              @if (canReturnStock()) {
+                <button type="button" class="inv-quick-action" (click)="openReturnDialog(item)">
+                  <i class="pi pi-refresh" aria-hidden="true"></i>
+                  <span>Devolucion</span>
+                </button>
+              }
+
+              @if (canManageItems()) {
+                <button type="button" class="inv-quick-action" (click)="openItemDialog(item)">
+                  <i class="pi pi-pencil" aria-hidden="true"></i>
+                  <span>Editar</span>
+                </button>
+              }
+            </div>
+          </section>
+        }
+      </section>
+
+      @if (canManageItems() && item.active) {
+        <button type="button" class="inv-detail-deactivate" (click)="deactivate(item)">
+          <i class="pi pi-ban" aria-hidden="true"></i>
+          Desactivar insumo
+        </button>
+      } @else if (canManageItems()) {
+        <button type="button" class="inv-detail-activate" (click)="activate(item)">
+          <i class="pi pi-check-circle" aria-hidden="true"></i>
+          Activar insumo
+        </button>
       }
     } @else {
       <div class="inv-detail-state inv-detail-state--empty">

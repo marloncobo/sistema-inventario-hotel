@@ -11,7 +11,7 @@ import { EmptyStateComponent } from '@shared/components/empty-state/empty-state.
       <app-empty-state
         icon="pi pi-map"
         title="La ruta solicitada no existe"
-        message="La navegación del frontend ya está protegida, pero esta URL no corresponde a ninguna vista configurada."
+        message="La direccion solicitada no corresponde a ninguna vista disponible."
         actionLabel="Ir al dashboard"
         actionRoute="/dashboard"
       />

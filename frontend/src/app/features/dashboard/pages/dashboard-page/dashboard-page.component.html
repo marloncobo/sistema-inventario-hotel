@@ -1,66 +1,49 @@
 <div class="dashboard-page">
-  <app-page-header
-    eyebrow="Panel principal"
-    title="Dashboard operativo"
-    subtitle="Resumen limpio de inventario, habitaciones y actividad reciente con los datos principales del backend."
-  />
+  <ng-template #illustration let-art="art" let-size="size">
+    <div class="dashboard-art" [attr.data-art]="art" [attr.data-size]="size || 'card'" aria-hidden="true">
+      <span class="dashboard-art__shadow"></span>
+      <span class="dashboard-art__plate"></span>
+      <span class="dashboard-art__primary"></span>
+      <span class="dashboard-art__secondary"></span>
+      <span class="dashboard-art__accent"></span>
+      <span class="dashboard-art__spark dashboard-art__spark--one"></span>
+      <span class="dashboard-art__spark dashboard-art__spark--two"></span>
+    </div>
+  </ng-template>
 
   @if (loading()) {
     <section class="surface-card dashboard-loading">
       <p-progress-spinner strokeWidth="4" animationDuration=".7s" />
-      <p>Cargando el estado principal de la operacion...</p>
+      <p>Cargando el panorama operativo...</p>
     </section>
   } @else {
-    <section class="surface-card dashboard-overview">
-      <div class="dashboard-overview__main">
-        <span class="dashboard-kicker">{{ todayLabel }}</span>
-        <h3>{{ heroTitle() }}</h3>
-        <p>{{ heroMessage() }}</p>
-
-        <div class="dashboard-chip-row">
-          @for (chip of overviewChips(); track chip.label) {
-            <article class="dashboard-chip">
-              <span>{{ chip.label }}</span>
-              <strong>{{ chip.value }}</strong>
-            </article>
-          }
-        </div>
+    <header class="surface-card dashboard-hero">
+      <div class="dashboard-hero__copy">
+        <span class="dashboard-eyebrow">Panel operativo</span>
+        <h1>Hola, {{ displayName() }}</h1>
+        <p>{{ headerSummary() }}</p>
       </div>
 
-      <div class="dashboard-overview__side">
-        <div class="dashboard-panel-head">
-          <div>
-            <h3>Radar inmediato</h3>
-            <p>Lo principal para revisar sin repetir accesos del sidebar.</p>
-          </div>
-        </div>
-
-        <div class="dashboard-focus-list">
-          @for (item of focusItems(); track item.label) {
-            <article class="dashboard-focus-item" [attr.data-tone]="item.tone">
-              <div class="dashboard-focus-item__icon">
-                <i [class]="item.icon"></i>
-              </div>
-
-              <div class="dashboard-focus-item__content">
-                <strong>{{ item.label }}</strong>
-                <small>{{ item.detail }}</small>
-              </div>
-            </article>
-          }
-        </div>
+      <div class="dashboard-hero__meta">
+        <span class="dashboard-meta-pill">{{ todayLabel }}</span>
+        <span class="dashboard-meta-pill" [attr.data-tone]="statusBanner().tone">
+          {{ statusChipLabel() }}
+        </span>
       </div>
-    </section>
+    </header>
 
-    @if (metrics().length) {
-      <section class="dashboard-metrics">
-        @for (card of metrics(); track card.label) {
-          <article class="surface-card dashboard-metric-card" [attr.data-tone]="card.tone">
-            <div class="dashboard-metric-card__icon">
-              <i [class]="card.icon"></i>
+    @if (kpiCards().length) {
+      <section class="dashboard-kpis">
+        @for (card of kpiCards(); track card.label) {
+          <article class="surface-card dashboard-kpi-card" [attr.data-tone]="card.tone">
+            <div class="dashboard-kpi-card__art">
+              <ng-container
+                [ngTemplateOutlet]="illustration"
+                [ngTemplateOutletContext]="{ art: card.art, size: 'card' }"
+              />
             </div>
 
-            <div class="dashboard-metric-card__content">
+            <div class="dashboard-kpi-card__content">
               <span>{{ card.label }}</span>
               <strong>{{ card.value }}</strong>
               <small>{{ card.helper }}</small>
@@ -70,163 +53,208 @@
       </section>
     }
 
-    <section class="dashboard-grid">
-      @if (canViewInventory()) {
-        <article class="surface-card dashboard-panel">
-          <div class="dashboard-panel-head">
-            <div>
-              <h3>Inventario</h3>
-              <p>Salud general del stock, cobertura visible y puntos con presion.</p>
-            </div>
-
-            <span class="dashboard-inline-badge">{{ inventoryCoverageBadge() }}</span>
-          </div>
-
-          <div class="dashboard-stat-grid">
-            @for (stat of inventoryStats(); track stat.label) {
-              <article class="dashboard-stat-card" [attr.data-tone]="stat.tone">
-                <span>{{ stat.label }}</span>
-                <strong>{{ stat.value }}</strong>
-                <small>{{ stat.helper }}</small>
-              </article>
-            }
-          </div>
-
-          <div class="dashboard-subsection-head">
-            <strong>Vigilancia inmediata</strong>
-            <span>Items con menor margen visible</span>
-          </div>
-
-          @if (watchlistItems().length) {
-            <div class="dashboard-watch-list">
-              @for (item of watchlistItems(); track item.title) {
-                <article class="dashboard-watch-item" [attr.data-tone]="item.tone">
-                  <strong>{{ item.title }}</strong>
-                  <span>{{ item.meta }}</span>
-                  <small>{{ item.helper }}</small>
-                </article>
-              }
-            </div>
-          } @else {
-            <p class="dashboard-empty-inline">No hay insumos en observacion dentro de lo visible para este perfil.</p>
-          }
-        </article>
-      }
-
+    <section class="dashboard-main">
       @if (canViewRooms()) {
-        <article class="surface-card dashboard-panel">
-          <div class="dashboard-panel-head">
+        <article class="surface-card dashboard-panorama">
+          <div class="dashboard-section-head">
             <div>
-              <h3>Habitaciones</h3>
-              <p>Disponibilidad real y distribucion del estado operativo.</p>
+              <h2>Panorama operativo</h2>
+              <p>Disponibilidad actual y lectura general de la operacion.</p>
             </div>
 
-            <span class="dashboard-inline-badge">{{ roomAvailabilityBadge() }}</span>
-          </div>
-
-          <div class="dashboard-stat-grid">
-            @for (stat of roomStats(); track stat.label) {
-              <article class="dashboard-stat-card" [attr.data-tone]="stat.tone">
-                <span>{{ stat.label }}</span>
-                <strong>{{ stat.value }}</strong>
-                <small>{{ stat.helper }}</small>
-              </article>
+            @if (canViewInventory()) {
+              <div class="dashboard-coverage-card" [attr.data-tone]="inventoryHealthTone()">
+                <span>Cobertura visible</span>
+                <strong>{{ inventoryCoveragePercentage() }}%</strong>
+                <small>{{ inventoryCoverageHelper() }}</small>
+              </div>
             }
           </div>
 
-          <div class="dashboard-subsection-head">
-            <strong>Distribucion por estado</strong>
-            <span>{{ activeRoomsCount() }} activas</span>
+          <div class="dashboard-panorama__body">
+            <div class="dashboard-donut">
+              <div class="dashboard-donut__ring" [style.background]="roomPanoramaChart()">
+                <div class="dashboard-donut__center">
+                  <strong>{{ formatNumber(activeRoomsCount()) }}</strong>
+                  <span>Habitaciones activas</span>
+                  <small>{{ formatNumber(visibleRoomsCount()) }} en vista general</small>
+                </div>
+              </div>
+            </div>
+
+            @if (roomBreakdown().length) {
+              <div class="dashboard-breakdown">
+                @for (item of roomBreakdown(); track item.label) {
+                  <article class="dashboard-breakdown__item" [attr.data-tone]="item.tone">
+                    <div class="dashboard-breakdown__head">
+                      <div>
+                        <strong>{{ item.label }}</strong>
+                        <small>{{ item.helper }}</small>
+                      </div>
+
+                      <span>{{ formatNumber(item.value) }} ({{ item.share }}%)</span>
+                    </div>
+
+                    <div class="dashboard-breakdown__track">
+                      <span [style.width.%]="item.share"></span>
+                    </div>
+                  </article>
+                }
+              </div>
+            } @else {
+              <div class="dashboard-empty-inline">
+                No hay habitaciones visibles para resumir en este momento.
+              </div>
+            }
           </div>
 
-          @if (roomStatusBreakdown().length) {
-            <div class="dashboard-distribution-list">
-              @for (item of roomStatusBreakdown(); track item.label) {
-                <article class="dashboard-distribution-item" [attr.data-tone]="item.tone">
-                  <div class="dashboard-distribution-item__head">
-                    <strong>{{ item.label }}</strong>
-                    <span>{{ item.value }} · {{ item.share }}%</span>
-                  </div>
-
-                  <div class="dashboard-distribution-track">
-                    <span [style.width.%]="item.share"></span>
-                  </div>
-                </article>
-              }
-            </div>
-          } @else {
-            <p class="dashboard-empty-inline">No hay habitaciones activas visibles para resumir en este momento.</p>
-          }
+          <div class="dashboard-panorama__status" [attr.data-tone]="statusBanner().tone">
+            <strong>{{ operationalHighlightTitle() }}</strong>
+            <p>{{ operationalHighlightText() }}</p>
+          </div>
         </article>
       }
+
+      <article class="surface-card dashboard-insights" [class.dashboard-insights--full]="!canViewRooms()">
+        <div class="dashboard-section-head">
+          <div>
+            <h2>Lo importante hoy</h2>
+            <p>Lectura rapida de los puntos que mas pesan sobre la operacion.</p>
+          </div>
+        </div>
+
+        @if (importantToday().length) {
+          <div class="dashboard-insights__list">
+            @for (item of importantToday(); track item.title) {
+              <article class="dashboard-insight" [attr.data-tone]="item.tone">
+                <div class="dashboard-insight__art">
+                  <ng-container
+                    [ngTemplateOutlet]="illustration"
+                    [ngTemplateOutletContext]="{ art: item.art, size: 'mini' }"
+                  />
+                </div>
+
+                <div class="dashboard-insight__content">
+                  <strong>{{ item.title }}</strong>
+                  <p>{{ item.text }}</p>
+                </div>
+              </article>
+            }
+          </div>
+        } @else {
+          <div class="dashboard-empty-inline">
+            Aun no hay suficiente informacion para construir insights en esta vista.
+          </div>
+        }
+      </article>
     </section>
 
-    <section class="dashboard-grid dashboard-grid--activity">
-      @if (canViewMovements()) {
-        <article class="surface-card dashboard-panel">
-          <div class="dashboard-panel-head">
-            <div>
-              <h3>Movimientos recientes</h3>
-              <p>Trazabilidad cargada para los ultimos {{ activityWindowDays }} dias.</p>
+    @if (canViewMovements() || canViewAssignments()) {
+      <section class="dashboard-activity">
+        @if (canViewMovements()) {
+          <article class="surface-card dashboard-activity-card">
+            <div class="dashboard-section-head">
+              <div>
+                <h2>Movimientos recientes</h2>
+                <p>Trazabilidad de los ultimos {{ activityWindowDays }} dias.</p>
+              </div>
             </div>
 
-            <span class="dashboard-inline-badge">{{ snapshot().movements.length }} cargados</span>
-          </div>
+            @if (movementItems().length) {
+              <div class="dashboard-activity-list">
+                @for (item of movementItems(); track item.id) {
+                  <article class="dashboard-activity-item">
+                    <div class="dashboard-activity-item__copy">
+                      <strong>{{ item.title }}</strong>
+                      <p>{{ item.detail }}</p>
+                    </div>
 
-          @if (recentMovements().length) {
-            <div class="dashboard-feed-list">
-              @for (movement of recentMovements(); track movement.id) {
-                <article class="dashboard-feed-item">
-                  <div class="dashboard-feed-item__main">
-                    <strong>{{ movement.itemName }}</strong>
-                    <small>{{ formatMovementContext(movement) }}</small>
-                  </div>
+                    <div class="dashboard-activity-item__meta">
+                      <span class="dashboard-pill">{{ item.badge }}</span>
+                      <small>{{ item.stamp }}</small>
+                    </div>
+                  </article>
+                }
+              </div>
+            } @else {
+              <div class="dashboard-empty-state">
+                <ng-container
+                  [ngTemplateOutlet]="illustration"
+                  [ngTemplateOutletContext]="{ art: 'box', size: 'empty' }"
+                />
 
-                  <div class="dashboard-feed-item__meta">
-                    <span class="dashboard-pill">{{ movement.quantity }} uds</span>
-                    <small>{{ formatDateTime(movement.createdAt) }}</small>
-                  </div>
-                </article>
-              }
+                <div class="dashboard-empty-state__copy">
+                  <strong>Sin movimientos recientes</strong>
+                  <p>No hay registros cargados en la ultima semana.</p>
+                </div>
+              </div>
+            }
+          </article>
+        }
+
+        @if (canViewAssignments()) {
+          <article class="surface-card dashboard-activity-card">
+            <div class="dashboard-section-head">
+              <div>
+                <h2>Asignaciones recientes</h2>
+                <p>Entregas de insumos registradas en los ultimos {{ activityWindowDays }} dias.</p>
+              </div>
             </div>
-          } @else {
-            <p class="dashboard-empty-inline">Sin movimientos recientes dentro de la ventana cargada.</p>
-          }
-        </article>
-      }
 
-      @if (canViewAssignments()) {
-        <article class="surface-card dashboard-panel">
-          <div class="dashboard-panel-head">
-            <div>
-              <h3>Asignaciones recientes</h3>
-              <p>Entrega de insumos a habitaciones dentro de la ultima ventana operativa.</p>
-            </div>
+            @if (assignmentItems().length) {
+              <div class="dashboard-activity-list">
+                @for (item of assignmentItems(); track item.id) {
+                  <article class="dashboard-activity-item">
+                    <div class="dashboard-activity-item__copy">
+                      <strong>{{ item.title }}</strong>
+                      <p>{{ item.detail }}</p>
+                    </div>
 
-            <span class="dashboard-inline-badge">{{ todayAssignmentsCount() }} hoy</span>
-          </div>
+                    <div class="dashboard-activity-item__meta">
+                      <span class="dashboard-pill">{{ item.badge }}</span>
+                      <small>{{ item.stamp }}</small>
+                    </div>
+                  </article>
+                }
+              </div>
+            } @else {
+              <div class="dashboard-empty-state">
+                <ng-container
+                  [ngTemplateOutlet]="illustration"
+                  [ngTemplateOutletContext]="{ art: 'clipboard', size: 'empty' }"
+                />
 
-          @if (recentAssignments().length) {
-            <div class="dashboard-feed-list">
-              @for (assignment of recentAssignments(); track assignment.id) {
-                <article class="dashboard-feed-item">
-                  <div class="dashboard-feed-item__main">
-                    <strong>{{ assignment.itemName }}</strong>
-                    <small>{{ formatAssignmentContext(assignment) }}</small>
-                  </div>
+                <div class="dashboard-empty-state__copy">
+                  <strong>Sin asignaciones recientes</strong>
+                  <p>No hay entregas registradas en la ultima semana.</p>
+                </div>
+              </div>
+            }
+          </article>
+        }
+      </section>
+    }
 
-                  <div class="dashboard-feed-item__meta">
-                    <span class="dashboard-pill">{{ assignment.quantity }} uds</span>
-                    <small>{{ formatDateTime(assignment.createdAt) }}</small>
-                  </div>
-                </article>
-              }
-            </div>
-          } @else {
-            <p class="dashboard-empty-inline">Sin asignaciones recientes dentro de la ventana cargada.</p>
-          }
-        </article>
-      }
+    <section class="surface-card dashboard-banner" [attr.data-tone]="statusBanner().tone">
+      <div class="dashboard-banner__art dashboard-banner__art--left">
+        <ng-container
+          [ngTemplateOutlet]="illustration"
+          [ngTemplateOutletContext]="{ art: bannerLeftArt(), size: 'banner' }"
+        />
+      </div>
+
+      <div class="dashboard-banner__copy">
+        <span>Estado general</span>
+        <h2>{{ statusBanner().title }}</h2>
+        <p>{{ statusBanner().text }}</p>
+      </div>
+
+      <div class="dashboard-banner__art dashboard-banner__art--right">
+        <ng-container
+          [ngTemplateOutlet]="illustration"
+          [ngTemplateOutletContext]="{ art: bannerRightArt(), size: 'banner' }"
+        />
+      </div>
     </section>
   }
 </div>
