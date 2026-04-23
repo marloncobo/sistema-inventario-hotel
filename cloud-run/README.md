@@ -29,21 +29,33 @@ gcloud artifacts repositories create $REPOSITORY `
   --description="Hotel inventory services"
 ```
 
-## 2. Construir y publicar imagenes
+## 2. Construir, publicar y desplegar por microservicio
 
 Desde la raiz del proyecto:
 
 ```powershell
 gcloud builds submit `
-  --config cloudbuild.yaml `
+  --config cloud-run/cloudbuild.inventory.yaml `
   --substitutions=_REGION=$REGION,_REPOSITORY=$REPOSITORY,_TAG=$TAG
 ```
 
-Esto publica:
+```powershell
+gcloud builds submit `
+  --config cloud-run/cloudbuild.rooms.yaml `
+  --substitutions=_REGION=$REGION,_REPOSITORY=$REPOSITORY,_TAG=$TAG
+```
 
-- `inventory-service`
-- `rooms-service`
-- `gateway-service`
+```powershell
+gcloud builds submit `
+  --config cloud-run/cloudbuild.gateway.yaml `
+  --substitutions=_REGION=$REGION,_REPOSITORY=$REPOSITORY,_TAG=$TAG
+```
+
+Cada archivo `cloudbuild` hace tres cosas para un servicio:
+
+- construye la imagen
+- la publica en Artifact Registry
+- despliega o actualiza el servicio en Cloud Run usando su archivo `env`
 
 ## 3. Crear archivos de variables
 
@@ -59,40 +71,20 @@ Usa el mismo `JWT_SECRET` en los tres servicios.
 
 Para `SPRING_DATASOURCE_URL`, usa la direccion de tu PostgreSQL disponible para Cloud Run. Si usas Cloud SQL con IP privada, configura Serverless VPC Access y usa la IP privada de la instancia.
 
-## 4. Desplegar servicios
+## 4. Orden recomendado de despliegue
 
-Despliega primero `inventory-service` y `rooms-service`, luego actualiza sus URLs cruzadas en los archivos YAML cuando Cloud Run muestre las URLs finales.
+Ejecuta primero `inventory-service` y `rooms-service`. Cuando Cloud Run te entregue sus URLs finales, actualiza:
 
-```powershell
-gcloud run deploy inventory-service `
-  --image "$REGION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/inventory-service:$TAG" `
-  --region $REGION `
-  --platform managed `
-  --port 8080 `
-  --allow-unauthenticated `
-  --env-vars-file cloud-run/env.inventory.yaml
-```
+- `cloud-run/env.inventory.yaml` con `ROOMS_SERVICE_URL`
+- `cloud-run/env.rooms.yaml` con `INVENTORY_SERVICE_URL`
+- `cloud-run/env.gateway.yaml` con `INVENTORY_SERVICE_URL` y `ROOMS_SERVICE_URL`
+
+Luego vuelve a lanzar el pipeline del gateway:
 
 ```powershell
-gcloud run deploy rooms-service `
-  --image "$REGION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/rooms-service:$TAG" `
-  --region $REGION `
-  --platform managed `
-  --port 8080 `
-  --allow-unauthenticated `
-  --env-vars-file cloud-run/env.rooms.yaml
-```
-
-Luego despliega el gateway con las URLs reales de inventory y rooms:
-
-```powershell
-gcloud run deploy gateway-service `
-  --image "$REGION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/gateway-service:$TAG" `
-  --region $REGION `
-  --platform managed `
-  --port 8080 `
-  --allow-unauthenticated `
-  --env-vars-file cloud-run/env.gateway.yaml
+gcloud builds submit `
+  --config cloud-run/cloudbuild.gateway.yaml `
+  --substitutions=_REGION=$REGION,_REPOSITORY=$REPOSITORY,_TAG=$TAG
 ```
 
 ## 5. Verificar
@@ -106,3 +98,52 @@ curl https://gateway-service-xxxxx-uc.a.run.app/actuator/health
 ```
 
 Usa la URL del gateway como `baseUrl` en Postman.
+
+## 6. Crear triggers de Cloud Build
+
+Puedes crear los tres triggers para GitHub con el script:
+
+```powershell
+.\cloud-run\create-triggers.ps1 `
+  -ProjectId $PROJECT_ID `
+  -Region $REGION `
+  -Repository $REPOSITORY `
+  -BranchPattern "^frontendv3$"
+```
+
+Si ya conectaste el repositorio en Cloud Build como 2da generacion, usa mejor el recurso del repositorio:
+
+```powershell
+.\cloud-run\create-triggers.ps1 `
+  -ProjectId $PROJECT_ID `
+  -Region $REGION `
+  -Repository $REPOSITORY `
+  -BranchPattern "^frontendv3$" `
+  -RepositoryResource "projects/$PROJECT_ID/locations/$REGION/connections/github-conn/repositories/sistema-inventario-hotel"
+```
+
+Si tus builds con trigger deben usar una cuenta de servicio especifica:
+
+```powershell
+.\cloud-run\create-triggers.ps1 `
+  -ProjectId $PROJECT_ID `
+  -Region $REGION `
+  -Repository $REPOSITORY `
+  -BranchPattern "^frontendv3$" `
+  -ServiceAccount "projects/$PROJECT_ID/serviceAccounts/cloud-build-deployer@$PROJECT_ID.iam.gserviceaccount.com"
+```
+
+El script crea estos triggers:
+
+- `deploy-inventory-service`
+- `deploy-rooms-service`
+- `deploy-gateway-service`
+
+Cada trigger escucha cambios solo en los archivos relevantes de su microservicio.
+
+Importante:
+
+- Los triggers de Cloud Build leen archivos desde GitHub, no desde tu maquina local.
+- Si usas `cloud-run/env.inventory.yaml`, `cloud-run/env.rooms.yaml` y `cloud-run/env.gateway.yaml`, esos archivos deben existir en el repositorio remoto para que el deploy automatico funcione.
+- Si no quieres versionar variables sensibles, conviene migrar a Secret Manager y ajustar los `cloudbuild` para usar `--update-secrets` y `--update-env-vars`.
+- Si ves `INVALID_ARGUMENT` al crear el trigger, normalmente el proyecto todavia no tiene el repositorio conectado a Cloud Build o debes usar `-RepositoryResource` en lugar de `-RepoOwner` y `-RepoName`.
