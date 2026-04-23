@@ -1,33 +1,48 @@
 .assignments-page {
-  max-width: 1360px;
+  max-width: 1480px;
   margin: 0 auto;
-  padding-bottom: 2rem;
+  padding-bottom: 2.5rem;
   display: flex;
   flex-direction: column;
-  gap: 1.85rem;
+  gap: 2rem;
+}
+
+.assignments-hero {
+  padding: 1.55rem 1.75rem 1.65rem;
+  background:
+    radial-gradient(ellipse 90% 70% at 0% 0%, rgba(232, 212, 168, 0.2), transparent 55%),
+    linear-gradient(180deg, var(--pp-porcelain, #fefdfb), var(--pp-cream, #fdfbf7));
+}
+
+.assignments-hero__copy {
+  max-width: 46rem;
 }
 
 .assignments-summary {
-  gap: 1.1rem;
+  gap: 1.15rem;
 }
 
 .assignments-summary-card {
   display: grid;
   grid-template-columns: auto 1fr;
   align-items: center;
-  gap: 1.05rem;
-  min-height: 140px;
+  gap: 1.15rem;
+  min-height: 148px;
+  padding: 0.25rem 0.15rem;
+  border: none;
+  box-shadow: var(--pp-shadow-soft, 0 12px 28px rgba(45, 32, 22, 0.04));
 }
 
 .assignments-summary-card__icon {
-  width: 3rem;
-  height: 3rem;
-  border-radius: 999px;
+  width: 3.25rem;
+  height: 3.25rem;
+  border-radius: 1.05rem;
   display: grid;
   place-items: center;
-  background: rgba(200, 146, 45, 0.1);
-  color: #c8922d;
-  font-size: 1.1rem;
+  background: rgba(200, 146, 45, 0.12);
+  border: 1px solid rgba(200, 146, 45, 0.2);
+  color: #9a6f14;
+  font-size: 1.12rem;
 }
 
 .assignments-summary-card__content {
@@ -36,16 +51,29 @@
 
 .assignments-summary-card__content span {
   display: block;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #958575;
 }
 
 .assignments-summary-card__content strong {
   display: block;
+  margin-top: 0.35rem;
+  font-family: var(--app-font-serif, 'Playfair Display', Georgia, serif);
+  font-size: 2rem;
+  line-height: 1;
+  color: #261c15;
 }
 
 .assignments-summary-card__content small {
   display: block;
-  margin-top: 0.45rem;
-  line-height: 1.5;
+  margin-top: 0.5rem;
+  line-height: 1.55;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #7a6b5c;
 }
 
 .assignments-block {
@@ -53,54 +81,62 @@
   overflow: hidden;
 }
 
+.assignments-form-shell {
+  border: 1px solid var(--pp-border, rgba(214, 191, 152, 0.28));
+}
+
 .assignments-section-head {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   gap: 1rem 1.25rem;
-  padding: 1.35rem 1.5rem 1.2rem;
-  background: linear-gradient(180deg, rgba(253, 251, 247, 0.96), rgba(255, 255, 255, 0.94));
-  border-bottom: 1px solid rgba(214, 191, 152, 0.18);
+  padding: 1.45rem 1.65rem 1.25rem;
+  background: linear-gradient(180deg, rgba(255, 252, 247, 0.98), rgba(255, 255, 255, 0.9));
+  border-bottom: 1px solid rgba(214, 191, 152, 0.16);
 }
 
 .assignments-section-head--form {
   border-bottom: none;
-  padding-bottom: 1rem;
+  padding-bottom: 1.1rem;
 }
 
 .assignments-section-head--results {
-  padding-top: 1.2rem;
+  padding-top: 1.35rem;
 }
 
 .assignments-section-head__identity {
   display: flex;
   align-items: center;
-  gap: 0.95rem;
+  gap: 1rem;
   min-width: 0;
 }
 
 .assignments-section-head__icon {
-  width: 2.9rem;
-  height: 2.9rem;
-  border-radius: 999px;
+  width: 3.05rem;
+  height: 3.05rem;
+  border-radius: 1.05rem;
   display: grid;
   place-items: center;
-  background: rgba(200, 146, 45, 0.1);
-  color: #c8922d;
+  background: rgba(200, 146, 45, 0.12);
+  border: 1px solid rgba(200, 146, 45, 0.2);
+  color: #9a6f14;
   flex-shrink: 0;
 }
 
 .assignments-section-head__identity h3 {
   margin: 0;
-  color: #3d2b1f;
-  font-size: 1.08rem;
+  font-family: var(--app-font-serif, 'Playfair Display', Georgia, serif);
+  color: #2a2118;
+  font-size: 1.22rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
 }
 
 .assignments-section-head__identity p {
-  margin: 0.24rem 0 0;
-  color: #8a7867;
-  font-size: 0.84rem;
-  line-height: 1.5;
+  margin: 0.3rem 0 0;
+  color: #7a6b5c;
+  font-size: 0.86rem;
+  line-height: 1.55;
 }
 
 .assignments-badge,
@@ -114,32 +150,50 @@
   justify-content: center;
   white-space: nowrap;
   border-radius: 999px;
-  font-size: 0.77rem;
+  font-size: 0.76rem;
   font-weight: 700;
 }
 
 .assignments-badge {
   gap: 0.5rem;
-  padding: 0.52rem 0.82rem;
-  background: rgba(200, 146, 45, 0.1);
-  color: #a36f16;
+  padding: 0.52rem 0.88rem;
+  background: rgba(200, 146, 45, 0.12);
+  color: #8a5f12;
+  border: 1px solid rgba(200, 146, 45, 0.2);
 }
 
 .assignments-form {
   display: flex;
   flex-direction: column;
+  gap: 1.5rem;
+  padding: 0 1.65rem 1.65rem;
+}
+
+.assignments-form-layout {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1.35rem;
-  padding: 0 1.5rem 1.5rem;
+  align-items: start;
+}
+
+.assignments-form-panel {
+  min-height: 100%;
 }
 
 .assignments-form-grid {
-  gap: 1rem 1.25rem;
+  gap: 1.1rem 1.3rem;
+}
+
+.assignments-form .field .field-control,
+.assignments-form .field .p-inputtext {
+  min-height: 3.25rem;
+  font-size: 0.94rem;
 }
 
 .assignments-form .field small,
 .assignments-history-controls .field small,
 .assignments-filter-shell .field small {
-  color: #b45309;
+  color: #a65f18;
   font-size: 0.78rem;
   line-height: 1.4;
 }
@@ -147,16 +201,28 @@
 .assignments-form__actions {
   display: flex;
   justify-content: flex-end;
-  gap: 0.75rem;
-  padding-top: 0.15rem;
+  gap: 0.85rem;
+  padding: 1.1rem 0 0.15rem;
+  margin-top: 0.15rem;
+  border-top: 1px solid rgba(214, 191, 152, 0.14);
+}
+
+.assignments-form__actions .p-button {
+  min-width: 12.5rem;
+  padding-top: 0.85rem !important;
+  padding-bottom: 0.85rem !important;
 }
 
 .assignments-history-controls {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: 1rem 1.25rem;
+  gap: 1.1rem 1.35rem;
   align-items: end;
-  padding: 1.35rem 1.5rem 1.2rem;
+  padding: 1.35rem 1.65rem 1.25rem;
+}
+
+.assignments-history-controls .field .field-control {
+  min-height: 3.15rem;
 }
 
 .assignments-history-controls__actions {
@@ -167,10 +233,10 @@
 .assignments-filter-shell {
   display: flex;
   flex-direction: column;
-  gap: 1.2rem;
-  padding: 1.45rem 1.5rem 1.25rem;
-  border-bottom: 1px solid rgba(214, 191, 152, 0.18);
-  background: linear-gradient(180deg, rgba(253, 251, 247, 0.96), rgba(255, 255, 255, 0.92));
+  gap: 1.25rem;
+  padding: 1.5rem 1.65rem 1.35rem;
+  border-bottom: 1px solid rgba(214, 191, 152, 0.16);
+  background: linear-gradient(180deg, rgba(255, 252, 247, 0.98), rgba(255, 255, 255, 0.92));
 }
 
 .assignments-filter-shell__header {
@@ -187,8 +253,8 @@
 .assignments-section-kicker {
   display: inline-flex;
   margin-bottom: 0.55rem;
-  color: #a36f16;
-  font-size: 0.72rem;
+  color: #9a6f14;
+  font-size: 0.7rem;
   font-weight: 800;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -196,64 +262,73 @@
 
 .assignments-filter-shell__copy h3 {
   margin: 0;
-  color: #3d2b1f;
-  font-size: 1.08rem;
+  font-family: var(--app-font-serif, 'Playfair Display', Georgia, serif);
+  color: #2a2118;
+  font-size: 1.18rem;
+  font-weight: 700;
 }
 
 .assignments-filter-shell__copy p {
   margin: 0.4rem 0 0;
-  color: #8a7867;
-  font-size: 0.84rem;
-  line-height: 1.5;
+  color: #7a6b5c;
+  font-size: 0.86rem;
+  line-height: 1.55;
 }
 
 .assignments-filters-grid {
-  gap: 1rem 1.25rem;
+  gap: 1.1rem 1.3rem;
+}
+
+.assignments-filter-shell .field .field-control,
+.assignments-filter-shell .field .p-inputtext {
+  min-height: 3.15rem;
 }
 
 .assignments-filter-shell__actions {
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
-  gap: 0.75rem;
+  gap: 0.85rem;
 }
 
 .assignments-active-filters {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.6rem;
-  padding: 0 1.5rem 1.2rem;
-  border-bottom: 1px solid rgba(214, 191, 152, 0.18);
+  gap: 0.65rem;
+  padding: 0 1.65rem 1.25rem;
+  border-bottom: 1px solid rgba(214, 191, 152, 0.14);
 }
 
 .assignments-chip {
-  padding: 0.45rem 0.75rem;
+  padding: 0.45rem 0.78rem;
   background: rgba(200, 146, 45, 0.08);
-  color: #8f6724;
+  color: #7a5a28;
+  border: 1px solid rgba(200, 146, 45, 0.14);
 }
 
 .assignments-stats {
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
-  gap: 0.7rem;
+  gap: 0.65rem;
 }
 
 .assignments-stats span {
-  padding: 0.45rem 0.72rem;
-  background: rgba(154, 138, 120, 0.08);
-  color: #766553;
+  padding: 0.45rem 0.78rem;
+  background: rgba(120, 105, 90, 0.07);
+  color: #6b5d4f;
+  border: 1px solid rgba(120, 105, 90, 0.1);
 }
 
 .assignments-table-wrap {
   overflow: hidden;
-  background: white;
+  background: linear-gradient(180deg, #fffefb, #fff);
 }
 
 .assignment-date {
   color: #5f4a38;
   font-weight: 600;
-  font-size: 0.82rem;
+  font-size: 0.83rem;
   line-height: 1.45;
   white-space: nowrap;
 }
@@ -261,45 +336,59 @@
 .assignment-entity {
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
+  gap: 0.22rem;
   min-width: 0;
 }
 
 .assignment-entity strong {
-  color: #3d2b1f;
+  color: #2a2118;
   font-weight: 700;
   line-height: 1.35;
 }
 
 .assignment-entity span {
-  color: #9a8a78;
+  color: #958575;
   font-size: 0.78rem;
   line-height: 1.45;
 }
 
 .assignment-room-chip {
-  padding: 0.42rem 0.74rem;
-  background: rgba(200, 146, 45, 0.08);
-  color: #8e641c;
+  padding: 0.42rem 0.78rem;
+  background: rgba(200, 146, 45, 0.1);
+  color: #7a5a28;
+  border: 1px solid rgba(200, 146, 45, 0.16);
 }
 
 .assignment-quantity {
-  padding: 0.42rem 0.7rem;
-  background: rgba(220, 252, 231, 0.9);
-  color: #166534;
+  padding: 0.42rem 0.75rem;
+  background: rgba(200, 146, 45, 0.1);
+  color: #6b4f1c;
+  border: 1px solid rgba(200, 146, 45, 0.16);
 }
 
 .assignment-person {
-  padding: 0.42rem 0.72rem;
-  background: rgba(219, 234, 254, 0.9);
-  color: #1d4ed8;
+  padding: 0.42rem 0.75rem;
+  background: rgba(139, 118, 98, 0.1);
+  color: #5d4f42;
+  border: 1px solid rgba(139, 118, 98, 0.14);
 }
 
-:host ::ng-deep app-page-header .page-header {
-  padding-bottom: 0;
-  margin-bottom: 0;
-  border-bottom: none;
-  align-items: center;
+:host ::ng-deep .assignments-table .p-datatable-thead > tr > th:nth-child(1),
+:host ::ng-deep .assignments-table .p-datatable-tbody > tr > td:nth-child(1),
+:host ::ng-deep .assignments-table .p-datatable-thead > tr > th:nth-child(5),
+:host ::ng-deep .assignments-table .p-datatable-tbody > tr > td:nth-child(5) {
+  width: 8rem;
+  text-align: center;
+}
+
+:host ::ng-deep .assignments-table .p-datatable-thead > tr > th:nth-child(2),
+:host ::ng-deep .assignments-table .p-datatable-tbody > tr > td:nth-child(2) {
+  width: 8rem;
+}
+
+:host ::ng-deep .assignments-table .p-datatable-thead > tr > th:nth-child(4),
+:host ::ng-deep .assignments-table .p-datatable-tbody > tr > td:nth-child(4) {
+  width: 9.5rem;
 }
 
 :host ::ng-deep .assignments-table .p-datatable-table {
@@ -307,17 +396,26 @@
 }
 
 :host ::ng-deep .assignments-table .p-datatable-thead > tr > th {
-  padding: 1rem 1.15rem;
-  background: #fdfbf7;
-  color: #7b6754;
-  font-size: 0.73rem;
+  padding: 1.05rem 1.2rem;
+  background: linear-gradient(180deg, #faf4e8, #f3e9d6);
+  color: #6e5c4c;
+  font-size: 0.68rem;
   font-weight: 800;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border-bottom: 1px solid rgba(214, 191, 152, 0.28);
 }
 
 :host ::ng-deep .assignments-table .p-datatable-tbody > tr > td {
-  padding: 1rem 1.15rem;
+  padding: 1.08rem 1.2rem;
   vertical-align: middle;
+  background: #fffefb;
+  font-size: 0.9rem;
+  border-bottom: 1px solid rgba(214, 191, 152, 0.1);
+}
+
+:host ::ng-deep .assignments-table .p-datatable-tbody > tr:hover > td {
+  background: #fffdf8;
 }
 
 :host ::ng-deep .assignments-table .p-datatable-tbody > tr:last-child > td {
@@ -327,14 +425,21 @@
 :host ::ng-deep .assignments-table .p-paginator {
   border: none;
   border-top: 1px solid rgba(214, 191, 152, 0.18);
-  padding: 0.95rem 1.15rem;
+  padding: 1rem 1.2rem;
   justify-content: space-between;
   gap: 1rem;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(253, 249, 242, 0.92));
 }
 
 :host ::ng-deep .assignments-table .p-paginator-current {
   color: #8a7867;
   font-size: 0.82rem;
+}
+
+@media (max-width: 1180px) {
+  .assignments-form-layout {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 960px) {
@@ -363,11 +468,11 @@
   .assignments-form,
   .assignments-history-controls,
   .assignments-filter-shell {
-    padding-inline: 1rem;
+    padding-inline: 1.1rem;
   }
 
   .assignments-active-filters {
-    padding-inline: 1rem;
+    padding-inline: 1.1rem;
   }
 
   .assignments-filter-shell__actions > *,
@@ -378,5 +483,9 @@
 
   .assignments-form__actions {
     justify-content: stretch;
+  }
+
+  .assignments-form__actions .p-button {
+    min-width: 0;
   }
 }

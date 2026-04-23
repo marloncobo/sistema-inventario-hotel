@@ -63,7 +63,7 @@
     </section>
 
     @if (metrics().length) {
-      <section class="summary-grid dashboard-metrics">
+      <section class="summary-grid dashboard-metrics admin-kpi-row">
         @for (card of metrics(); track card.label) {
           <article class="summary-card dashboard-summary-card" [attr.data-tone]="card.tone">
             <div class="dashboard-summary-card__icon">
@@ -80,7 +80,7 @@
       </section>
     }
 
-    <section class="dashboard-board">
+    <section class="dashboard-board admin-content-block">
       <article class="surface-card dashboard-map">
         <div class="dashboard-panel-head">
           <div>

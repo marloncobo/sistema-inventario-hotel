@@ -347,6 +347,31 @@
   line-height: 1.45;
 }
 
+:host ::ng-deep .alerts-table--alerts .p-datatable-thead > tr > th:nth-child(2),
+:host ::ng-deep .alerts-table--alerts .p-datatable-tbody > tr > td:nth-child(2),
+:host ::ng-deep .alerts-table--alerts .p-datatable-thead > tr > th:nth-child(3),
+:host ::ng-deep .alerts-table--alerts .p-datatable-tbody > tr > td:nth-child(3) {
+  width: 8rem;
+  text-align: center;
+}
+
+:host ::ng-deep .alerts-table--alerts .p-datatable-thead > tr > th:nth-child(4),
+:host ::ng-deep .alerts-table--alerts .p-datatable-tbody > tr > td:nth-child(4),
+:host ::ng-deep .alerts-table--alerts .p-datatable-thead > tr > th:nth-child(5),
+:host ::ng-deep .alerts-table--alerts .p-datatable-tbody > tr > td:nth-child(5) {
+  width: 9rem;
+}
+
+:host ::ng-deep .alerts-table--stock .p-datatable-thead > tr > th:nth-child(1),
+:host ::ng-deep .alerts-table--stock .p-datatable-tbody > tr > td:nth-child(1),
+:host ::ng-deep .alerts-table--stock .p-datatable-thead > tr > th:nth-child(3),
+:host ::ng-deep .alerts-table--stock .p-datatable-tbody > tr > td:nth-child(3),
+:host ::ng-deep .alerts-table--stock .p-datatable-thead > tr > th:nth-child(4),
+:host ::ng-deep .alerts-table--stock .p-datatable-tbody > tr > td:nth-child(4) {
+  width: 7.5rem;
+  text-align: center;
+}
+
 :host ::ng-deep app-page-header .page-header {
   padding-bottom: 0;
   margin-bottom: 0;

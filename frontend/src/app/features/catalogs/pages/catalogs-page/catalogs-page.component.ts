@@ -125,7 +125,7 @@ const SORT_OPTIONS: Array<{ value: CatalogSortOption; label: string }> = [
         </article>
       }
 
-      <section class="summary-grid catalogs-summary">
+      <section class="summary-grid catalogs-summary admin-kpi-row">
         @for (card of summaryCards(); track card.section) {
           <article class="summary-card">
             <div class="catalogs-summary__icon">
@@ -140,7 +140,7 @@ const SORT_OPTIONS: Array<{ value: CatalogSortOption; label: string }> = [
         }
       </section>
 
-      <section class="surface-card catalogs-workbench">
+      <section class="surface-card catalogs-workbench admin-content-block">
         <div class="catalog-tabs" role="tablist" aria-label="Secciones de catalogos">
           @for (section of availableSections(); track section.value) {
             <button
@@ -154,7 +154,7 @@ const SORT_OPTIONS: Array<{ value: CatalogSortOption; label: string }> = [
           }
         </div>
 
-        <div class="catalog-toolbar">
+        <div class="catalog-toolbar admin-filter-block">
           <label class="catalog-search">
             <i class="pi pi-search"></i>
             <input
@@ -266,7 +266,7 @@ const SORT_OPTIONS: Array<{ value: CatalogSortOption; label: string }> = [
           </div>
         </div>
 
-        <div class="catalogs-table-wrap">
+        <div class="catalogs-table-wrap admin-table-block">
           @switch (activeSection()) {
             @case ('categories') {
               <p-table
@@ -530,26 +530,6 @@ const SORT_OPTIONS: Array<{ value: CatalogSortOption; label: string }> = [
         </div>
       </section>
 
-      <article class="catalogs-guide-card">
-        <div class="catalogs-guide-card__icon">
-          <i class="pi pi-book"></i>
-        </div>
-
-        <div class="catalogs-guide-card__copy">
-          <strong>Gestiona todos tus catalogos</strong>
-          <p>Manten la informacion organizada y actualizada para un mejor control operativo.</p>
-        </div>
-
-        <button
-          pButton
-          type="button"
-          icon="pi pi-arrow-right"
-          label="Ver guia"
-          severity="secondary"
-          variant="outlined"
-          (click)="showGuide()"
-        ></button>
-      </article>
     </div>
 
     <p-dialog
@@ -959,44 +939,6 @@ const SORT_OPTIONS: Array<{ value: CatalogSortOption; label: string }> = [
       font-size: 0.9rem;
     }
 
-    .catalogs-guide-card {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      padding: 1rem 1.25rem;
-      border-radius: 1rem;
-      background: white;
-      border: 1px solid rgba(214, 191, 152, 0.2);
-      box-shadow: var(--app-shadow);
-    }
-
-    .catalogs-guide-card__icon {
-      width: 2.6rem;
-      height: 2.6rem;
-      border-radius: 999px;
-      display: grid;
-      place-items: center;
-      background: rgba(200, 146, 45, 0.1);
-      color: #c8922d;
-      flex-shrink: 0;
-    }
-
-    .catalogs-guide-card__copy {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .catalogs-guide-card__copy strong {
-      display: block;
-      color: #3d2b1f;
-    }
-
-    .catalogs-guide-card__copy p {
-      margin: 0.2rem 0 0;
-      color: #8a7867;
-      font-size: 0.84rem;
-    }
-
     .catalog-form {
       display: flex;
       flex-direction: column;
@@ -1108,7 +1050,6 @@ const SORT_OPTIONS: Array<{ value: CatalogSortOption; label: string }> = [
     @media (max-width: 960px) {
       .catalog-toolbar,
       .catalogs-section-head,
-      .catalogs-guide-card,
       .catalog-active-filters {
         flex-direction: column;
         align-items: stretch;
@@ -1323,13 +1264,6 @@ export class CatalogsPageComponent implements OnInit {
 
   protected toggleFiltersPanel(): void {
     this.filtersPanelOpen.update((current) => !current);
-  }
-
-  protected showGuide(): void {
-    this.notificationService.info(
-      'Catalogos',
-      'Usa las pestañas, filtros y exportacion para mantener cada catalogo ordenado.'
-    );
   }
 
   protected describeCategory(category: CatalogEntity): string {

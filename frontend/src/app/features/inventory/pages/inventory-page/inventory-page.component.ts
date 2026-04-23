@@ -1,11 +1,12 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, DestroyRef, effect, inject, OnInit, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { catchError, forkJoin, of, take } from 'rxjs';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
+import { DrawerModule } from 'primeng/drawer';
 import { InputTextModule } from 'primeng/inputtext';
-import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { AuthService } from '@core/services/auth.service';
 import { InventoryApiService } from '@core/services/api/inventory-api.service';
@@ -24,17 +25,14 @@ import type {
   UpdateSupplyItemRequest
 } from '@models/inventory.model';
 import { EmptyStateComponent } from '@shared/components/empty-state/empty-state.component';
-import { PageHeaderComponent } from '@shared/components/page-header/page-header.component';
 import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
 
 type InventoryDialog = 'item' | 'entry' | 'return' | 'decrease';
-type InventorySection = {
-  category: string;
-  total: number;
-  lowStock: number;
-  outOfStock: number;
-  items: SupplyItem[];
-};
+
+type ItemFormStep = 1 | 2 | 3;
+
+const ITEM_FORM_STEPS: ItemFormStep[] = [1, 2, 3];
+const ITEM_FORM_STEP_TOTAL = 3;
 
 @Component({
   selector: 'app-inventory-page',
@@ -44,16 +42,20 @@ type InventorySection = {
     ReactiveFormsModule,
     ButtonModule,
     DialogModule,
+    DrawerModule,
     InputTextModule,
     EmptyStateComponent,
-    PageHeaderComponent,
-    TableModule,
     TagModule
   ],
   templateUrl: './inventory-page.component.html',
-  styleUrls: ['./inventory-page.component.css']
+  styleUrls: ['./inventory-page.component.css', '../../../../shared/styles/premium-panels.css']
 })
 export class InventoryPageComponent implements OnInit {
+  protected readonly itemFormSteps = ITEM_FORM_STEPS;
+  protected readonly itemFormStepTotal = ITEM_FORM_STEP_TOTAL;
+  protected readonly catalogPageSize = 12;
+
+  private readonly destroyRef = inject(DestroyRef);
   private readonly authService = inject(AuthService);
   private readonly inventoryApi = inject(InventoryApiService);
   private readonly usersApi = inject(UsersApiService);
@@ -72,7 +74,10 @@ export class InventoryPageComponent implements OnInit {
   protected readonly activeDialog = signal<InventoryDialog>('item');
   protected readonly editingItemId = signal<number | null>(null);
   protected readonly operationItemId = signal<number | null>(null);
+  protected readonly itemFormStep = signal<ItemFormStep>(1);
+  protected readonly catalogFirst = signal(0);
   protected dialogVisible = false;
+  protected detailVisible = false;
 
   protected readonly filtersForm = this.fb.nonNullable.group({
     search: [''],
@@ -127,8 +132,7 @@ export class InventoryPageComponent implements OnInit {
         item.name.toLowerCase().includes(search) ||
         (item.providerName ?? '').toLowerCase().includes(search);
 
-      const matchesCategory =
-        !category || (item.category ?? '').toLowerCase().includes(category);
+      const matchesCategory = !category || (item.category ?? '').toLowerCase().includes(category);
 
       return matchesSearch && matchesCategory;
     });
@@ -138,25 +142,10 @@ export class InventoryPageComponent implements OnInit {
     [...this.filteredItems()].sort((left, right) => this.compareItems(left, right))
   );
 
-  protected readonly categorySections = computed<InventorySection[]>(() => {
-    const sections = new Map<string, SupplyItem[]>();
-
-    for (const item of this.orderedItems()) {
-      const category = this.itemCategoryLabel(item);
-      const items = sections.get(category) ?? [];
-      items.push(item);
-      sections.set(category, items);
-    }
-
-    return Array.from(sections.entries())
-      .map(([category, items]) => ({
-        category,
-        total: items.length,
-        lowStock: items.filter((item) => this.isLowStock(item) && item.stock > 0).length,
-        outOfStock: items.filter((item) => item.stock === 0).length,
-        items
-      }))
-      .sort((left, right) => this.compareSections(left, right));
+  protected readonly catalogPagedItems = computed(() => {
+    const list = this.orderedItems();
+    const first = this.catalogFirst();
+    return list.slice(first, first + this.catalogPageSize);
   });
 
   protected readonly activeItemsCount = computed(
@@ -164,40 +153,12 @@ export class InventoryPageComponent implements OnInit {
   );
 
   protected readonly lowStockCount = computed(
-    () => this.orderedItems().filter((item) => this.isLowStock(item)).length
+    () => this.orderedItems().filter((item) => item.stock > 0 && this.isLowStock(item)).length
   );
-
-  protected readonly visibleCategoryCount = computed(() => this.categorySections().length);
 
   protected readonly outOfStockCount = computed(
     () => this.orderedItems().filter((item) => item.stock === 0).length
   );
-  protected readonly stableStockCount = computed(
-    () =>
-      this.orderedItems().filter(
-        (item) => item.active && item.stock > 0 && !this.isLowStock(item)
-      ).length
-  );
-  protected readonly prioritySections = computed(() => this.categorySections().slice(0, 4));
-  protected readonly activeFilterSummary = computed(() => {
-    const filters: string[] = [];
-    const search = this.filtersForm.controls.search.getRawValue().trim();
-    const category = this.filtersForm.controls.category.getRawValue().trim();
-
-    if (search) {
-      filters.push(`Busqueda: ${search}`);
-    }
-
-    if (category) {
-      filters.push(`Categoria: ${category}`);
-    }
-
-    if (!filters.length) {
-      filters.push('Sin filtros activos');
-    }
-
-    return filters;
-  });
 
   protected readonly categoryOptions = computed(() => {
     const values = new Set<string>();
@@ -224,9 +185,32 @@ export class InventoryPageComponent implements OnInit {
     this.serviceUsers().map((user) => user.username)
   );
 
+  constructor() {
+    effect(() => {
+      const total = this.orderedItems().length;
+      const first = this.catalogFirst();
+
+      if (total === 0) {
+        if (first !== 0) {
+          this.catalogFirst.set(0);
+        }
+        return;
+      }
+
+      if (first >= total) {
+        const page = Math.floor((total - 1) / this.catalogPageSize);
+        this.catalogFirst.set(page * this.catalogPageSize);
+      }
+    });
+  }
+
   ngOnInit(): void {
     this.loadReferenceData();
     this.loadItems();
+
+    this.filtersForm.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      this.catalogFirst.set(0);
+    });
   }
 
   protected isAdmin(): boolean {
@@ -247,6 +231,19 @@ export class InventoryPageComponent implements OnInit {
 
   protected itemCategoryLabel(item: SupplyItem): string {
     return item.category?.trim() || 'Sin categoria';
+  }
+
+  protected itemProviderLabel(item: SupplyItem): string {
+    return item.providerName?.trim() || 'Sin proveedor';
+  }
+
+  protected itemUnitLabel(item: SupplyItem): string {
+    return item.unit?.trim() || '--';
+  }
+
+  protected itemDescriptionLabel(item: SupplyItem): string {
+    const text = item.description?.trim();
+    return text ? text : 'Sin descripcion registrada.';
   }
 
   protected itemStockStatusLabel(item: SupplyItem): string {
@@ -277,8 +274,47 @@ export class InventoryPageComponent implements OnInit {
     return 'success';
   }
 
-  protected itemStockRange(item: SupplyItem): string {
-    return `Min ${item.minStock} | Max ${item.maxStock ?? 'N/A'}`;
+  protected itemStatusTone(item: SupplyItem): 'success' | 'warn' | 'danger' {
+    if (item.stock === 0) {
+      return 'danger';
+    }
+
+    if (!item.active || this.isLowStock(item)) {
+      return 'warn';
+    }
+
+    return 'success';
+  }
+
+  protected maxStockLabel(item: SupplyItem): string {
+    return item.maxStock === null ? '--' : `${item.maxStock}`;
+  }
+
+  protected calculateStockPercentage(item: SupplyItem): number {
+    if (!item.maxStock || item.maxStock === 0) {
+      return item.stock > 0 ? 100 : 0;
+    }
+
+    const percentage = (item.stock / item.maxStock) * 100;
+    return Math.min(Math.max(percentage, 0), 100);
+  }
+
+  protected availabilityPercent(item: SupplyItem): number {
+    return Math.round(this.calculateStockPercentage(item));
+  }
+
+  protected itemInitials(item: SupplyItem): string {
+    const name = item.name?.trim();
+    if (!name) {
+      return '?';
+    }
+
+    const parts = name.split(/\s+/).filter(Boolean);
+    if (parts.length >= 2) {
+      return (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase();
+    }
+
+    return name.slice(0, 2).toUpperCase();
   }
 
   protected dialogTitle(): string {
@@ -294,6 +330,130 @@ export class InventoryPageComponent implements OnInit {
     }
   }
 
+  protected itemDrawerTitle(): string {
+    return this.editingItemId() === null ? 'Nuevo insumo' : 'Editar insumo';
+  }
+
+  protected operationDialogTitle(): string {
+    return this.dialogTitle();
+  }
+
+  protected itemFormStepTitle(step: ItemFormStep): string {
+    switch (step) {
+      case 1:
+        return 'Identificacion';
+      case 2:
+        return 'Stock y limites';
+      default:
+        return 'Proveedor y notas';
+    }
+  }
+
+  protected itemFormProgressPercent(): number {
+    return (this.itemFormStep() / ITEM_FORM_STEP_TOTAL) * 100;
+  }
+
+  protected catalogRangeLabel(): string {
+    const total = this.orderedItems().length;
+    if (total === 0) {
+      return '0 resultados';
+    }
+
+    const first = this.catalogFirst();
+    const last = Math.min(first + this.catalogPageSize, total);
+    return `${first + 1}-${last} de ${total}`;
+  }
+
+  protected catalogSummaryLabel(): string {
+    const total = this.orderedItems().length;
+    if (total === 0) {
+      return 'Mostrando 0 a 0 de 0 insumos';
+    }
+
+    const first = this.catalogFirst() + 1;
+    const last = this.catalogFirst() + this.catalogPagedItems().length;
+    return `Mostrando ${first} a ${last} de ${total} insumos`;
+  }
+
+  protected catalogCurrentPageLabel(): string {
+    return `${Math.floor(this.catalogFirst() / this.catalogPageSize) + 1}`;
+  }
+
+  protected catalogCanPrev(): boolean {
+    return this.catalogFirst() > 0;
+  }
+
+  protected catalogCanNext(): boolean {
+    return this.catalogFirst() + this.catalogPageSize < this.orderedItems().length;
+  }
+
+  protected catalogPrev(): void {
+    this.catalogFirst.update((first) => Math.max(0, first - this.catalogPageSize));
+  }
+
+  protected catalogNext(): void {
+    this.catalogFirst.update((first) => first + this.catalogPageSize);
+  }
+
+  protected nextItemFormStep(): void {
+    const step = this.itemFormStep();
+
+    if (step === 1) {
+      this.touchItemStep1();
+      if (
+        this.itemForm.controls.name.invalid ||
+        this.itemForm.controls.category.invalid ||
+        this.itemForm.controls.unit.invalid
+      ) {
+        return;
+      }
+      this.itemFormStep.set(2);
+      return;
+    }
+
+    if (step === 2) {
+      this.touchItemStep2();
+      if (
+        this.itemForm.controls.minStock.invalid ||
+        this.itemForm.controls.maxStock.invalid ||
+        (this.editingItemId() === null && this.itemForm.controls.stock.invalid)
+      ) {
+        return;
+      }
+      this.itemFormStep.set(3);
+    }
+  }
+
+  protected prevItemFormStep(): void {
+    const step = this.itemFormStep();
+    if (step > 1) {
+      this.itemFormStep.set((step - 1) as ItemFormStep);
+    }
+  }
+
+  protected goItemFormStep(target: ItemFormStep): void {
+    const current = this.itemFormStep();
+    if (target >= current) {
+      return;
+    }
+
+    this.itemFormStep.set(target);
+  }
+
+  private touchItemStep1(): void {
+    this.itemForm.controls.name.markAsTouched();
+    this.itemForm.controls.category.markAsTouched();
+    this.itemForm.controls.unit.markAsTouched();
+  }
+
+  private touchItemStep2(): void {
+    this.itemForm.controls.minStock.markAsTouched();
+    this.itemForm.controls.maxStock.markAsTouched();
+    if (this.editingItemId() === null) {
+      this.itemForm.controls.stock.markAsTouched();
+    }
+  }
+
   protected loadItems(): void {
     this.loading.set(true);
     const category = this.filtersForm.controls.category.getRawValue().trim();
@@ -305,12 +465,26 @@ export class InventoryPageComponent implements OnInit {
       .subscribe({
         next: (items) => {
           this.items.set(items);
+          this.catalogFirst.set(0);
+
           const currentSelectedItemId = this.selectedItem()?.id;
           if (currentSelectedItemId) {
-            this.selectedItem.set(
-              items.find((item) => item.id === currentSelectedItemId) ?? null
-            );
+            const currentItem = items.find((item) => item.id === currentSelectedItemId) ?? null;
+            this.selectedItem.set(currentItem);
+            if (!currentItem && items.length) {
+              this.selectItem(items[0].id);
+            } else if (!currentItem) {
+              this.detailVisible = false;
+            } else if (this.detailVisible) {
+              this.selectItem(currentSelectedItemId);
+            }
+          } else if (items.length) {
+            this.selectItem(items[0].id);
+          } else {
+            this.selectedItem.set(null);
+            this.detailVisible = false;
           }
+
           this.loading.set(false);
         },
         error: () => {
@@ -319,8 +493,22 @@ export class InventoryPageComponent implements OnInit {
       });
   }
 
+  protected clearFilters(): void {
+    this.filtersForm.reset({
+      search: '',
+      category: ''
+    });
+    this.loadItems();
+  }
+
+  protected openItemDetail(id: number): void {
+    this.detailVisible = true;
+    this.selectItem(id);
+  }
+
   protected selectItem(id: number): void {
     this.detailLoading.set(true);
+
     this.inventoryApi
       .getItem(id)
       .pipe(take(1))
@@ -337,6 +525,7 @@ export class InventoryPageComponent implements OnInit {
 
   protected openItemDialog(item?: SupplyItem): void {
     this.activeDialog.set('item');
+    this.itemFormStep.set(1);
     this.editingItemId.set(item?.id ?? null);
     this.operationItemId.set(item?.id ?? null);
     this.itemForm.reset({
@@ -402,10 +591,63 @@ export class InventoryPageComponent implements OnInit {
           this.notificationService.success('Inventario', 'Insumo desactivado.');
           this.loadItems();
           if (this.selectedItem()?.id === item.id) {
+            this.detailVisible = true;
             this.selectItem(item.id);
           }
+        },
+        error: () => {
+          this.notificationService.error('Inventario', 'No se pudo desactivar el insumo.');
         }
       });
+  }
+
+  protected activate(item: SupplyItem): void {
+    if (!item.category?.trim() || !item.unit?.trim()) {
+      this.notificationService.warn(
+        'Inventario',
+        'Completa categoria y unidad del insumo antes de activarlo.'
+      );
+      this.openItemDialog(item);
+      return;
+    }
+
+    const payload: UpdateSupplyItemRequest = {
+      code: item.code.trim(),
+      name: item.name.trim(),
+      description: item.description?.trim() || null,
+      category: item.category.trim(),
+      unit: item.unit.trim(),
+      providerName: item.providerName?.trim() || null,
+      minStock: item.minStock,
+      maxStock: item.maxStock ?? null,
+      active: true
+    };
+
+    this.inventoryApi
+      .updateItem(item.id, payload)
+      .pipe(take(1))
+      .subscribe({
+        next: () => {
+          this.notificationService.success('Inventario', 'Insumo activado.');
+          this.loadItems();
+          if (this.selectedItem()?.id === item.id) {
+            this.detailVisible = true;
+            this.selectItem(item.id);
+          }
+        },
+        error: () => {
+          this.notificationService.error('Inventario', 'No se pudo activar el insumo.');
+        }
+      });
+  }
+
+  protected onItemFormSubmit(): void {
+    if (this.itemFormStep() < ITEM_FORM_STEP_TOTAL) {
+      this.nextItemFormStep();
+      return;
+    }
+
+    this.submitItem();
   }
 
   protected submitItem(): void {
@@ -427,6 +669,7 @@ export class InventoryPageComponent implements OnInit {
     };
 
     this.saving.set(true);
+
     const request$ =
       this.editingItemId() === null
         ? this.inventoryApi.createItem({
@@ -449,6 +692,8 @@ export class InventoryPageComponent implements OnInit {
         this.notificationService.success('Inventario', 'Insumo guardado correctamente.');
         this.loadItems();
         this.selectedItem.set(item);
+        this.detailVisible = true;
+        this.selectItem(item.id);
       },
       error: (error) => {
         this.saving.set(false);
@@ -482,6 +727,8 @@ export class InventoryPageComponent implements OnInit {
           this.notificationService.success('Inventario', 'Entrada registrada.');
           this.loadItems();
           this.selectedItem.set(item);
+          this.detailVisible = true;
+          this.selectItem(item.id);
         },
         error: (error) => {
           this.saving.set(false);
@@ -521,6 +768,7 @@ export class InventoryPageComponent implements OnInit {
             response.message || 'Devolucion registrada.'
           );
           this.loadItems();
+          this.detailVisible = true;
           this.selectItem(currentItemId);
         },
         error: (error) => {
@@ -565,11 +813,9 @@ export class InventoryPageComponent implements OnInit {
           this.saving.set(false);
           this.dialogVisible = false;
           this.resetDialogs();
-          this.notificationService.success(
-            'Inventario',
-            response.message || 'Salida registrada.'
-          );
+          this.notificationService.success('Inventario', response.message || 'Salida registrada.');
           this.loadItems();
+          this.detailVisible = true;
           this.selectItem(currentItemId);
         },
         error: (error) => {
@@ -582,6 +828,8 @@ export class InventoryPageComponent implements OnInit {
   protected resetDialogs(): void {
     this.editingItemId.set(null);
     this.operationItemId.set(null);
+    this.itemFormStep.set(1);
+
     this.itemForm.reset({
       code: '',
       name: '',
@@ -594,11 +842,13 @@ export class InventoryPageComponent implements OnInit {
       maxStock: null,
       active: true
     });
+
     this.entryForm.reset({
       quantity: 1,
       providerName: '',
       referenceText: ''
     });
+
     this.returnForm.reset({
       quantity: 1,
       roomNumber: '',
@@ -607,6 +857,7 @@ export class InventoryPageComponent implements OnInit {
       referenceText: '',
       sourceMovementId: 0
     });
+
     this.decreaseForm.reset({
       quantity: 1,
       roomNumber: '',
@@ -618,14 +869,28 @@ export class InventoryPageComponent implements OnInit {
   }
 
   protected showItemError(
-    controlName: 'name' | 'category' | 'unit' | 'stock' | 'minStock'
+    controlName:
+      | 'name'
+      | 'category'
+      | 'unit'
+      | 'stock'
+      | 'minStock'
+      | 'maxStock'
+      | 'providerName'
   ): boolean {
     const control = this.itemForm.controls[controlName];
     return control.invalid && control.touched;
   }
 
   protected itemError(
-    controlName: 'name' | 'category' | 'unit' | 'stock' | 'minStock'
+    controlName:
+      | 'name'
+      | 'category'
+      | 'unit'
+      | 'stock'
+      | 'minStock'
+      | 'maxStock'
+      | 'providerName'
   ): string {
     return this.resolveControlError(this.itemForm.controls[controlName].errors);
   }
@@ -762,24 +1027,5 @@ export class InventoryPageComponent implements OnInit {
     }
 
     return 2;
-  }
-
-  private compareSections(left: InventorySection, right: InventorySection): number {
-    const outDifference = right.outOfStock - left.outOfStock;
-    if (outDifference !== 0) {
-      return outDifference;
-    }
-
-    const lowDifference = right.lowStock - left.lowStock;
-    if (lowDifference !== 0) {
-      return lowDifference;
-    }
-
-    const totalDifference = right.total - left.total;
-    if (totalDifference !== 0) {
-      return totalDifference;
-    }
-
-    return left.category.localeCompare(right.category, undefined, { sensitivity: 'base' });
   }
 }

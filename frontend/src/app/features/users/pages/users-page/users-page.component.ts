@@ -354,21 +354,38 @@ import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
     }
 
     .stat-card {
-      background: white;
-      border: 1px solid #f0f0f0;
-      border-radius: 12px;
-      padding: 1.5rem;
+      position: relative;
+      overflow: hidden;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.995), rgba(252, 250, 246, 0.97));
+      border: 1px solid rgba(219, 178, 102, 0.55);
+      border-radius: 1.55rem;
+      padding: 1.65rem;
       display: flex;
       gap: 1.25rem;
       align-items: center;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.03);
+      box-shadow:
+        inset 0 1px 0 rgba(223, 189, 120, 0.45),
+        0 16px 34px rgba(61, 43, 31, 0.035);
+      transition:
+        transform 0.22s ease,
+        box-shadow 0.22s ease,
+        border-color 0.22s ease;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(200, 146, 45, 0.7);
+      box-shadow:
+        inset 0 1px 0 rgba(223, 189, 120, 0.55),
+        0 20px 38px rgba(61, 43, 31, 0.055);
     }
 
     .stat-icon-wrapper {
       width: 3.5rem;
       height: 3.5rem;
-      border-radius: 12px;
-      background: rgba(200, 146, 45, 0.08);
+      border-radius: 999px;
+      background: rgba(247, 241, 232, 0.95);
+      border: 1px solid rgba(200, 146, 45, 0.1);
       color: #c8922d;
       display: flex;
       align-items: center;

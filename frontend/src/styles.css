@@ -236,6 +236,252 @@ h3 { font-size: 1.35rem; }
   font-size: 0.82rem;
 }
 
+/* Admin Layout Architecture - hierarchy and spacing only */
+:where(
+  .dashboard-page,
+  .inventory-page,
+  .rooms-page,
+  .assignments-page,
+  .movements-page,
+  .alerts-page,
+  .audits-page,
+  .reports-page,
+  .catalogs-page
+) {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+:where(
+  .inventory-summary,
+  .rooms-summary,
+  .assignments-summary,
+  .movements-summary,
+  .alerts-summary,
+  .audits-summary,
+  .reports-summary,
+  .catalogs-summary,
+  .dashboard-metrics
+) {
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+}
+
+.admin-kpi-row {
+  margin-top: 0.25rem;
+}
+
+.admin-filter-block {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid rgba(214, 191, 152, 0.18);
+  background: linear-gradient(180deg, rgba(253, 251, 247, 0.94), rgba(255, 255, 255, 0.92));
+}
+
+.admin-content-block {
+  margin-top: 0.25rem;
+}
+
+.admin-table-block {
+  padding-top: 0.5rem;
+}
+
+:where(
+  .inventory-workbench,
+  .rooms-workbench,
+  .assignments-block,
+  .movements-workbench,
+  .alerts-workbench,
+  .reports-workbench,
+  .audits-workbench,
+  .catalogs-workbench
+) {
+  margin-top: 0.25rem;
+}
+
+:where(
+  .inventory-filters,
+  .assignments-filter-shell,
+  .assignments-history-controls,
+  .movements-filter-shell,
+  .alerts-filter-shell,
+  .reports-filter-shell,
+  .audit-filter-shell,
+  .catalog-toolbar
+) {
+  gap: 1rem 1.25rem;
+}
+
+:where(.admin-filter-block) :where(.filters-grid, .form-grid) {
+  gap: 1rem 1.25rem;
+}
+
+:where(
+  .inventory-filters__actions,
+  .assignments-form__actions,
+  .assignments-filter-shell__actions,
+  .assignments-history-controls__actions,
+  .movements-filter-shell__actions,
+  .alerts-filter-shell__actions,
+  .reports-filter-shell__actions,
+  .audit-filter-shell__actions,
+  .catalog-toolbar__controls
+) {
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+:where(
+  .inventory-table-wrap,
+  .rooms-table-wrap,
+  .assignments-table-wrap,
+  .movements-table-wrap,
+  .alerts-table-wrap,
+  .reports-table-wrap,
+  .audits-table-wrap,
+  .catalogs-table-wrap
+) {
+  padding: 0 1.25rem 1.25rem;
+  background: white;
+}
+
+:where(
+  .inventory-result-stats,
+  .rooms-result-stats,
+  .assignments-stats,
+  .movements-result-head__stats,
+  .reports-result-head__stats,
+  .audits-result-head__stats,
+  .catalogs-section-head__actions
+) {
+  row-gap: 0.6rem;
+}
+
+:where(
+  .inventory-table,
+  .rooms-table,
+  .assignments-table,
+  .movements-table,
+  .alerts-table,
+  .reports-table,
+  .audits-table,
+  .catalogs-table
+) .p-datatable-wrapper {
+  border-radius: var(--app-rounded-sm);
+  border: 1px solid rgba(214, 191, 152, 0.2);
+}
+
+:where(
+  .inventory-table,
+  .rooms-table,
+  .assignments-table,
+  .movements-table,
+  .alerts-table,
+  .reports-table,
+  .audits-table,
+  .catalogs-table
+) .p-datatable-thead > tr > th {
+  white-space: nowrap;
+}
+
+:where(
+  .inventory-table,
+  .rooms-table,
+  .assignments-table,
+  .movements-table,
+  .alerts-table,
+  .reports-table,
+  .audits-table,
+  .catalogs-table
+) .p-datatable-wrapper {
+  max-height: 62vh;
+  overflow: auto;
+}
+
+:where(
+  .inventory-table,
+  .rooms-table,
+  .assignments-table,
+  .movements-table,
+  .alerts-table,
+  .reports-table,
+  .audits-table,
+  .catalogs-table
+) .p-datatable-thead > tr > th {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+}
+
+@media (min-width: 1024px) {
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-datatable-thead > tr > th:first-child,
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-datatable-tbody > tr > td:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    background: inherit;
+  }
+
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-datatable-thead > tr > th:first-child {
+    z-index: 4;
+  }
+}
+
+@media (max-width: 1280px) {
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-datatable-thead > tr > th,
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-datatable-tbody > tr > td {
+    padding: 0.85rem 0.95rem;
+  }
+}
+
 /* Form Design - Clean & Aligned */
 .field {
   display: flex;
@@ -352,6 +598,55 @@ h3 { font-size: 1.35rem; }
   .audits-page,
   .catalogs-page {
     padding: 1.5rem 1rem 2rem !important;
+  }
+
+  :where(
+    .inventory-table-wrap,
+    .rooms-table-wrap,
+    .assignments-table-wrap,
+    .movements-table-wrap,
+    .alerts-table-wrap,
+    .reports-table-wrap,
+    .audits-table-wrap,
+    .catalogs-table-wrap
+  ) {
+    padding: 0 1rem 1rem;
+  }
+
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-datatable-wrapper {
+    max-height: none;
+  }
+
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-datatable-thead > tr > th,
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-datatable-tbody > tr > td {
+    padding: 0.8rem 0.9rem;
   }
 }
 

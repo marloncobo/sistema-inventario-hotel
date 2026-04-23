@@ -1,779 +1,900 @@
-<div class="inventory-page">
-  <app-page-header
-    eyebrow="Operacion"
-    title="Inventario"
-    subtitle="Control de insumos para la operacion diaria de Hotel Lunara."
-  >
-    <div header-actions class="inventory-header-actions">
-      @if (canManageItems()) {
-        <button pButton type="button" icon="pi pi-plus" label="Nuevo insumo" (click)="openItemDialog()"></button>
-      }
-    </div>
-  </app-page-header>
-
-  <section class="summary-grid inventory-summary">
-    <article class="summary-card inventory-summary-card">
-      <div class="inventory-summary-card__icon inventory-panel-icon">
-        <i class="pi pi-box"></i>
-      </div>
-      <div class="inventory-summary-card__content">
-        <span>Insumos visibles</span>
-        <strong>{{ orderedItems().length }}</strong>
-        <small>Consulta actual con filtros aplicados.</small>
-      </div>
-    </article>
-
-    <article class="summary-card inventory-summary-card">
-      <div class="inventory-summary-card__icon inventory-panel-icon">
-        <i class="pi pi-sitemap"></i>
-      </div>
-      <div class="inventory-summary-card__content">
-        <span>Categorias</span>
-        <strong>{{ visibleCategoryCount() }}</strong>
-        <small>Bloques ordenados para ubicar cada insumo rapido.</small>
-      </div>
-    </article>
-
-    <article class="summary-card inventory-summary-card">
-      <div class="inventory-summary-card__icon inventory-panel-icon">
-        <i class="pi pi-exclamation-circle"></i>
-      </div>
-      <div class="inventory-summary-card__content">
-        <span>Stock bajo</span>
-        <strong>{{ lowStockCount() }}</strong>
-        <small>Items en seguimiento por minimo configurado.</small>
-      </div>
-    </article>
-
-    <article class="summary-card inventory-summary-card">
-      <div class="inventory-summary-card__icon inventory-panel-icon">
-        <i class="pi pi-ban"></i>
-      </div>
-      <div class="inventory-summary-card__content">
-        <span>Agotados</span>
-        <strong>{{ outOfStockCount() }}</strong>
-        <small>Insumos sin existencias disponibles.</small>
-      </div>
-    </article>
-  </section>
-
-  <section class="surface-card inventory-layout-board">
-    <div class="inventory-layout-head inventory-panel-head">
-      <div class="inventory-layout-head__identity inventory-panel-identity">
-        <div class="inventory-layout-head__icon inventory-panel-icon">
-          <i class="pi pi-clone"></i>
-        </div>
-        <div class="inventory-panel-copy">
-          <h3>Distribucion del inventario</h3>
-          <p>Vista agrupada por categoria y prioridad de stock para ordenar mejor los espacios.</p>
-        </div>
-      </div>
-
-      <div class="inventory-layout-head__stats inventory-inline-actions inventory-inline-actions--end">
-        <span>{{ visibleCategoryCount() }} categorias</span>
-        <span>{{ activeItemsCount() }} activos</span>
-        <span>{{ lowStockCount() }} en alerta</span>
-      </div>
+<div class="inventory-page pp-root">
+  <header class="inv-page-head">
+    <div class="inv-page-head__copy">
+      <h1 class="inv-page-head__title">Inventario</h1>
+      <p class="inv-page-head__desc">Control de existencias e insumos del hotel.</p>
     </div>
 
-    @if (!loading() && !orderedItems().length) {
-      <app-empty-state
-        icon="pi pi-box"
-        title="Sin inventario visible"
-        message="No hay insumos para los filtros actuales o el backend aun no registra inventario."
-      />
-    } @else {
-      <div class="inventory-layout-body">
-        <div class="inventory-layout-grid">
-          @for (section of categorySections(); track section.category) {
-            <article class="inventory-category-section">
-              <div class="inventory-category-section__head">
-                <div>
-                  <h4>{{ section.category }}</h4>
-                  <p>{{ section.total }} insumos organizados en esta categoria.</p>
-                </div>
-
-                <div class="inventory-category-section__stats">
-                  <span>{{ section.lowStock }} bajos</span>
-                  <span>{{ section.outOfStock }} agotados</span>
-                </div>
-              </div>
-
-              <div class="inventory-category-section__items">
-                @for (item of section.items; track item.id) {
-                  <button
-                    type="button"
-                    class="inventory-tile"
-                    [class.inventory-tile--selected]="selectedItem()?.id === item.id"
-                    [class.inventory-tile--low]="isLowStock(item) && item.stock > 0 && item.active"
-                    [class.inventory-tile--out]="item.stock === 0"
-                    [class.inventory-tile--inactive]="!item.active"
-                    (click)="selectItem(item.id)"
-                  >
-                    <div class="inventory-tile__head">
-                      <span class="inventory-code-chip">{{ item.code }}</span>
-                      <span class="inventory-tile__stock">{{ item.stock }} {{ item.unit || 'uds' }}</span>
-                    </div>
-
-                    <div class="inventory-tile__body">
-                      <strong>{{ item.name }}</strong>
-                      <span>{{ item.providerName || 'Sin proveedor asignado' }}</span>
-                    </div>
-
-                    <div class="inventory-tile__meta">
-                      <span>{{ itemStockRange(item) }}</span>
-                      <span>{{ item.unit || 'Sin unidad' }}</span>
-                    </div>
-
-                    <div class="inventory-tile__tags">
-                      <p-tag
-                        [value]="itemStockStatusLabel(item)"
-                        [severity]="itemStockStatusSeverity(item)"
-                      ></p-tag>
-                      <p-tag
-                        [value]="item.active ? 'Activo' : 'Inactivo'"
-                        [severity]="item.active ? 'success' : 'danger'"
-                      ></p-tag>
-                    </div>
-                  </button>
-                }
-              </div>
-            </article>
-          }
-        </div>
-
-        <aside class="inventory-layout-side">
-          <article class="summary-card inventory-focus-card">
-            <div class="inventory-focus-card__head">
-              <div>
-                <span>Prioridades</span>
-                <strong>Categorias en seguimiento</strong>
-                <small>El orden superior muestra primero donde hay agotados o faltantes.</small>
-              </div>
-            </div>
-
-            <div class="inventory-focus-list">
-              @for (section of prioritySections(); track section.category) {
-                <article class="inventory-focus-item">
-                  <div class="inventory-focus-item__body">
-                    <strong>{{ section.category }}</strong>
-                    <small>{{ section.total }} insumos monitoreados.</small>
-                  </div>
-
-                  <div class="inventory-focus-item__stats">
-                    @if (section.outOfStock) {
-                      <span class="inventory-focus-pill inventory-focus-pill--danger">
-                        {{ section.outOfStock }} agotados
-                      </span>
-                    }
-                    @if (section.lowStock) {
-                      <span class="inventory-focus-pill inventory-focus-pill--warn">
-                        {{ section.lowStock }} bajos
-                      </span>
-                    }
-                    @if (!section.outOfStock && !section.lowStock) {
-                      <span class="inventory-focus-pill inventory-focus-pill--success">Estable</span>
-                    }
-                  </div>
-                </article>
-              }
-            </div>
-          </article>
-
-          <article class="summary-card inventory-focus-card inventory-focus-card--accent">
-            <div class="inventory-focus-card__head">
-              <div>
-                <span>Cobertura</span>
-                <strong>Balance actual</strong>
-                <small>Resumen corto del estado general y los filtros activos en la vista.</small>
-              </div>
-            </div>
-
-            <div class="summary-grid inventory-focus-metrics">
-              <article class="summary-card inventory-focus-metric">
-                <span>Estables</span>
-                <strong>{{ stableStockCount() }}</strong>
-                <small>Items activos sin riesgo inmediato.</small>
-              </article>
-
-              <article class="summary-card inventory-focus-metric">
-                <span>Agotados</span>
-                <strong>{{ outOfStockCount() }}</strong>
-                <small>Items sin existencias disponibles.</small>
-              </article>
-            </div>
-
-            <div class="inventory-focus-tags">
-              @for (tag of activeFilterSummary(); track tag) {
-                <span>{{ tag }}</span>
-              }
-            </div>
-
-            @if (selectedItem(); as item) {
-              <div class="inventory-focus-selected">
-                <span>Seleccion actual</span>
-                <strong>{{ item.name }}</strong>
-                <small>{{ itemCategoryLabel(item) }} | {{ itemStockRange(item) }}</small>
-              </div>
-            }
-          </article>
-        </aside>
-      </div>
-    }
-  </section>
-
-  <section class="surface-card inventory-workbench">
-    <div class="inventory-workbench__head inventory-panel-head">
-      <div class="inventory-workbench__identity inventory-panel-identity">
-        <div class="inventory-workbench__icon inventory-panel-icon">
-          <i class="pi pi-table"></i>
-        </div>
-        <div class="inventory-panel-copy">
-          <h3>Listado de insumos</h3>
-          <p>Consulta detallada con filtros, estados y accesos a operaciones del inventario.</p>
-        </div>
-      </div>
-
-      <div class="inventory-workbench__actions inventory-inline-actions inventory-inline-actions--end">
+    @if (canManageItems()) {
+      <div class="inv-page-head__actions">
         <button
           pButton
           type="button"
-          icon="pi pi-refresh"
-          label="Recargar"
-          severity="secondary"
-          variant="outlined"
-          [loading]="loading()"
-          (click)="loadItems()"
+          icon="pi pi-plus"
+          label="Nuevo insumo"
+          class="inv-page-head__create"
+          (click)="openItemDialog()"
         ></button>
       </div>
-    </div>
+    }
+  </header>
 
-    <form [formGroup]="filtersForm" class="inventory-filters" (ngSubmit)="loadItems()">
-      <label class="field">
-        <span>Busqueda</span>
-        <input pInputText type="text" formControlName="search" placeholder="Codigo, nombre o proveedor" />
-      </label>
-
-      <label class="field">
-        <span>Categoria</span>
-        <input pInputText type="text" formControlName="category" placeholder="Ej: ASEO" />
-      </label>
-
-      <div class="inventory-filters__actions inventory-inline-actions">
-        <button pButton type="submit" icon="pi pi-search" label="Consultar" [loading]="loading()"></button>
-      </div>
-    </form>
-
-    <div class="inventory-result-stats">
-      <span>{{ orderedItems().length }} visibles</span>
-      <span>{{ visibleCategoryCount() }} categorias</span>
-      <span>{{ activeItemsCount() }} activos</span>
-      <span>{{ stableStockCount() }} estables</span>
-      @if (selectedItem(); as item) {
-        <span>Detalle {{ item.code }}</span>
-      }
-    </div>
-
-    <div class="inventory-table-wrap">
-      @if (!loading() && !orderedItems().length) {
-        <app-empty-state
-          icon="pi pi-box"
-          title="Sin insumos visibles"
-          message="No hay items para los filtros actuales o el backend aun no registra inventario."
-        />
-      } @else {
-        <p-table
-          [value]="orderedItems()"
-          [loading]="loading()"
-          [paginator]="true"
-          [rows]="10"
-          [rowsPerPageOptions]="[10, 20, 50]"
-          [showCurrentPageReport]="true"
-          currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} insumos"
-          responsiveLayout="scroll"
-          styleClass="inventory-table"
-        >
-          <ng-template pTemplate="header">
-            <tr>
-              <th>Codigo</th>
-              <th>Insumo</th>
-              <th>Categoria</th>
-              <th>Stock</th>
-              <th>Proveedor</th>
-              <th>Estado</th>
-              <th class="text-right">Acciones</th>
-            </tr>
-          </ng-template>
-
-          <ng-template pTemplate="body" let-item>
-            <tr>
-              <td><span class="inventory-code-chip">{{ item.code }}</span></td>
-              <td>
-                <div class="inventory-entity">
-                  <strong>{{ item.name }}</strong>
-                  <span>{{ item.unit || 'Sin unidad registrada' }}</span>
-                </div>
-              </td>
-              <td><span class="inventory-category-chip">{{ itemCategoryLabel(item) }}</span></td>
-              <td>
-                <div class="inventory-stock-cell">
-                  <strong>{{ item.stock }}</strong>
-                  <span>{{ itemStockRange(item) }}</span>
-                </div>
-              </td>
-              <td>
-                <div class="inventory-entity">
-                  <strong>{{ item.providerName || 'Sin proveedor' }}</strong>
-                  <span>{{ item.active ? 'Operacion habilitada' : 'Operacion restringida' }}</span>
-                </div>
-              </td>
-              <td>
-                <div class="inventory-status-stack">
-                  <p-tag
-                    [value]="itemStockStatusLabel(item)"
-                    [severity]="itemStockStatusSeverity(item)"
-                  ></p-tag>
-                  <p-tag
-                    [value]="item.active ? 'Activo' : 'Inactivo'"
-                    [severity]="item.active ? 'success' : 'danger'"
-                  ></p-tag>
-                </div>
-              </td>
-              <td class="text-right">
-                <div class="inventory-actions">
-                  <button
-                    pButton
-                    type="button"
-                    icon="pi pi-eye"
-                    size="small"
-                    severity="secondary"
-                    variant="outlined"
-                    (click)="selectItem(item.id)"
-                  ></button>
-
-                  @if (canManageItems()) {
-                    <button
-                      pButton
-                      type="button"
-                      icon="pi pi-pen-to-square"
-                      size="small"
-                      severity="secondary"
-                      variant="outlined"
-                      (click)="openItemDialog(item)"
-                    ></button>
-
-                    <button
-                      pButton
-                      type="button"
-                      icon="pi pi-plus-circle"
-                      size="small"
-                      severity="success"
-                      variant="outlined"
-                      (click)="openEntryDialog(item)"
-                    ></button>
-                  }
-
-                  @if (canReturnStock()) {
-                    <button
-                      pButton
-                      type="button"
-                      icon="pi pi-undo"
-                      size="small"
-                      severity="warn"
-                      variant="outlined"
-                      (click)="openReturnDialog(item)"
-                    ></button>
-                  }
-
-                  @if (canManageItems()) {
-                    <button
-                      pButton
-                      type="button"
-                      icon="pi pi-minus-circle"
-                      size="small"
-                      severity="contrast"
-                      variant="outlined"
-                      (click)="openDecreaseDialog(item)"
-                    ></button>
-
-                    @if (item.active) {
-                      <button
-                        pButton
-                        type="button"
-                        icon="pi pi-ban"
-                        size="small"
-                        severity="danger"
-                        variant="outlined"
-                        (click)="deactivate(item)"
-                      ></button>
-                    }
-                  }
-                </div>
-              </td>
-            </tr>
-          </ng-template>
-        </p-table>
-      }
-    </div>
-  </section>
-
-  @if (selectedItem(); as item) {
-    <section class="surface-card inventory-detail">
-      <div class="inventory-detail__head inventory-panel-head">
-        <div class="inventory-detail__identity inventory-panel-identity">
-          <div class="inventory-detail__icon inventory-panel-icon">
-            <i class="pi pi-verified"></i>
-          </div>
-          <div class="inventory-panel-copy">
-            <h3>Detalle del insumo {{ item.code }}</h3>
-            <p>Resumen actual del estado operativo, categoria y referencias del insumo.</p>
-          </div>
-        </div>
-
-        <div class="inventory-detail__meta inventory-inline-actions inventory-inline-actions--end">
-          <p-tag
-            [value]="itemStockStatusLabel(item)"
-            [severity]="itemStockStatusSeverity(item)"
-          ></p-tag>
-          <p-tag
-            [value]="item.active ? 'Activo' : 'Inactivo'"
-            [severity]="item.active ? 'success' : 'danger'"
-          ></p-tag>
-          <button
-            pButton
-            type="button"
-            icon="pi pi-refresh"
-            label="Actualizar detalle"
-            severity="secondary"
-            variant="outlined"
-            [loading]="detailLoading()"
-            (click)="selectItem(item.id)"
-          ></button>
-        </div>
-      </div>
-
-      <div class="summary-grid inventory-detail-summary">
-        <article class="summary-card inventory-detail-card">
-          <span>Codigo</span>
-          <strong>{{ item.code }}</strong>
-          <small>{{ item.name }}</small>
-        </article>
-
-        <article class="summary-card inventory-detail-card">
-          <span>Stock actual</span>
-          <strong>{{ item.stock }}</strong>
-          <small>{{ itemStockRange(item) }}</small>
-        </article>
-
-        <article class="summary-card inventory-detail-card">
-          <span>Categoria</span>
-          <strong>{{ itemCategoryLabel(item) }}</strong>
-          <small>{{ item.unit || 'Sin unidad' }}</small>
-        </article>
-
-        <article class="summary-card inventory-detail-card">
-          <span>Proveedor</span>
-          <strong>{{ item.providerName || 'Sin proveedor' }}</strong>
-          <small>{{ item.active ? 'Disponible para movimientos' : 'Inactivo' }}</small>
-        </article>
-      </div>
-
-      <div class="inventory-detail-panels">
-        <article class="inventory-detail-panel">
-          <h4>Descripcion</h4>
-          <p>{{ item.description || 'El backend no registra descripcion para este insumo.' }}</p>
-        </article>
-
-        <article class="inventory-detail-panel inventory-detail-panel--accent">
-          <h4>Resumen operativo</h4>
-          <ul>
-            <li>Consulta existencias antes de registrar movimientos.</li>
-            <li>Usa referencias claras para mantener la trazabilidad.</li>
-            <li>Gestiona las salidas a habitaciones desde el modulo de asignaciones.</li>
-          </ul>
-        </article>
-      </div>
-    </section>
-  }
-</div>
-
-<p-dialog
-  [(visible)]="dialogVisible"
-  [modal]="true"
-  [draggable]="false"
-  [style]="{ width: 'min(56rem, 96vw)' }"
-  [header]="dialogTitle()"
-  (onHide)="resetDialogs()"
->
-  @switch (activeDialog()) {
-    @case ('item') {
-      <form [formGroup]="itemForm" class="inventory-dialog-form" (ngSubmit)="submitItem()">
-        @if (editingItemId() !== null) {
-          <label class="field">
-            <span>Codigo</span>
-            <input pInputText type="text" formControlName="code" readonly />
-          </label>
-        } @else {
-          <article class="inventory-note-banner">
-            <i class="pi pi-hashtag"></i>
-            <div>
-              <strong>Codigo automatico</strong>
-              <p>El sistema generara el codigo del insumo al guardarlo.</p>
+  <section class="inventory-workbench">
+    <div class="inventory-layout">
+      <div class="inventory-layout__main">
+        <div class="inv-stat-strip pp-metric-strip" aria-label="Resumen del inventario">
+          <article class="pp-metric-card inv-indicator-card">
+            <span class="inv-indicator-card__icon inv-indicator-card__icon--catalog" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <path d="M12 3 20 7.5v9L12 21l-8-4.5v-9L12 3Z" />
+                <path d="m4 7.5 8 4.5 8-4.5" />
+                <path d="M12 12v9" />
+              </svg>
+            </span>
+            <div class="inv-indicator-card__content">
+              <span class="inv-indicator-card__label">Insumos</span>
+              <strong class="inv-indicator-card__value">{{ orderedItems().length }}</strong>
+              <small class="inv-indicator-card__hint">Existencias visibles en tabla</small>
             </div>
           </article>
-        }
 
-        <div class="form-grid">
-          <label class="field">
-            <span>Nombre</span>
-            <input pInputText type="text" formControlName="name" />
-            @if (showItemError('name')) {
-              <small>{{ itemError('name') }}</small>
-            }
-          </label>
+          <article class="pp-metric-card inv-indicator-card">
+            <span class="inv-indicator-card__icon inv-indicator-card__icon--active" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <rect x="4" y="5" width="16" height="15" rx="3" />
+                <path d="M8 3v4" />
+                <path d="M16 3v4" />
+                <path d="m9.5 13 1.8 1.8L15 11" />
+              </svg>
+            </span>
+            <div class="inv-indicator-card__content">
+              <span class="inv-indicator-card__label">Activos</span>
+              <strong class="inv-indicator-card__value">{{ activeItemsCount() }}</strong>
+              <small class="inv-indicator-card__hint">En operacion</small>
+            </div>
+          </article>
 
-          <label class="field">
-            <span>Categoria</span>
-            <input pInputText type="text" formControlName="category" list="inventory-categories" />
-            @if (showItemError('category')) {
-              <small>{{ itemError('category') }}</small>
-            }
-          </label>
+          <article class="pp-metric-card inv-indicator-card">
+            <span class="inv-indicator-card__icon inv-indicator-card__icon--warn" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="8" />
+                <path d="M12 8v5" />
+                <path d="M12 16h.01" />
+              </svg>
+            </span>
+            <div class="inv-indicator-card__content">
+              <span class="inv-indicator-card__label">Stock bajo</span>
+              <strong class="inv-indicator-card__value">{{ lowStockCount() }}</strong>
+              <small class="inv-indicator-card__hint">Pendientes por revisar</small>
+            </div>
+          </article>
+
+          <article class="pp-metric-card inv-indicator-card">
+            <span class="inv-indicator-card__icon inv-indicator-card__icon--danger" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <path d="M7 6h10l3 3v9H4V9l3-3Z" />
+                <path d="M9 12h6" />
+              </svg>
+            </span>
+            <div class="inv-indicator-card__content">
+              <span class="inv-indicator-card__label">Agotados</span>
+              <strong class="inv-indicator-card__value">{{ outOfStockCount() }}</strong>
+              <small class="inv-indicator-card__hint">Sin existencia disponible</small>
+            </div>
+          </article>
         </div>
 
-        <div class="form-grid">
-          <label class="field">
-            <span>Unidad</span>
-            <input pInputText type="text" formControlName="unit" list="inventory-units" />
-            @if (showItemError('unit')) {
-              <small>{{ itemError('unit') }}</small>
-            }
-          </label>
-        </div>
+        <section class="inv-catalog-panel pp-surface-solid">
+          <form [formGroup]="filtersForm" class="inv-filter-shell" autocomplete="off">
+            <div class="inv-filter-bar">
+              <label class="inv-filter-search">
+                <i class="pi pi-search" aria-hidden="true"></i>
+                <input
+                  pInputText
+                  type="text"
+                  formControlName="search"
+                  placeholder="Buscar por nombre, codigo o proveedor..."
+                />
+              </label>
 
-        <div class="form-grid">
-          <label class="field">
-            <span>Proveedor</span>
-            <input pInputText type="text" formControlName="providerName" list="inventory-providers" />
-          </label>
+              <label class="inv-filter-select">
+                <select class="field-control" formControlName="category" (change)="loadItems()">
+                  <option value="">Todas las categorias</option>
+                  @for (option of categoryOptions(); track option) {
+                    <option [value]="option">{{ option }}</option>
+                  }
+                </select>
+              </label>
 
-          <label class="field">
-            <span>Stock inicial</span>
-            <input pInputText type="number" formControlName="stock" [readonly]="editingItemId() !== null" />
-            @if (showItemError('stock')) {
-              <small>{{ itemError('stock') }}</small>
-            }
-          </label>
-        </div>
+              <button
+                pButton
+                type="button"
+                icon="pi pi-filter"
+                severity="secondary"
+                variant="outlined"
+                label="Filtrar"
+                class="inv-filter-btn"
+                (click)="loadItems()"
+              ></button>
+            </div>
+          </form>
 
-        <div class="form-grid">
-          <label class="field">
-            <span>Stock minimo</span>
-            <input pInputText type="number" formControlName="minStock" />
-            @if (showItemError('minStock')) {
-              <small>{{ itemError('minStock') }}</small>
-            }
-          </label>
+          @if (!loading() && !orderedItems().length) {
+            <div class="inventory-empty-wrap">
+              <app-empty-state
+                icon="pi pi-box"
+                title="Sin items"
+                message="No hay resultados para los filtros actuales."
+              />
+            </div>
+          } @else {
+            <div class="inv-table-wrap">
+              <div class="inv-table-shell">
+                <div class="inv-table-head" aria-hidden="true">
+                  <span>INSUMO</span>
+                  <span>CATEGORIA</span>
+                  <span>STOCK</span>
+                  <span>ESTADO</span>
+                </div>
 
-          <label class="field">
-            <span>Stock maximo</span>
-            <input pInputText type="number" formControlName="maxStock" />
-          </label>
-        </div>
+                @if (loading()) {
+                  <div class="inv-row-list inv-row-list--loading" aria-busy="true">
+                    @for (s of [1, 2, 3]; track s) {
+                      <div class="inv-table-row inv-table-row--skeleton"></div>
+                    }
+                  </div>
+                } @else {
+                  <div class="inv-row-list" role="list">
+                    @for (item of catalogPagedItems(); track item.id) {
+                      <button
+                        type="button"
+                        class="inv-table-row"
+                        [class.inv-table-row--selected]="selectedItem()?.id === item.id"
+                        (click)="openItemDetail(item.id)"
+                        role="listitem"
+                      >
+                        <div class="inv-table-cell inv-table-cell--item">
+                          <div class="inv-table-item-text">
+                            <strong class="inv-table-name">{{ item.name }}</strong>
+                            <small class="inv-table-code">{{ item.code }}</small>
+                            <small class="inv-table-provider">{{ itemProviderLabel(item) }}</small>
+                          </div>
+                        </div>
 
-        <label class="field">
-          <span>Descripcion</span>
-          <textarea class="field-control field-control--textarea" formControlName="description"></textarea>
-        </label>
+                        <div class="inv-table-cell inv-table-cell--category">
+                          <span class="inv-table-category">{{ itemCategoryLabel(item) }}</span>
+                        </div>
 
-        @if (editingItemId() !== null) {
-          <label class="inventory-checkbox">
-            <input type="checkbox" formControlName="active" />
-            <span>Mantener item activo</span>
-          </label>
-        }
+                        <div class="inv-table-cell inv-table-cell--stock">
+                          <strong>{{ item.stock }} {{ itemUnitLabel(item) }}</strong>
+                          <small>Min {{ item.minStock }} Max. {{ maxStockLabel(item) }}</small>
+                        </div>
 
-        <div class="inventory-dialog-actions inventory-inline-actions inventory-inline-actions--end">
-          <button
-            pButton
-            type="button"
-            label="Cancelar"
-            severity="secondary"
-            variant="text"
-            (click)="dialogVisible = false"
-          ></button>
-          <button pButton type="submit" label="Guardar" [loading]="saving()"></button>
-        </div>
-      </form>
-    }
+                        <div
+                          class="inv-table-cell inv-table-cell--status"
+                          [attr.data-state]="itemStatusTone(item)"
+                        >
+                          <span class="inv-table-status__dot" aria-hidden="true"></span>
+                          <span class="inv-table-status__label">{{ itemStockStatusLabel(item) }}</span>
+                        </div>
+                      </button>
+                    }
+                  </div>
+                }
 
-    @case ('entry') {
-      <form [formGroup]="entryForm" class="inventory-dialog-form" (ngSubmit)="submitEntry()">
-        <div class="form-grid">
-          <label class="field">
-            <span>Cantidad</span>
-            <input pInputText type="number" formControlName="quantity" />
-            @if (showEntryError('quantity')) {
-              <small>{{ entryError('quantity') }}</small>
-            }
-          </label>
+                <div class="inv-table-footer">
+                  <span class="inv-table-footer__summary">{{ catalogSummaryLabel() }}</span>
 
-          <label class="field">
-            <span>Proveedor</span>
-            <input pInputText type="text" formControlName="providerName" list="inventory-providers" />
-            @if (showEntryError('providerName')) {
-              <small>{{ entryError('providerName') }}</small>
-            }
-          </label>
-        </div>
+                  <nav class="inv-table-pager" aria-label="Paginacion del catalogo">
+                    <button
+                      type="button"
+                      class="inv-table-pager__btn"
+                      [disabled]="!catalogCanPrev()"
+                      (click)="catalogPrev()"
+                      aria-label="Pagina anterior"
+                    >
+                      <i class="pi pi-angle-left" aria-hidden="true"></i>
+                    </button>
 
-        <label class="field">
-          <span>Referencia</span>
-          <textarea class="field-control field-control--textarea" formControlName="referenceText"></textarea>
-        </label>
+                    <span class="inv-table-pager__current">{{ catalogCurrentPageLabel() }}</span>
 
-        <div class="inventory-dialog-actions inventory-inline-actions inventory-inline-actions--end">
-          <button
-            pButton
-            type="button"
-            label="Cancelar"
-            severity="secondary"
-            variant="text"
-            (click)="dialogVisible = false"
-          ></button>
-          <button pButton type="submit" label="Registrar entrada" [loading]="saving()"></button>
-        </div>
-      </form>
-    }
+                    <button
+                      type="button"
+                      class="inv-table-pager__btn"
+                      [disabled]="!catalogCanNext()"
+                      (click)="catalogNext()"
+                      aria-label="Pagina siguiente"
+                    >
+                      <i class="pi pi-angle-right" aria-hidden="true"></i>
+                    </button>
+                  </nav>
+                </div>
+              </div>
+            </div>
+          }
+        </section>
+      </div>
+    </div>
+  </section>
+</div>
 
-    @case ('return') {
-      <form [formGroup]="returnForm" class="inventory-dialog-form" (ngSubmit)="submitReturn()">
-        <div class="form-grid">
-          <label class="field">
-            <span>Cantidad</span>
-            <input pInputText type="number" formControlName="quantity" />
-            @if (showReturnError('quantity')) {
-              <small>{{ returnError('quantity') }}</small>
-            }
-          </label>
+<p-drawer
+  [(visible)]="detailVisible"
+  position="right"
+  [modal]="false"
+  [style]="{ width: 'min(26rem, 100vw)', border: 'none' }"
+  (onHide)="detailVisible = false"
+  class="inventory-detail-drawer"
+>
+  <ng-template pTemplate="header">
+    <div class="inventory-detail-drawer__title-wrap">
+      <span class="inventory-detail-drawer__title">Detalle del insumo</span>
+      <p class="inventory-detail-drawer__subtitle">Consulta stock, estado y acciones rapidas.</p>
+    </div>
+  </ng-template>
 
-          <label class="field">
-            <span>Movimiento origen</span>
-            <input pInputText type="number" formControlName="sourceMovementId" />
-            @if (showReturnError('sourceMovementId')) {
-              <small>{{ returnError('sourceMovementId') }}</small>
-            }
-          </label>
-        </div>
+  <section class="inv-detail-card inv-detail-card--drawer" aria-live="polite">
+    @if (detailLoading()) {
+      <div class="inv-detail-state inv-detail-state--loading">
+        <i class="pi pi-spinner inv-detail-spinner" aria-hidden="true"></i>
+        <span>Cargando detalle...</span>
+      </div>
+    } @else if (selectedItem(); as item) {
+      <header class="inv-detail-card__top">
+        <span class="inv-detail-card__code">{{ item.code }}</span>
+        <span class="inv-detail-card__status" [attr.data-state]="itemStatusTone(item)">
+          {{ itemStockStatusLabel(item) }}
+          <span class="inv-detail-card__status-dot" aria-hidden="true"></span>
+        </span>
+      </header>
 
-        <div class="form-grid">
-          <label class="field">
-            <span>Habitacion</span>
-            <input pInputText type="text" formControlName="roomNumber" />
-          </label>
+      <section class="inv-detail-card__identity">
+        <h3 class="inv-detail-card__title">{{ item.name }}</h3>
+        <p class="inv-detail-card__meta">
+          {{ itemCategoryLabel(item) }} &middot; {{ itemUnitLabel(item) }}
+        </p>
+      </section>
 
-          <label class="field">
-            <span>Area</span>
-            <input pInputText type="text" formControlName="areaName" />
-          </label>
-        </div>
-
-        <div class="form-grid">
-          <label class="field">
-            <span>Responsable operativo</span>
-            <select class="field-control" formControlName="operationalResponsible">
-              <option value="">Selecciona un usuario de servicio</option>
-              @for (user of serviceUserOptions(); track user) {
-                <option [value]="user">{{ user }}</option>
-              }
-            </select>
-          </label>
-        </div>
-
-        <label class="field">
-          <span>Referencia</span>
-          <textarea class="field-control field-control--textarea" formControlName="referenceText"></textarea>
-        </label>
-
-        <div class="inventory-dialog-actions inventory-inline-actions inventory-inline-actions--end">
-          <button
-            pButton
-            type="button"
-            label="Cancelar"
-            severity="secondary"
-            variant="text"
-            (click)="dialogVisible = false"
-          ></button>
-          <button pButton type="submit" label="Registrar devolucion" [loading]="saving()"></button>
-        </div>
-      </form>
-    }
-
-    @case ('decrease') {
-      <form [formGroup]="decreaseForm" class="inventory-dialog-form" (ngSubmit)="submitDecrease()">
-        <article class="inventory-note-banner">
-          <i class="pi pi-exclamation-triangle"></i>
-          <div>
-            <strong>Movimiento interno</strong>
-            <p>Usa este formulario para salidas operativas internas distintas a habitaciones.</p>
+      <section class="inv-detail-stock-card inv-detail-stock-card--flat">
+        <div class="inv-detail-stock-card__main">
+          <div class="inv-detail-stock-card__current">
+            <strong>{{ item.stock }}</strong>
+            <span>{{ itemUnitLabel(item) }}</span>
           </div>
+
+          <div class="inv-detail-stock-card__limits">
+            <div>
+              <span>Minimo: {{ item.minStock }}</span>
+            </div>
+            <div>
+              <span>Maximo: {{ maxStockLabel(item) }}</span>
+            </div>
+          </div>
+        </div>
+        <small class="inv-detail-stock-card__caption">Disponibilidad actual</small>
+      </section>
+
+      <div class="inv-detail-info-list">
+        <article class="inv-detail-info-row">
+          <i class="pi pi-briefcase" aria-hidden="true"></i>
+          <span>Proveedor</span>
+          <strong>{{ itemProviderLabel(item) }}</strong>
         </article>
 
-        <div class="form-grid">
-          <label class="field">
-            <span>Cantidad</span>
-            <input pInputText type="number" formControlName="quantity" />
-            @if (showDecreaseError('quantity')) {
-              <small>{{ decreaseError('quantity') }}</small>
+        <article class="inv-detail-info-row">
+          <i class="pi pi-check-circle" aria-hidden="true"></i>
+          <span>Activo</span>
+          <strong>{{ item.active ? 'Si' : 'No' }}</strong>
+        </article>
+      </div>
+
+      <section class="inv-detail-section">
+        <h4 class="inv-detail-section__title">Descripcion</h4>
+        <p class="inv-detail-section__text">{{ itemDescriptionLabel(item) }}</p>
+      </section>
+
+      @if (canManageItems() || canReturnStock()) {
+        <section class="inv-detail-section">
+          <h4 class="inv-detail-section__title">Acciones rapidas</h4>
+
+          <div class="inv-quick-actions">
+            @if (canManageItems()) {
+              <button type="button" class="inv-quick-action" (click)="openEntryDialog(item)">
+                <i class="pi pi-download" aria-hidden="true"></i>
+                <span>Entrada</span>
+              </button>
+
+              <button type="button" class="inv-quick-action" (click)="openDecreaseDialog(item)">
+                <i class="pi pi-upload" aria-hidden="true"></i>
+                <span>Salida</span>
+              </button>
             }
-          </label>
 
-          <label class="field">
-            <span>Origen operativo</span>
-            <input pInputText type="text" formControlName="origin" placeholder="Ej: AREA_OPERATIVA" />
-            @if (showDecreaseError('origin')) {
-              <small>{{ decreaseError('origin') }}</small>
+            @if (canReturnStock()) {
+              <button type="button" class="inv-quick-action" (click)="openReturnDialog(item)">
+                <i class="pi pi-refresh" aria-hidden="true"></i>
+                <span>Devolucion</span>
+              </button>
             }
-          </label>
+
+            @if (canManageItems()) {
+              <button type="button" class="inv-quick-action" (click)="openItemDialog(item)">
+                <i class="pi pi-pencil" aria-hidden="true"></i>
+                <span>Editar</span>
+              </button>
+            }
+          </div>
+
+          @if (canManageItems() && item.active) {
+            <button type="button" class="inv-detail-deactivate" (click)="deactivate(item)">
+              <i class="pi pi-ban" aria-hidden="true"></i>
+              Desactivar insumo
+            </button>
+          } @else if (canManageItems()) {
+            <button type="button" class="inv-detail-activate" (click)="activate(item)">
+              <i class="pi pi-check-circle" aria-hidden="true"></i>
+              Activar insumo
+            </button>
+          }
+        </section>
+      }
+    } @else {
+      <div class="inv-detail-state inv-detail-state--empty">
+        <div class="inv-detail-empty-icon" aria-hidden="true">
+          <i class="pi pi-box"></i>
         </div>
-
-        <div class="form-grid">
-          <label class="field">
-            <span>Area</span>
-            <input pInputText type="text" formControlName="areaName" />
-          </label>
-
-          <label class="field">
-            <span>Responsable operativo</span>
-            <select class="field-control" formControlName="operationalResponsible">
-              <option value="">Selecciona un usuario de servicio</option>
-              @for (user of serviceUserOptions(); track user) {
-                <option [value]="user">{{ user }}</option>
-              }
-            </select>
-          </label>
-        </div>
-
-        <label class="field">
-          <span>Referencia</span>
-          <textarea class="field-control field-control--textarea" formControlName="referenceText"></textarea>
-        </label>
-
-        <div class="inventory-dialog-actions inventory-inline-actions inventory-inline-actions--end">
-          <button
-            pButton
-            type="button"
-            label="Cancelar"
-            severity="secondary"
-            variant="text"
-            (click)="dialogVisible = false"
-          ></button>
-          <button pButton type="submit" label="Registrar salida" [loading]="saving()"></button>
-        </div>
-      </form>
+        <strong>Selecciona un insumo</strong>
+        <p>El detalle aparecera aqui con stock, limites y acciones.</p>
+      </div>
     }
-  }
-</p-dialog>
+  </section>
+</p-drawer>
+
+@if (activeDialog() === 'item') {
+  <p-dialog
+    [(visible)]="dialogVisible"
+    [modal]="true"
+    [draggable]="false"
+    [style]="{ width: 'min(56rem, 94vw)' }"
+    (onHide)="resetDialogs()"
+    styleClass="inventory-item-wizard"
+  >
+    <ng-template pTemplate="header">
+      <div class="inventory-drawer__title-wrap">
+        <span class="inventory-drawer__title">{{ itemDrawerTitle() }}</span>
+        <p class="inventory-drawer__subtitle">
+          Conserva el catalogo, los limites de stock y los datos de proveedor.
+        </p>
+      </div>
+    </ng-template>
+
+    <form [formGroup]="itemForm" class="inventory-drawer-form" (ngSubmit)="onItemFormSubmit()">
+      <div class="inventory-drawer__summary">
+        @if (editingItemId() !== null) {
+          <div class="inventory-drawer__avatar" aria-hidden="true">
+            {{ (itemForm.controls.name.getRawValue() || '?').charAt(0).toUpperCase() }}
+          </div>
+        } @else {
+          <div class="inventory-drawer__summary-icon" aria-hidden="true">
+            <i class="pi pi-box"></i>
+          </div>
+        }
+
+        <div class="inventory-drawer__summary-body">
+          <strong>{{ editingItemId() === null ? 'Alta de insumo' : 'Edicion de insumo' }}</strong>
+          <span class="inventory-drawer__summary-hint">
+            {{
+              editingItemId() === null
+                ? 'Tres pasos: identificacion, stock y datos adicionales.'
+                : 'Actualiza la ficha sin alterar el flujo operativo del catalogo.'
+            }}
+          </span>
+        </div>
+
+        <div class="inventory-drawer__summary-meta">
+          <span class="inventory-drawer__summary-chip">
+            {{
+              editingItemId() === null
+                ? 'Nuevo registro'
+                : 'Codigo ' + (itemForm.controls.code.getRawValue() || '-')
+            }}
+          </span>
+          <span class="inventory-drawer__summary-chip">
+            Paso {{ itemFormStep() }} de {{ itemFormStepTotal }}
+          </span>
+        </div>
+      </div>
+
+      <div
+        class="inv-drawer-progress"
+        role="progressbar"
+        [attr.aria-valuenow]="itemFormStep()"
+        aria-valuemin="1"
+        [attr.aria-valuemax]="itemFormStepTotal"
+      >
+        <div class="inv-drawer-progress__track">
+          <div class="inv-drawer-progress__fill" [style.width.%]="itemFormProgressPercent()"></div>
+        </div>
+
+        <nav class="inv-drawer-steps" aria-label="Pasos del formulario">
+          @for (step of itemFormSteps; track step) {
+            <button
+              type="button"
+              class="inv-drawer-step"
+              [class.inv-drawer-step--active]="itemFormStep() === step"
+              [class.inv-drawer-step--done]="itemFormStep() > step"
+              [disabled]="itemFormStep() <= step"
+              (click)="goItemFormStep(step)"
+            >
+              <span class="inv-drawer-step__number">{{ step }}</span>
+              <span class="inv-drawer-step__text">{{ itemFormStepTitle(step) }}</span>
+            </button>
+          }
+        </nav>
+      </div>
+
+      <p class="inventory-drawer__step-caption">
+        Paso {{ itemFormStep() }} de {{ itemFormStepTotal }} - {{ itemFormStepTitle(itemFormStep()) }}
+      </p>
+
+      <div class="inventory-drawer__body">
+        @if (itemFormStep() === 1) {
+          <section class="inventory-drawer__section" aria-labelledby="inv-step-1">
+            <div class="inventory-drawer__section-head" id="inv-step-1">
+              <h4>Identificacion</h4>
+              <p>Nombre, categoria y unidad base del insumo.</p>
+            </div>
+
+            <div class="inventory-form-card inventory-form-card--emphasis">
+              @if (editingItemId() !== null) {
+                <label class="field">
+                  <span>Codigo</span>
+                  <input pInputText type="text" formControlName="code" readonly />
+                </label>
+              }
+
+              <label class="field">
+                <span>Nombre</span>
+                <input pInputText type="text" formControlName="name" placeholder="Ej. Detergente liquido" />
+                @if (showItemError('name')) {
+                  <small class="error-text">{{ itemError('name') }}</small>
+                }
+              </label>
+
+              <div class="form-grid inventory-form-grid-tight">
+                <label class="field">
+                  <span>Categoria</span>
+                  <input
+                    pInputText
+                    type="text"
+                    formControlName="category"
+                    list="inventory-categories"
+                    placeholder="Ej. ASEO"
+                  />
+                  @if (showItemError('category')) {
+                    <small class="error-text">{{ itemError('category') }}</small>
+                  }
+                </label>
+
+                <label class="field">
+                  <span>Unidad</span>
+                  <input
+                    pInputText
+                    type="text"
+                    formControlName="unit"
+                    list="inventory-units"
+                    placeholder="Ej. UND"
+                  />
+                  @if (showItemError('unit')) {
+                    <small class="error-text">{{ itemError('unit') }}</small>
+                  }
+                </label>
+              </div>
+            </div>
+          </section>
+        }
+
+        @if (itemFormStep() === 2) {
+          <section class="inventory-drawer__section" aria-labelledby="inv-step-2">
+            <div class="inventory-drawer__section-head" id="inv-step-2">
+              <h4>Stock y limites</h4>
+              <p>Define existencias iniciales y el rango de control del insumo.</p>
+            </div>
+
+            <div class="inventory-form-card inventory-form-card--emphasis">
+              @if (editingItemId() === null) {
+                <label class="field">
+                  <span>Stock inicial</span>
+                  <input pInputText type="number" formControlName="stock" />
+                  @if (showItemError('stock')) {
+                    <small class="error-text">{{ itemError('stock') }}</small>
+                  }
+                </label>
+              } @else {
+                <div class="inventory-readonly-hint">
+                  <i class="pi pi-info-circle" aria-hidden="true"></i>
+                  <span>El stock actual se ajusta mediante entradas, salidas o devoluciones.</span>
+                </div>
+              }
+
+              <div class="form-grid inventory-form-grid-tight">
+                <label class="field">
+                  <span>Minimo</span>
+                  <input pInputText type="number" formControlName="minStock" />
+                  @if (showItemError('minStock')) {
+                    <small class="error-text">{{ itemError('minStock') }}</small>
+                  }
+                </label>
+
+                <label class="field">
+                  <span>Maximo</span>
+                  <input pInputText type="number" formControlName="maxStock" placeholder="Opcional" />
+                  @if (showItemError('maxStock')) {
+                    <small class="error-text">{{ itemError('maxStock') }}</small>
+                  }
+                </label>
+              </div>
+            </div>
+          </section>
+        }
+
+        @if (itemFormStep() === 2) {
+          <div class="inventory-drawer__preview">
+            <div class="inventory-drawer__preview-grid">
+              <article class="inventory-drawer__preview-item">
+                <span>Stock base</span>
+                <strong>
+                  {{
+                    editingItemId() === null
+                      ? itemForm.controls.stock.getRawValue()
+                      : 'Gestionado por operaciones'
+                  }}
+                </strong>
+              </article>
+
+              <article class="inventory-drawer__preview-item">
+                <span>Minimo</span>
+                <strong>{{ itemForm.controls.minStock.getRawValue() }}</strong>
+              </article>
+
+              <article class="inventory-drawer__preview-item">
+                <span>Maximo</span>
+                <strong>{{ itemForm.controls.maxStock.getRawValue() ?? 'Sin tope' }}</strong>
+              </article>
+
+              <article class="inventory-drawer__preview-item">
+                <span>Modo</span>
+                <strong>{{ editingItemId() === null ? 'Alta inicial' : 'Edicion segura' }}</strong>
+              </article>
+            </div>
+          </div>
+        }
+
+        @if (itemFormStep() === 3) {
+          <section class="inventory-drawer__section" aria-labelledby="inv-step-3">
+            <div class="inventory-drawer__section-head" id="inv-step-3">
+              <h4>Proveedor y notas</h4>
+              <p>Completa los datos de trazabilidad y contexto del insumo.</p>
+            </div>
+
+            <div class="inventory-form-card">
+              <label class="field">
+                <span>Proveedor</span>
+                <input
+                  pInputText
+                  type="text"
+                  formControlName="providerName"
+                  list="inventory-providers"
+                  placeholder="Nombre del proveedor"
+                />
+                @if (showItemError('providerName')) {
+                  <small class="error-text">{{ itemError('providerName') }}</small>
+                }
+              </label>
+
+              <label class="field">
+                <span>Descripcion</span>
+                <textarea
+                  class="field-control field-control--textarea"
+                  rows="5"
+                  formControlName="description"
+                  placeholder="Observaciones, uso o ubicacion"
+                ></textarea>
+              </label>
+
+              @if (editingItemId() !== null) {
+                <label class="inventory-toggle">
+                  <input type="checkbox" formControlName="active" />
+                  <span>Insumo activo en catalogo</span>
+                </label>
+              }
+            </div>
+          </section>
+        }
+      </div>
+
+      <div class="inventory-drawer__footer">
+        <button
+          pButton
+          type="button"
+          label="Cancelar"
+          severity="secondary"
+          variant="text"
+          (click)="dialogVisible = false"
+        ></button>
+
+        <div class="inventory-drawer__footer-actions">
+          @if (itemFormStep() > 1) {
+            <button
+              pButton
+              type="button"
+              label="Atras"
+              icon="pi pi-angle-left"
+              severity="secondary"
+              variant="outlined"
+              (click)="prevItemFormStep()"
+            ></button>
+          }
+
+          @if (itemFormStep() < itemFormStepTotal) {
+            <button
+              pButton
+              type="button"
+              label="Siguiente"
+              icon="pi pi-angle-right"
+              iconPos="right"
+              (click)="nextItemFormStep()"
+            ></button>
+          } @else {
+            <button
+              pButton
+              type="submit"
+              [label]="editingItemId() === null ? 'Crear insumo' : 'Guardar cambios'"
+              icon="pi pi-check"
+              [loading]="saving()"
+            ></button>
+          }
+        </div>
+      </div>
+    </form>
+  </p-dialog>
+}
+
+@if (activeDialog() !== 'item') {
+  <p-dialog
+    [(visible)]="dialogVisible"
+    [modal]="true"
+    [draggable]="false"
+    [style]="{ width: 'min(44rem, 96vw)' }"
+    [header]="operationDialogTitle()"
+    (onHide)="resetDialogs()"
+    styleClass="inventory-operation-dialog"
+  >
+    @switch (activeDialog()) {
+      @case ('entry') {
+        <form [formGroup]="entryForm" class="inventory-dialog-form" (ngSubmit)="submitEntry()">
+          @if (selectedItem(); as current) {
+            <div class="inventory-dialog-spotlight">
+              <div class="inventory-dialog-spotlight__copy">
+                <span class="pp-section-label">Insumo seleccionado</span>
+                <strong>{{ current.name }}</strong>
+                <small>{{ current.code }} &middot; Stock actual {{ current.stock }} {{ itemUnitLabel(current) }}</small>
+              </div>
+              <p-tag
+                [value]="itemStockStatusLabel(current)"
+                [severity]="itemStockStatusSeverity(current)"
+              ></p-tag>
+            </div>
+          }
+
+          <section class="pp-form-group">
+            <div class="pp-form-group__head">
+              <h4 class="pp-form-group__title">Datos de la entrada</h4>
+              <p class="pp-form-group__desc">Registra cantidad, proveedor y referencia del abastecimiento.</p>
+            </div>
+
+            <div class="form-grid pp-form-grid-2">
+              <label class="field">
+                <span>Cantidad</span>
+                <input pInputText type="number" formControlName="quantity" />
+                @if (showEntryError('quantity')) {
+                  <small class="error-text">{{ entryError('quantity') }}</small>
+                }
+              </label>
+
+              <label class="field">
+                <span>Proveedor</span>
+                <input pInputText type="text" formControlName="providerName" list="inventory-providers" />
+                @if (showEntryError('providerName')) {
+                  <small class="error-text">{{ entryError('providerName') }}</small>
+                }
+              </label>
+            </div>
+
+            <label class="field">
+              <span>Referencia</span>
+              <textarea class="field-control field-control--textarea" rows="3" formControlName="referenceText"></textarea>
+            </label>
+          </section>
+
+          <div class="dialog-footer">
+            <button
+              pButton
+              type="button"
+              label="Cancelar"
+              severity="secondary"
+              variant="text"
+              (click)="dialogVisible = false"
+            ></button>
+
+            <button pButton type="submit" label="Registrar" [loading]="saving()"></button>
+          </div>
+        </form>
+      }
+
+      @case ('return') {
+        <form [formGroup]="returnForm" class="inventory-dialog-form" (ngSubmit)="submitReturn()">
+          @if (selectedItem(); as current) {
+            <div class="inventory-dialog-spotlight">
+              <div class="inventory-dialog-spotlight__copy">
+                <span class="pp-section-label">Insumo seleccionado</span>
+                <strong>{{ current.name }}</strong>
+                <small>{{ current.code }} &middot; Stock actual {{ current.stock }} {{ itemUnitLabel(current) }}</small>
+              </div>
+              <p-tag
+                [value]="itemStockStatusLabel(current)"
+                [severity]="itemStockStatusSeverity(current)"
+              ></p-tag>
+            </div>
+          }
+
+          <section class="pp-form-group">
+            <div class="pp-form-group__head">
+              <h4 class="pp-form-group__title">Datos de la devolucion</h4>
+              <p class="pp-form-group__desc">Asocia la devolucion al movimiento original y a su contexto operativo.</p>
+            </div>
+
+            <div class="form-grid pp-form-grid-2">
+              <label class="field">
+                <span>Cantidad</span>
+                <input pInputText type="number" formControlName="quantity" />
+                @if (showReturnError('quantity')) {
+                  <small class="error-text">{{ returnError('quantity') }}</small>
+                }
+              </label>
+
+              <label class="field">
+                <span>Movimiento</span>
+                <input pInputText type="number" formControlName="sourceMovementId" />
+                @if (showReturnError('sourceMovementId')) {
+                  <small class="error-text">{{ returnError('sourceMovementId') }}</small>
+                }
+              </label>
+            </div>
+
+            <div class="form-grid pp-form-grid-2">
+              <label class="field">
+                <span>Habitacion</span>
+                <input pInputText type="text" formControlName="roomNumber" />
+              </label>
+
+              <label class="field">
+                <span>Area</span>
+                <input pInputText type="text" formControlName="areaName" />
+              </label>
+            </div>
+
+            <label class="field">
+              <span>Responsable</span>
+              <select class="field-control" formControlName="operationalResponsible">
+                <option value="">Seleccionar</option>
+                @for (user of serviceUserOptions(); track user) {
+                  <option [value]="user">{{ user }}</option>
+                }
+              </select>
+            </label>
+
+            <label class="field">
+              <span>Nota</span>
+              <textarea class="field-control field-control--textarea" rows="3" formControlName="referenceText"></textarea>
+            </label>
+          </section>
+
+          <div class="dialog-footer">
+            <button
+              pButton
+              type="button"
+              label="Cancelar"
+              severity="secondary"
+              variant="text"
+              (click)="dialogVisible = false"
+            ></button>
+
+            <button pButton type="submit" label="Confirmar" [loading]="saving()"></button>
+          </div>
+        </form>
+      }
+
+      @case ('decrease') {
+        <form [formGroup]="decreaseForm" class="inventory-dialog-form" (ngSubmit)="submitDecrease()">
+          @if (selectedItem(); as current) {
+            <div class="inventory-dialog-spotlight">
+              <div class="inventory-dialog-spotlight__copy">
+                <span class="pp-section-label">Insumo seleccionado</span>
+                <strong>{{ current.name }}</strong>
+                <small>{{ current.code }} &middot; Stock actual {{ current.stock }} {{ itemUnitLabel(current) }}</small>
+              </div>
+              <p-tag
+                [value]="itemStockStatusLabel(current)"
+                [severity]="itemStockStatusSeverity(current)"
+              ></p-tag>
+            </div>
+          }
+
+          <section class="pp-form-group">
+            <div class="pp-form-group__head">
+              <h4 class="pp-form-group__title">Salida interna</h4>
+              <p class="pp-form-group__desc">Registra la salida hacia otra area operativa distinta a una habitacion.</p>
+            </div>
+
+            <div class="form-grid pp-form-grid-2">
+              <label class="field">
+                <span>Cantidad</span>
+                <input pInputText type="number" formControlName="quantity" />
+                @if (showDecreaseError('quantity')) {
+                  <small class="error-text">{{ decreaseError('quantity') }}</small>
+                }
+              </label>
+
+              <label class="field">
+                <span>Destino</span>
+                <input pInputText type="text" formControlName="origin" />
+                @if (showDecreaseError('origin')) {
+                  <small class="error-text">{{ decreaseError('origin') }}</small>
+                }
+              </label>
+            </div>
+
+            <div class="form-grid pp-form-grid-2">
+              <label class="field">
+                <span>Area</span>
+                <input pInputText type="text" formControlName="areaName" />
+              </label>
+
+              <label class="field">
+                <span>Responsable</span>
+                <select class="field-control" formControlName="operationalResponsible">
+                  <option value="">Seleccionar</option>
+                  @for (user of serviceUserOptions(); track user) {
+                    <option [value]="user">{{ user }}</option>
+                  }
+                </select>
+              </label>
+            </div>
+
+            <label class="field">
+              <span>Nota</span>
+              <textarea class="field-control field-control--textarea" rows="3" formControlName="referenceText"></textarea>
+            </label>
+          </section>
+
+          <div class="dialog-footer">
+            <button
+              pButton
+              type="button"
+              label="Cancelar"
+              severity="secondary"
+              variant="text"
+              (click)="dialogVisible = false"
+            ></button>
+
+            <button pButton type="submit" label="Registrar" [loading]="saving()"></button>
+          </div>
+        </form>
+      }
+    }
+  </p-dialog>
+}
 
 <datalist id="inventory-categories">
   @for (option of categoryOptions(); track option) {

@@ -12,7 +12,7 @@ import { filter, startWith } from 'rxjs';
   standalone: true,
   imports: [CommonModule, RouterLink, RouterLinkActive],
   templateUrl: './sidebar.component.html',
-  styleUrl: './sidebar.component.css'
+  styleUrls: ['./sidebar.component.css']
 })
 export class SidebarComponent {
   protected readonly layout = inject(LayoutService);

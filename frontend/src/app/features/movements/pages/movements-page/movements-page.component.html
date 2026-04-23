@@ -5,7 +5,7 @@
     subtitle="Historial trazable de entradas, devoluciones, salidas y anulaciones sobre el inventario de Lunara."
   />
 
-  <section class="summary-grid movements-summary">
+  <section class="summary-grid movements-summary admin-kpi-row">
     <article class="summary-card movements-summary-card">
       <div class="movements-summary-card__icon">
         <i class="pi pi-database"></i>
@@ -51,8 +51,8 @@
     </article>
   </section>
 
-  <section class="surface-card movements-workbench">
-    <form [formGroup]="filtersForm" class="movements-filter-shell" (ngSubmit)="loadMovements()">
+  <section class="surface-card movements-workbench admin-content-block">
+    <form [formGroup]="filtersForm" class="movements-filter-shell admin-filter-block" (ngSubmit)="loadMovements()">
       <div class="movements-filter-shell__header">
         <div>
           <h3>Filtros de consulta</h3>
@@ -164,7 +164,7 @@
       </div>
     </div>
 
-    <div class="movements-table-wrap">
+    <div class="movements-table-wrap admin-table-block">
       @if (!loading() && !movements().length) {
         <app-empty-state
           icon="pi pi-history"

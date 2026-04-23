@@ -1,12 +1,16 @@
-<div class="assignments-page">
-  <app-page-header
-    eyebrow="Operacion"
-    title="Asignaciones a habitaciones"
-    subtitle="Registro de entregas y devoluciones de insumos para la operacion diaria de Hotel Lunara."
-  />
+<div class="assignments-page pp-root">
+  <header class="assignments-hero pp-surface">
+    <div class="assignments-hero__copy">
+      <span class="pp-eyebrow">Operacion</span>
+      <h1 class="pp-hero-title">Asignaciones a habitaciones</h1>
+      <p class="pp-hero-lede">
+        Registro de entregas y devoluciones de insumos para la operacion diaria de Hotel Lunara.
+      </p>
+    </div>
+  </header>
 
-  <section class="summary-grid assignments-summary">
-    <article class="summary-card assignments-summary-card">
+  <section class="summary-grid assignments-summary admin-kpi-row">
+    <article class="summary-card assignments-summary-card pp-surface-solid">
       <div class="assignments-summary-card__icon">
         <i class="pi pi-box"></i>
       </div>
@@ -17,7 +21,7 @@
       </div>
     </article>
 
-    <article class="summary-card assignments-summary-card">
+    <article class="summary-card assignments-summary-card pp-surface-solid">
       <div class="assignments-summary-card__icon">
         <i class="pi pi-send"></i>
       </div>
@@ -28,7 +32,7 @@
       </div>
     </article>
 
-    <article class="summary-card assignments-summary-card">
+    <article class="summary-card assignments-summary-card pp-surface-solid">
       <div class="assignments-summary-card__icon">
         <i class="pi pi-sort-alt"></i>
       </div>
@@ -39,7 +43,7 @@
       </div>
     </article>
 
-    <article class="summary-card assignments-summary-card">
+    <article class="summary-card assignments-summary-card pp-surface-solid">
       <div class="assignments-summary-card__icon">
         <i class="pi pi-chart-line"></i>
       </div>
@@ -51,7 +55,7 @@
     </article>
   </section>
 
-  <section class="surface-card assignments-block">
+  <section class="surface-card assignments-block admin-content-block assignments-form-shell pp-surface-solid">
     <div class="assignments-section-head assignments-section-head--form">
       <div class="assignments-section-head__identity">
         <div class="assignments-section-head__icon">
@@ -67,75 +71,89 @@
     </div>
 
     <form [formGroup]="assignmentForm" class="assignments-form" (ngSubmit)="submitAssignment()">
-      <div class="form-grid assignments-form-grid">
-        <label class="field">
-          <span>Habitacion</span>
-          @if (canBrowseRooms()) {
-            <select class="field-control" formControlName="roomId">
-              <option value="0">Selecciona una habitacion</option>
-              @for (room of rooms(); track room.id) {
-                <option [value]="room.id">{{ roomLabel(room) }}</option>
+      <div class="assignments-form-layout">
+        <section class="pp-form-group assignments-form-panel" aria-labelledby="asg-dest">
+          <div class="pp-form-group__head">
+            <h4 class="pp-form-group__title" id="asg-dest">Destino y material</h4>
+            <p class="pp-form-group__desc">Selecciona la habitación y el insumo que se mueve en esta operación.</p>
+          </div>
+          <div class="form-grid assignments-form-grid pp-form-grid-2">
+            <label class="field">
+              <span>Habitacion</span>
+              @if (canBrowseRooms()) {
+                <select class="field-control" formControlName="roomId">
+                  <option value="0">Selecciona una habitacion</option>
+                  @for (room of rooms(); track room.id) {
+                    <option [value]="room.id">{{ roomLabel(room) }}</option>
+                  }
+                </select>
+              } @else {
+                <input pInputText type="number" formControlName="roomId" placeholder="Ingresa el identificador de habitacion" />
               }
-            </select>
-          } @else {
-            <input pInputText type="number" formControlName="roomId" placeholder="Ingresa el identificador de habitacion" />
-          }
-          @if (showAssignmentError('roomId')) {
-            <small>{{ assignmentError('roomId') }}</small>
-          }
-        </label>
+              @if (showAssignmentError('roomId')) {
+                <small>{{ assignmentError('roomId') }}</small>
+              }
+            </label>
 
-        <label class="field">
-          <span>Item</span>
-          <select class="field-control" formControlName="itemId">
-            <option value="0">Selecciona un item</option>
-            @for (item of items(); track item.id) {
-              <option [value]="item.id">{{ itemLabel(item) }}</option>
-            }
-          </select>
-          @if (showAssignmentError('itemId')) {
-            <small>{{ assignmentError('itemId') }}</small>
-          }
-        </label>
-      </div>
+            <label class="field">
+              <span>Item</span>
+              <select class="field-control" formControlName="itemId">
+                <option value="0">Selecciona un item</option>
+                @for (item of items(); track item.id) {
+                  <option [value]="item.id">{{ itemLabel(item) }}</option>
+                }
+              </select>
+              @if (showAssignmentError('itemId')) {
+                <small>{{ assignmentError('itemId') }}</small>
+              }
+            </label>
+          </div>
+        </section>
 
-      <div class="form-grid assignments-form-grid">
-        <label class="field">
-          <span>Cantidad</span>
-          <input pInputText type="number" formControlName="quantity" />
-          @if (showAssignmentError('quantity')) {
-            <small>{{ assignmentError('quantity') }}</small>
-          }
-        </label>
+        <section class="pp-form-group assignments-form-panel" aria-labelledby="asg-op">
+          <div class="pp-form-group__head">
+            <h4 class="pp-form-group__title" id="asg-op">Operación y responsable</h4>
+            <p class="pp-form-group__desc">Cantidad, personal de servicio y tipo de movimiento del insumo.</p>
+          </div>
+          <div class="form-grid assignments-form-grid pp-form-grid-2">
+            <label class="field">
+              <span>Cantidad</span>
+              <input pInputText type="number" formControlName="quantity" />
+              @if (showAssignmentError('quantity')) {
+                <small>{{ assignmentError('quantity') }}</small>
+              }
+            </label>
 
-        <label class="field">
-          <span>Entregado por</span>
-          <select class="field-control" formControlName="deliveredBy">
-            <option value="">Selecciona un usuario de servicio</option>
-            @for (user of serviceUsers(); track user.id) {
-              <option [value]="user.username">{{ user.username }}</option>
-            }
-          </select>
-          @if (showAssignmentError('deliveredBy')) {
-            <small>{{ assignmentError('deliveredBy') }}</small>
-          }
-        </label>
-      </div>
+            <label class="field">
+              <span>Entregado por</span>
+              <select class="field-control" formControlName="deliveredBy">
+                <option value="">Selecciona un usuario de servicio</option>
+                @for (user of serviceUsers(); track user.id) {
+                  <option [value]="user.username">{{ user.username }}</option>
+                }
+              </select>
+              @if (showAssignmentError('deliveredBy')) {
+                <small>{{ assignmentError('deliveredBy') }}</small>
+              }
+            </label>
+          </div>
 
-      <div class="form-grid assignments-form-grid">
-        <label class="field">
-          <span>Movimiento del insumo</span>
-          <select class="field-control" formControlName="assignmentType">
-            @for (type of assignmentFlows; track type.value) {
-              <option [value]="type.value">{{ type.label }}</option>
-            }
-          </select>
-        </label>
+          <div class="form-grid assignments-form-grid pp-form-grid-2">
+            <label class="field">
+              <span>Movimiento del insumo</span>
+              <select class="field-control" formControlName="assignmentType">
+                @for (type of assignmentFlows; track type.value) {
+                  <option [value]="type.value">{{ type.label }}</option>
+                }
+              </select>
+            </label>
 
-        <label class="field">
-          <span>Huesped</span>
-          <input pInputText type="text" formControlName="guestName" placeholder="Nombre de apoyo para la entrega" />
-        </label>
+            <label class="field">
+              <span>Huesped</span>
+              <input pInputText type="text" formControlName="guestName" placeholder="Nombre de apoyo para la entrega" />
+            </label>
+          </div>
+        </section>
       </div>
 
       <div class="assignments-form__actions">
@@ -145,7 +163,7 @@
   </section>
 
   @if (canBrowseRooms()) {
-    <section class="surface-card assignments-block">
+    <section class="surface-card assignments-block admin-content-block pp-surface-solid">
       <div class="assignments-section-head">
         <div class="assignments-section-head__identity">
           <div class="assignments-section-head__icon">
@@ -160,7 +178,7 @@
         <span class="assignments-badge">{{ roomHistory().length }} registros</span>
       </div>
 
-      <div class="assignments-history-controls">
+      <div class="assignments-history-controls admin-filter-block">
         <label class="field">
           <span>Habitacion</span>
           <select class="field-control" [formControl]="historyForm.controls.roomId">
@@ -184,7 +202,7 @@
         </div>
       </div>
 
-      <div class="assignments-table-wrap">
+      <div class="assignments-table-wrap admin-table-block">
         @if (!historyLoading() && !roomHistory().length) {
           <app-empty-state
             icon="pi pi-clock"
@@ -241,8 +259,8 @@
   }
 
   @if (canLoadOverview()) {
-    <section class="surface-card assignments-block">
-      <div class="assignments-filter-shell">
+    <section class="surface-card assignments-block admin-content-block pp-surface-solid">
+      <div class="assignments-filter-shell admin-filter-block">
         <div class="assignments-filter-shell__header">
           <div class="assignments-filter-shell__copy">
             <span class="assignments-section-kicker">Seguimiento global</span>
@@ -330,7 +348,7 @@
         </div>
       </div>
 
-      <div class="assignments-table-wrap">
+      <div class="assignments-table-wrap admin-table-block">
         @if (!loading() && !assignments().length) {
           <app-empty-state
             icon="pi pi-send"

@@ -5,7 +5,7 @@
     subtitle="Seguimiento de stock bajo y alertas operativas emitidas por el backend actual."
   />
 
-  <section class="summary-grid alerts-summary">
+  <section class="summary-grid alerts-summary admin-kpi-row">
     <article class="summary-card alerts-summary-card">
       <div class="alerts-summary-card__icon">
         <i class="pi pi-exclamation-circle"></i>
@@ -51,8 +51,8 @@
     </article>
   </section>
 
-  <section class="surface-card alerts-workbench">
-    <div class="alerts-filter-shell">
+  <section class="surface-card alerts-workbench admin-content-block">
+    <div class="alerts-filter-shell admin-filter-block">
       <div class="alerts-filter-shell__header">
         <div class="alerts-filter-shell__copy">
           <span class="alerts-section-kicker">Vista operativa</span>
@@ -126,7 +126,7 @@
               message="No hay alertas de bajo stock para el filtro actual."
             />
           } @else {
-            <div class="alerts-table-wrap">
+            <div class="alerts-table-wrap admin-table-block">
               <p-table
                 [value]="alerts()"
                 [loading]="loading()"
@@ -196,7 +196,7 @@
               message="El backend no devolvio insumos con stock bajo para esta consulta."
             />
           } @else {
-            <div class="alerts-table-wrap">
+            <div class="alerts-table-wrap admin-table-block">
               <p-table
                 [value]="lowStockItems()"
                 [loading]="loading()"

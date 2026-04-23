@@ -58,7 +58,7 @@ const AUDIT_SCOPE_META: Record<
         subtitle="Consulta unificada de eventos del gateway, inventario y habitaciones."
       />
 
-      <section class="summary-grid audits-summary">
+      <section class="summary-grid audits-summary admin-kpi-row">
         <article class="summary-card audits-summary-card audits-summary-card--scope">
           <div class="audits-summary-card__icon">
             <i [class]="currentScopeMeta().icon"></i>
@@ -104,7 +104,7 @@ const AUDIT_SCOPE_META: Record<
         </article>
       </section>
 
-      <section class="surface-card audits-workbench">
+      <section class="surface-card audits-workbench admin-content-block">
         <div class="audit-tabs" role="tablist" aria-label="Alcances de auditoria">
           @for (scope of scopes; track scope.value) {
             <button
@@ -118,7 +118,7 @@ const AUDIT_SCOPE_META: Record<
           }
         </div>
 
-        <form [formGroup]="filtersForm" class="audit-filter-shell" (ngSubmit)="search()">
+        <form [formGroup]="filtersForm" class="audit-filter-shell admin-filter-block" (ngSubmit)="search()">
           <div class="audit-filter-shell__header">
             <div>
               <h3>Filtros de auditoria</h3>
@@ -200,7 +200,7 @@ const AUDIT_SCOPE_META: Record<
           </div>
         </div>
 
-        <div class="audits-table-wrap">
+        <div class="audits-table-wrap admin-table-block">
           @if (!loading() && !logs().length) {
             <div class="audits-empty-state">
               <i class="pi pi-search"></i>

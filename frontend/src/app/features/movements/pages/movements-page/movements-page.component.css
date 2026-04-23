@@ -226,6 +226,27 @@
   color: #9b6d18;
 }
 
+:host ::ng-deep .movements-table .p-datatable-thead > tr > th:nth-child(1),
+:host ::ng-deep .movements-table .p-datatable-tbody > tr > td:nth-child(1),
+:host ::ng-deep .movements-table .p-datatable-thead > tr > th:nth-child(5),
+:host ::ng-deep .movements-table .p-datatable-tbody > tr > td:nth-child(5) {
+  width: 8rem;
+  text-align: center;
+}
+
+:host ::ng-deep .movements-table .p-datatable-thead > tr > th:nth-child(3),
+:host ::ng-deep .movements-table .p-datatable-tbody > tr > td:nth-child(3),
+:host ::ng-deep .movements-table .p-datatable-thead > tr > th:nth-child(7),
+:host ::ng-deep .movements-table .p-datatable-tbody > tr > td:nth-child(7) {
+  width: 9rem;
+  text-align: center;
+}
+
+:host ::ng-deep .movements-table .p-datatable-thead > tr > th:last-child,
+:host ::ng-deep .movements-table .p-datatable-tbody > tr > td:last-child {
+  width: 8.5rem;
+}
+
 .movements-dialog-form {
   display: flex;
   flex-direction: column;

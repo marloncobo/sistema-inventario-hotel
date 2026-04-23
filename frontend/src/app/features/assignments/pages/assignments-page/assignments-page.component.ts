@@ -16,8 +16,6 @@ import type { AppUser } from '@models/app-user.model';
 import type { SupplyItem } from '@models/inventory.model';
 import type { AssignSupplyRequest, AssignmentFilters, Room, RoomSupplyAssignment } from '@models/room.model';
 import { EmptyStateComponent } from '@shared/components/empty-state/empty-state.component';
-import { PageHeaderComponent } from '@shared/components/page-header/page-header.component';
-
 const ASSIGNMENT_FLOW_OPTIONS = [
   { label: 'Salida', value: 'SERVICIO_HABITACION' },
   { label: 'Entrada', value: 'HABITACION' }
@@ -32,12 +30,11 @@ const ASSIGNMENT_FLOW_OPTIONS = [
     ButtonModule,
     InputTextModule,
     EmptyStateComponent,
-    PageHeaderComponent,
     TableModule,
     TagModule
   ],
   templateUrl: './assignments-page.component.html',
-  styleUrls: ['./assignments-page.component.css']
+  styleUrls: ['./assignments-page.component.css', '../../../../shared/styles/premium-panels.css']
 })
 export class AssignmentsPageComponent implements OnInit {
   private readonly authService = inject(AuthService);
