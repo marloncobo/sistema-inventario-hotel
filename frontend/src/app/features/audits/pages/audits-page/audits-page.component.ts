@@ -119,8 +119,6 @@ const AUDIT_SCOPE_META: Record<
         </div>
 
         <form [formGroup]="filtersForm" class="audit-filter-shell admin-filter-block" (ngSubmit)="search()">
-
-
           <div class="filters-grid audits-filters-grid">
             <label class="field">
               <span>Accion</span>
@@ -165,9 +163,13 @@ const AUDIT_SCOPE_META: Record<
           </div>
         </form>
 
-
-
-
+        @if (activeFilterCount() > 0) {
+          <div class="audits-active-filters">
+            @for (chip of activeFilterChips(); track chip) {
+              <span class="audits-chip">{{ chip }}</span>
+            }
+          </div>
+        }
 
         <div class="audits-table-wrap admin-table-block">
           @if (!loading() && !logs().length) {
@@ -225,7 +227,7 @@ const AUDIT_SCOPE_META: Record<
   `,
   styles: `
     .audits-page {
-      max-width: 1360px;
+      max-width: 1480px;
       margin: 0 auto;
       padding-bottom: 2rem;
       display: flex;
@@ -305,11 +307,9 @@ const AUDIT_SCOPE_META: Record<
       border-bottom: 1px solid rgba(214, 191, 152, 0.18);
     }
 
-
-
     .audits-filters-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
       gap: 1rem 1.25rem;
     }
 
@@ -331,9 +331,24 @@ const AUDIT_SCOPE_META: Record<
       color: #ffffff;
     }
 
+    .audits-active-filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      padding: 0 1.25rem 1.15rem;
+      border-bottom: 1px solid rgba(214, 191, 152, 0.18);
+    }
 
-
-
+    .audits-chip {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.45rem 0.75rem;
+      border-radius: 999px;
+      background: rgba(200, 146, 45, 0.08);
+      color: #8f6724;
+      font-size: 0.78rem;
+      font-weight: 600;
+    }
 
     .audits-table-wrap {
       overflow: hidden;
@@ -465,10 +480,19 @@ const AUDIT_SCOPE_META: Record<
       border-color: #c8922d;
       color: #ffffff;
     }
-
-
-
     @media (max-width: 720px) {
+      .audits-page {
+        gap: 1.1rem;
+      }
+
+      .audits-summary {
+        order: 3;
+      }
+
+      .audits-workbench {
+        order: 1;
+      }
+
       .audits-summary-card {
         grid-template-columns: 1fr;
         align-items: flex-start;
@@ -479,7 +503,9 @@ const AUDIT_SCOPE_META: Record<
         padding-inline: 1rem;
       }
 
-
+      .audits-active-filters {
+        padding-inline: 1rem;
+      }
 
       .audit-tab {
         padding-inline: 0.75rem;
@@ -487,6 +513,27 @@ const AUDIT_SCOPE_META: Record<
 
       .audit-filter-shell__actions > * {
         width: 100%;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .audit-tabs {
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        scrollbar-width: none;
+      }
+
+      .audit-tabs::-webkit-scrollbar {
+        display: none;
+      }
+
+      .audit-tab {
+        flex: 0 0 auto;
+      }
+
+      .audit-filter-shell,
+      .audits-active-filters {
+        padding-inline: 0.9rem;
       }
     }
   `

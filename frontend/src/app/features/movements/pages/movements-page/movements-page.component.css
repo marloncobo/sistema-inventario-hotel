@@ -4,7 +4,7 @@
   --movements-soft: #ab9986;
   --movements-border: rgba(183, 156, 118, 0.18);
   --movements-surface: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(252, 248, 241, 0.96));
-  max-width: 1360px;
+  max-width: 1480px;
   margin: 0 auto;
   padding-bottom: 2rem;
   display: flex;
@@ -177,7 +177,7 @@
 }
 
 .movements-filters-grid--primary {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(13rem, 1fr));
 }
 
 .movements-filters-grid--primary .field:nth-child(5),
@@ -427,8 +427,24 @@
 }
 
 @media (max-width: 1120px) {
+  .movements-page {
+    gap: 1.35rem;
+  }
+
+  .movements-summary {
+    order: 3;
+  }
+
+  .movements-filter-card {
+    order: 1;
+  }
+
+  .movements-logbook {
+    order: 2;
+  }
+
   .movements-filters-grid--primary {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(14rem, 1fr));
   }
 
   .movements-section-head,
@@ -442,7 +458,40 @@
   }
 }
 
+@media (max-width: 900px) {
+  .movements-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+  }
+
+  .movements-summary-card {
+    min-height: 0;
+    padding: 1.2rem 1.1rem;
+  }
+
+  .movements-filter-form,
+  .movements-logbook__head {
+    padding: 1.25rem;
+  }
+
+  .movements-active-filters {
+    padding: 0 1.25rem 1.25rem;
+  }
+
+  .movements-table-wrap {
+    border-top: 1px solid rgba(214, 191, 152, 0.12);
+  }
+}
+
 @media (max-width: 760px) {
+  .movements-page {
+    gap: 1.1rem;
+  }
+
+  .movements-summary {
+    grid-template-columns: 1fr;
+  }
+
   .movements-summary-card {
     grid-template-columns: 1fr;
     align-items: flex-start;
@@ -450,11 +499,11 @@
 
   .movements-filter-form,
   .movements-logbook__head {
-    padding: 1.1rem;
+    padding: 1.1rem 1rem;
   }
 
   .movements-active-filters {
-    padding: 0 1.1rem 1.1rem;
+    padding: 0 1rem 1rem;
   }
 
   .movements-filters-grid--primary,
@@ -473,5 +522,37 @@
 
   .movements-dialog-actions {
     flex-direction: column-reverse;
+  }
+
+  .movements-counter--soft {
+    display: none;
+  }
+}
+
+@media (max-width: 560px) {
+  .movements-section-head__identity {
+    gap: 0.8rem;
+  }
+
+  .movements-section-head__copy h3 {
+    font-size: 1.05rem;
+  }
+
+  .movements-section-head__copy p {
+    font-size: 0.84rem;
+  }
+
+  .movements-filter-form,
+  .movements-logbook__head {
+    padding-inline: 0.9rem;
+  }
+
+  .movements-active-filters {
+    padding-inline: 0.9rem;
+  }
+
+  .movements-more-filters {
+    min-height: 2.9rem;
+    padding-top: 0.65rem;
   }
 }
