@@ -2,23 +2,23 @@
   <app-page-header
     eyebrow="Analisis"
     title="Reportes"
-    subtitle="Consulta reportes operativos y exportaciones respaldadas por el backend desde un panel mas ordenado."
+    subtitle="Consulta reportes operativos y exportaciones desde un panel mas ordenado."
   />
 
   @if (!isAdmin()) {
     <article class="note-banner">
       <i class="pi pi-info-circle"></i>
       <div>
-        <strong>Permiso real del backend</strong>
+        <strong>Permisos de exportacion</strong>
         <p>
-          RECEPCION puede consultar reportes de habitaciones, pero la exportacion sigue reservada a
-          ADMIN. El frontend respeta esa restriccion.
+          RECEPCION puede consultar reportes de habitaciones, pero la exportacion esta disponible
+          solo para ADMIN.
         </p>
       </div>
     </article>
   }
 
-  <section class="summary-grid reports-summary">
+  <section class="summary-grid reports-summary admin-kpi-row">
     <article class="summary-card reports-summary-card reports-summary-card--active">
       <div class="reports-summary-card__icon">
         <i [class]="currentReportMeta().icon"></i>
@@ -64,7 +64,7 @@
     </article>
   </section>
 
-  <section class="surface-card reports-workbench">
+  <section class="surface-card reports-workbench admin-content-block">
     <div class="report-tabs" role="tablist" aria-label="Tipos de reporte">
       @for (report of availableReports(); track report.key) {
         <button
@@ -78,19 +78,7 @@
       }
     </div>
 
-    <form [formGroup]="filtersForm" class="reports-filter-shell" (ngSubmit)="loadReport()">
-      <div class="reports-filter-shell__header">
-        <div>
-          <h3>Filtros de consulta</h3>
-          <p>Refina la busqueda y ejecuta la consulta o exportacion desde un solo bloque.</p>
-        </div>
-
-        <span class="reports-badge">
-          <i [class]="currentReportMeta().icon"></i>
-          {{ currentReportMeta().label }}
-        </span>
-      </div>
-
+    <form [formGroup]="filtersForm" class="reports-filter-shell admin-filter-block" (ngSubmit)="loadReport()">
       <div class="filters-grid reports-filters-grid">
         <label class="field">
           <span>Fecha inicial</span>
@@ -131,6 +119,7 @@
         <button
           pButton
           type="submit"
+          class="reports-btn-primary"
           icon="pi pi-filter"
           label="Consultar"
           [loading]="loading()"
@@ -188,12 +177,12 @@
       </div>
     </div>
 
-    <div class="reports-table-wrap">
+    <div class="reports-table-wrap admin-table-block">
       @if (!loading() && currentCount() === 0) {
         <app-empty-state
           icon="pi pi-chart-line"
           title="Sin datos para el reporte"
-          message="El backend no devolvio filas para los filtros y reporte seleccionados."
+          message="No se encontraron registros para los filtros y el reporte seleccionados."
         />
       } @else {
         @switch (activeReport()) {

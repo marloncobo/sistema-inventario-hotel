@@ -15,9 +15,8 @@ import { CommonModule } from '@angular/common';
   imports: [CommonModule, ReactiveFormsModule, ButtonModule, InputTextModule, PasswordModule],
   template: `
     <div class="login-container">
-      <!-- Left Side: Hero Area (Image & Gold Overlay) -->
+      <!-- Left Side: Hero Area -->
       <aside class="login-hero">
-        <div class="hero-overlay"></div>
         <div class="hero-content">
           <div class="hero-quote">
             <blockquote>
@@ -33,11 +32,26 @@ import { CommonModule } from '@angular/common';
         <div class="login-main__content">
           <header class="login-header">
             <div class="brand">
+              <div class="brand__sparkle brand__sparkle--left" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.937A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .962 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.582a.5.5 0 0 1 0 .962L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.962 0z"/>
+                </svg>
+              </div>
+              <div class="brand__sparkle brand__sparkle--left-small" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.937A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .962 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.582a.5.5 0 0 1 0 .962L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.962 0z"/>
+                </svg>
+              </div>
               <img
                 class="brand__image"
-                src="/images/lunara-login-logo.png"
+                src="/images/lunara-login-logo-cropped.png"
                 alt="Logo de Lunara"
               />
+              <div class="brand__sparkle brand__sparkle--right" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.937A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .962 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.582a.5.5 0 0 1 0 .962L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.962 0z"/>
+                </svg>
+              </div>
             </div>
           </header>
 
@@ -49,6 +63,16 @@ import { CommonModule } from '@angular/common';
               </div>
 
               <form [formGroup]="form" (ngSubmit)="submit()" class="login-form">
+                @if (submitError(); as error) {
+                  <article class="validation-banner validation-banner--danger">
+                    <strong>
+                      <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
+                      No fue posible iniciar sesion
+                    </strong>
+                    <p>{{ error }}</p>
+                  </article>
+                }
+
                 <div class="field">
                   <label for="username">Usuario</label>
                   <div class="input-wrapper">
@@ -118,28 +142,13 @@ import { CommonModule } from '@angular/common';
       background: #fff;
     }
 
-    /* Left Side: Hero Area (Image & Gold Overlay) */
+    /* Left Side: Hero Area */
     .login-hero {
       position: relative;
-      background: url('/images/warm-room.png') center/cover no-repeat;
+      background: url('/images/login-hero-room.png') center/cover no-repeat;
       display: flex;
       align-items: flex-end;
       padding: 5rem;
-    }
-
-    .hero-overlay {
-      position: absolute;
-      inset: 0;
-      /* Noticeable Golden/Yellowish Transparent Overlay */
-      background: linear-gradient(135deg, rgba(200, 146, 45, 0.3) 0%, rgba(101, 73, 31, 0.4) 100%);
-      backdrop-filter: brightness(0.95);
-    }
-
-    .hero-overlay::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: radial-gradient(circle at 30% 50%, rgba(245, 208, 97, 0.15), transparent 70%);
     }
 
     .hero-content {
@@ -183,29 +192,78 @@ import { CommonModule } from '@angular/common';
       display: flex;
       flex-direction: column;
       gap: 1.1rem;
-      transform: translateY(-1.9rem);
+      transform: translateY(0.15rem);
     }
 
     .login-header {
       display: flex;
       justify-content: center;
-      margin-bottom: -1.7rem;
+      margin-bottom: 0.35rem;
     }
 
     .brand {
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      position: relative;
+      display: grid;
+      place-items: center;
+      width: min(14.2rem, 100%);
     }
 
     .brand__image {
       display: block;
-      width: min(18rem, 100%);
+      width: 100%;
       height: auto;
       background: transparent;
       border-radius: 0;
       box-shadow: none;
       filter: drop-shadow(0 18px 38px rgba(200, 146, 45, 0.34));
+    }
+
+    .brand__sparkle {
+      position: absolute;
+      width: 1.5rem;
+      height: 1.5rem;
+      color: #c8922d;
+      filter: drop-shadow(0 0 10px rgba(200, 146, 45, 0.45));
+      animation: sparkle-twinkle 4s infinite ease-in-out;
+      z-index: 5;
+    }
+
+    @keyframes sparkle-twinkle {
+      0%, 100% {
+        transform: scale(1) rotate(0deg);
+        opacity: 0.8;
+      }
+      50% {
+        transform: scale(1.2) rotate(15deg);
+        opacity: 1;
+        filter: drop-shadow(0 0 15px rgba(200, 146, 45, 0.65));
+      }
+    }
+
+    .brand__sparkle--left {
+      top: -0.2rem;
+      left: -1.8rem;
+    }
+
+    .brand__sparkle--left-small {
+      top: 1.8rem;
+      left: -2.3rem;
+      width: 0.9rem;
+      height: 0.9rem;
+      animation-delay: -1.5s;
+      opacity: 0.7;
+    }
+
+    .brand__sparkle--right {
+      top: 1.6rem;
+      right: -1.8rem;
+      width: 1.3rem;
+      height: 1.3rem;
+      animation-delay: -0.8s;
+    }
+
+    .login-card__header {
+      padding-top: 1.25rem;
     }
 
     .login-card__header h1 {
@@ -342,6 +400,25 @@ import { CommonModule } from '@angular/common';
       .login-main__content {
         transform: none;
       }
+
+      .login-header {
+        margin-bottom: 0.15rem;
+      }
+
+      .brand__sparkle--left {
+        left: -1.4rem;
+        top: -0.1rem;
+      }
+
+      .brand__sparkle--left-small {
+        left: -1.8rem;
+        top: 1.5rem;
+      }
+
+      .brand__sparkle--right {
+        right: -1.3rem;
+        top: 1.4rem;
+      }
     }
   `
 })
@@ -352,6 +429,7 @@ export class LoginPageComponent {
   private readonly notificationService = inject(NotificationService);
 
   protected readonly isSubmitting = signal(false);
+  protected readonly submitError = signal<string | null>(null);
 
   protected readonly form = this.fb.nonNullable.group({
     username: ['', [Validators.required]],
@@ -359,6 +437,8 @@ export class LoginPageComponent {
   });
 
   protected submit(): void {
+    this.submitError.set(null);
+
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
@@ -375,7 +455,10 @@ export class LoginPageComponent {
           this.isSubmitting.set(false);
           void this.router.navigate(['/dashboard']);
         },
-        error: () => {
+        error: (error: unknown) => {
+          this.submitError.set(
+            error instanceof Error ? error.message : 'Verifica el usuario y la contraseÃ±a.'
+          );
           this.isSubmitting.set(false);
         }
       });

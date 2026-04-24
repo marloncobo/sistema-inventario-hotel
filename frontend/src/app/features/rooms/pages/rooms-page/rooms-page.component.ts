@@ -1,29 +1,23 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { Component, computed, effect, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
-import { catchError, forkJoin, of, take } from 'rxjs';
+import { catchError, forkJoin, of, startWith, take } from 'rxjs';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
 import { TableModule } from 'primeng/table';
+import type { TableRowSelectEvent } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { ROOM_STATUS_OPTIONS, ROOM_TYPES } from '@core/constants/domain-options';
 import { AuthService } from '@core/services/auth.service';
 import { RoomsApiService } from '@core/services/api/rooms-api.service';
 import { NotificationService } from '@core/services/ui/notification.service';
-import { extractApiFieldErrors } from '@models/api-error.model';
+import { extractApiErrorMessage, extractApiFieldErrors } from '@models/api-error.model';
 import type { CreateRoomRequest, Room, RoomSupplyAssignment } from '@models/room.model';
 import { EmptyStateComponent } from '@shared/components/empty-state/empty-state.component';
-import { PageHeaderComponent } from '@shared/components/page-header/page-header.component';
+import { MinNumberDirective } from '@shared/directives/min-number.directive';
 import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
-
-type FloorSection = {
-  floor: number;
-  total: number;
-  available: number;
-  active: number;
-  rooms: Room[];
-};
 
 @Component({
   selector: 'app-rooms-page',
@@ -34,13 +28,13 @@ type FloorSection = {
     ButtonModule,
     DialogModule,
     InputTextModule,
-    EmptyStateComponent,
-    PageHeaderComponent,
     TableModule,
-    TagModule
+    EmptyStateComponent,
+    TagModule,
+    MinNumberDirective
   ],
   templateUrl: './rooms-page.component.html',
-  styleUrls: ['./rooms-page.component.css']
+  styleUrls: ['./rooms-page.component.css', '../../../../shared/styles/premium-panels.css']
 })
 export class RoomsPageComponent implements OnInit {
   private readonly authService = inject(AuthService);
@@ -55,35 +49,25 @@ export class RoomsPageComponent implements OnInit {
   protected readonly assignments = signal<RoomSupplyAssignment[]>([]);
   protected readonly loading = signal(false);
   protected readonly detailLoading = signal(false);
-  protected readonly orderedRooms = computed(() =>
-    [...this.rooms()].sort((left, right) => this.compareRooms(left, right))
-  );
-  protected readonly orderedAssignments = computed(() =>
-    [...this.assignments()].sort(
-      (left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime()
-    )
-  );
-  protected readonly floorSections = computed<FloorSection[]>(() => {
-    const sections = new Map<number, Room[]>();
-
-    for (const room of this.orderedRooms()) {
-      const roomsByFloor = sections.get(room.floor) ?? [];
-      roomsByFloor.push(room);
-      sections.set(room.floor, roomsByFloor);
-    }
-
-    return Array.from(sections.entries()).map(([floor, rooms]) => ({
-      floor,
-      total: rooms.length,
-      available: rooms.filter((room) => room.status === 'DISPONIBLE').length,
-      active: rooms.filter((room) => room.active).length,
-      rooms
-    }));
-  });
   protected readonly saving = signal(false);
   protected readonly createDialogVisible = signal(false);
   protected readonly statusDialogVisible = signal(false);
   protected readonly statusTargetRoom = signal<Room | null>(null);
+  protected readonly createSubmitError = signal<string | null>(null);
+  protected readonly statusSubmitError = signal<string | null>(null);
+  protected readonly currentPage = signal(1);
+  protected readonly pageSize = 10;
+
+  protected readonly filtersForm = this.fb.nonNullable.group({
+    search: [''],
+    status: [''],
+    floor: ['']
+  });
+
+  private readonly filtersValue = toSignal(
+    this.filtersForm.valueChanges.pipe(startWith(this.filtersForm.getRawValue())),
+    { initialValue: this.filtersForm.getRawValue() }
+  );
 
   protected readonly createForm = this.fb.group({
     number: this.fb.nonNullable.control('', [Validators.required, Validators.pattern(/^\d{3}$/)]),
@@ -91,27 +75,86 @@ export class RoomsPageComponent implements OnInit {
     status: this.fb.nonNullable.control('DISPONIBLE', [Validators.required]),
     capacity: this.fb.nonNullable.control(2, [Validators.required, Validators.min(1)]),
     floor: this.fb.nonNullable.control(1, [Validators.required, Validators.min(1)]),
-    observations: this.fb.control('')
+    observations: this.fb.control('', [Validators.maxLength(500)])
   });
 
   protected readonly statusForm = this.fb.nonNullable.group({
     status: ['DISPONIBLE', [Validators.required]]
   });
 
-  protected readonly availableCount = computed(
-    () => this.rooms().filter((room) => room.status === 'DISPONIBLE').length
-  );
-  protected readonly floorCount = computed(() => this.floorSections().length);
-  protected readonly occupiedCount = computed(
-    () => this.rooms().filter((room) => room.status === 'OCUPADA').length
+  protected readonly filteredRooms = computed(() => {
+    const { search, status, floor } = this.filtersValue();
+    const normalizedSearch = this.normalizeRoomLookup(search ?? '');
+    const normalizedStatus = (status ?? '').trim().toUpperCase();
+    const normalizedFloor = (floor ?? '').trim();
+
+    return [...this.rooms()]
+      .filter((room) => {
+        const searchLabel =
+          `${room.number} ${this.roomTypeLabel(room.type)} ${room.floor} ${room.capacity}`.toLowerCase();
+        const matchesSearch = !normalizedSearch || searchLabel.includes(normalizedSearch);
+        const matchesStatus = !normalizedStatus || room.status === normalizedStatus;
+        const matchesFloor = !normalizedFloor || `${room.floor}` === normalizedFloor;
+
+        return matchesSearch && matchesStatus && matchesFloor;
+      })
+      .sort((left, right) => this.compareRooms(left, right));
+  });
+
+  protected readonly paginatedRooms = computed(() => {
+    const start = (this.currentPage() - 1) * this.pageSize;
+    return this.filteredRooms().slice(start, start + this.pageSize);
+  });
+
+  protected readonly floorOptions = computed(() =>
+    Array.from(new Set(this.rooms().map((room) => room.floor))).sort((left, right) => left - right)
   );
 
-  protected readonly activeCount = computed(
-    () => this.rooms().filter((room) => room.active).length
+  protected readonly totalCount = computed(() => this.rooms().length);
+  protected readonly totalPages = computed(() =>
+    Math.max(1, Math.ceil(this.filteredRooms().length / this.pageSize))
   );
-  protected readonly unavailableCount = computed(
-    () => this.rooms().filter((room) => room.status !== 'DISPONIBLE').length
+  protected readonly pageStart = computed(() =>
+    this.filteredRooms().length ? (this.currentPage() - 1) * this.pageSize + 1 : 0
   );
+  protected readonly pageEnd = computed(() =>
+    Math.min(this.currentPage() * this.pageSize, this.filteredRooms().length)
+  );
+  protected readonly visiblePages = computed(() => {
+    const totalPages = this.totalPages();
+    const currentPage = this.currentPage();
+    const maxButtons = 5;
+
+    let startPage = Math.max(1, currentPage - 2);
+    let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+
+    if (endPage - startPage + 1 < maxButtons) {
+      startPage = Math.max(1, endPage - maxButtons + 1);
+    }
+
+    return Array.from({ length: endPage - startPage + 1 }, (_, index) => startPage + index);
+  });
+
+  protected readonly orderedAssignments = computed(() =>
+    [...this.assignments()].sort(
+      (left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime()
+    )
+  );
+
+  protected readonly recentAssignments = computed(() => this.orderedAssignments().slice(0, 6));
+
+  private readonly resetPageWhenFiltersChange = effect(() => {
+    this.filtersValue();
+    this.currentPage.set(1);
+  });
+
+  private readonly clampCurrentPage = effect(() => {
+    const totalPages = this.totalPages();
+    const currentPage = this.currentPage();
+    if (currentPage > totalPages) {
+      this.currentPage.set(totalPages);
+    }
+  });
 
   ngOnInit(): void {
     this.loadRooms();
@@ -133,12 +176,16 @@ export class RoomsPageComponent implements OnInit {
       .subscribe({
         next: (rooms) => {
           this.rooms.set(rooms);
+
           const currentSelectedRoomId = this.selectedRoom()?.id;
           if (currentSelectedRoomId) {
-            this.selectedRoom.set(
-              rooms.find((room) => room.id === currentSelectedRoomId) ?? null
-            );
+            const refreshedSelection = rooms.find((room) => room.id === currentSelectedRoomId) ?? null;
+            this.selectedRoom.set(refreshedSelection);
+            if (!refreshedSelection) {
+              this.assignments.set([]);
+            }
           }
+
           this.loading.set(false);
         },
         error: () => {
@@ -147,17 +194,45 @@ export class RoomsPageComponent implements OnInit {
       });
   }
 
+  protected clearFilters(): void {
+    this.filtersForm.reset({
+      search: '',
+      status: '',
+      floor: ''
+    });
+  }
+
+  protected onRoomRowSelect(event: TableRowSelectEvent<Room>): void {
+    const row = event.data;
+    if (!row || Array.isArray(row)) {
+      return;
+    }
+
+    this.selectRoom(row.id);
+  }
+
   protected selectRoom(id: number): void {
+    if (!id) {
+      return;
+    }
+
     this.detailLoading.set(true);
     forkJoin({
       room: this.roomsApi.getRoom(id).pipe(catchError(() => of(null))),
-      assignments: this.roomsApi.getRoomAssignments(id).pipe(catchError(() => of([] as RoomSupplyAssignment[])))
+      assignments: this.roomsApi
+        .getRoomAssignments(id)
+        .pipe(catchError(() => of([] as RoomSupplyAssignment[])))
     })
       .pipe(take(1))
       .subscribe({
         next: (result) => {
           this.selectedRoom.set(result.room);
           this.assignments.set(result.assignments);
+
+          if (result.room) {
+            this.currentPage.set(this.resolvePageForRoom(result.room.id));
+          }
+
           this.detailLoading.set(false);
         },
         error: () => {
@@ -166,7 +241,13 @@ export class RoomsPageComponent implements OnInit {
       });
   }
 
+  protected changePage(page: number): void {
+    const safePage = Math.min(Math.max(page, 1), this.totalPages());
+    this.currentPage.set(safePage);
+  }
+
   protected openCreateDialog(): void {
+    this.createSubmitError.set(null);
     this.createForm.reset({
       number: '',
       type: 'ESTANDAR',
@@ -179,13 +260,24 @@ export class RoomsPageComponent implements OnInit {
   }
 
   protected submitCreate(): void {
+    this.createSubmitError.set(null);
+    this.clearCustomCreateError('capacity', 'familyCapacity');
+
+    const raw = this.createForm.getRawValue();
+    if (raw.type === 'FAMILIAR' && raw.capacity < 3) {
+      this.createForm.controls.capacity.setErrors({
+        ...(this.createForm.controls.capacity.errors ?? {}),
+        familyCapacity: true
+      });
+      this.createForm.controls.capacity.markAsTouched();
+    }
+
     if (this.createForm.invalid) {
       this.createForm.markAllAsTouched();
       return;
     }
 
     this.saving.set(true);
-    const raw = this.createForm.getRawValue();
     const payload: CreateRoomRequest = {
       number: raw.number.trim(),
       type: raw.type,
@@ -203,24 +295,42 @@ export class RoomsPageComponent implements OnInit {
           this.saving.set(false);
           this.createDialogVisible.set(false);
           this.notificationService.success('Habitaciones', 'Habitacion creada.');
-          this.loadRooms();
+          this.focusRoom(room);
           this.selectedRoom.set(room);
           this.assignments.set([]);
+          this.loadRooms();
         },
-        error: (error) => {
-          this.saving.set(false);
-          applyServerValidationErrors(this.createForm, extractApiFieldErrors(error.error));
+      error: (error) => {
+        this.saving.set(false);
+        const fieldErrors = extractApiFieldErrors(error.error);
+        if (Object.keys(fieldErrors).length) {
+          applyServerValidationErrors(this.createForm, fieldErrors);
+          this.createSubmitError.set('Revisa los campos marcados antes de guardar.');
+          return;
         }
-      });
+
+        const message = extractApiErrorMessage(error.error);
+        this.createSubmitError.set(message);
+        if (message.toLowerCase().includes('numero')) {
+          this.createForm.controls.number.setErrors({
+            ...(this.createForm.controls.number.errors ?? {}),
+            server: message
+          });
+          this.createForm.controls.number.markAsTouched();
+        }
+      }
+    });
   }
 
   protected openStatusDialog(room: Room): void {
+    this.statusSubmitError.set(null);
     this.statusTargetRoom.set(room);
     this.statusForm.reset({ status: room.status });
     this.statusDialogVisible.set(true);
   }
 
   protected submitStatus(): void {
+    this.statusSubmitError.set(null);
     const room = this.statusTargetRoom();
     if (this.statusForm.invalid || !room) {
       this.statusForm.markAllAsTouched();
@@ -238,75 +348,91 @@ export class RoomsPageComponent implements OnInit {
           this.statusTargetRoom.set(null);
           this.notificationService.success('Habitaciones', 'Estado actualizado.');
           this.loadRooms();
+
           if (this.selectedRoom()?.id === updatedRoom.id) {
             this.selectRoom(updatedRoom.id);
           }
         },
-        error: () => {
+        error: (error) => {
           this.saving.set(false);
+          this.statusSubmitError.set(extractApiErrorMessage(error.error));
         }
       });
   }
 
   protected formatDate(value: string): string {
-    return new Date(value).toLocaleString();
+    return new Date(value).toLocaleString(undefined, {
+      dateStyle: 'short',
+      timeStyle: 'short'
+    });
   }
 
-  protected roomStatusSeverity(status: string): 'success' | 'warn' | 'danger' {
-    if (status === 'DISPONIBLE') {
-      return 'success';
-    }
+  protected roomStatusLabel(status: string): string {
+    return this.formatLabel(status);
+  }
 
-    if (status === 'OCUPADA') {
-      return 'danger';
-    }
-
-    return 'warn';
+  protected roomTypeLabel(type: string): string {
+    return this.formatLabel(type);
   }
 
   protected assignmentFlowLabel(value: string | null | undefined): string {
-    if (value === 'HABITACION') {
-      return 'Entrada';
-    }
-
-    return 'Salida';
+    return value === 'HABITACION' ? 'Entrada' : 'Salida';
   }
 
   protected assignmentFlowSeverity(value: string | null | undefined): 'info' | 'warn' {
-    if (value === 'HABITACION') {
-      return 'info';
-    }
-
-    return 'warn';
-  }
-
-  protected roomTileSubtitle(room: Room): string {
-    if (!room.active) {
-      return 'Habitacion inactiva';
-    }
-
-    if (room.status === 'DISPONIBLE') {
-      return 'Lista para asignacion';
-    }
-
-    if (room.status === 'OCUPADA') {
-      return 'Actualmente ocupada';
-    }
-
-    return 'Bloqueada temporalmente';
+    return value === 'HABITACION' ? 'info' : 'warn';
   }
 
   protected showCreateError(
-    controlName: 'number' | 'type' | 'status' | 'capacity' | 'floor'
+    controlName: 'number' | 'type' | 'status' | 'capacity' | 'floor' | 'observations'
   ): boolean {
     const control = this.createForm.controls[controlName];
     return control.invalid && control.touched;
   }
 
   protected createError(
-    controlName: 'number' | 'type' | 'status' | 'capacity' | 'floor'
+    controlName: 'number' | 'type' | 'status' | 'capacity' | 'floor' | 'observations'
   ): string {
     return this.resolveControlError(this.createForm.controls[controlName].errors);
+  }
+
+  private focusRoom(room: Room): void {
+    this.filtersForm.patchValue({
+      search: room.number,
+      status: '',
+      floor: ''
+    });
+    this.currentPage.set(1);
+  }
+
+  private resolvePageForRoom(roomId: number): number {
+    const roomIndex = this.filteredRooms().findIndex((room) => room.id === roomId);
+    return roomIndex === -1 ? 1 : Math.floor(roomIndex / this.pageSize) + 1;
+  }
+
+  private normalizeRoomLookup(value: string): string {
+    return value
+      .trim()
+      .toLowerCase()
+      .replace(/^hab\.?\s*/i, '');
+  }
+
+  private formatLabel(value: string): string {
+    const normalized = value.toLowerCase().replace(/_/g, ' ');
+    return normalized.charAt(0).toUpperCase() + normalized.slice(1);
+  }
+
+  private clearCustomCreateError(
+    controlName: 'capacity',
+    errorKey: 'familyCapacity'
+  ): void {
+    const control = this.createForm.controls[controlName];
+    if (!control.errors?.[errorKey]) {
+      return;
+    }
+
+    const { [errorKey]: _removed, ...rest } = control.errors;
+    control.setErrors(Object.keys(rest).length ? rest : null);
   }
 
   private resolveControlError(errors: ValidationErrors | null): string {
@@ -330,6 +456,14 @@ export class RoomsPageComponent implements OnInit {
       return 'Debe ser mayor o igual al minimo permitido.';
     }
 
+    if (errors['familyCapacity']) {
+      return 'La habitacion familiar debe tener capacidad minima de 3 personas.';
+    }
+
+    if (errors['maxlength']) {
+      return `No puede superar ${errors['maxlength'].requiredLength} caracteres.`;
+    }
+
     return 'Valor invalido.';
   }
 
@@ -339,6 +473,9 @@ export class RoomsPageComponent implements OnInit {
       return floorDifference;
     }
 
-    return left.number.localeCompare(right.number, undefined, { numeric: true, sensitivity: 'base' });
+    return left.number.localeCompare(right.number, undefined, {
+      numeric: true,
+      sensitivity: 'base'
+    });
   }
 }

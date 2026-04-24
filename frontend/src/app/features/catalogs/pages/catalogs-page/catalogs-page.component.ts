@@ -9,9 +9,10 @@ import { TableModule } from 'primeng/table';
 import { AuthService } from '@core/services/auth.service';
 import { InventoryApiService } from '@core/services/api/inventory-api.service';
 import { NotificationService } from '@core/services/ui/notification.service';
-import { extractApiFieldErrors } from '@models/api-error.model';
+import { extractApiErrorMessage, extractApiFieldErrors } from '@models/api-error.model';
 import type { CatalogEntity, Provider, UnitOfMeasure } from '@models/inventory.model';
 import { PageHeaderComponent } from '@shared/components/page-header/page-header.component';
+import { notBlankValidator } from '@shared/utils/app-validators.util';
 import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
 
 type CatalogSection = 'categories' | 'units' | 'providers' | 'areas';
@@ -116,16 +117,16 @@ const SORT_OPTIONS: Array<{ value: CatalogSortOption; label: string }> = [
         <article class="note-banner">
           <i class="pi pi-info-circle"></i>
           <div>
-            <strong>Restriccion de backend</strong>
+            <strong>Acceso por perfil</strong>
             <p>
-              El rol ALMACENISTA solo puede administrar proveedores. Las demas secciones se mantienen
-              ocultas sin alterar rutas ni seguridad del backend.
+              El rol ALMACENISTA solo puede administrar proveedores. Las demas secciones estan
+              disponibles solo para perfiles autorizados.
             </p>
           </div>
         </article>
       }
 
-      <section class="summary-grid catalogs-summary">
+      <section class="summary-grid catalogs-summary admin-kpi-row">
         @for (card of summaryCards(); track card.section) {
           <article class="summary-card">
             <div class="catalogs-summary__icon">
@@ -140,7 +141,7 @@ const SORT_OPTIONS: Array<{ value: CatalogSortOption; label: string }> = [
         }
       </section>
 
-      <section class="surface-card catalogs-workbench">
+      <section class="surface-card catalogs-workbench admin-content-block">
         <div class="catalog-tabs" role="tablist" aria-label="Secciones de catalogos">
           @for (section of availableSections(); track section.value) {
             <button
@@ -154,7 +155,7 @@ const SORT_OPTIONS: Array<{ value: CatalogSortOption; label: string }> = [
           }
         </div>
 
-        <div class="catalog-toolbar">
+        <div class="catalog-toolbar admin-filter-block">
           <label class="catalog-search">
             <i class="pi pi-search"></i>
             <input
@@ -266,7 +267,7 @@ const SORT_OPTIONS: Array<{ value: CatalogSortOption; label: string }> = [
           </div>
         </div>
 
-        <div class="catalogs-table-wrap">
+        <div class="catalogs-table-wrap admin-table-block">
           @switch (activeSection()) {
             @case ('categories') {
               <p-table
@@ -530,26 +531,6 @@ const SORT_OPTIONS: Array<{ value: CatalogSortOption; label: string }> = [
         </div>
       </section>
 
-      <article class="catalogs-guide-card">
-        <div class="catalogs-guide-card__icon">
-          <i class="pi pi-book"></i>
-        </div>
-
-        <div class="catalogs-guide-card__copy">
-          <strong>Gestiona todos tus catalogos</strong>
-          <p>Manten la informacion organizada y actualizada para un mejor control operativo.</p>
-        </div>
-
-        <button
-          pButton
-          type="button"
-          icon="pi pi-arrow-right"
-          label="Ver guia"
-          severity="secondary"
-          variant="outlined"
-          (click)="showGuide()"
-        ></button>
-      </article>
     </div>
 
     <p-dialog
@@ -562,10 +543,20 @@ const SORT_OPTIONS: Array<{ value: CatalogSortOption; label: string }> = [
       (onHide)="resetForm()"
     >
       <form [formGroup]="form" class="catalog-form" (ngSubmit)="submit()">
+        @if (submitError(); as error) {
+          <article class="validation-banner validation-banner--danger">
+            <strong>
+              <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
+              Corrige la informacion del catalogo
+            </strong>
+            <p>{{ error }}</p>
+          </article>
+        }
+
         <div class="form-grid">
           <label class="field">
             <span>Codigo</span>
-            <input pInputText type="text" formControlName="code" />
+            <input pInputText type="text" formControlName="code" maxlength="40" />
             @if (showControlError('code')) {
               <small>{{ controlError('code') }}</small>
             }
@@ -573,7 +564,7 @@ const SORT_OPTIONS: Array<{ value: CatalogSortOption; label: string }> = [
 
           <label class="field">
             <span>Nombre</span>
-            <input pInputText type="text" formControlName="name" />
+            <input pInputText type="text" formControlName="name" maxlength="180" />
             @if (showControlError('name')) {
               <small>{{ controlError('name') }}</small>
             }
@@ -584,7 +575,10 @@ const SORT_OPTIONS: Array<{ value: CatalogSortOption; label: string }> = [
           <div class="form-grid">
             <label class="field">
               <span>Abreviatura</span>
-              <input pInputText type="text" formControlName="abbreviation" />
+              <input pInputText type="text" formControlName="abbreviation" maxlength="20" />
+              @if (showControlError('abbreviation')) {
+                <small>{{ controlError('abbreviation') }}</small>
+              }
             </label>
           </div>
         }
@@ -593,19 +587,28 @@ const SORT_OPTIONS: Array<{ value: CatalogSortOption; label: string }> = [
           <div class="form-grid">
             <label class="field">
               <span>Documento</span>
-              <input pInputText type="text" formControlName="documentNumber" />
+              <input pInputText type="text" formControlName="documentNumber" maxlength="40" />
+              @if (showControlError('documentNumber')) {
+                <small>{{ controlError('documentNumber') }}</small>
+              }
             </label>
 
             <label class="field">
               <span>Telefono</span>
-              <input pInputText type="text" formControlName="phone" />
+              <input pInputText type="text" formControlName="phone" maxlength="40" />
+              @if (showControlError('phone')) {
+                <small>{{ controlError('phone') }}</small>
+              }
             </label>
           </div>
 
           <div class="form-grid">
             <label class="field">
               <span>Email</span>
-              <input pInputText type="email" formControlName="email" />
+              <input pInputText type="email" formControlName="email" maxlength="180" />
+              @if (showControlError('email')) {
+                <small>{{ controlError('email') }}</small>
+              }
             </label>
           </div>
         }
@@ -959,44 +962,6 @@ const SORT_OPTIONS: Array<{ value: CatalogSortOption; label: string }> = [
       font-size: 0.9rem;
     }
 
-    .catalogs-guide-card {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      padding: 1rem 1.25rem;
-      border-radius: 1rem;
-      background: white;
-      border: 1px solid rgba(214, 191, 152, 0.2);
-      box-shadow: var(--app-shadow);
-    }
-
-    .catalogs-guide-card__icon {
-      width: 2.6rem;
-      height: 2.6rem;
-      border-radius: 999px;
-      display: grid;
-      place-items: center;
-      background: rgba(200, 146, 45, 0.1);
-      color: #c8922d;
-      flex-shrink: 0;
-    }
-
-    .catalogs-guide-card__copy {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .catalogs-guide-card__copy strong {
-      display: block;
-      color: #3d2b1f;
-    }
-
-    .catalogs-guide-card__copy p {
-      margin: 0.2rem 0 0;
-      color: #8a7867;
-      font-size: 0.84rem;
-    }
-
     .catalog-form {
       display: flex;
       flex-direction: column;
@@ -1053,6 +1018,12 @@ const SORT_OPTIONS: Array<{ value: CatalogSortOption; label: string }> = [
       border-radius: 0.9rem;
       padding-inline: 1.1rem;
       box-shadow: 0 12px 24px rgba(200, 146, 45, 0.22);
+      color: #ffffff !important;
+    }
+
+    :host ::ng-deep .catalogs-create-button.p-button .p-button-label,
+    :host ::ng-deep .catalogs-create-button.p-button .p-button-icon {
+      color: inherit !important;
     }
 
     :host ::ng-deep .catalog-toolbar__button.p-button,
@@ -1108,7 +1079,6 @@ const SORT_OPTIONS: Array<{ value: CatalogSortOption; label: string }> = [
     @media (max-width: 960px) {
       .catalog-toolbar,
       .catalogs-section-head,
-      .catalogs-guide-card,
       .catalog-active-filters {
         flex-direction: column;
         align-items: stretch;
@@ -1178,6 +1148,7 @@ export class CatalogsPageComponent implements OnInit {
   protected readonly statusFilter = signal<CatalogStatusFilter>('all');
   protected readonly sortOption = signal<CatalogSortOption>('name-asc');
   protected readonly filtersPanelOpen = signal(false);
+  protected readonly submitError = signal<string | null>(null);
   protected dialogVisible = false;
 
   protected readonly availableSections = computed(() => {
@@ -1291,12 +1262,12 @@ export class CatalogsPageComponent implements OnInit {
   });
 
   protected readonly form = this.fb.nonNullable.group({
-    code: ['', [Validators.required]],
-    name: ['', [Validators.required]],
-    abbreviation: [''],
-    documentNumber: [''],
-    phone: [''],
-    email: [''],
+    code: ['', [Validators.required, notBlankValidator, Validators.maxLength(40)]],
+    name: ['', [Validators.required, notBlankValidator, Validators.maxLength(180)]],
+    abbreviation: ['', [Validators.maxLength(20)]],
+    documentNumber: ['', [Validators.maxLength(40)]],
+    phone: ['', [Validators.maxLength(40)]],
+    email: ['', [Validators.email, Validators.maxLength(180)]],
     active: [true]
   });
 
@@ -1325,13 +1296,6 @@ export class CatalogsPageComponent implements OnInit {
     this.filtersPanelOpen.update((current) => !current);
   }
 
-  protected showGuide(): void {
-    this.notificationService.info(
-      'Catalogos',
-      'Usa las pestañas, filtros y exportacion para mantener cada catalogo ordenado.'
-    );
-  }
-
   protected describeCategory(category: CatalogEntity): string {
     return `Codigo interno ${category.code} listo para clasificar insumos y materiales.`;
   }
@@ -1351,6 +1315,7 @@ export class CatalogsPageComponent implements OnInit {
   }
 
   protected openCreate(section: CatalogSection): void {
+    this.submitError.set(null);
     this.dialogSection.set(section);
     this.editingId.set(null);
     this.form.reset({
@@ -1366,6 +1331,7 @@ export class CatalogsPageComponent implements OnInit {
   }
 
   protected openEdit(section: CatalogSection, entity: CatalogEntity | UnitOfMeasure | Provider): void {
+    this.submitError.set(null);
     this.dialogSection.set(section);
     this.editingId.set(entity.id);
     this.form.reset({
@@ -1381,6 +1347,8 @@ export class CatalogsPageComponent implements OnInit {
   }
 
   protected submit(): void {
+    this.submitError.set(null);
+
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
@@ -1409,12 +1377,20 @@ export class CatalogsPageComponent implements OnInit {
       },
       error: (error: { error?: unknown }) => {
         this.saving.set(false);
-        applyServerValidationErrors(this.form, extractApiFieldErrors(error.error as never));
+        const fieldErrors = extractApiFieldErrors(error.error as never);
+        if (Object.keys(fieldErrors).length) {
+          applyServerValidationErrors(this.form, fieldErrors);
+          this.submitError.set('Revisa los campos marcados antes de guardar.');
+          return;
+        }
+
+        this.submitError.set(extractApiErrorMessage(error.error as never));
       }
     });
   }
 
   protected resetForm(): void {
+    this.submitError.set(null);
     this.editingId.set(null);
     this.form.reset({
       code: '',
@@ -1427,18 +1403,38 @@ export class CatalogsPageComponent implements OnInit {
     });
   }
 
-  protected showControlError(controlName: 'code' | 'name'): boolean {
+  protected showControlError(
+    controlName: 'code' | 'name' | 'abbreviation' | 'documentNumber' | 'phone' | 'email'
+  ): boolean {
     const control = this.form.controls[controlName];
     return control.invalid && control.touched;
   }
 
-  protected controlError(controlName: 'code' | 'name'): string {
+  protected controlError(
+    controlName: 'code' | 'name' | 'abbreviation' | 'documentNumber' | 'phone' | 'email'
+  ): string {
     const control = this.form.controls[controlName];
     if (control.errors?.['server']) {
       return control.errors['server'] as string;
     }
 
-    return 'Este campo es obligatorio.';
+    if (control.errors?.['required']) {
+      return 'Este campo es obligatorio.';
+    }
+
+    if (control.errors?.['blank']) {
+      return 'No puede quedar en blanco.';
+    }
+
+    if (control.errors?.['maxlength']) {
+      return `No puede superar ${control.errors['maxlength'].requiredLength} caracteres.`;
+    }
+
+    if (control.errors?.['email']) {
+      return 'Debes ingresar un correo valido.';
+    }
+
+    return 'Valor invalido.';
   }
 
   protected loadSection(section: CatalogSection): void {

@@ -1,23 +1,27 @@
-<div class="assignments-page">
-  <app-page-header
-    eyebrow="Operacion"
-    title="Asignaciones a habitaciones"
-    subtitle="Registro de entregas y devoluciones de insumos para la operacion diaria de Hotel Lunara."
-  />
+<div class="assignments-page pp-root">
+  <header class="assignments-hero pp-surface">
+    <div class="assignments-hero__top">
+      <div class="assignments-hero__copy">
+        <h1 class="pp-hero-title">Asignaciones a habitaciones</h1>
+        <p class="pp-hero-lede">
+          Registro de entregas y devoluciones de insumos para la operacion diaria de Hotel Lunara.
+        </p>
+      </div>
+      <div class="assignments-header-actions">
+        <button
+          pButton
+          type="button"
+          icon="pi pi-plus"
+          label="Crear movimiento"
+          class="btn-gold-add"
+          (click)="openMovementDialog()"
+        ></button>
+      </div>
+    </div>
+  </header>
 
   <section class="summary-grid assignments-summary">
-    <article class="summary-card assignments-summary-card">
-      <div class="assignments-summary-card__icon">
-        <i class="pi pi-box"></i>
-      </div>
-      <div class="assignments-summary-card__content">
-        <span>Items disponibles</span>
-        <strong>{{ items().length }}</strong>
-        <small>Insumos activos listos para asignarse a habitaciones.</small>
-      </div>
-    </article>
-
-    <article class="summary-card assignments-summary-card">
+    <article class="summary-card assignments-summary-card pp-surface-solid">
       <div class="assignments-summary-card__icon">
         <i class="pi pi-send"></i>
       </div>
@@ -28,7 +32,7 @@
       </div>
     </article>
 
-    <article class="summary-card assignments-summary-card">
+    <article class="summary-card assignments-summary-card pp-surface-solid">
       <div class="assignments-summary-card__icon">
         <i class="pi pi-sort-alt"></i>
       </div>
@@ -39,7 +43,7 @@
       </div>
     </article>
 
-    <article class="summary-card assignments-summary-card">
+    <article class="summary-card assignments-summary-card pp-surface-solid">
       <div class="assignments-summary-card__icon">
         <i class="pi pi-chart-line"></i>
       </div>
@@ -51,23 +55,305 @@
     </article>
   </section>
 
-  <section class="surface-card assignments-block">
-    <div class="assignments-section-head assignments-section-head--form">
-      <div class="assignments-section-head__identity">
-        <div class="assignments-section-head__icon">
-          <i class="pi pi-plus-circle"></i>
+  @if (showAssignmentsCatalog()) {
+    <section
+      class="surface-card catalogs-workbench assignments-catalog assignments-block admin-content-block pp-surface-solid"
+    >
+      @if (showCatalogTabs()) {
+        <div class="catalog-tabs" role="tablist" aria-label="Vista de historial">
+          <button
+            type="button"
+            class="catalog-tab"
+            role="tab"
+            [class.is-active]="catalogView() === 'room'"
+            [attr.aria-selected]="catalogView() === 'room'"
+            (click)="selectCatalogView('room')"
+          >
+            Historial por habitacion
+          </button>
+          <button
+            type="button"
+            class="catalog-tab"
+            role="tab"
+            [class.is-active]="catalogView() === 'global'"
+            [attr.aria-selected]="catalogView() === 'global'"
+            (click)="selectCatalogView('global')"
+          >
+            Historial global
+          </button>
         </div>
+      }
+
+      @if (showRoomHistoryPanel()) {
+        <div class="assignments-catalog-panel" role="tabpanel" aria-label="Historial por habitacion">
+          <div class="catalog-toolbar">
+            <div class="assignments-catalog-toolbar__primary">
+              <label class="field assignments-toolbar-field">
+                <span>Habitacion</span>
+                <select class="catalog-select catalog-select--grow" [formControl]="historyForm.controls.roomId">
+                  <option value="0">Selecciona una habitacion</option>
+                  @for (room of rooms(); track room.id) {
+                    <option [value]="room.id">{{ roomLabel(room) }}</option>
+                  }
+                </select>
+              </label>
+            </div>
+            <div class="catalog-toolbar__controls">
+              @if (historyRoomNumber(); as rn) {
+                <span class="catalog-filter-chip">{{ 'Hab. ' + rn }}</span>
+              }
+              <span class="catalogs-section-head__count">{{ roomHistory().length }} registros</span>
+              <button
+                pButton
+                type="button"
+                icon="pi pi-clock"
+                label="Ver historial"
+                [disabled]="historyForm.controls.roomId.getRawValue() < 1"
+                [loading]="historyLoading()"
+                (click)="loadRoomHistory()"
+              ></button>
+            </div>
+          </div>
+
+          <div class="catalogs-table-wrap admin-table-block">
+            <p-table
+              [value]="roomHistory()"
+              [loading]="historyLoading()"
+              [paginator]="true"
+              [rows]="10"
+              [rowsPerPageOptions]="[10, 20, 50]"
+              [showCurrentPageReport]="true"
+              currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros"
+              responsiveLayout="scroll"
+              styleClass="catalogs-table"
+            >
+              <ng-template pTemplate="header">
+                <tr>
+                  <th>FECHA</th>
+                  <th>HAB.</th>
+                  <th>ITEM</th>
+                  <th>MOV.</th>
+                  <th>UD.</th>
+                  <th>ENTREGA</th>
+                  <th>HUESPED</th>
+                </tr>
+              </ng-template>
+
+              <ng-template pTemplate="emptymessage">
+                <tr>
+                  <td colspan="7">
+                    <div class="catalog-empty-state">{{ roomHistoryEmptyHint() }}</div>
+                  </td>
+                </tr>
+              </ng-template>
+
+              <ng-template pTemplate="body" let-assignment>
+                <tr>
+                  <td><span class="muted-copy">{{ formatDate(assignment.createdAt) }}</span></td>
+                  <td><span class="code-chip">Hab. {{ assignment.roomNumber }}</span></td>
+                  <td>
+                    <div class="entity-stack">
+                      <strong class="entity-stack__title entity-stack__title--small">{{ assignment.itemName }}</strong>
+                      <span class="entity-stack__meta">Insumo</span>
+                    </div>
+                  </td>
+                  <td>
+                    <span
+                      class="status-pill"
+                      [class.status-pill--entrada]="assignment.assignmentType === 'HABITACION'"
+                      [class.status-pill--salida]="assignment.assignmentType !== 'HABITACION'"
+                      >{{ flowLabel(assignment.assignmentType) }}</span
+                    >
+                  </td>
+                  <td>
+                    <strong class="entity-stack__title entity-stack__title--small">{{ assignment.quantity }}</strong>
+                    <span class="entity-stack__meta">uds</span>
+                  </td>
+                  <td><span class="muted-copy">{{ assignment.deliveredBy }}</span></td>
+                  <td>
+                    <span class="muted-copy">{{ assignment.guestName?.trim() || 'Sin huesped' }}</span>
+                  </td>
+                </tr>
+              </ng-template>
+            </p-table>
+          </div>
+        </div>
+      }
+
+      @if (showGlobalHistoryPanel()) {
+        <div class="assignments-catalog-panel" role="tabpanel" aria-label="Historial global">
+          <form
+            [formGroup]="filtersForm"
+            class="catalog-toolbar assignments-catalog-toolbar--stack"
+            (submit)="$event.preventDefault()"
+          >
+            <div class="assignments-global-filters">
+              <label class="field assignments-toolbar-field">
+                <span>Habitacion</span>
+                <input
+                  pInputText
+                  type="text"
+                  formControlName="roomNumber"
+                  placeholder="Ej. 201"
+                  class="catalog-input"
+                />
+              </label>
+              <label class="field assignments-toolbar-field">
+                <span>Movimiento</span>
+                <select class="catalog-select" formControlName="assignmentType">
+                  <option value="">Todos</option>
+                  @for (type of assignmentFlows; track type.value) {
+                    <option [value]="type.value">{{ type.label }}</option>
+                  }
+                </select>
+              </label>
+              <label class="field assignments-toolbar-field">
+                <span>Desde</span>
+                <input class="catalog-input" type="date" formControlName="startDate" />
+              </label>
+              <label class="field assignments-toolbar-field">
+                <span>Hasta</span>
+                <input class="catalog-input" type="date" formControlName="endDate" />
+              </label>
+            </div>
+            <div class="catalog-toolbar__controls assignments-catalog-toolbar__controls">
+              <span class="catalogs-section-head__count">
+                {{ assignments().length }} registros · {{ totalAssignedQuantity() }} uds ·
+                {{ incomingAssignmentsCount() }} in / {{ outgoingAssignmentsCount() }} out ·
+                {{ activeOverviewFilterCount() }} filtros
+              </span>
+              <button
+                pButton
+                type="button"
+                icon="pi pi-filter"
+                label="Consultar"
+                [loading]="loading()"
+                (click)="loadAssignments()"
+              ></button>
+              <button
+                pButton
+                type="button"
+                severity="secondary"
+                icon="pi pi-times"
+                label="Limpiar"
+                (click)="clearOverviewFilters()"
+              ></button>
+            </div>
+          </form>
+
+          @if (activeOverviewFilters().length) {
+            <div class="catalog-active-filters">
+              <div class="catalog-active-filters__chips">
+                @for (filter of activeOverviewFilters(); track filter) {
+                  <span class="catalog-filter-chip">{{ filter }}</span>
+                }
+              </div>
+            </div>
+          }
+
+          <div class="catalogs-table-wrap admin-table-block">
+            <p-table
+              [value]="assignments()"
+              [loading]="loading()"
+              [paginator]="true"
+              [rows]="10"
+              [rowsPerPageOptions]="[10, 20, 50]"
+              [showCurrentPageReport]="true"
+              currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros"
+              responsiveLayout="scroll"
+              styleClass="catalogs-table"
+            >
+              <ng-template pTemplate="header">
+                <tr>
+                  <th>FECHA</th>
+                  <th>HAB.</th>
+                  <th>ITEM</th>
+                  <th>MOV.</th>
+                  <th>UD.</th>
+                  <th>ENTREGA</th>
+                  <th>HUESPED</th>
+                </tr>
+              </ng-template>
+
+              <ng-template pTemplate="emptymessage">
+                <tr>
+                  <td colspan="7">
+                    <div class="catalog-empty-state">No se encontraron movimientos con los filtros actuales.</div>
+                  </td>
+                </tr>
+              </ng-template>
+
+              <ng-template pTemplate="body" let-assignment>
+                <tr>
+                  <td><span class="muted-copy">{{ formatDate(assignment.createdAt) }}</span></td>
+                  <td><span class="code-chip">Hab. {{ assignment.roomNumber }}</span></td>
+                  <td>
+                    <div class="entity-stack">
+                      <strong class="entity-stack__title entity-stack__title--small">{{ assignment.itemName }}</strong>
+                      <span class="entity-stack__meta">Movimiento global</span>
+                    </div>
+                  </td>
+                  <td>
+                    <span
+                      class="status-pill"
+                      [class.status-pill--entrada]="assignment.assignmentType === 'HABITACION'"
+                      [class.status-pill--salida]="assignment.assignmentType !== 'HABITACION'"
+                      >{{ flowLabel(assignment.assignmentType) }}</span
+                    >
+                  </td>
+                  <td>
+                    <strong class="entity-stack__title entity-stack__title--small">{{ assignment.quantity }}</strong>
+                    <span class="entity-stack__meta">uds</span>
+                  </td>
+                  <td><span class="muted-copy">{{ assignment.deliveredBy }}</span></td>
+                  <td>
+                    <span class="muted-copy">{{ assignment.guestName?.trim() || 'Sin huesped' }}</span>
+                  </td>
+                </tr>
+              </ng-template>
+            </p-table>
+          </div>
+        </div>
+      }
+    </section>
+  }
+</div>
+
+<p-dialog
+  class="assignments-modal"
+  [visible]="movementDialogVisible()"
+  [modal]="true"
+  [draggable]="false"
+  [style]="{ width: 'min(44rem, 96vw)' }"
+  styleClass="assignments-modal"
+  (visibleChange)="onMovementDialogVisibleChange($event)"
+>
+  <ng-template pTemplate="header">
+    <span class="assignments-dialog-title">Nuevo movimiento</span>
+  </ng-template>
+
+  <form [formGroup]="assignmentForm" class="assignments-dialog-form" (ngSubmit)="submitAssignment()">
+    @if (submitError(); as error) {
+      <article class="validation-banner validation-banner--danger">
+        <strong>
+          <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
+          No fue posible guardar el movimiento
+        </strong>
+        <p>{{ error }}</p>
+      </article>
+    }
+
+    <section class="assignments-dialog-section">
+      <div class="assignments-dialog-section__head">
+        <span class="assignments-dialog-section__icon">
+          <i class="pi pi-map-marker" aria-hidden="true"></i>
+        </span>
         <div>
-          <h3>Nuevo movimiento</h3>
-          <p>Registra una entrega o devolucion de insumos asociada a una habitacion.</p>
+          <h4 class="assignments-dialog-section__title">Destino y material</h4>
+          <p class="assignments-dialog-section__desc">Habitacion e insumo que participan en esta operacion.</p>
         </div>
       </div>
-
-      <span class="assignments-badge">Formulario operativo</span>
-    </div>
-
-    <form [formGroup]="assignmentForm" class="assignments-form" (ngSubmit)="submitAssignment()">
-      <div class="form-grid assignments-form-grid">
+      <div class="form-grid pp-form-grid-2">
         <label class="field">
           <span>Habitacion</span>
           @if (canBrowseRooms()) {
@@ -78,7 +364,13 @@
               }
             </select>
           } @else {
-            <input pInputText type="number" formControlName="roomId" placeholder="Ingresa el identificador de habitacion" />
+            <input
+              pInputText
+              type="number"
+              formControlName="roomId"
+              placeholder="Identificador de habitacion"
+              [appMinNumber]="1"
+            />
           }
           @if (showAssignmentError('roomId')) {
             <small>{{ assignmentError('roomId') }}</small>
@@ -98,11 +390,22 @@
           }
         </label>
       </div>
+    </section>
 
-      <div class="form-grid assignments-form-grid">
+    <section class="assignments-dialog-section">
+      <div class="assignments-dialog-section__head">
+        <span class="assignments-dialog-section__icon">
+          <i class="pi pi-sync" aria-hidden="true"></i>
+        </span>
+        <div>
+          <h4 class="assignments-dialog-section__title">Operacion y responsable</h4>
+          <p class="assignments-dialog-section__desc">Cantidad, personal de servicio y tipo de movimiento.</p>
+        </div>
+      </div>
+      <div class="form-grid pp-form-grid-2">
         <label class="field">
           <span>Cantidad</span>
-          <input pInputText type="number" formControlName="quantity" />
+          <input pInputText type="number" formControlName="quantity" [appMinNumber]="1" />
           @if (showAssignmentError('quantity')) {
             <small>{{ assignmentError('quantity') }}</small>
           }
@@ -122,7 +425,7 @@
         </label>
       </div>
 
-      <div class="form-grid assignments-form-grid">
+      <div class="form-grid pp-form-grid-2">
         <label class="field">
           <span>Movimiento del insumo</span>
           <select class="field-control" formControlName="assignmentType">
@@ -134,257 +437,31 @@
 
         <label class="field">
           <span>Huesped</span>
-          <input pInputText type="text" formControlName="guestName" placeholder="Nombre de apoyo para la entrega" />
-        </label>
-      </div>
-
-      <div class="assignments-form__actions">
-        <button pButton type="submit" label="Guardar movimiento" [loading]="saving()"></button>
-      </div>
-    </form>
-  </section>
-
-  @if (canBrowseRooms()) {
-    <section class="surface-card assignments-block">
-      <div class="assignments-section-head">
-        <div class="assignments-section-head__identity">
-          <div class="assignments-section-head__icon">
-            <i class="pi pi-clock"></i>
-          </div>
-          <div>
-            <h3>Historial por habitacion</h3>
-            <p>Consulta los movimientos registrados para una habitacion especifica.</p>
-          </div>
-        </div>
-
-        <span class="assignments-badge">{{ roomHistory().length }} registros</span>
-      </div>
-
-      <div class="assignments-history-controls">
-        <label class="field">
-          <span>Habitacion</span>
-          <select class="field-control" [formControl]="historyForm.controls.roomId">
-            <option value="0">Selecciona una habitacion</option>
-            @for (room of rooms(); track room.id) {
-              <option [value]="room.id">{{ roomLabel(room) }}</option>
-            }
-          </select>
-        </label>
-
-        <div class="assignments-history-controls__actions">
-          <button
-            pButton
-            type="button"
-            icon="pi pi-clock"
-            label="Ver historial"
-            [disabled]="historyForm.controls.roomId.getRawValue() < 1"
-            [loading]="historyLoading()"
-            (click)="loadRoomHistory()"
-          ></button>
-        </div>
-      </div>
-
-      <div class="assignments-table-wrap">
-        @if (!historyLoading() && !roomHistory().length) {
-          <app-empty-state
-            icon="pi pi-clock"
-            title="Sin historial para la habitacion"
-            message="La habitacion seleccionada aun no registra movimientos."
+          <input
+            pInputText
+            type="text"
+            formControlName="guestName"
+            placeholder="Nombre de apoyo para la entrega"
+            maxlength="120"
           />
-        } @else {
-          <p-table
-            [value]="roomHistory()"
-            [loading]="historyLoading()"
-            [paginator]="true"
-            [rows]="6"
-            [rowsPerPageOptions]="[6, 12, 24]"
-            [showCurrentPageReport]="true"
-            currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} movimientos"
-            responsiveLayout="scroll"
-            styleClass="assignments-table"
-          >
-            <ng-template pTemplate="header">
-              <tr>
-                <th>Fecha</th>
-                <th>Item</th>
-                <th>Movimiento</th>
-                <th>Cantidad</th>
-                <th>Entregado por</th>
-                <th>Huesped</th>
-              </tr>
-            </ng-template>
-
-            <ng-template pTemplate="body" let-assignment>
-              <tr>
-                <td><span class="assignment-date">{{ formatDate(assignment.createdAt) }}</span></td>
-                <td>
-                  <div class="assignment-entity">
-                    <strong>{{ assignment.itemName }}</strong>
-                    <span>Registro por habitacion</span>
-                  </div>
-                </td>
-                <td>
-                  <p-tag
-                    [value]="flowLabel(assignment.assignmentType)"
-                    [severity]="flowSeverity(assignment.assignmentType)"
-                  ></p-tag>
-                </td>
-                <td><span class="assignment-quantity">{{ assignment.quantity }}</span></td>
-                <td><span class="assignment-person">{{ assignment.deliveredBy }}</span></td>
-                <td>{{ assignment.guestName || 'Sin huesped' }}</td>
-              </tr>
-            </ng-template>
-          </p-table>
-        }
-      </div>
-    </section>
-  }
-
-  @if (canLoadOverview()) {
-    <section class="surface-card assignments-block">
-      <div class="assignments-filter-shell">
-        <div class="assignments-filter-shell__header">
-          <div class="assignments-filter-shell__copy">
-            <span class="assignments-section-kicker">Seguimiento global</span>
-            <h3>Filtros de consulta</h3>
-            <p>Organiza la busqueda por habitacion, tipo de movimiento y rango de fechas antes de consultar.</p>
-          </div>
-
-          <span class="assignments-badge">
-            <i class="pi pi-filter"></i>
-            {{ activeOverviewFilterCount() }} filtros activos
-          </span>
-        </div>
-
-        <form [formGroup]="filtersForm" class="filters-grid assignments-filters-grid" (ngSubmit)="loadAssignments()">
-          <label class="field">
-            <span>Habitacion</span>
-            <input pInputText type="text" formControlName="roomNumber" placeholder="Ej. 201" />
-          </label>
-
-          <label class="field">
-            <span>Movimiento</span>
-            <select class="field-control" formControlName="assignmentType">
-              <option value="">Todos</option>
-              @for (type of assignmentFlows; track type.value) {
-                <option [value]="type.value">{{ type.label }}</option>
-              }
-            </select>
-          </label>
-
-          <label class="field">
-            <span>Fecha inicial</span>
-            <input class="field-control" type="date" formControlName="startDate" />
-          </label>
-
-          <label class="field">
-            <span>Fecha final</span>
-            <input class="field-control" type="date" formControlName="endDate" />
-          </label>
-        </form>
-
-        <div class="assignments-filter-shell__actions">
-          <button
-            pButton
-            type="button"
-            icon="pi pi-filter"
-            label="Consultar"
-            [loading]="loading()"
-            (click)="loadAssignments()"
-          ></button>
-          <button
-            pButton
-            type="button"
-            severity="secondary"
-            icon="pi pi-times"
-            label="Limpiar"
-            (click)="clearOverviewFilters()"
-          ></button>
-        </div>
-      </div>
-
-      @if (activeOverviewFilters().length) {
-        <div class="assignments-active-filters">
-          @for (filter of activeOverviewFilters(); track filter) {
-            <span class="assignments-chip">{{ filter }}</span>
+          @if (showAssignmentError('guestName')) {
+            <small>{{ assignmentError('guestName') }}</small>
           }
-        </div>
-      }
-
-      <div class="assignments-section-head assignments-section-head--results">
-        <div class="assignments-section-head__identity">
-          <div class="assignments-section-head__icon">
-            <i class="pi pi-list-check"></i>
-          </div>
-          <div>
-            <h3>Historial global de asignaciones</h3>
-            <p>Vista consolidada de los movimientos registrados en habitaciones.</p>
-          </div>
-        </div>
-
-        <div class="assignments-stats">
-          <span>{{ assignments().length }} registros</span>
-          <span>{{ totalAssignedQuantity() }} unidades</span>
-          <span>{{ incomingAssignmentsCount() }} entradas</span>
-          <span>{{ outgoingAssignmentsCount() }} salidas</span>
-        </div>
-      </div>
-
-      <div class="assignments-table-wrap">
-        @if (!loading() && !assignments().length) {
-          <app-empty-state
-            icon="pi pi-send"
-            title="Sin asignaciones para mostrar"
-            message="No se encontraron movimientos con los filtros actuales."
-          />
-        } @else {
-          <p-table
-            [value]="assignments()"
-            [loading]="loading()"
-            [paginator]="true"
-            [rows]="10"
-            [rowsPerPageOptions]="[10, 20, 50]"
-            [showCurrentPageReport]="true"
-            currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} movimientos"
-            responsiveLayout="scroll"
-            styleClass="assignments-table"
-          >
-            <ng-template pTemplate="header">
-              <tr>
-                <th>Fecha</th>
-                <th>Habitacion</th>
-                <th>Item</th>
-                <th>Movimiento</th>
-                <th>Cantidad</th>
-                <th>Entregado por</th>
-                <th>Huesped</th>
-              </tr>
-            </ng-template>
-
-            <ng-template pTemplate="body" let-assignment>
-              <tr>
-                <td><span class="assignment-date">{{ formatDate(assignment.createdAt) }}</span></td>
-                <td><span class="assignment-room-chip">{{ assignment.roomNumber }}</span></td>
-                <td>
-                  <div class="assignment-entity">
-                    <strong>{{ assignment.itemName }}</strong>
-                    <span>Movimiento {{ flowLabel(assignment.assignmentType).toLowerCase() }}</span>
-                  </div>
-                </td>
-                <td>
-                  <p-tag
-                    [value]="flowLabel(assignment.assignmentType)"
-                    [severity]="flowSeverity(assignment.assignmentType)"
-                  ></p-tag>
-                </td>
-                <td><span class="assignment-quantity">{{ assignment.quantity }}</span></td>
-                <td><span class="assignment-person">{{ assignment.deliveredBy }}</span></td>
-                <td>{{ assignment.guestName || 'Sin huesped' }}</td>
-              </tr>
-            </ng-template>
-          </p-table>
-        }
+        </label>
       </div>
     </section>
-  }
-</div>
+
+    <div class="assignments-dialog-actions">
+      <button
+        pButton
+        type="button"
+        label="Cancelar"
+        severity="secondary"
+        variant="text"
+        class="assignments-dialog-cancel"
+        (click)="onMovementDialogVisibleChange(false)"
+      ></button>
+      <button pButton type="submit" label="Guardar movimiento" class="assignments-dialog-save" [loading]="saving()"></button>
+    </div>
+  </form>
+</p-dialog>

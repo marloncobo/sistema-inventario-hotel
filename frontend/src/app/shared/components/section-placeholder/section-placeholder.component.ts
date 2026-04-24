@@ -30,15 +30,9 @@ import { PageHeaderComponent } from '../page-header/page-header.component';
         <article class="placeholder-card">
           <h3>Estado actual</h3>
           <p>
-            La base técnica de esta sección ya está registrada en routing, guards por rol,
-            layout común e integración JWT. La implementación CRUD y tablas finales se
-            completará en la siguiente fase sin tocar el backend.
+            Esta seccion ya cuenta con estructura, permisos y espacio reservado dentro del sistema.
+            Las acciones y tablas finales se completaran en la siguiente fase.
           </p>
-        </article>
-
-        <article class="placeholder-card">
-          <h3>Contrato backend a respetar</h3>
-          <p>{{ endpoint }}</p>
         </article>
 
         <article class="placeholder-card">
@@ -49,8 +43,8 @@ import { PageHeaderComponent } from '../page-header/page-header.component';
 
       <app-empty-state
         icon="pi pi-cog"
-        title="Módulo preparado para crecer"
-        message="La base ya reconoce permisos, navegación y estructura de feature. En Fase 3 se conectarán formularios, tablas, filtros y exportaciones reales contra el gateway existente."
+        title="Modulo preparado para crecer"
+        message="La navegacion y los permisos ya estan listos. En la siguiente fase se incorporaran formularios, tablas, filtros y exportaciones para esta seccion."
       />
     </div>
   `,
@@ -87,6 +81,5 @@ export class SectionPlaceholderComponent {
 
   protected readonly title = this.route.snapshot.data['title'] as string;
   protected readonly summary = this.route.snapshot.data['summary'] as string;
-  protected readonly endpoint = this.route.snapshot.data['endpoint'] as string;
   protected readonly note = this.route.snapshot.data['note'] as string;
 }

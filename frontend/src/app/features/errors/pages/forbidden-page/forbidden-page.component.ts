@@ -13,7 +13,7 @@ import { EmptyStateComponent } from '@shared/components/empty-state/empty-state.
       <app-empty-state
         icon="pi pi-lock"
         title="No tienes permisos para esta vista"
-        message="El backend rechazó el acceso para el rol autenticado. El frontend mantiene la restricción y no intenta eludirla."
+        message="Tu perfil no tiene acceso a esta vista. Si necesitas ingresar, solicita autorizacion a un administrador."
       />
 
       <div class="error-page__actions">

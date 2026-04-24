@@ -1,76 +1,44 @@
 <div class="dashboard-page">
-  <app-page-header
-    eyebrow="Resumen del dia"
-    title="Panorama Luna"
-    subtitle="Una vista rapida del estado operativo para coordinar inventario, habitaciones y seguimiento."
-  >
-    <div header-actions class="dashboard-header-actions">
-      @if (primaryAction(); as action) {
-        <a
-          pButton
-          [routerLink]="action.route"
-          [label]="action.label"
-          [icon]="action.icon"
-          iconPos="right"
-        ></a>
-      }
+  <ng-template #illustration let-art="art" let-size="size">
+    
+  <div class="dashboard-art" [attr.data-art]="art" [attr.data-size]="size || 'card'" aria-hidden="true">
+      <span class="dashboard-art__shadow"></span>
+      <span class="dashboard-art__plate"></span>
+      <span class="dashboard-art__spark dashboard-art__spark--one"></span>
+      <span class="dashboard-art__spark dashboard-art__spark--two"></span>
+      <span class="dashboard-art__primary"></span>
+      <span class="dashboard-art__secondary"></span>
+      <span class="dashboard-art__accent"></span>
     </div>
-  </app-page-header>
+
+</ng-template>
 
   @if (loading()) {
     <section class="surface-card dashboard-loading">
       <p-progress-spinner strokeWidth="4" animationDuration=".7s" />
-      <p>Cargando el panorama operativo del hotel...</p>
+      <p>Cargando el panorama operativo...</p>
     </section>
-  } @else if (!metrics().length && !accessSections().length) {
-    <app-empty-state
-      icon="pi pi-chart-bar"
-      title="Sin metricas para mostrar"
-      message="Aun no hay datos suficientes para este perfil, pero la operacion principal sigue disponible."
-    />
   } @else {
-    <section class="surface-card dashboard-hero">
-      <div class="dashboard-hero__main">
-        <span class="dashboard-kicker">Centro de control</span>
-        <h3>{{ heroTitle() }}</h3>
-        <p>{{ heroMessage() }}</p>
-
-        <div class="dashboard-hero__chips">
-          <span>{{ moduleCount() }} modulos habilitados</span>
-          <span>{{ quickActions().length }} accesos rapidos</span>
-          <span>{{ metrics().length }} metricas visibles</span>
-        </div>
+    <header class="surface-card dashboard-hero">
+      <div class="dashboard-hero__copy">
+        <span class="dashboard-date">{{ todayLabel }}</span>
+        <h1>Hola, {{ displayName() }}</h1>
+        <p>{{ headerSummary() }}</p>
       </div>
+    </header>
 
-      <div class="dashboard-hero__panel">
-        <span class="dashboard-panel__eyebrow">Prioridades del turno</span>
-
-        <div class="dashboard-priority-list">
-          @for (item of priorityItems(); track item.label) {
-            <article class="dashboard-priority-item" [attr.data-tone]="item.tone">
-              <div class="dashboard-priority-item__icon">
-                <i [class]="item.icon"></i>
-              </div>
-
-              <div>
-                <strong>{{ item.label }}</strong>
-                <small>{{ item.detail }}</small>
-              </div>
-            </article>
-          }
-        </div>
-      </div>
-    </section>
-
-    @if (metrics().length) {
-      <section class="summary-grid dashboard-metrics">
-        @for (card of metrics(); track card.label) {
-          <article class="summary-card dashboard-summary-card" [attr.data-tone]="card.tone">
-            <div class="dashboard-summary-card__icon">
-              <i [class]="card.icon"></i>
+    @if (kpiCards().length) {
+      <section class="dashboard-kpis">
+        @for (card of kpiCards(); track card.label) {
+          <article class="surface-card dashboard-kpi-card" [attr.data-tone]="card.tone">
+            <div class="dashboard-kpi-card__art">
+              <ng-container
+                [ngTemplateOutlet]="illustration"
+                [ngTemplateOutletContext]="{ art: card.art, size: 'card' }"
+              />
             </div>
 
-            <div class="dashboard-summary-card__content">
+            <div class="dashboard-kpi-card__content">
               <span>{{ card.label }}</span>
               <strong>{{ card.value }}</strong>
               <small>{{ card.helper }}</small>
@@ -80,102 +48,21 @@
       </section>
     }
 
-    <section class="dashboard-board">
-      <article class="surface-card dashboard-map">
-        <div class="dashboard-panel-head">
-          <div>
-            <h3>Mapa operativo</h3>
-            <p>Los modulos se agrupan por frentes para que la navegacion quede mas ordenada.</p>
-          </div>
-        </div>
 
-        <div class="dashboard-section-grid">
-          @for (section of accessSections(); track section.id) {
-            <article class="dashboard-section-card">
-              <div class="dashboard-section-card__head">
-                <div class="dashboard-section-card__icon">
-                  <i [class]="section.icon"></i>
-                </div>
 
-                <div>
-                  <span>{{ section.eyebrow }}</span>
-                  <h4>{{ section.label }}</h4>
-                </div>
-              </div>
+    <section class="surface-card dashboard-banner" [attr.data-tone]="statusBanner().tone">
+      <div class="dashboard-banner__art dashboard-banner__art--left">
+        <ng-container
+          [ngTemplateOutlet]="illustration"
+          [ngTemplateOutletContext]="{ art: bannerLeftArt(), size: 'banner' }"
+        />
+      </div>
 
-              <p>{{ section.description }}</p>
-
-              <div class="dashboard-link-list">
-                @for (item of section.items; track item.route) {
-                  <a [routerLink]="item.route" class="dashboard-link-item">
-                    <div class="dashboard-link-item__body">
-                      <strong>{{ item.label }}</strong>
-                      <small>{{ item.description }}</small>
-                    </div>
-
-                    <i class="pi pi-arrow-up-right"></i>
-                  </a>
-                }
-              </div>
-            </article>
-          }
-        </div>
-      </article>
-
-      <aside class="dashboard-stack">
-        <article class="surface-card dashboard-quick-card">
-          <div class="dashboard-panel-head">
-            <div>
-              <h3>Accesos rapidos</h3>
-              <p>Entradas directas a las vistas que mas se usan durante la jornada.</p>
-            </div>
-          </div>
-
-          <div class="dashboard-quick-list">
-            @for (item of quickActions(); track item.route) {
-              <a [routerLink]="item.route" class="dashboard-quick-list__item">
-                <div class="dashboard-quick-list__icon">
-                  <i [class]="item.icon"></i>
-                </div>
-
-                <div class="dashboard-quick-list__body">
-                  <strong>{{ item.label }}</strong>
-                  <small>{{ item.description }}</small>
-                </div>
-              </a>
-            }
-          </div>
-        </article>
-
-        <article class="surface-card dashboard-status-card">
-          <div class="dashboard-panel-head">
-            <div>
-              <h3>Estado del panel</h3>
-              <p>Resumen corto para priorizar por volumen, accesos y visibilidad.</p>
-            </div>
-          </div>
-
-          <div class="dashboard-status-grid">
-            <article class="dashboard-status-item">
-              <span>Modulos</span>
-              <strong>{{ moduleCount() }}</strong>
-              <small>Secciones habilitadas segun tu perfil.</small>
-            </article>
-
-            <article class="dashboard-status-item">
-              <span>Metricas</span>
-              <strong>{{ metrics().length }}</strong>
-              <small>Indicadores cargados para este rol.</small>
-            </article>
-
-            <article class="dashboard-status-item">
-              <span>Focos</span>
-              <strong>{{ priorityItems().length }}</strong>
-              <small>Temas visibles para revisar primero.</small>
-            </article>
-          </div>
-        </article>
-      </aside>
+      <div class="dashboard-banner__copy">
+        <span>Estado general</span>
+        <h2>{{ statusBanner().title }}</h2>
+        <p>{{ statusBanner().text }}</p>
+      </div>
     </section>
   }
 </div>

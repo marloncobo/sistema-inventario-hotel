@@ -24,7 +24,7 @@ const AUDIT_SCOPE_META: Record<
   auth: {
     label: 'Autenticacion',
     icon: 'pi pi-shield',
-    description: 'Eventos de acceso, validacion de sesiones y cambios ligados al gateway.'
+    description: 'Eventos de acceso, validacion de sesiones y cambios de seguridad.'
   },
   inventory: {
     label: 'Inventario',
@@ -55,10 +55,10 @@ const AUDIT_SCOPE_META: Record<
       <app-page-header
         eyebrow="Control"
         title="Auditoria"
-        subtitle="Consulta unificada de eventos del gateway, inventario y habitaciones."
+        subtitle="Consulta unificada de eventos de acceso, inventario y habitaciones."
       />
 
-      <section class="summary-grid audits-summary">
+      <section class="summary-grid audits-summary admin-kpi-row">
         <article class="summary-card audits-summary-card audits-summary-card--scope">
           <div class="audits-summary-card__icon">
             <i [class]="currentScopeMeta().icon"></i>
@@ -104,7 +104,7 @@ const AUDIT_SCOPE_META: Record<
         </article>
       </section>
 
-      <section class="surface-card audits-workbench">
+      <section class="surface-card audits-workbench admin-content-block">
         <div class="audit-tabs" role="tablist" aria-label="Alcances de auditoria">
           @for (scope of scopes; track scope.value) {
             <button
@@ -118,18 +118,8 @@ const AUDIT_SCOPE_META: Record<
           }
         </div>
 
-        <form [formGroup]="filtersForm" class="audit-filter-shell" (ngSubmit)="search()">
-          <div class="audit-filter-shell__header">
-            <div>
-              <h3>Filtros de auditoria</h3>
-              <p>Acota por accion, usuario o rango de fechas y vuelve a consultar la bitacora.</p>
-            </div>
+        <form [formGroup]="filtersForm" class="audit-filter-shell admin-filter-block" (ngSubmit)="search()">
 
-            <span class="audits-badge">
-              <i [class]="currentScopeMeta().icon"></i>
-              {{ currentScopeMeta().label }}
-            </span>
-          </div>
 
           <div class="filters-grid audits-filters-grid">
             <label class="field">
@@ -157,6 +147,7 @@ const AUDIT_SCOPE_META: Record<
             <button
               pButton
               type="submit"
+              class="audit-btn-primary"
               icon="pi pi-filter"
               label="Consultar"
               [loading]="loading()"
@@ -174,33 +165,11 @@ const AUDIT_SCOPE_META: Record<
           </div>
         </form>
 
-        @if (activeFilterCount() > 0) {
-          <div class="audits-active-filters">
-            @for (chip of activeFilterChips(); track chip) {
-              <span class="audits-chip">{{ chip }}</span>
-            }
-          </div>
-        }
 
-        <div class="audits-result-head">
-          <div class="audits-result-head__identity">
-            <div class="audits-result-head__icon">
-              <i [class]="currentScopeMeta().icon"></i>
-            </div>
 
-            <div>
-              <h3>{{ currentScopeMeta().label }}</h3>
-              <p>{{ currentScopeMeta().description }}</p>
-            </div>
-          </div>
 
-          <div class="audits-result-head__stats">
-            <span>{{ formatMetric(logs().length) }} eventos</span>
-            <span>{{ formatMetric(activeFilterCount()) }} filtros</span>
-          </div>
-        </div>
 
-        <div class="audits-table-wrap">
+        <div class="audits-table-wrap admin-table-block">
           @if (!loading() && !logs().length) {
             <div class="audits-empty-state">
               <i class="pi pi-search"></i>
@@ -232,7 +201,7 @@ const AUDIT_SCOPE_META: Record<
               <ng-template pTemplate="body" let-log>
                 <tr>
                   <td><span class="audit-date">{{ formatDate(log.createdAt) }}</span></td>
-                  <td><p-tag [value]="log.action" severity="info"></p-tag></td>
+                  <td><span class="audit-action-tag">{{ log.action }}</span></td>
                   <td>
                     <div class="audit-entity">
                       <strong>{{ log.entityName }}</strong>
@@ -336,41 +305,11 @@ const AUDIT_SCOPE_META: Record<
       border-bottom: 1px solid rgba(214, 191, 152, 0.18);
     }
 
-    .audit-filter-shell__header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 1rem;
-    }
 
-    .audit-filter-shell__header h3 {
-      margin: 0;
-      color: #3d2b1f;
-      font-size: 1.05rem;
-    }
-
-    .audit-filter-shell__header p {
-      margin: 0.35rem 0 0;
-      color: #8a7867;
-      font-size: 0.85rem;
-      line-height: 1.5;
-    }
-
-    .audits-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.55rem;
-      padding: 0.55rem 0.85rem;
-      border-radius: 999px;
-      background: rgba(200, 146, 45, 0.1);
-      color: #a36f16;
-      font-size: 0.78rem;
-      font-weight: 700;
-      letter-spacing: 0.03em;
-      white-space: nowrap;
-    }
 
     .audits-filters-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
       gap: 1rem 1.25rem;
     }
 
@@ -381,83 +320,20 @@ const AUDIT_SCOPE_META: Record<
       justify-content: flex-end;
     }
 
-    .audits-active-filters {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.6rem;
-      padding: 0 1.25rem 1.15rem;
-      border-bottom: 1px solid rgba(214, 191, 152, 0.18);
+    :host ::ng-deep .audit-btn-primary.p-button {
+      background: #c8922d;
+      border-color: #c8922d;
+      color: #ffffff;
     }
 
-    .audits-chip {
-      display: inline-flex;
-      align-items: center;
-      padding: 0.45rem 0.75rem;
-      border-radius: 999px;
-      background: rgba(200, 146, 45, 0.08);
-      color: #8f6724;
-      font-size: 0.78rem;
-      font-weight: 600;
+    :host ::ng-deep .audit-btn-primary.p-button .p-button-label,
+    :host ::ng-deep .audit-btn-primary.p-button .p-button-icon {
+      color: #ffffff;
     }
 
-    .audits-result-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 1rem;
-      padding: 1.25rem;
-      background: linear-gradient(180deg, rgba(253, 251, 247, 0.96), rgba(255, 255, 255, 0.94));
-      border-bottom: 1px solid rgba(214, 191, 152, 0.18);
-    }
 
-    .audits-result-head__identity {
-      display: flex;
-      align-items: center;
-      gap: 0.95rem;
-      min-width: 0;
-    }
 
-    .audits-result-head__icon {
-      width: 2.9rem;
-      height: 2.9rem;
-      border-radius: 999px;
-      display: grid;
-      place-items: center;
-      background: rgba(200, 146, 45, 0.1);
-      color: #c8922d;
-      flex-shrink: 0;
-    }
 
-    .audits-result-head__identity h3 {
-      margin: 0;
-      color: #3d2b1f;
-      font-size: 1.12rem;
-    }
-
-    .audits-result-head__identity p {
-      margin: 0.2rem 0 0;
-      color: #8a7867;
-      font-size: 0.84rem;
-      line-height: 1.5;
-    }
-
-    .audits-result-head__stats {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: flex-end;
-      gap: 0.7rem;
-    }
-
-    .audits-result-head__stats span {
-      display: inline-flex;
-      align-items: center;
-      padding: 0.45rem 0.72rem;
-      border-radius: 999px;
-      background: rgba(154, 138, 120, 0.08);
-      color: #766553;
-      font-size: 0.78rem;
-      font-weight: 700;
-    }
 
     .audits-table-wrap {
       overflow: hidden;
@@ -522,6 +398,17 @@ const AUDIT_SCOPE_META: Record<
       line-height: 1.5;
     }
 
+    .audit-action-tag {
+      display: inline-flex;
+      padding: 0.38rem 0.72rem;
+      border-radius: 999px;
+      font-size: 0.74rem;
+      font-weight: 700;
+      color: #8e641c;
+      background: rgba(200, 146, 45, 0.12);
+      border: 1px solid rgba(200, 146, 45, 0.2);
+    }
+
     :host ::ng-deep app-page-header .page-header {
       padding-bottom: 0;
       margin-bottom: 0;
@@ -564,18 +451,22 @@ const AUDIT_SCOPE_META: Record<
       font-size: 0.82rem;
     }
 
-    @media (max-width: 960px) {
-      .audit-filter-shell__header,
-      .audits-result-head {
-        flex-direction: column;
-        align-items: stretch;
-      }
-
-      .audit-filter-shell__actions,
-      .audits-result-head__stats {
-        justify-content: flex-start;
-      }
+    :host ::ng-deep .audits-table .p-paginator .p-paginator-element {
+      color: #b57b17;
     }
+
+    :host ::ng-deep .audits-table .p-paginator .p-paginator-element:hover {
+      background: rgba(200, 146, 45, 0.12);
+      color: #9b6d18;
+    }
+
+    :host ::ng-deep .audits-table .p-paginator .p-paginator-page.p-highlight {
+      background: #c8922d;
+      border-color: #c8922d;
+      color: #ffffff;
+    }
+
+
 
     @media (max-width: 720px) {
       .audits-summary-card {
@@ -584,14 +475,11 @@ const AUDIT_SCOPE_META: Record<
       }
 
       .audit-tabs,
-      .audit-filter-shell,
-      .audits-result-head {
+      .audit-filter-shell {
         padding-inline: 1rem;
       }
 
-      .audits-active-filters {
-        padding-inline: 1rem;
-      }
+
 
       .audit-tab {
         padding-inline: 0.75rem;
