@@ -113,7 +113,7 @@ export class DashboardPageComponent implements OnInit {
     this.authService.hasAnyRole(['ADMIN', 'ALMACENISTA'])
   );
   protected readonly canViewAssignments = computed(() =>
-    this.authService.hasAnyRole(['ADMIN', 'ALMACENISTA', 'RECEPCION', 'SERVICIO'])
+    this.authService.hasAnyRole(['ADMIN', 'ALMACENISTA', 'RECEPCION'])
   );
 
   protected readonly visibleItemsCount = computed(() => this.snapshot().items.length);

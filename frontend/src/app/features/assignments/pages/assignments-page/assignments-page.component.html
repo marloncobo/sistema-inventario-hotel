@@ -8,14 +8,16 @@
         </p>
       </div>
       <div class="assignments-header-actions">
-        <button
-          pButton
-          type="button"
-          icon="pi pi-plus"
-          label="Crear movimiento"
-          class="btn-gold-add"
-          (click)="openMovementDialog()"
-        ></button>
+        @if (canCreateMovement()) {
+          <button
+            pButton
+            type="button"
+            icon="pi pi-plus"
+            label="Crear movimiento"
+            class="btn-gold-add"
+            (click)="openMovementDialog()"
+          ></button>
+        }
       </div>
     </div>
   </header>

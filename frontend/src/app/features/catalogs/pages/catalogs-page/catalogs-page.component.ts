@@ -1277,7 +1277,16 @@ export class CatalogsPageComponent implements OnInit {
     return this.authService.hasRole('ADMIN');
   }
 
+  protected canAccessSection(section: CatalogSection): boolean {
+    return section === 'providers' || this.isAdmin();
+  }
+
   protected setActiveSection(section: CatalogSection): void {
+    if (!this.canAccessSection(section)) {
+      this.activeSection.set('providers');
+      return;
+    }
+
     this.activeSection.set(section);
     this.loadSection(section);
   }
@@ -1312,6 +1321,9 @@ export class CatalogsPageComponent implements OnInit {
   }
 
   protected openCreate(section: CatalogSection): void {
+    if (!this.canAccessSection(section)) {
+      return;
+    }
     this.submitError.set(null);
     this.dialogSection.set(section);
     this.editingId.set(null);
@@ -1328,6 +1340,10 @@ export class CatalogsPageComponent implements OnInit {
   }
 
   protected openEdit(section: CatalogSection, entity: CatalogEntity | UnitOfMeasure | Provider): void {
+    if (!this.canAccessSection(section)) {
+      return;
+    }
+
     this.submitError.set(null);
     this.dialogSection.set(section);
     this.editingId.set(entity.id);
@@ -1344,6 +1360,10 @@ export class CatalogsPageComponent implements OnInit {
   }
 
   protected submit(): void {
+    if (!this.canAccessSection(this.dialogSection())) {
+      return;
+    }
+
     this.submitError.set(null);
 
     const generatedCode = this.buildCatalogCode(
@@ -1441,6 +1461,11 @@ export class CatalogsPageComponent implements OnInit {
   }
 
   protected loadSection(section: CatalogSection): void {
+    if (!this.canAccessSection(section)) {
+      this.activeSection.set('providers');
+      return;
+    }
+
     this.loading.set(true);
     const request$: Observable<CatalogEntity[] | UnitOfMeasure[] | Provider[]> =
       section === 'categories'

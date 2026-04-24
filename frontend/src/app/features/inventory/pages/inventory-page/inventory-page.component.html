@@ -305,12 +305,14 @@
             <h4 class="inv-detail-section__title">Acciones rapidas</h4>
 
             <div class="inv-quick-actions">
-              @if (canManageItems()) {
+              @if (canRegisterEntry()) {
                 <button type="button" class="inv-quick-action" (click)="openEntryDialog(item)">
                   <i class="pi pi-download" aria-hidden="true"></i>
                   <span>Entrada</span>
                 </button>
+              }
 
+              @if (canRegisterDecrease()) {
                 <button type="button" class="inv-quick-action" (click)="openDecreaseDialog(item)">
                   <i class="pi pi-upload" aria-hidden="true"></i>
                   <span>Salida</span>
@@ -335,12 +337,12 @@
         }
       </section>
 
-      @if (canManageItems() && item.active) {
+      @if (canDeactivateItem() && item.active) {
         <button type="button" class="inv-detail-deactivate" (click)="deactivate(item)">
           <i class="pi pi-ban" aria-hidden="true"></i>
           Desactivar insumo
         </button>
-      } @else if (canManageItems()) {
+      } @else if (canDeactivateItem()) {
         <button type="button" class="inv-detail-activate" (click)="activate(item)">
           <i class="pi pi-check-circle" aria-hidden="true"></i>
           Activar insumo

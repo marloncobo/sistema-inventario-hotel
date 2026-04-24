@@ -48,7 +48,7 @@
 
           <div class="sidebar__items">
             @for (group of category.groups; track group.title) {
-              @for (item of group.items; track item.route) {
+              @for (item of group.items; track item.label) {
                 <a
                   [routerLink]="item.route"
                   routerLinkActive="sidebar__item--active"

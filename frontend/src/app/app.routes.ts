@@ -1,13 +1,11 @@
 import { Routes } from '@angular/router';
+import { rolesForShellRoute } from '@core/constants/shell-route-roles';
 import { authGuard } from '@core/guards/auth.guard';
 import { guestGuard } from '@core/guards/guest.guard';
 import { roleGuard } from '@core/guards/role.guard';
 import { AppShellComponent } from '@layout/app-shell/app-shell.component';
 import { DashboardPageComponent } from '@features/dashboard/pages/dashboard-page/dashboard-page.component';
-import { ForbiddenPageComponent } from '@features/errors/pages/forbidden-page/forbidden-page.component';
 import { NotFoundPageComponent } from '@features/errors/pages/not-found-page/not-found-page.component';
-
-const allRoles = ['ADMIN', 'ALMACENISTA', 'RECEPCION', 'SERVICIO'] as const;
 
 export const routes: Routes = [
   {
@@ -38,7 +36,7 @@ export const routes: Routes = [
         data: {
           title: 'Dashboard',
           breadcrumb: 'Dashboard',
-          roles: [...allRoles]
+          roles: rolesForShellRoute('dashboard')
         }
       },
       {
@@ -51,7 +49,7 @@ export const routes: Routes = [
         data: {
           title: 'Usuarios',
           breadcrumb: 'Usuarios',
-          roles: ['ADMIN'],
+          roles: rolesForShellRoute('usuarios'),
           summary: 'Gestion administrativa de usuarios, activacion de cuentas y revision de roles.',
           endpoint: 'GET /auth/users · POST /auth/users · PUT /auth/users/{id}',
           note: 'Asigna credenciales seguras y el perfil correcto para cada usuario.'
@@ -67,7 +65,7 @@ export const routes: Routes = [
         data: {
           title: 'Auditoría',
           breadcrumb: 'Auditoría',
-          roles: ['ADMIN'],
+          roles: rolesForShellRoute('auditoria'),
           summary: 'Consulta centralizada de bitácoras de autenticación, inventario y habitaciones.',
           endpoint:
             'GET /auth/audit · GET /inventory/api/inventory/audit · GET /rooms/api/rooms/audit',
@@ -84,11 +82,11 @@ export const routes: Routes = [
         data: {
           title: 'Catálogos',
           breadcrumb: 'Catálogos',
-          roles: ['ADMIN', 'ALMACENISTA'],
-          summary: 'Catálogos maestros para categorías, unidades, proveedores y áreas.',
+          roles: rolesForShellRoute('catalogos'),
+          summary: 'Catálogos maestros (admin) o gestión de proveedores (almacenista), según rol.',
           endpoint:
             'GET/POST/PUT /inventory/api/inventory/catalogs/categories|units|providers|areas',
-          note: 'El perfil ALMACENISTA administra proveedores; las demas secciones quedan reservadas para administracion.'
+          note: 'El almacenista solo opera la sección de proveedores; el resto del catálogo es administración.'
         }
       },
       {
@@ -101,11 +99,11 @@ export const routes: Routes = [
         data: {
           title: 'Inventario',
           breadcrumb: 'Inventario',
-          roles: ['ADMIN', 'ALMACENISTA', 'SERVICIO'],
+          roles: rolesForShellRoute('inventario'),
           summary: 'Base para listado, detalle, creación, edición y operaciones sobre insumos.',
           endpoint:
             'GET /items · GET /items/{id} · POST /items · PUT /items/{id} · PATCH /items/{id}/deactivate · POST /items/{id}/entries · POST /items/{id}/returns',
-          note: 'Las salidas y devoluciones deben registrarse desde el flujo operativo correspondiente.'
+          note: 'Las acciones disponibles dependen del rol autenticado.'
         }
       },
       {
@@ -118,7 +116,7 @@ export const routes: Routes = [
         data: {
           title: 'Movimientos',
           breadcrumb: 'Movimientos',
-          roles: ['ADMIN', 'ALMACENISTA'],
+          roles: rolesForShellRoute('movimientos'),
           summary: 'Historial trazable de entradas, salidas, devoluciones y anulaciones.',
           endpoint:
             'GET /inventory/api/inventory/movements · POST /inventory/api/inventory/movements/{id}/void',
@@ -135,7 +133,7 @@ export const routes: Routes = [
         data: {
           title: 'Alertas',
           breadcrumb: 'Alertas',
-          roles: ['ADMIN', 'ALMACENISTA'],
+          roles: rolesForShellRoute('alertas'),
           summary: 'Seguimiento operativo del stock bajo y alertas abiertas del inventario.',
           endpoint:
             'GET /inventory/api/inventory/items/low-stock · GET /inventory/api/inventory/alerts/low-stock',
@@ -152,11 +150,27 @@ export const routes: Routes = [
         data: {
           title: 'Habitaciones',
           breadcrumb: 'Habitaciones',
-          roles: ['ADMIN', 'ALMACENISTA', 'RECEPCION'],
-          summary: 'Base del módulo de consulta, alta y actualización de estado operativo de habitaciones.',
+          roles: rolesForShellRoute('habitaciones'),
+          summary: 'Base del módulo de consulta y actualización operativa de habitaciones.',
           endpoint:
             'POST /rooms/api/rooms · GET /rooms/api/rooms · GET /rooms/api/rooms/{id} · PATCH /rooms/api/rooms/{id}/status',
-          note: 'La disponibilidad y los estados operativos se validan automaticamente para mantener consistencia.'
+          note: 'ADMIN puede crear habitaciones; RECEPCION puede cambiar estado; ALMACENISTA solo consulta.'
+        }
+      },
+      {
+        path: 'habitaciones/consulta',
+        canActivate: [roleGuard],
+        loadComponent: () =>
+          import('@features/rooms/pages/room-lookup-page/room-lookup-page.component').then(
+            (m) => m.RoomLookupPageComponent
+          ),
+        data: {
+          title: 'Consulta habitación',
+          breadcrumb: 'Consulta por número',
+          roles: rolesForShellRoute('habitaciones/consulta'),
+          summary: 'Validación de habitación por número según permisos del gateway.',
+          endpoint: 'GET /rooms/api/rooms/number/{number}',
+          note: 'Consulta por número disponible para todos los roles del sistema; en SERVICIO sustituye al listado general de habitaciones para obtener el id en asignaciones.'
         }
       },
       {
@@ -169,11 +183,11 @@ export const routes: Routes = [
         data: {
           title: 'Asignaciones',
           breadcrumb: 'Asignaciones',
-          roles: ['ADMIN', 'ALMACENISTA', 'RECEPCION', 'SERVICIO'],
-          summary: 'Base de la entrega de insumos a habitaciones y del historial de asignaciones.',
+          roles: rolesForShellRoute('asignaciones'),
+          summary: 'Entrega de insumos a habitaciones e historial de asignaciones.',
           endpoint:
             'POST /rooms/api/rooms/{roomId}/supplies/assign · GET /rooms/api/rooms/{roomId}/supplies · GET /rooms/api/rooms/supplies',
-          note: 'El personal de servicio puede registrar entregas segun los permisos y el flujo operativo disponible.'
+          note: 'RECEPCION no puede registrar asignaciones por permisos del backend.'
         }
       },
       {
@@ -186,20 +200,17 @@ export const routes: Routes = [
         data: {
           title: 'Reportes',
           breadcrumb: 'Reportes',
-          roles: ['ADMIN', 'RECEPCION'],
-          summary: 'Consulta reportes de inventario y habitaciones con opciones de exportacion.',
+          roles: rolesForShellRoute('reportes'),
+          summary: 'Consulta reportes de habitaciones e inventario según el rol.',
           endpoint:
             'GET /inventory/api/inventory/reports/* · GET /rooms/api/rooms/reports/* · endpoints /export?format=xlsx|csv|pdf',
-          note: 'La exportacion de reportes de habitaciones esta disponible solo para administradores.'
+          note: 'La exportacion queda reservada para administradores.'
         }
       },
       {
         path: 'forbidden',
-        component: ForbiddenPageComponent,
-        data: {
-          title: 'Acceso restringido',
-          breadcrumb: 'Sin acceso'
-        }
+        redirectTo: 'dashboard',
+        pathMatch: 'full'
       },
       {
         path: '**',

@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { catchError, forkJoin, of, startWith, take } from 'rxjs';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
@@ -41,6 +42,7 @@ const ASSIGNMENT_FLOW_OPTIONS = [
 })
 export class AssignmentsPageComponent implements OnInit {
   private readonly authService = inject(AuthService);
+  private readonly route = inject(ActivatedRoute);
   private readonly inventoryApi = inject(InventoryApiService);
   private readonly roomsApi = inject(RoomsApiService);
   private readonly usersApi = inject(UsersApiService);
@@ -124,10 +126,18 @@ export class AssignmentsPageComponent implements OnInit {
   protected readonly activeOverviewFilterCount = computed(() => this.activeOverviewFilters().length);
 
   ngOnInit(): void {
+    const roomIdParam = Number(this.route.snapshot.queryParamMap.get('roomId'));
+    if (!Number.isNaN(roomIdParam) && roomIdParam > 0) {
+      this.assignmentForm.patchValue({ roomId: roomIdParam });
+    }
     this.loadBaseData();
   }
 
   protected openMovementDialog(): void {
+    if (!this.canCreateMovement()) {
+      return;
+    }
+
     this.submitError.set(null);
     this.movementDialogVisible.set(true);
   }
@@ -182,7 +192,11 @@ export class AssignmentsPageComponent implements OnInit {
   }
 
   protected canLoadOverview(): boolean {
-    return this.authService.hasAnyRole(['ADMIN', 'ALMACENISTA', 'RECEPCION']);
+    return this.authService.hasAnyRole(['ADMIN', 'ALMACENISTA']);
+  }
+
+  protected canCreateMovement(): boolean {
+    return this.authService.hasAnyRole(['ADMIN', 'ALMACENISTA', 'SERVICIO']);
   }
 
   protected loadBaseData(): void {
@@ -217,6 +231,7 @@ export class AssignmentsPageComponent implements OnInit {
                     {
                       id: 0,
                       username: this.authService.username(),
+                      email: `${this.authService.username().toLowerCase().replace(/\s+/g, '.')}@hotel.local`,
                       roles: ['SERVICIO'],
                       active: true
                     }

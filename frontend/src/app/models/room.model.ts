@@ -23,6 +23,7 @@ export interface UpdateRoomStatusRequest {
 }
 
 export interface RoomValidationResponse {
+  id: number;
   number: string;
   type: string;
   status: string;

@@ -46,7 +46,6 @@ export const errorInterceptor: HttpInterceptorFn = (request, next) => {
         }
       } else if (error.status === 403) {
         notificationService.warn('Acceso restringido', message);
-        void router.navigate(['/forbidden']);
       } else if (error.status >= 500) {
         const shouldNotify = uiStateService.reportIssue({
           kind: 'server',

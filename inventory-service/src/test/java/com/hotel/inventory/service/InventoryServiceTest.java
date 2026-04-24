@@ -136,7 +136,7 @@ class InventoryServiceTest {
         when(supplyItemRepository.findById(3L)).thenReturn(Optional.of(item));
         when(supplyItemRepository.save(item)).thenReturn(item);
         when(roomClient.getRoomByNumber("204"))
-                .thenReturn(new RoomValidationResponse("204", "ESTANDAR", "DISPONIBLE", true));
+                .thenReturn(new RoomValidationResponse(9L, "204", "ESTANDAR", "DISPONIBLE", true));
 
         StockChangeResponse response = inventoryService.decreaseStock(
                 new InternalStockDecreaseRequest(3L, 5, "204", null, "HABITACION", "Laura", "Reposicion habitacion"),

@@ -268,6 +268,18 @@ export class InventoryPageComponent implements OnInit {
     return this.authService.hasAnyRole(['ADMIN', 'ALMACENISTA']);
   }
 
+  protected canDeactivateItem(): boolean {
+    return this.authService.hasRole('ADMIN');
+  }
+
+  protected canRegisterEntry(): boolean {
+    return this.authService.hasAnyRole(['ADMIN', 'ALMACENISTA']);
+  }
+
+  protected canRegisterDecrease(): boolean {
+    return this.authService.hasAnyRole(['ADMIN', 'ALMACENISTA', 'SERVICIO']);
+  }
+
   protected canReturnStock(): boolean {
     return this.authService.hasAnyRole(['ADMIN', 'ALMACENISTA', 'SERVICIO']);
   }

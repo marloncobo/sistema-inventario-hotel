@@ -1,0 +1,203 @@
+:host {
+  display: block;
+}
+
+.room-lookup-page {
+  max-width: 1480px;
+  margin: 0 auto;
+  padding: 0 0 2.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2.35rem;
+}
+
+.room-lookup-page .room-lookup-hero {
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.room-lookup-hero {
+  padding: 1rem 0 !important;
+}
+
+.room-lookup-hero__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 1.25rem 1.5rem;
+  flex-wrap: wrap;
+}
+
+.room-lookup-hero__copy {
+  max-width: 46rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.room-lookup-workbench {
+  padding: 0;
+  overflow: hidden;
+}
+
+.room-lookup-section-head {
+  padding: 1.35rem 1.5rem 1rem;
+  border-bottom: 1px solid var(--pp-border-soft, rgba(200, 146, 45, 0.09));
+  background: linear-gradient(180deg, rgba(252, 248, 241, 0.96), rgba(255, 255, 255, 0.98));
+}
+
+.room-lookup-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 1rem 1.25rem;
+  flex-wrap: wrap;
+  padding: 1.25rem 1.5rem 1.35rem;
+  border-bottom: 1px solid var(--pp-border-soft, rgba(200, 146, 45, 0.09));
+}
+
+.room-lookup-toolbar__primary {
+  flex: 1 1 16rem;
+  min-width: 0;
+}
+
+.room-lookup-toolbar__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.room-lookup-field {
+  flex: 1 1 160px;
+  min-width: min(100%, 11rem);
+  max-width: 22rem;
+}
+
+.room-lookup-field > span {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #8a6418;
+}
+
+.room-lookup-input {
+  width: 100%;
+  padding: 0.8rem 0.95rem;
+  border-radius: 0.9rem;
+  border: 1px solid rgba(214, 191, 152, 0.4);
+  background: white;
+  color: #5f4a38;
+  font-size: 0.92rem;
+  outline: none;
+}
+
+.room-lookup-input:focus {
+  border-color: #c8922d;
+  box-shadow: 0 0 0 3px rgba(200, 146, 45, 0.1);
+}
+
+.room-lookup-field-error {
+  display: block;
+  margin-top: 0.35rem;
+  color: #c2410c;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.room-lookup-api-banner {
+  margin: 0 1.5rem 1.25rem;
+}
+
+.room-lookup-result-block {
+  padding: 1.35rem 1.5rem 1.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.35rem;
+}
+
+.room-lookup-result-head {
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+}
+
+.room-lookup-metric-strip {
+  grid-template-columns: repeat(auto-fit, minmax(9.75rem, 1fr));
+}
+
+.room-lookup-metric__value--sm {
+  font-size: 1.05rem !important;
+  line-height: 1.25;
+  word-break: break-word;
+}
+
+.room-lookup-metric__value--md {
+  font-size: 1.35rem !important;
+}
+
+.room-lookup-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.85rem;
+  padding-top: 0.15rem;
+}
+
+.code-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  padding: 0.4rem 0.72rem;
+  background: rgba(200, 146, 45, 0.08);
+  color: #8e641c;
+  letter-spacing: 0.03em;
+}
+
+.room-lookup-cta {
+  text-decoration: none !important;
+}
+
+.btn-gold-add {
+  background: #c8922d !important;
+  border: none !important;
+  padding: 0.8rem 1.75rem !important;
+  border-radius: 10px !important;
+  font-weight: 600 !important;
+  font-size: 0.9rem !important;
+  color: white !important;
+  box-shadow: 0 4px 15px rgba(200, 146, 45, 0.25) !important;
+  transition: all 0.3s ease !important;
+}
+
+.btn-gold-add:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(200, 146, 45, 0.35) !important;
+}
+
+@media (max-width: 768px) {
+  .room-lookup-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .room-lookup-toolbar__actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .room-lookup-toolbar__actions .btn-gold-add {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .room-lookup-field {
+    max-width: none;
+  }
+}

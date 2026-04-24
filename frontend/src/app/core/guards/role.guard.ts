@@ -10,11 +10,16 @@ function readRoles(route: ActivatedRouteSnapshot): AppRole[] {
 export const roleGuard: CanActivateFn = (route) => {
   const authService = inject(AuthService);
   const router = inject(Router);
+
   const requiredRoles = readRoles(route);
 
-  if (!requiredRoles.length || authService.hasAnyRole(requiredRoles)) {
-    return true;
+  if (!requiredRoles.length) {
+    return router.createUrlTree(['/dashboard']);
   }
 
-  return router.createUrlTree(['/forbidden']);
+  if (!authService.hasAnyRole(requiredRoles)) {
+    return router.createUrlTree(['/dashboard']);
+  }
+
+  return true;
 };
