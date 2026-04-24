@@ -148,7 +148,7 @@ import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
                   </div>
                   <div class="user-details">
                     <span class="user-name">{{ user.username }}</span>
-                    <span class="user-email">{{ user.username }}&#64;lunara.com</span>
+                    <span class="user-email">{{ user.email }}</span>
                   </div>
                 </div>
               </td>
@@ -239,7 +239,6 @@ import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
               <p>{{ error }}</p>
             </article>
           }
-
           <div class="lunara-field">
             <label>NOMBRE COMPLETO *</label>
             <input pInputText formControlName="username" placeholder="Juan López" />
@@ -250,7 +249,10 @@ import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
 
           <div class="lunara-field">
             <label>CORREO ELECTRÓNICO *</label>
-            <input pInputText type="email" placeholder="juan&#64;lunara.com" />
+            <input pInputText type="email" formControlName="email" placeholder="juan&#64;lunara.com" />
+            @if (showControlError('email')) {
+              <small class="error-text">{{ controlError('email') }}</small>
+            }
           </div>
 
           <div class="lunara-field">
@@ -1069,6 +1071,7 @@ export class UsersPageComponent implements OnInit {
 
   protected readonly form = this.fb.nonNullable.group({
     username: ['', [Validators.required, notBlankValidator]],
+    email: ['', [Validators.required, Validators.email, notBlankValidator]],
     password: ['', [Validators.minLength(8), passwordStrengthValidator]],
     roles: [[] as AppRole[], [Validators.required]],
     active: [true]
@@ -1111,6 +1114,7 @@ export class UsersPageComponent implements OnInit {
     this.editingUser.set(null);
     this.form.reset({
       username: '',
+      email: '',
       password: '',
       roles: ['RECEPCION'],
       active: true
@@ -1123,6 +1127,7 @@ export class UsersPageComponent implements OnInit {
     this.editingUser.set(user);
     this.form.reset({
       username: user.username,
+      email: user.email,
       password: '',
       roles: [...user.roles],
       active: user.active
@@ -1141,6 +1146,7 @@ export class UsersPageComponent implements OnInit {
     const raw = this.form.getRawValue();
     const payload = {
       username: raw.username.trim(),
+      email: raw.email.trim().toLowerCase(),
       password: raw.password.trim() ? raw.password.trim() : null,
       roles: raw.roles,
       active: raw.active
@@ -1190,6 +1196,13 @@ export class UsersPageComponent implements OnInit {
           this.form.controls.username.markAsTouched();
         }
 
+        if (message.toLowerCase().includes('email') || message.toLowerCase().includes('correo')) {
+          this.form.controls.email.setErrors({
+            ...(this.form.controls.email.errors ?? {}),
+            server: message
+          });
+          this.form.controls.email.markAsTouched();
+        }
         if (message.toLowerCase().includes('contrasena')) {
           this.form.controls.password.setErrors({
             ...(this.form.controls.password.errors ?? {}),
@@ -1206,6 +1219,7 @@ export class UsersPageComponent implements OnInit {
     this.editingUser.set(null);
     this.form.reset({
       username: '',
+      email: '',
       password: '',
       roles: [],
       active: true
@@ -1240,12 +1254,12 @@ export class UsersPageComponent implements OnInit {
     return labels[Math.abs(user.id) % labels.length];
   }
 
-  protected showControlError(controlName: 'username' | 'password' | 'roles'): boolean {
+  protected showControlError(controlName: 'username' | 'email' | 'password' | 'roles'): boolean {
     const control = this.form.controls[controlName];
     return control.invalid && control.touched;
   }
 
-  protected controlError(controlName: 'username' | 'password' | 'roles'): string {
+  protected controlError(controlName: 'username' | 'email' | 'password' | 'roles'): string {
     const control = this.form.controls[controlName];
 
     if (control.errors?.['server']) {
@@ -1260,6 +1274,9 @@ export class UsersPageComponent implements OnInit {
       return 'No puede quedar en blanco.';
     }
 
+    if (control.errors?.['email']) {
+      return 'Ingresa un correo electronico valido.';
+    }
     if (control.errors?.['minlength']) {
       return 'Debe tener al menos 8 caracteres.';
     }

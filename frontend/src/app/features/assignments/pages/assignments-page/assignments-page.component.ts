@@ -231,6 +231,7 @@ export class AssignmentsPageComponent implements OnInit {
                     {
                       id: 0,
                       username: this.authService.username(),
+                      email: `${this.authService.username().toLowerCase().replace(/\s+/g, '.')}@hotel.local`,
                       roles: ['SERVICIO'],
                       active: true
                     }
