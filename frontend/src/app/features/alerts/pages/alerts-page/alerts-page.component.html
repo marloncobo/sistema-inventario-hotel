@@ -52,40 +52,30 @@
   </section>
 
   <section class="surface-card alerts-workbench admin-content-block">
-    <div class="alerts-reload-bar admin-filter-block">
-      <button
-        pButton
-        type="button"
-        class="alerts-btn-reload"
-        icon="pi pi-refresh"
-        label="Recargar"
-        [loading]="loading()"
-        (click)="loadData()"
-      ></button>
-    </div>
-
     <div class="alerts-tabbed-panel">
       <div class="alerts-tabs" role="tablist">
-        <button
-          type="button"
-          role="tab"
-          class="alerts-tabs__tab"
-          [attr.aria-selected]="alertsWorkbenchTab() === 'emitted'"
-          [class.alerts-tabs__tab--active]="alertsWorkbenchTab() === 'emitted'"
-          (click)="setAlertsWorkbenchTab('emitted')"
-        >
-          Alertas emitidas
-        </button>
-        <button
-          type="button"
-          role="tab"
-          class="alerts-tabs__tab"
-          [attr.aria-selected]="alertsWorkbenchTab() === 'lowStock'"
-          [class.alerts-tabs__tab--active]="alertsWorkbenchTab() === 'lowStock'"
-          (click)="setAlertsWorkbenchTab('lowStock')"
-        >
-          Items con stock bajo
-        </button>
+        <div class="alerts-tabs-group" style="display: flex;">
+          <button
+            type="button"
+            role="tab"
+            class="alerts-tabs__tab"
+            [attr.aria-selected]="alertsWorkbenchTab() === 'emitted'"
+            [class.alerts-tabs__tab--active]="alertsWorkbenchTab() === 'emitted'"
+            (click)="setAlertsWorkbenchTab('emitted')"
+          >
+            Alertas emitidas
+          </button>
+          <button
+            type="button"
+            role="tab"
+            class="alerts-tabs__tab"
+            [attr.aria-selected]="alertsWorkbenchTab() === 'lowStock'"
+            [class.alerts-tabs__tab--active]="alertsWorkbenchTab() === 'lowStock'"
+            (click)="setAlertsWorkbenchTab('lowStock')"
+          >
+            Items con stock bajo
+          </button>
+        </div>
       </div>
 
       @if (alertsWorkbenchTab() === 'emitted') {
@@ -100,7 +90,18 @@
                 <p>Bitacora principal para revisar el estado de las alertas generadas.</p>
               </div>
             </div>
-            <span class="alerts-panel__badge alerts-panel__badge--records">{{ alerts().length }} registros</span>
+            <div class="alerts-panel__meta">
+              <span class="alerts-panel__badge alerts-panel__badge--records">{{ alerts().length }} registros</span>
+              <button
+                pButton
+                type="button"
+                class="alerts-btn-reload"
+                icon="pi pi-refresh"
+                label="Recargar"
+                [loading]="loading()"
+                (click)="loadData()"
+              ></button>
+            </div>
           </div>
 
           <div class="alerts-panel__body alerts-panel__body--table">
@@ -184,7 +185,18 @@
                 <p>Consulta operativa derivada del stock actual del inventario.</p>
               </div>
             </div>
-            <span class="alerts-panel__badge alerts-panel__badge--records">{{ lowStockItems().length }} registros</span>
+            <div class="alerts-panel__meta">
+              <span class="alerts-panel__badge alerts-panel__badge--records">{{ lowStockItems().length }} registros</span>
+              <button
+                pButton
+                type="button"
+                class="alerts-btn-reload"
+                icon="pi pi-refresh"
+                label="Recargar"
+                [loading]="loading()"
+                (click)="loadData()"
+              ></button>
+            </div>
           </div>
 
           <div class="alerts-panel__body alerts-panel__body--table">

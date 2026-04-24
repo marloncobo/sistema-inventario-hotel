@@ -35,6 +35,15 @@
   align-items: center;
   gap: 1rem;
   min-height: 132px;
+  background: #ffffff;
+  border: 1px solid rgba(214, 191, 152, 0.28);
+  transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
+}
+
+.reports-summary-card:hover {
+  border-color: rgba(200, 146, 45, 0.34);
+  box-shadow: 0 8px 24px rgba(45, 32, 22, 0.06);
+  transform: translateY(-2px);
 }
 
 .reports-summary-card__icon {
@@ -159,6 +168,12 @@
 
 :host ::ng-deep .reports-filter-shell__actions .p-button:hover {
   transform: translateY(-1px);
+}
+
+:host ::ng-deep .reports-btn-primary.p-button,
+:host ::ng-deep .reports-btn-primary.p-button .p-button-label,
+:host ::ng-deep .reports-btn-primary.p-button .p-button-icon {
+  color: #ffffff !important;
 }
 
 .reports-filter-shell .field {
@@ -297,6 +312,13 @@
 
 :host ::ng-deep .reports-table .p-datatable-tbody > tr:last-child > td {
   border-bottom: none;
+}
+
+:host ::ng-deep .reports-table .p-tag.p-tag-success,
+:host ::ng-deep .reports-table .p-tag-success {
+  background: rgba(200, 146, 45, 0.14) !important;
+  color: #8e641c !important;
+  border: 1px solid rgba(200, 146, 45, 0.24) !important;
 }
 
 :host ::ng-deep .reports-table .p-paginator {

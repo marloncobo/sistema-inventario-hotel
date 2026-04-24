@@ -1,15 +1,17 @@
 <div class="dashboard-page">
   <ng-template #illustration let-art="art" let-size="size">
-    <div class="dashboard-art" [attr.data-art]="art" [attr.data-size]="size || 'card'" aria-hidden="true">
+    
+  <div class="dashboard-art" [attr.data-art]="art" [attr.data-size]="size || 'card'" aria-hidden="true">
       <span class="dashboard-art__shadow"></span>
       <span class="dashboard-art__plate"></span>
+      <span class="dashboard-art__spark dashboard-art__spark--one"></span>
+      <span class="dashboard-art__spark dashboard-art__spark--two"></span>
       <span class="dashboard-art__primary"></span>
       <span class="dashboard-art__secondary"></span>
       <span class="dashboard-art__accent"></span>
-      <span class="dashboard-art__spark dashboard-art__spark--one"></span>
-      <span class="dashboard-art__spark dashboard-art__spark--two"></span>
     </div>
-  </ng-template>
+
+</ng-template>
 
   @if (loading()) {
     <section class="surface-card dashboard-loading">
@@ -19,16 +21,9 @@
   } @else {
     <header class="surface-card dashboard-hero">
       <div class="dashboard-hero__copy">
-        <span class="dashboard-eyebrow">Panel operativo</span>
+        <span class="dashboard-date">{{ todayLabel }}</span>
         <h1>Hola, {{ displayName() }}</h1>
         <p>{{ headerSummary() }}</p>
-      </div>
-
-      <div class="dashboard-hero__meta">
-        <span class="dashboard-meta-pill">{{ todayLabel }}</span>
-        <span class="dashboard-meta-pill" [attr.data-tone]="statusBanner().tone">
-          {{ statusChipLabel() }}
-        </span>
       </div>
     </header>
 
@@ -53,187 +48,7 @@
       </section>
     }
 
-    <section class="dashboard-main">
-      @if (canViewRooms()) {
-        <article class="surface-card dashboard-panorama">
-          <div class="dashboard-section-head">
-            <div>
-              <h2>Panorama operativo</h2>
-              <p>Disponibilidad actual y lectura general de la operacion.</p>
-            </div>
 
-            @if (canViewInventory()) {
-              <div class="dashboard-coverage-card" [attr.data-tone]="inventoryHealthTone()">
-                <span>Cobertura visible</span>
-                <strong>{{ inventoryCoveragePercentage() }}%</strong>
-                <small>{{ inventoryCoverageHelper() }}</small>
-              </div>
-            }
-          </div>
-
-          <div class="dashboard-panorama__body">
-            <div class="dashboard-donut">
-              <div class="dashboard-donut__ring" [style.background]="roomPanoramaChart()">
-                <div class="dashboard-donut__center">
-                  <strong>{{ formatNumber(activeRoomsCount()) }}</strong>
-                  <span>Habitaciones activas</span>
-                  <small>{{ formatNumber(visibleRoomsCount()) }} en vista general</small>
-                </div>
-              </div>
-            </div>
-
-            @if (roomBreakdown().length) {
-              <div class="dashboard-breakdown">
-                @for (item of roomBreakdown(); track item.label) {
-                  <article class="dashboard-breakdown__item" [attr.data-tone]="item.tone">
-                    <div class="dashboard-breakdown__head">
-                      <div>
-                        <strong>{{ item.label }}</strong>
-                        <small>{{ item.helper }}</small>
-                      </div>
-
-                      <span>{{ formatNumber(item.value) }} ({{ item.share }}%)</span>
-                    </div>
-
-                    <div class="dashboard-breakdown__track">
-                      <span [style.width.%]="item.share"></span>
-                    </div>
-                  </article>
-                }
-              </div>
-            } @else {
-              <div class="dashboard-empty-inline">
-                No hay habitaciones visibles para resumir en este momento.
-              </div>
-            }
-          </div>
-
-          <div class="dashboard-panorama__status" [attr.data-tone]="statusBanner().tone">
-            <strong>{{ operationalHighlightTitle() }}</strong>
-            <p>{{ operationalHighlightText() }}</p>
-          </div>
-        </article>
-      }
-
-      <article class="surface-card dashboard-insights" [class.dashboard-insights--full]="!canViewRooms()">
-        <div class="dashboard-section-head">
-          <div>
-            <h2>Lo importante hoy</h2>
-            <p>Lectura rapida de los puntos que mas pesan sobre la operacion.</p>
-          </div>
-        </div>
-
-        @if (importantToday().length) {
-          <div class="dashboard-insights__list">
-            @for (item of importantToday(); track item.title) {
-              <article class="dashboard-insight" [attr.data-tone]="item.tone">
-                <div class="dashboard-insight__art">
-                  <ng-container
-                    [ngTemplateOutlet]="illustration"
-                    [ngTemplateOutletContext]="{ art: item.art, size: 'mini' }"
-                  />
-                </div>
-
-                <div class="dashboard-insight__content">
-                  <strong>{{ item.title }}</strong>
-                  <p>{{ item.text }}</p>
-                </div>
-              </article>
-            }
-          </div>
-        } @else {
-          <div class="dashboard-empty-inline">
-            Aun no hay suficiente informacion para construir insights en esta vista.
-          </div>
-        }
-      </article>
-    </section>
-
-    @if (canViewMovements() || canViewAssignments()) {
-      <section class="dashboard-activity">
-        @if (canViewMovements()) {
-          <article class="surface-card dashboard-activity-card">
-            <div class="dashboard-section-head">
-              <div>
-                <h2>Movimientos recientes</h2>
-                <p>Trazabilidad de los ultimos {{ activityWindowDays }} dias.</p>
-              </div>
-            </div>
-
-            @if (movementItems().length) {
-              <div class="dashboard-activity-list">
-                @for (item of movementItems(); track item.id) {
-                  <article class="dashboard-activity-item">
-                    <div class="dashboard-activity-item__copy">
-                      <strong>{{ item.title }}</strong>
-                      <p>{{ item.detail }}</p>
-                    </div>
-
-                    <div class="dashboard-activity-item__meta">
-                      <span class="dashboard-pill">{{ item.badge }}</span>
-                      <small>{{ item.stamp }}</small>
-                    </div>
-                  </article>
-                }
-              </div>
-            } @else {
-              <div class="dashboard-empty-state">
-                <ng-container
-                  [ngTemplateOutlet]="illustration"
-                  [ngTemplateOutletContext]="{ art: 'box', size: 'empty' }"
-                />
-
-                <div class="dashboard-empty-state__copy">
-                  <strong>Sin movimientos recientes</strong>
-                  <p>No hay registros cargados en la ultima semana.</p>
-                </div>
-              </div>
-            }
-          </article>
-        }
-
-        @if (canViewAssignments()) {
-          <article class="surface-card dashboard-activity-card">
-            <div class="dashboard-section-head">
-              <div>
-                <h2>Asignaciones recientes</h2>
-                <p>Entregas de insumos registradas en los ultimos {{ activityWindowDays }} dias.</p>
-              </div>
-            </div>
-
-            @if (assignmentItems().length) {
-              <div class="dashboard-activity-list">
-                @for (item of assignmentItems(); track item.id) {
-                  <article class="dashboard-activity-item">
-                    <div class="dashboard-activity-item__copy">
-                      <strong>{{ item.title }}</strong>
-                      <p>{{ item.detail }}</p>
-                    </div>
-
-                    <div class="dashboard-activity-item__meta">
-                      <span class="dashboard-pill">{{ item.badge }}</span>
-                      <small>{{ item.stamp }}</small>
-                    </div>
-                  </article>
-                }
-              </div>
-            } @else {
-              <div class="dashboard-empty-state">
-                <ng-container
-                  [ngTemplateOutlet]="illustration"
-                  [ngTemplateOutletContext]="{ art: 'clipboard', size: 'empty' }"
-                />
-
-                <div class="dashboard-empty-state__copy">
-                  <strong>Sin asignaciones recientes</strong>
-                  <p>No hay entregas registradas en la ultima semana.</p>
-                </div>
-              </div>
-            }
-          </article>
-        }
-      </section>
-    }
 
     <section class="surface-card dashboard-banner" [attr.data-tone]="statusBanner().tone">
       <div class="dashboard-banner__art dashboard-banner__art--left">
@@ -247,13 +62,6 @@
         <span>Estado general</span>
         <h2>{{ statusBanner().title }}</h2>
         <p>{{ statusBanner().text }}</p>
-      </div>
-
-      <div class="dashboard-banner__art dashboard-banner__art--right">
-        <ng-container
-          [ngTemplateOutlet]="illustration"
-          [ngTemplateOutletContext]="{ art: bannerRightArt(), size: 'banner' }"
-        />
       </div>
     </section>
   }

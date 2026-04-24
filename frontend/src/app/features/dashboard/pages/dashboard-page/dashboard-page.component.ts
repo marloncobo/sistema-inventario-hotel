@@ -74,6 +74,7 @@ export class DashboardPageComponent implements OnInit {
   private readonly roomsApi = inject(RoomsApiService);
   private readonly numberFormatter = new Intl.NumberFormat('es-CO');
   private readonly headerDateFormatter = new Intl.DateTimeFormat('es-CO', {
+    weekday: 'long',
     day: 'numeric',
     month: 'long',
     year: 'numeric'
@@ -605,13 +606,9 @@ export class DashboardPageComponent implements OnInit {
     };
   });
 
-  protected readonly bannerLeftArt = computed<DashboardArt>(() =>
-    this.canViewRooms() ? 'bed' : 'shield'
-  );
+  protected readonly bannerLeftArt = computed<DashboardArt>(() => 'door');
 
-  protected readonly bannerRightArt = computed<DashboardArt>(() =>
-    this.canViewInventory() ? 'package' : 'chart'
-  );
+  protected readonly bannerRightArt = computed<DashboardArt>(() => 'clipboard');
 
   ngOnInit(): void {
     this.loadDashboard();

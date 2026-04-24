@@ -18,6 +18,12 @@
   gap: 0.75rem;
 }
 
+:host ::ng-deep .movements-btn-primary.p-button,
+:host ::ng-deep .movements-btn-primary.p-button .p-button-label,
+:host ::ng-deep .movements-btn-primary.p-button .p-button-icon {
+  color: #ffffff !important;
+}
+
 .movements-summary-card,
 .movements-filter-card,
 .movements-logbook {
@@ -33,6 +39,14 @@
   align-items: center;
   gap: 1rem;
   min-height: 132px;
+  background: #ffffff !important;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
+}
+
+.movements-summary-card:hover {
+  border-color: rgba(200, 146, 45, 0.34);
+  box-shadow: 0 8px 24px rgba(45, 32, 22, 0.06);
+  transform: translateY(-2px);
 }
 
 .movements-summary-card__icon,

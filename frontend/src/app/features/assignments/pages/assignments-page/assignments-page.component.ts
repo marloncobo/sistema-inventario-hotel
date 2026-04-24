@@ -4,9 +4,9 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { catchError, forkJoin, of, startWith, take } from 'rxjs';
 import { ButtonModule } from 'primeng/button';
+import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
 import { TableModule } from 'primeng/table';
-import { TagModule } from 'primeng/tag';
 import { AuthService } from '@core/services/auth.service';
 import { InventoryApiService } from '@core/services/api/inventory-api.service';
 import { RoomsApiService } from '@core/services/api/rooms-api.service';
@@ -16,7 +16,6 @@ import { extractApiErrorMessage, extractApiFieldErrors } from '@models/api-error
 import type { AppUser } from '@models/app-user.model';
 import type { SupplyItem } from '@models/inventory.model';
 import type { AssignSupplyRequest, AssignmentFilters, Room, RoomSupplyAssignment } from '@models/room.model';
-import { EmptyStateComponent } from '@shared/components/empty-state/empty-state.component';
 import { MinNumberDirective } from '@shared/directives/min-number.directive';
 import { notBlankValidator } from '@shared/utils/app-validators.util';
 import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
@@ -32,11 +31,10 @@ const ASSIGNMENT_FLOW_OPTIONS = [
     CommonModule,
     ReactiveFormsModule,
     ButtonModule,
+    DialogModule,
     InputTextModule,
-    EmptyStateComponent,
     MinNumberDirective,
-    TableModule,
-    TagModule
+    TableModule
   ],
   templateUrl: './assignments-page.component.html',
   styleUrls: ['./assignments-page.component.css', '../../../../shared/styles/premium-panels.css']
@@ -59,6 +57,9 @@ export class AssignmentsPageComponent implements OnInit {
   protected readonly saving = signal(false);
   protected readonly historyLoading = signal(false);
   protected readonly submitError = signal<string | null>(null);
+  protected readonly movementDialogVisible = signal(false);
+  /** Vista activa cuando el usuario puede ver habitacion y global a la vez. */
+  protected readonly catalogView = signal<'room' | 'global'>('room');
 
   protected readonly assignmentForm = this.fb.group({
     roomId: this.fb.nonNullable.control(0, [Validators.required, Validators.min(1)]),
@@ -126,6 +127,52 @@ export class AssignmentsPageComponent implements OnInit {
     this.loadBaseData();
   }
 
+  protected openMovementDialog(): void {
+    this.submitError.set(null);
+    this.movementDialogVisible.set(true);
+  }
+
+  protected onMovementDialogVisibleChange(visible: boolean): void {
+    this.movementDialogVisible.set(visible);
+    if (!visible) {
+      this.submitError.set(null);
+      this.assignmentForm.markAsUntouched();
+    }
+  }
+
+  protected selectCatalogView(view: 'room' | 'global'): void {
+    this.catalogView.set(view);
+  }
+
+  protected showAssignmentsCatalog(): boolean {
+    return this.canBrowseRooms() || this.canLoadOverview();
+  }
+
+  protected showCatalogTabs(): boolean {
+    return this.canBrowseRooms() && this.canLoadOverview();
+  }
+
+  protected showRoomHistoryPanel(): boolean {
+    return this.canBrowseRooms() && (!this.canLoadOverview() || this.catalogView() === 'room');
+  }
+
+  protected showGlobalHistoryPanel(): boolean {
+    return this.canLoadOverview() && (!this.canBrowseRooms() || this.catalogView() === 'global');
+  }
+
+  protected historyRoomNumber(): string | null {
+    const id = this.historyForm.controls.roomId.getRawValue();
+    const room = this.rooms().find((r) => r.id === id);
+    return room ? room.number : null;
+  }
+
+  protected roomHistoryEmptyHint(): string {
+    if (this.historyForm.controls.roomId.getRawValue() < 1) {
+      return 'Elige una habitacion y pulsa Ver historial para llenar el catalogo.';
+    }
+    return 'Esta habitacion aun no registra movimientos en el sistema.';
+  }
+
   protected isServiceRole(): boolean {
     return this.authService.hasRole('SERVICIO');
   }
@@ -179,6 +226,10 @@ export class AssignmentsPageComponent implements OnInit {
 
           if (!this.assignmentForm.controls.deliveredBy.getRawValue() && this.serviceUsers().length) {
             this.assignmentForm.controls.deliveredBy.setValue(this.serviceUsers()[0]!.username);
+          }
+
+          if (!result.rooms.length && this.canLoadOverview()) {
+            this.catalogView.set('global');
           }
 
           this.loading.set(false);
@@ -263,6 +314,7 @@ export class AssignmentsPageComponent implements OnInit {
         next: () => {
           this.saving.set(false);
           this.notificationService.success('Asignaciones', 'Asignación registrada.');
+          this.movementDialogVisible.set(false);
           this.assignmentForm.reset({
             roomId: this.isServiceRole() ? 0 : raw.roomId,
             itemId: 0,
@@ -308,14 +360,6 @@ export class AssignmentsPageComponent implements OnInit {
     }
 
     return 'Salida';
-  }
-
-  protected flowSeverity(value: string | null | undefined): 'info' | 'warn' {
-    if (value === 'HABITACION') {
-      return 'info';
-    }
-
-    return 'warn';
   }
 
   protected clearOverviewFilters(): void {

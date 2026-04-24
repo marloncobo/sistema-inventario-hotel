@@ -79,18 +79,6 @@
     </div>
 
     <form [formGroup]="filtersForm" class="reports-filter-shell admin-filter-block" (ngSubmit)="loadReport()">
-      <div class="reports-filter-shell__header">
-        <div>
-          <h3>Filtros de consulta</h3>
-          <p>Refina la busqueda y ejecuta la consulta o exportacion desde un solo bloque.</p>
-        </div>
-
-        <span class="reports-badge">
-          <i [class]="currentReportMeta().icon"></i>
-          {{ currentReportMeta().label }}
-        </span>
-      </div>
-
       <div class="filters-grid reports-filters-grid">
         <label class="field">
           <span>Fecha inicial</span>
@@ -131,6 +119,7 @@
         <button
           pButton
           type="submit"
+          class="reports-btn-primary"
           icon="pi pi-filter"
           label="Consultar"
           [loading]="loading()"
