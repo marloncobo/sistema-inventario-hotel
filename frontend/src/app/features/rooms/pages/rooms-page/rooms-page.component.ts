@@ -247,6 +247,10 @@ export class RoomsPageComponent implements OnInit {
   }
 
   protected openCreateDialog(): void {
+    if (!this.canCreate()) {
+      return;
+    }
+
     this.createSubmitError.set(null);
     this.createForm.reset({
       number: '',
@@ -260,6 +264,10 @@ export class RoomsPageComponent implements OnInit {
   }
 
   protected submitCreate(): void {
+    if (!this.canCreate()) {
+      return;
+    }
+
     this.createSubmitError.set(null);
     this.clearCustomCreateError('capacity', 'familyCapacity');
 
@@ -323,6 +331,10 @@ export class RoomsPageComponent implements OnInit {
   }
 
   protected openStatusDialog(room: Room): void {
+    if (!this.canUpdateStatus()) {
+      return;
+    }
+
     this.statusSubmitError.set(null);
     this.statusTargetRoom.set(room);
     this.statusForm.reset({ status: room.status });
@@ -330,6 +342,10 @@ export class RoomsPageComponent implements OnInit {
   }
 
   protected submitStatus(): void {
+    if (!this.canUpdateStatus()) {
+      return;
+    }
+
     this.statusSubmitError.set(null);
     const room = this.statusTargetRoom();
     if (this.statusForm.invalid || !room) {

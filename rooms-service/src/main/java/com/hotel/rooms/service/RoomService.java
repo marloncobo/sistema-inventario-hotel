@@ -74,7 +74,7 @@ public class RoomService {
     public RoomValidationResponse getRoomByNumber(String number) {
         Room room = roomRepository.findByNumber(number)
                 .orElseThrow(() -> new NotFoundException("No existe la habitacion con numero " + number));
-        return new RoomValidationResponse(room.getNumber(), room.getType(), room.getStatus(), room.getActive());
+        return new RoomValidationResponse(room.getId(), room.getNumber(), room.getType(), room.getStatus(), room.getActive());
     }
 
     @Transactional

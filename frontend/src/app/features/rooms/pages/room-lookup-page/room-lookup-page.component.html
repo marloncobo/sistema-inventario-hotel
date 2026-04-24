@@ -1,0 +1,116 @@
+<div class="room-lookup-page pp-root">
+  <header class="room-lookup-hero pp-surface">
+    <div class="room-lookup-hero__top">
+      <div class="room-lookup-hero__copy">
+        <h1 class="pp-hero-title">Consulta por número</h1>
+        <p class="pp-hero-lede">
+          Escribe tres dígitos y pulsa Consultar. Si tienes acceso a Asignaciones, usa el identificador interno del
+          resultado al registrar una entrega.
+        </p>
+      </div>
+    </div>
+  </header>
+
+  <section class="surface-card catalogs-workbench room-lookup-workbench admin-content-block pp-surface-solid">
+    <div class="pp-section-head room-lookup-section-head">
+      <div class="pp-section-head__copy">
+        <span class="pp-eyebrow">Habitaciones</span>
+        <h2 class="pp-section-head__title">Buscar por número</h2>
+        <p class="pp-section-head__desc">
+          La consulta usa el mismo criterio que en operación: número de tres dígitos (por ejemplo 204).
+        </p>
+      </div>
+    </div>
+
+    <form [formGroup]="form" class="room-lookup-toolbar" (ngSubmit)="submitLookup()">
+      <div class="room-lookup-toolbar__primary">
+        <label class="field room-lookup-field">
+          <span>Número de habitación</span>
+          <input
+            pInputText
+            type="text"
+            formControlName="number"
+            maxlength="3"
+            placeholder="Ej. 204"
+            autocomplete="off"
+            class="room-lookup-input"
+            inputmode="numeric"
+          />
+          @if (showNumberError()) {
+            <small class="room-lookup-field-error">{{ numberError() }}</small>
+          }
+        </label>
+      </div>
+      <div class="room-lookup-toolbar__actions">
+        <button
+          pButton
+          type="submit"
+          label="Consultar"
+          icon="pi pi-search"
+          [loading]="loading()"
+          class="btn-gold-add"
+        ></button>
+      </div>
+    </form>
+
+    @if (lookupError(); as err) {
+      <article class="validation-banner validation-banner--danger room-lookup-api-banner">
+        <strong>
+          <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
+          No se pudo completar la consulta
+        </strong>
+        <p>{{ err }}</p>
+      </article>
+    }
+
+    @if (result(); as room) {
+      <div class="room-lookup-result-block">
+        <div class="pp-section-head room-lookup-result-head">
+          <div class="pp-section-head__copy">
+            <span class="pp-eyebrow">Resultado</span>
+            <h2 class="pp-section-head__title">Habitación {{ room.number }}</h2>
+            <p class="pp-section-head__desc">Datos devueltos por el servicio de habitaciones.</p>
+          </div>
+        </div>
+
+        <div class="pp-metric-strip room-lookup-metric-strip">
+          <article class="pp-metric-card">
+            <p class="pp-metric-card__label">Número</p>
+            <p class="pp-metric-card__value room-lookup-metric__value--md">{{ room.number }}</p>
+            <p class="pp-metric-card__hint">Identificador visible</p>
+          </article>
+          <article class="pp-metric-card">
+            <p class="pp-metric-card__label">Tipo</p>
+            <p class="pp-metric-card__value room-lookup-metric__value--sm">{{ room.type }}</p>
+          </article>
+          <article class="pp-metric-card">
+            <p class="pp-metric-card__label">Estado</p>
+            <p class="pp-metric-card__value room-lookup-metric__value--sm">{{ room.status }}</p>
+          </article>
+          <article class="pp-metric-card">
+            <p class="pp-metric-card__label">Activa</p>
+            <p class="pp-metric-card__value room-lookup-metric__value--md">{{ room.active ? 'Sí' : 'No' }}</p>
+          </article>
+          <article class="pp-metric-card">
+            <p class="pp-metric-card__label">ID interno</p>
+            <p class="pp-metric-card__value room-lookup-metric__value--md">
+              <span class="code-chip">{{ room.id }}</span>
+            </p>
+            <p class="pp-metric-card__hint">Para el formulario de asignaciones</p>
+          </article>
+        </div>
+
+        <div class="room-lookup-actions">
+          <a
+            pButton
+            [routerLink]="['/asignaciones']"
+            [queryParams]="{ roomId: room.id }"
+            label="Ir a asignaciones"
+            icon="pi pi-arrow-right"
+            class="btn-gold-add room-lookup-cta"
+          ></a>
+        </div>
+      </div>
+    }
+  </section>
+</div>

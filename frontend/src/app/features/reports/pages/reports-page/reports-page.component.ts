@@ -199,7 +199,16 @@ export class ReportsPageComponent implements OnInit {
     return this.authService.hasRole('ADMIN');
   }
 
+  protected canViewInventoryReports(): boolean {
+    return this.isAdmin();
+  }
+
+
   protected setReport(report: ReportKey): void {
+    if ((report === 'inventory' || report === 'top-used') && !this.canViewInventoryReports()) {
+      return;
+    }
+
     this.activeReport.set(report);
     this.loadReport();
   }
@@ -220,8 +229,14 @@ export class ReportsPageComponent implements OnInit {
   }
 
   protected loadReport(): void {
-    this.loading.set(true);
     const report = this.activeReport();
+
+    if ((report === 'inventory' || report === 'top-used') && !this.canViewInventoryReports()) {
+      this.activeReport.set('consumption');
+      return this.loadReport();
+    }
+
+    this.loading.set(true);
     const filters = this.filtersForm.getRawValue();
 
     const request$: Observable<
