@@ -38,7 +38,11 @@ const ASSIGNMENT_FLOW_OPTIONS = [
     TableModule
   ],
   templateUrl: './assignments-page.component.html',
-  styleUrls: ['./assignments-page.component.css', '../../../../shared/styles/premium-panels.css']
+  styleUrls: [
+    './assignments-page.component.css',
+    './assignments-page.visuals.css',
+    '../../../../shared/styles/premium-panels.css'
+  ]
 })
 export class AssignmentsPageComponent implements OnInit {
   private readonly authService = inject(AuthService);
@@ -127,10 +131,6 @@ export class AssignmentsPageComponent implements OnInit {
   }
 
   protected openMovementDialog(): void {
-    if (!this.canCreateMovement()) {
-      return;
-    }
-
     this.submitError.set(null);
     this.movementDialogVisible.set(true);
   }
@@ -151,16 +151,16 @@ export class AssignmentsPageComponent implements OnInit {
     return this.authService.hasRole('SERVICIO');
   }
 
+  protected canCreateMovement(): boolean {
+    return this.authService.hasAnyRole(['ADMIN', 'ALMACENISTA', 'SERVICIO']);
+  }
+
   protected canBrowseRooms(): boolean {
     return this.rooms().length > 0;
   }
 
   protected canLoadOverview(): boolean {
-    return this.authService.hasAnyRole(['ADMIN', 'ALMACENISTA']);
-  }
-
-  protected canCreateMovement(): boolean {
-    return this.authService.hasAnyRole(['ADMIN', 'ALMACENISTA', 'SERVICIO']);
+    return this.authService.hasAnyRole(['ADMIN', 'ALMACENISTA', 'RECEPCION']);
   }
 
   protected loadBaseData(): void {

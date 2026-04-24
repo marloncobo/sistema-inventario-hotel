@@ -154,6 +154,7 @@
                         role="listitem"
                       >
                         <div class="inv-table-cell inv-table-cell--item">
+                          <span class="inv-table-mobile-label">Insumo</span>
                           <div class="inv-table-item-text">
                             <strong class="inv-table-name">{{ item.name }}</strong>
                             <small class="inv-table-code">{{ item.code }}</small>
@@ -162,10 +163,12 @@
                         </div>
 
                         <div class="inv-table-cell inv-table-cell--category">
+                          <span class="inv-table-mobile-label">Categoria</span>
                           <span class="inv-table-category">{{ itemCategoryLabel(item) }}</span>
                         </div>
 
                         <div class="inv-table-cell inv-table-cell--stock">
+                          <span class="inv-table-mobile-label">Stock</span>
                           <strong>{{ item.stock }} {{ itemUnitLabel(item) }}</strong>
                           <small>Min {{ item.minStock }} Max. {{ maxStockLabel(item) }}</small>
                         </div>
@@ -174,6 +177,7 @@
                           class="inv-table-cell inv-table-cell--status"
                           [attr.data-state]="itemStatusTone(item)"
                         >
+                          <span class="inv-table-mobile-label">Estado</span>
                           <span class="inv-table-status__dot" aria-hidden="true"></span>
                           <span class="inv-table-status__label">{{ itemStockStatusLabel(item) }}</span>
                         </div>
@@ -305,14 +309,12 @@
             <h4 class="inv-detail-section__title">Acciones rapidas</h4>
 
             <div class="inv-quick-actions">
-              @if (canRegisterEntry()) {
+              @if (canManageItems()) {
                 <button type="button" class="inv-quick-action" (click)="openEntryDialog(item)">
                   <i class="pi pi-download" aria-hidden="true"></i>
                   <span>Entrada</span>
                 </button>
-              }
 
-              @if (canRegisterDecrease()) {
                 <button type="button" class="inv-quick-action" (click)="openDecreaseDialog(item)">
                   <i class="pi pi-upload" aria-hidden="true"></i>
                   <span>Salida</span>
@@ -337,12 +339,12 @@
         }
       </section>
 
-      @if (canDeactivateItem() && item.active) {
+      @if (canManageItems() && item.active) {
         <button type="button" class="inv-detail-deactivate" (click)="deactivate(item)">
           <i class="pi pi-ban" aria-hidden="true"></i>
           Desactivar insumo
         </button>
-      } @else if (canDeactivateItem()) {
+      } @else if (canManageItems()) {
         <button type="button" class="inv-detail-activate" (click)="activate(item)">
           <i class="pi pi-check-circle" aria-hidden="true"></i>
           Activar insumo

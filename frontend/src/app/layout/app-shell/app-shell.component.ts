@@ -91,7 +91,7 @@ import { SidebarComponent } from '../sidebar/sidebar.component';
     @media (max-width: 1023px) {
       .shell__main {
         margin-left: 0;
-        padding: 0.75rem;
+        padding: 0.75rem 0.75rem 1rem;
       }
 
       .shell__mobile-trigger {
@@ -100,9 +100,27 @@ import { SidebarComponent } from '../sidebar/sidebar.component';
 
       .shell__content {
         margin-top: 4.5rem;
-        padding: 1.25rem;
+        padding: 0;
         border-radius: 1.25rem;
         min-height: calc(100vh - 6rem);
+      }
+    }
+
+    @media (max-width: 640px) {
+      .shell__main {
+        padding-inline: 0.5rem;
+      }
+
+      .shell__mobile-trigger {
+        top: 0.75rem;
+        right: 0.75rem;
+        width: 3rem;
+        height: 3rem;
+        border-radius: 0.9rem;
+      }
+
+      .shell__content {
+        margin-top: 4rem;
       }
     }
   `
