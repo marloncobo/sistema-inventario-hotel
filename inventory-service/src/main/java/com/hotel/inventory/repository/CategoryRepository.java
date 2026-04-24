@@ -2,7 +2,9 @@ package com.hotel.inventory.repository;
 
 import com.hotel.inventory.model.Category;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface CategoryRepository extends JpaRepository<Category, Long> {
@@ -12,4 +14,6 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
     boolean existsByNameIgnoreCaseAndIdNot(String name, Long id);
     Optional<Category> findByCodeIgnoreCase(String code);
     Optional<Category> findByNameIgnoreCase(String name);
+    @Query("select c.code from Category c")
+    List<String> findAllCodes();
 }

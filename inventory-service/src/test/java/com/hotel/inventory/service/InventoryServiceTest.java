@@ -209,6 +209,6 @@ class InventoryServiceTest {
     }
 
     private static Provider provider(String name) {
-        return new Provider("900001999", name, null, null, true);
+        return new Provider("PRO-9999", "900001999", name, null, null, true);
     }
 }
