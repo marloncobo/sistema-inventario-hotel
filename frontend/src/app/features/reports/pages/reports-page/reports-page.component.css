@@ -361,6 +361,10 @@
   .reports-result-head__stats {
     justify-content: flex-start;
   }
+
+  :host ::ng-deep .reports-table .p-datatable-table {
+    min-width: 48rem;
+  }
 }
 
 @media (max-width: 720px) {
@@ -394,6 +398,20 @@
   .reports-filter-shell__actions > * {
     width: 100%;
   }
+
+  .reports-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  :host ::ng-deep .reports-table .p-datatable-table {
+    min-width: 42rem;
+  }
+
+  :host ::ng-deep .reports-table .p-datatable-thead > tr > th,
+  :host ::ng-deep .reports-table .p-datatable-tbody > tr > td {
+    padding: 0.85rem 0.8rem;
+  }
 }
 
 @media (max-width: 560px) {
@@ -418,5 +436,16 @@
 
   .report-tab {
     flex: 0 0 auto;
+  }
+
+  :host ::ng-deep .reports-table .p-datatable-table {
+    min-width: 36rem;
+  }
+
+  :host ::ng-deep .reports-table .p-datatable-thead > tr > th:nth-child(1),
+  :host ::ng-deep .reports-table .p-datatable-tbody > tr > td:nth-child(1),
+  :host ::ng-deep .reports-table .p-datatable-thead > tr > th:last-child,
+  :host ::ng-deep .reports-table .p-datatable-tbody > tr > td:last-child {
+    min-width: 6.5rem;
   }
 }

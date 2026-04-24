@@ -514,6 +514,20 @@ const AUDIT_SCOPE_META: Record<
       .audit-filter-shell__actions > * {
         width: 100%;
       }
+
+      .audits-table-wrap {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      :host ::ng-deep .audits-table .p-datatable-table {
+        min-width: 46rem;
+      }
+
+      :host ::ng-deep .audits-table .p-datatable-thead > tr > th,
+      :host ::ng-deep .audits-table .p-datatable-tbody > tr > td {
+        padding: 0.85rem 0.8rem;
+      }
     }
 
     @media (max-width: 560px) {
@@ -534,6 +548,10 @@ const AUDIT_SCOPE_META: Record<
       .audit-filter-shell,
       .audits-active-filters {
         padding-inline: 0.9rem;
+      }
+
+      :host ::ng-deep .audits-table .p-datatable-table {
+        min-width: 40rem;
       }
     }
   `

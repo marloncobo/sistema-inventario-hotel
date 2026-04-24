@@ -163,6 +163,11 @@
 
 .rooms-table-wrap {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+:host ::ng-deep .lunara-table .p-datatable-table {
+  min-width: 52rem;
 }
 
 :host ::ng-deep .lunara-table .p-datatable-thead > tr > th {
@@ -960,5 +965,25 @@
 
   .rooms-dialog-actions > * {
     width: 100%;
+  }
+
+  :host ::ng-deep .lunara-table .p-datatable-table {
+    min-width: 42rem;
+  }
+
+  :host ::ng-deep .lunara-table .p-datatable-thead > tr > th,
+  :host ::ng-deep .lunara-table .p-datatable-tbody > tr > td {
+    padding-inline: 0.9rem;
+  }
+}
+
+@media (max-width: 560px) {
+  :host ::ng-deep .lunara-table .p-datatable-table {
+    min-width: 36rem;
+  }
+
+  :host ::ng-deep .lunara-table .p-datatable-thead > tr > th,
+  :host ::ng-deep .lunara-table .p-datatable-tbody > tr > td {
+    padding: 0.9rem 0.78rem;
   }
 }

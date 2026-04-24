@@ -401,6 +401,14 @@
     width: 100%;
     justify-content: flex-start;
   }
+
+  :host ::ng-deep .alerts-table--alerts .p-datatable-table {
+    min-width: 50rem;
+  }
+
+  :host ::ng-deep .alerts-table--stock .p-datatable-table {
+    min-width: 38rem;
+  }
 }
 
 @media (max-width: 720px) {
@@ -426,5 +434,33 @@
   .alerts-btn-reload.p-button {
     width: 100%;
     justify-content: center;
+  }
+
+  .alerts-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  :host ::ng-deep .alerts-table--alerts .p-datatable-table {
+    min-width: 44rem;
+  }
+
+  :host ::ng-deep .alerts-table--stock .p-datatable-table {
+    min-width: 34rem;
+  }
+
+  :host ::ng-deep .alerts-table .p-datatable-thead > tr > th,
+  :host ::ng-deep .alerts-table .p-datatable-tbody > tr > td {
+    padding: 0.85rem 0.8rem;
+  }
+}
+
+@media (max-width: 560px) {
+  :host ::ng-deep .alerts-table--alerts .p-datatable-table {
+    min-width: 39rem;
+  }
+
+  :host ::ng-deep .alerts-table--stock .p-datatable-table {
+    min-width: 30rem;
   }
 }

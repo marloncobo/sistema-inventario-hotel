@@ -1106,6 +1106,15 @@ const SORT_OPTIONS: Array<{ value: CatalogSortOption; label: string }> = [
         width: 100%;
       }
 
+      .catalogs-table-wrap {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      :host ::ng-deep .catalogs-table .p-datatable-table {
+        min-width: 42rem;
+      }
+
       .dialog-actions {
         flex-direction: column-reverse;
       }
@@ -1117,6 +1126,12 @@ const SORT_OPTIONS: Array<{ value: CatalogSortOption; label: string }> = [
       :host ::ng-deep .catalogs-table .p-datatable-thead > tr > th,
       :host ::ng-deep .catalogs-table .p-datatable-tbody > tr > td {
         padding: 0.75rem 0.7rem;
+      }
+    }
+
+    @media (max-width: 560px) {
+      :host ::ng-deep .catalogs-table .p-datatable-table {
+        min-width: 37rem;
       }
     }
   `

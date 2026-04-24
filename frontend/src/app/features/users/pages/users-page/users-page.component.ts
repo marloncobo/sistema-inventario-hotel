@@ -125,7 +125,11 @@ import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
         <p-table 
           [value]="filteredUsers()" 
           [loading]="loading()"
+          [paginator]="true"
           [rows]="10"
+          [rowsPerPageOptions]="[5, 10, 20]"
+          [showCurrentPageReport]="true"
+          currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} usuarios"
           responsiveLayout="scroll"
           styleClass="lunara-table"
         >
@@ -188,18 +192,6 @@ import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
             </tr>
           </ng-template>
         </p-table>
-
-        <!-- Pagination Bar -->
-        <div class="pagination-bar">
-          <span class="pagination-info">Mostrando 1 a {{ filteredUsers().length }} de {{ filteredUsers().length }} usuarios</span>
-          <div class="pagination-controls">
-            <button class="pag-btn"><i class="pi pi-angle-double-left"></i></button>
-            <button class="pag-btn"><i class="pi pi-angle-left"></i></button>
-            <button class="pag-btn active">1</button>
-            <button class="pag-btn"><i class="pi pi-angle-right"></i></button>
-            <button class="pag-btn"><i class="pi pi-angle-double-right"></i></button>
-          </div>
-        </div>
       </div>
     </div>
 
@@ -325,6 +317,13 @@ import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
       justify-content: space-between;
       align-items: center;
       margin-bottom: 2rem;
+      gap: 1.25rem 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .header-info {
+      min-width: 0;
+      flex: 1 1 24rem;
     }
 
     .header-info h1 {
@@ -333,6 +332,7 @@ import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
       margin: 0;
       color: #1a1a1a;
       font-weight: 700;
+      line-height: 0.96;
     }
 
     .header-info p {
@@ -373,6 +373,7 @@ import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
       align-items: center;
       gap: 1rem;
       min-height: 132px;
+      padding: 1.5rem;
     }
 
     .stat-card:hover {
@@ -423,10 +424,11 @@ import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
       font-size: 0.8rem;
       color: #a3907d;
       font-weight: 500;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 240px;
+      white-space: normal;
+      overflow: visible;
+      text-overflow: initial;
+      max-width: 28ch;
+      line-height: 1.45;
     }
 
     @media (max-width: 1100px) {
@@ -461,6 +463,8 @@ import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
       align-items: center;
       border-bottom: 1px solid #f8f8f8;
       background: white;
+      gap: 1rem;
+      flex-wrap: wrap;
     }
 
     .search-box {
@@ -499,10 +503,13 @@ import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
       display: flex;
       gap: 0.75rem;
       align-items: center;
+      flex-wrap: wrap;
+      justify-content: flex-end;
     }
 
     .lunara-native-select {
       min-width: 150px;
+      max-width: 100%;
       padding: 0.6rem 2rem 0.6rem 1rem;
       border: 1px solid #f0f0f0;
       border-radius: 10px;
@@ -538,6 +545,15 @@ import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
 
     /* Table Styles */
     ::ng-deep .lunara-table {
+      .p-datatable-wrapper {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .p-datatable-table {
+        min-width: 52rem;
+      }
+
       .p-datatable-thead > tr > th {
         background: #fdfcf9;
         padding: 1rem 1.5rem;
@@ -553,6 +569,32 @@ import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
         padding: 1.5rem 1.75rem;
         border-bottom: 1px solid #fafafa;
         vertical-align: middle;
+      }
+
+      .p-paginator {
+        border: none;
+        border-top: 1px solid #f5eee3;
+        padding: 1rem 1.2rem;
+        justify-content: space-between;
+        gap: 0.75rem 1rem;
+        flex-wrap: wrap;
+      }
+
+      .p-paginator-current {
+        color: #8a7867;
+        font-size: 0.84rem;
+      }
+
+      .p-paginator .p-paginator-element {
+        min-width: 2.35rem;
+        height: 2.35rem;
+        border-radius: 0.8rem;
+      }
+
+      .p-paginator .p-paginator-page.p-highlight {
+        background: #c8922d;
+        border-color: #c8922d;
+        color: #ffffff;
       }
     }
 
@@ -682,51 +724,6 @@ import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
       border-color: #c8922d;
       color: white;
       transform: scale(1.1);
-    }
-
-    /* Pagination */
-    .pagination-bar {
-      padding: 1.5rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: white;
-    }
-
-    .pagination-info {
-      font-size: 0.85rem;
-      color: #999;
-    }
-
-    .pagination-controls {
-      display: flex;
-      gap: 0.5rem;
-    }
-
-    .pag-btn {
-      width: 2.25rem;
-      height: 2.25rem;
-      border-radius: 8px;
-      border: 1px solid #f0f0f0;
-      background: white;
-      color: #666;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .pag-btn.active {
-      background: #c8922d;
-      border-color: #c8922d;
-      color: white;
-      font-weight: 700;
-    }
-
-    .pag-btn:hover:not(.active) {
-      border-color: #c8922d;
-      color: #c8922d;
     }
 
     /* Drawer Styles */
@@ -1008,6 +1005,172 @@ import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
       color: #d32f2f;
       font-size: 0.75rem;
       font-weight: 500;
+    }
+
+    @media (max-width: 1180px) {
+      .users-page-container {
+        padding: 2rem 2rem 3rem;
+      }
+
+      .table-toolbar {
+        align-items: stretch;
+      }
+
+      .search-box {
+        max-width: none;
+      }
+
+      .filter-actions {
+        width: 100%;
+        justify-content: flex-start;
+      }
+    }
+
+    @media (max-width: 900px) {
+      .users-header {
+        align-items: stretch;
+      }
+
+      .btn-gold-add {
+        width: 100%;
+        justify-content: center;
+      }
+
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+
+      ::ng-deep .lunara-table {
+        .p-datatable-table {
+          min-width: 44rem;
+        }
+
+        .p-datatable-thead > tr > th,
+        .p-datatable-tbody > tr > td {
+          padding: 1rem 0.95rem;
+        }
+      }
+    }
+
+    @media (max-width: 720px) {
+      .users-page-container {
+        padding: 1.5rem 1rem 2.5rem;
+      }
+
+      .header-info h1 {
+        font-size: clamp(2.5rem, 12vw, 4rem);
+      }
+
+      .header-info p {
+        max-width: 22rem;
+        font-size: 0.95rem;
+        line-height: 1.55;
+      }
+
+      .stat-card {
+        grid-template-columns: 1fr;
+        align-items: flex-start;
+        gap: 0.9rem;
+        min-height: 0;
+      }
+
+      .stat-icon-wrapper {
+        width: 3.25rem;
+        height: 3.25rem;
+      }
+
+      .table-toolbar {
+        padding: 1rem;
+      }
+
+      .filter-actions > * {
+        width: 100%;
+      }
+
+      .btn-filter-text {
+        justify-content: center !important;
+      }
+
+      ::ng-deep .lunara-table {
+        .p-datatable-table {
+          min-width: 38rem;
+        }
+
+        .p-paginator {
+          justify-content: center;
+          padding: 0.9rem 0.95rem 1rem;
+        }
+
+        .p-paginator-current {
+          width: 100%;
+          text-align: center;
+          order: 3;
+        }
+      }
+
+      .drawer-footer {
+        flex-direction: column-reverse;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .users-page-container {
+        padding-inline: 0.9rem;
+      }
+
+      .header-info h1 {
+        font-size: clamp(2.35rem, 15vw, 3.8rem);
+      }
+
+      .header-info {
+        flex-basis: 100%;
+      }
+
+      .stat-card {
+        padding: 1.15rem;
+        border-radius: 1.2rem;
+      }
+
+      .stat-value {
+        font-size: 2rem;
+      }
+
+      .stat-sub {
+        max-width: none;
+      }
+
+      ::ng-deep .lunara-table {
+        .p-datatable-table {
+          min-width: 33rem;
+        }
+
+        .p-datatable-thead > tr > th,
+        .p-datatable-tbody > tr > td {
+          padding: 0.9rem 0.78rem;
+        }
+
+        .p-paginator .p-paginator-element {
+          min-width: 2.1rem;
+          height: 2.1rem;
+        }
+      }
+
+      .drawer-user-header,
+      .form-body,
+      .drawer-footer {
+        padding-inline: 1rem;
+        margin-inline: 1rem;
+      }
+
+      .drawer-user-header {
+        margin-top: 1rem;
+        margin-bottom: 1rem;
+      }
+
+      .drawer-footer {
+        margin-inline: 0;
+        padding-inline: 1rem;
+      }
     }
   `
 })

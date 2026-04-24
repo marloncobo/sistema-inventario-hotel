@@ -481,6 +481,10 @@
   .movements-table-wrap {
     border-top: 1px solid rgba(214, 191, 152, 0.12);
   }
+
+  :host ::ng-deep .movements-table .p-datatable-table {
+    min-width: 72rem;
+  }
 }
 
 @media (max-width: 760px) {
@@ -527,6 +531,20 @@
   .movements-counter--soft {
     display: none;
   }
+
+  .movements-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  :host ::ng-deep .movements-table .p-datatable-table {
+    min-width: 64rem;
+  }
+
+  :host ::ng-deep .movements-table .p-datatable-thead > tr > th,
+  :host ::ng-deep .movements-table .p-datatable-tbody > tr > td {
+    padding: 0.85rem 0.8rem;
+  }
 }
 
 @media (max-width: 560px) {
@@ -554,5 +572,25 @@
   .movements-more-filters {
     min-height: 2.9rem;
     padding-top: 0.65rem;
+  }
+
+  :host ::ng-deep .movements-table .p-datatable-table {
+    min-width: 56rem;
+  }
+
+  :host ::ng-deep .movements-table .p-datatable-thead > tr > th:nth-child(1),
+  :host ::ng-deep .movements-table .p-datatable-tbody > tr > td:nth-child(1),
+  :host ::ng-deep .movements-table .p-datatable-thead > tr > th:nth-child(3),
+  :host ::ng-deep .movements-table .p-datatable-tbody > tr > td:nth-child(3),
+  :host ::ng-deep .movements-table .p-datatable-thead > tr > th:nth-child(8),
+  :host ::ng-deep .movements-table .p-datatable-tbody > tr > td:nth-child(8),
+  :host ::ng-deep .movements-table .p-datatable-thead > tr > th:nth-child(4),
+  :host ::ng-deep .movements-table .p-datatable-tbody > tr > td:nth-child(4),
+  :host ::ng-deep .movements-table .p-datatable-thead > tr > th:nth-child(5),
+  :host ::ng-deep .movements-table .p-datatable-tbody > tr > td:nth-child(5),
+  :host ::ng-deep .movements-table .p-datatable-thead > tr > th:last-child,
+  :host ::ng-deep .movements-table .p-datatable-tbody > tr > td:last-child {
+    width: auto;
+    min-width: 7rem;
   }
 }
