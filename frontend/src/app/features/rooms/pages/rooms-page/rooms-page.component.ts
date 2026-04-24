@@ -50,6 +50,7 @@ export class RoomsPageComponent implements OnInit {
   protected readonly loading = signal(false);
   protected readonly detailLoading = signal(false);
   protected readonly saving = signal(false);
+  protected readonly detailDialogVisible = signal(false);
   protected readonly createDialogVisible = signal(false);
   protected readonly statusDialogVisible = signal(false);
   protected readonly statusTargetRoom = signal<Room | null>(null);
@@ -216,6 +217,7 @@ export class RoomsPageComponent implements OnInit {
       return;
     }
 
+    this.detailDialogVisible.set(true);
     this.detailLoading.set(true);
     forkJoin({
       room: this.roomsApi.getRoom(id).pipe(catchError(() => of(null))),
@@ -294,6 +296,7 @@ export class RoomsPageComponent implements OnInit {
         next: (room) => {
           this.saving.set(false);
           this.createDialogVisible.set(false);
+          this.detailDialogVisible.set(true);
           this.notificationService.success('Habitaciones', 'Habitacion creada.');
           this.focusRoom(room);
           this.selectedRoom.set(room);
