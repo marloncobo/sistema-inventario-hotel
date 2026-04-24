@@ -38,8 +38,8 @@ import java.util.regex.Pattern;
 public class InventoryService {
     private static final LocalDateTime MIN_DATE = LocalDateTime.of(1900, 1, 1, 0, 0);
     private static final LocalDateTime MAX_DATE = LocalDateTime.of(9999, 12, 31, 23, 59, 59);
-    private static final Pattern TRAILING_NUMBER_PATTERN = Pattern.compile("(\\d+)$");
     private static final String ITEM_CODE_PREFIX = "INS-";
+    private static final Pattern ITEM_CODE_PATTERN = Pattern.compile("^" + ITEM_CODE_PREFIX + "(\\d+)$");
 
     private final SupplyItemRepository supplyItemRepository;
     private final InventoryMovementRepository movementRepository;
@@ -435,11 +435,15 @@ public class InventoryService {
         if (isBlank(code)) {
             return 0;
         }
-        Matcher matcher = TRAILING_NUMBER_PATTERN.matcher(code.trim());
+        Matcher matcher = ITEM_CODE_PATTERN.matcher(normalize(code));
         if (!matcher.find()) {
             return 0;
         }
-        return Integer.parseInt(matcher.group(1));
+        try {
+            return Integer.parseInt(matcher.group(1));
+        } catch (NumberFormatException ex) {
+            return 0;
+        }
     }
 
     private record CatalogSelection(Category category, UnitOfMeasure unit, Provider provider) {}

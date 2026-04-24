@@ -12,6 +12,8 @@ public class AppUser {
     private Long id;
     @Column(nullable = false, unique = true)
     private String username;
+    @Column(unique = true)
+    private String email;
     @Column(nullable = false)
     private String password;
     @ElementCollection(fetch = FetchType.EAGER)
@@ -23,8 +25,9 @@ public class AppUser {
 
     public AppUser() {}
 
-    public AppUser(String username, String password, List<String> roles, Boolean active) {
+    public AppUser(String username, String email, String password, List<String> roles, Boolean active) {
         this.username = username;
+        this.email = email;
         this.password = password;
         this.roles = roles;
         this.active = active;
@@ -32,12 +35,14 @@ public class AppUser {
 
     public Long getId() { return id; }
     public String getUsername() { return username; }
+    public String getEmail() { return email; }
     public String getPassword() { return password; }
     public List<String> getRoles() { return roles; }
     public Boolean getActive() { return active; }
 
     public void setId(Long id) { this.id = id; }
     public void setUsername(String username) { this.username = username; }
+    public void setEmail(String email) { this.email = email; }
     public void setPassword(String password) { this.password = password; }
     public void setRoles(List<String> roles) { this.roles = roles; }
     public void setActive(Boolean active) { this.active = active; }

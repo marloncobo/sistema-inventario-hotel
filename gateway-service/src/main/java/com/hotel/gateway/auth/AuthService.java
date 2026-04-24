@@ -14,9 +14,12 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Locale;
+import java.util.regex.Pattern;
 
 @Service
 public class AuthService {
+    private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}$", Pattern.CASE_INSENSITIVE);
+
     private final JwtEncoder jwtEncoder;
     private final PasswordEncoder passwordEncoder;
     private final long expirationMinutes;
@@ -79,7 +82,7 @@ public class AuthService {
             return userRepository.findByUsernameIgnoreCase(username).orElse(null);
         }
         if ("admin".equals(username)) {
-            return new AppUser("admin", passwordEncoder.encode("Admin123"), List.of("ADMIN"), true);
+            return new AppUser("admin", "admin@hotel.local", passwordEncoder.encode("Admin123"), List.of("ADMIN"), true);
         }
         return null;
     }
@@ -92,9 +95,14 @@ public class AuthService {
         if (userRepository.existsByUsernameIgnoreCase(request.username())) {
             throw new IllegalArgumentException("Ya existe el usuario " + request.username());
         }
+        String normalizedEmail = normalizeEmail(request.email());
+        if (userRepository.existsByEmailIgnoreCase(normalizedEmail)) {
+            throw new IllegalArgumentException("Ya existe el email " + normalizedEmail);
+        }
         validatePassword(request.password(), true);
         AppUser saved = userRepository.save(new AppUser(
                 request.username().trim(),
+                normalizedEmail,
                 passwordEncoder.encode(request.password()),
                 normalizeRoles(request.roles()),
                 request.active() == null || request.active()
@@ -108,7 +116,12 @@ public class AuthService {
         if (userRepository.existsByUsernameIgnoreCaseAndIdNot(request.username(), id)) {
             throw new IllegalArgumentException("Ya existe el usuario " + request.username());
         }
+        String normalizedEmail = normalizeEmail(request.email());
+        if (userRepository.existsByEmailIgnoreCaseAndIdNot(normalizedEmail, id)) {
+            throw new IllegalArgumentException("Ya existe el email " + normalizedEmail);
+        }
         user.setUsername(request.username().trim());
+        user.setEmail(normalizedEmail);
         if (request.password() != null && !request.password().isBlank()) {
             validatePassword(request.password(), false);
             user.setPassword(passwordEncoder.encode(request.password()));
@@ -154,5 +167,16 @@ public class AuthService {
                 || password.chars().noneMatch(Character::isDigit)) {
             throw new IllegalArgumentException("La contrasena debe tener minimo 8 caracteres, una mayuscula y un numero");
         }
+    }
+
+    private String normalizeEmail(String email) {
+        if (email == null || email.isBlank()) {
+            throw new IllegalArgumentException("El email es obligatorio");
+        }
+        String normalized = email.trim().toLowerCase(Locale.ROOT);
+        if (!EMAIL_PATTERN.matcher(normalized).matches()) {
+            throw new IllegalArgumentException("El email no es valido");
+        }
+        return normalized;
     }
 }

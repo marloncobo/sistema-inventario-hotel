@@ -35,8 +35,8 @@ public class DataLoader {
                 unitRepository.save(new UnitOfMeasure("LITRO", "LITRO", "LT", true));
             }
             if (providerRepository.count() == 0) {
-                providerRepository.save(new Provider("900001001", "Aseo Premium SAS", null, null, true));
-                providerRepository.save(new Provider("900001002", "Distribuciones Hoteleras SAS", null, null, true));
+                providerRepository.save(new Provider("PRO-0001", "900001001", "Aseo Premium SAS", null, null, true));
+                providerRepository.save(new Provider("PRO-0002", "900001002", "Distribuciones Hoteleras SAS", null, null, true));
             }
             if (areaRepository.count() == 0) {
                 areaRepository.save(new Area("LIMPIEZA", "LIMPIEZA", true));
@@ -62,6 +62,22 @@ public class DataLoader {
     @Order(1)
     CommandLineRunner migrateLegacySupplyItemCatalogColumns(JdbcTemplate jdbcTemplate) {
         return args -> {
+            if (!columnExists(jdbcTemplate, "providers", "code")) {
+                jdbcTemplate.execute("alter table providers add column code varchar(40)");
+            }
+
+            jdbcTemplate.update("""
+                    update providers
+                    set code = 'PRO-' || lpad(cast(id as text), 4, '0')
+                    where code is null or btrim(code) = ''
+                    """);
+
+            jdbcTemplate.execute("alter table providers alter column code set not null");
+
+            if (!uniqueConstraintExists(jdbcTemplate, "providers", "providers_code_key")) {
+                jdbcTemplate.execute("alter table providers add constraint providers_code_key unique (code)");
+            }
+
             if (columnExists(jdbcTemplate, "inventory_movements", "item_name")) {
                 jdbcTemplate.execute("alter table inventory_movements alter column item_name drop not null");
             }
@@ -115,6 +131,20 @@ public class DataLoader {
                       and column_name = ?
                 )
                 """, Boolean.class, tableName, columnName);
+        return Boolean.TRUE.equals(exists);
+    }
+
+    private static boolean uniqueConstraintExists(JdbcTemplate jdbcTemplate, String tableName, String constraintName) {
+        Boolean exists = jdbcTemplate.queryForObject("""
+                select exists (
+                    select 1
+                    from information_schema.table_constraints
+                    where table_schema = current_schema()
+                      and table_name = ?
+                      and constraint_name = ?
+                      and constraint_type = 'UNIQUE'
+                )
+                """, Boolean.class, tableName, constraintName);
         return Boolean.TRUE.equals(exists);
     }
 }

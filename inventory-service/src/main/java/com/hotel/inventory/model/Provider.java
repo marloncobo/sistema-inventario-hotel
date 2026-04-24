@@ -8,6 +8,8 @@ public class Provider {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    @Column(unique = true, length = 40)
+    private String code;
     @Column(nullable = false, unique = true, length = 40)
     private String documentNumber;
     @Column(nullable = false, unique = true)
@@ -19,7 +21,8 @@ public class Provider {
 
     public Provider() {}
 
-    public Provider(String documentNumber, String name, String phone, String email, Boolean active) {
+    public Provider(String code, String documentNumber, String name, String phone, String email, Boolean active) {
+        this.code = code;
         this.documentNumber = documentNumber;
         this.name = name;
         this.phone = phone;
@@ -28,6 +31,7 @@ public class Provider {
     }
 
     public Long getId() { return id; }
+    public String getCode() { return code; }
     public String getDocumentNumber() { return documentNumber; }
     public String getName() { return name; }
     public String getPhone() { return phone; }
@@ -35,6 +39,7 @@ public class Provider {
     public Boolean getActive() { return active; }
 
     public void setId(Long id) { this.id = id; }
+    public void setCode(String code) { this.code = code; }
     public void setDocumentNumber(String documentNumber) { this.documentNumber = documentNumber; }
     public void setName(String name) { this.name = name; }
     public void setPhone(String phone) { this.phone = phone; }
