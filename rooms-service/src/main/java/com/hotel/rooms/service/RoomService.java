@@ -71,6 +71,30 @@ public class RoomService {
                 .orElseThrow(() -> new NotFoundException("No existe la habitacion con id " + id));
     }
 
+    @Transactional
+    public Room updateRoom(Long id, CreateRoomRequest request, String username) {
+        validateRoomType(request.type());
+        validateCapacity(request.type(), request.capacity());
+        validateRoomStatus(request.status());
+
+        Room room = getRoom(id);
+        String number = request.number().trim();
+        if (roomRepository.existsByNumberAndIdNot(number, id)) {
+            throw new BusinessException("Ya existe una habitacion con numero " + request.number());
+        }
+
+        room.setNumber(number);
+        room.setType(normalize(request.type()));
+        room.setStatus(normalize(request.status()));
+        room.setCapacity(request.capacity());
+        room.setFloor(request.floor());
+        room.setObservations(request.observations());
+
+        Room saved = roomRepository.save(room);
+        auditService.record("UPDATE", "Room", saved.getId(), username, saved.getNumber());
+        return saved;
+    }
+
     public RoomValidationResponse getRoomByNumber(String number) {
         Room room = roomRepository.findByNumber(number)
                 .orElseThrow(() -> new NotFoundException("No existe la habitacion con numero " + number));

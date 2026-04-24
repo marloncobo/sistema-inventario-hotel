@@ -201,7 +201,22 @@
     }
   </section>
 
-  <section class="table-container rooms-detail-panel" aria-live="polite">
+</div>
+
+<p-dialog
+  class="rooms-modal rooms-modal--detail"
+  [visible]="detailDialogVisible()"
+  [modal]="true"
+  [draggable]="false"
+  [style]="{ width: 'min(64rem, 96vw)' }"
+  styleClass="rooms-modal rooms-modal--detail"
+  (visibleChange)="detailDialogVisible.set($event)"
+>
+  <ng-template pTemplate="header">
+    <span class="rooms-dialog-title">Detalle de habitación</span>
+  </ng-template>
+
+  <section class="rooms-detail-panel" aria-live="polite">
     @if (detailLoading()) {
       <div class="rooms-detail-state">
         <i class="pi pi-spin pi-spinner" aria-hidden="true"></i>
@@ -313,7 +328,7 @@
           @if (!recentAssignments().length) {
             <div class="rooms-history__empty rooms-history__empty--panel">
               <i class="pi pi-file-edit" aria-hidden="true"></i>
-              <span>La habitacion seleccionada aun no registra movimientos.</span>
+              <span>La habitación seleccionada aun no registra movimientos.</span>
             </div>
           } @else {
             <div class="rooms-history__list rooms-history__list--panel">
@@ -345,12 +360,12 @@
     } @else {
       <div class="rooms-detail-state rooms-detail-state--empty">
         <i class="pi pi-home" aria-hidden="true"></i>
-        <strong>Selecciona una habitacion</strong>
+        <strong>Selecciona una habitación</strong>
         <p>Usa el selector rapido o cualquier fila de la tabla para ver el detalle.</p>
       </div>
     }
   </section>
-</div>
+</p-dialog>
 
 <p-dialog
   class="rooms-modal"
@@ -370,7 +385,7 @@
       <article class="validation-banner validation-banner--danger">
         <strong>
           <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
-          Corrige los datos de la habitacion
+          Corrige los datos de la habitación
         </strong>
         <p>{{ error }}</p>
       </article>
@@ -382,8 +397,8 @@
           <i class="pi pi-id-card" aria-hidden="true"></i>
         </span>
         <div>
-          <h4 class="rooms-dialog-section__title">Identificacion</h4>
-          <p class="rooms-dialog-section__desc">Numero, tipo y estado inicial de la habitacion.</p>
+          <h4 class="rooms-dialog-section__title">Identificación</h4>
+          <p class="rooms-dialog-section__desc">Numero, tipo y estado inicial de la habitación.</p>
         </div>
       </div>
 
@@ -420,7 +435,7 @@
           <i class="pi pi-building" aria-hidden="true"></i>
         </span>
         <div>
-          <h4 class="rooms-dialog-section__title">Capacidad y ubicacion</h4>
+          <h4 class="rooms-dialog-section__title">Capacidad y ubicación</h4>
           <p class="rooms-dialog-section__desc">Piso, cupos y observaciones internas.</p>
         </div>
       </div>

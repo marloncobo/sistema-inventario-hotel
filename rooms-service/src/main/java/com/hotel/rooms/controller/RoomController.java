@@ -59,6 +59,12 @@ public class RoomController {
         return roomService.getRoom(id);
     }
 
+    @PutMapping("/{id}")
+    public Room updateRoom(@PathVariable Long id, @Valid @RequestBody CreateRoomRequest request,
+                           Authentication authentication) {
+        return roomService.updateRoom(id, request, username(authentication));
+    }
+
     @GetMapping("/number/{number}")
     public RoomValidationResponse getRoomByNumber(@PathVariable String number) {
         return roomService.getRoomByNumber(number);

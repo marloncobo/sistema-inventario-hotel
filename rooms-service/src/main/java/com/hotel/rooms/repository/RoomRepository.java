@@ -7,6 +7,7 @@ import java.util.Optional;
 
 public interface RoomRepository extends JpaRepository<Room, Long> {
     boolean existsByNumber(String number);
+    boolean existsByNumberAndIdNot(String number, Long id);
     long countByActiveTrue();
     Optional<Room> findByNumber(String number);
 }

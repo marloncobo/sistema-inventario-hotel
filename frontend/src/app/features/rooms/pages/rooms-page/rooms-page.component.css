@@ -425,6 +425,12 @@
   padding: 1.5rem;
 }
 
+:host ::ng-deep .rooms-modal--detail {
+  .p-dialog-content {
+    padding-top: 0.35rem !important;
+  }
+}
+
 .rooms-detail-panel__head {
   display: flex;
   justify-content: space-between;
@@ -933,7 +939,7 @@
   }
 
   .rooms-detail-panel {
-    padding: 1.25rem 1.1rem 1.35rem;
+    padding: 1rem 0.1rem 0.35rem;
   }
 
   .rooms-detail-metric {
