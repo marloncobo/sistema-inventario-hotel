@@ -797,12 +797,12 @@
 
               <label class="field">
                 <span>Proveedor</span>
-                <input
-                  pInputText
-                  type="text"
-                  formControlName="providerName"
-                  list="inventory-providers"
-                />
+                <select class="field-control" formControlName="providerName">
+                  <option value="">Seleccionar</option>
+                  @for (provider of providerOptions(); track provider) {
+                    <option [value]="provider">{{ provider }}</option>
+                  }
+                </select>
                 @if (showEntryError('providerName')) {
                   <small class="error-text">{{ entryError('providerName') }}</small>
                 }
@@ -881,30 +881,40 @@
 
               <label class="field">
                 <span>Movimiento</span>
-                <input pInputText type="number" formControlName="sourceMovementId" [appMinNumber]="1" />
+                <select class="field-control" formControlName="sourceMovementId">
+                  <option [ngValue]="0">Seleccionar</option>
+                  @for (movement of returnSourceMovements(); track movement.id) {
+                    <option [ngValue]="movement.id">{{ returnSourceMovementLabel(movement) }}</option>
+                  }
+                </select>
                 @if (showReturnError('sourceMovementId')) {
                   <small class="error-text">{{ returnError('sourceMovementId') }}</small>
                 }
-              </label>
-            </div>
-
-            <div class="form-grid pp-form-grid-2">
-              <label class="field">
-                <span>Habitacion</span>
-                <input pInputText type="text" formControlName="roomNumber" maxlength="3" inputmode="numeric" />
-                @if (showReturnError('roomNumber')) {
-                  <small class="error-text">{{ returnError('roomNumber') }}</small>
-                }
-              </label>
-
-              <label class="field">
-                <span>Area</span>
-                <input pInputText type="text" formControlName="areaName" maxlength="120" />
-                @if (showReturnError('areaName')) {
-                  <small class="error-text">{{ returnError('areaName') }}</small>
+                @if (!returnSourceMovements().length) {
+                  <small class="error-text">No hay salidas validas con cantidad pendiente para devolver.</small>
                 }
               </label>
             </div>
+
+            @if (selectedReturnSourceMovement(); as sourceMovement) {
+              <div class="inventory-dialog-spotlight">
+                <div class="inventory-dialog-spotlight__copy">
+                  <span class="pp-section-label">Contexto autocompletado</span>
+                  @if (sourceMovement.roomNumber) {
+                    <strong>Habitacion {{ sourceMovement.roomNumber }}</strong>
+                  } @else {
+                    <strong>Sin habitacion asociada</strong>
+                  }
+                  <small>
+                    {{
+                      sourceMovement.areaName
+                        ? 'Area ' + sourceMovement.areaName
+                        : 'El movimiento no requiere area para la devolucion'
+                    }}
+                  </small>
+                </div>
+              </div>
+            }
 
             <label class="field">
               <span>Responsable</span>
@@ -989,19 +999,26 @@
                 }
               </label>
 
-              <label class="field">
-                <span>Destino</span>
-                <input pInputText type="text" formControlName="origin" />
-                @if (showDecreaseError('origin')) {
-                  <small class="error-text">{{ decreaseError('origin') }}</small>
-                }
-              </label>
+              <div class="field">
+                <span>Tipo de salida</span>
+                <input
+                  pInputText
+                  type="text"
+                  value="Consumo interno"
+                  readonly
+                />
+              </div>
             </div>
 
             <div class="form-grid pp-form-grid-2">
               <label class="field">
                 <span>Area</span>
-                <input pInputText type="text" formControlName="areaName" maxlength="120" />
+                <select class="field-control" formControlName="areaName">
+                  <option value="">Seleccionar</option>
+                  @for (area of areaOptions(); track area) {
+                    <option [value]="area">{{ area }}</option>
+                  }
+                </select>
                 @if (showDecreaseError('areaName')) {
                   <small class="error-text">{{ decreaseError('areaName') }}</small>
                 }

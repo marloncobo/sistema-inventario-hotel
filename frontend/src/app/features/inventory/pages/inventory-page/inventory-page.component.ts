@@ -10,6 +10,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { TagModule } from 'primeng/tag';
 import { AuthService } from '@core/services/auth.service';
 import { InventoryApiService } from '@core/services/api/inventory-api.service';
+import { RoomsApiService } from '@core/services/api/rooms-api.service';
 import { UsersApiService } from '@core/services/api/users-api.service';
 import { NotificationService } from '@core/services/ui/notification.service';
 import { extractApiErrorMessage, extractApiFieldErrors } from '@models/api-error.model';
@@ -17,6 +18,7 @@ import type { AppUser } from '@models/app-user.model';
 import type {
   CatalogEntity,
   CreateSupplyItemRequest,
+  InventoryMovement,
   Provider,
   StockEntryRequest,
   StockReturnRequest,
@@ -24,6 +26,7 @@ import type {
   UnitOfMeasure,
   UpdateSupplyItemRequest
 } from '@models/inventory.model';
+import type { Room } from '@models/room.model';
 import { EmptyStateComponent } from '@shared/components/empty-state/empty-state.component';
 import { MinNumberDirective } from '@shared/directives/min-number.directive';
 import { notBlankValidator } from '@shared/utils/app-validators.util';
@@ -32,6 +35,10 @@ import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
 type InventoryDialog = 'item' | 'entry' | 'return' | 'decrease';
 
 type ItemFormStep = 1 | 2 | 3;
+
+type ReturnSourceMovementOption = InventoryMovement & {
+  pendingQuantity: number;
+};
 
 const ITEM_FORM_STEPS: ItemFormStep[] = [1, 2, 3];
 const ITEM_FORM_STEP_TOTAL = 3;
@@ -61,6 +68,7 @@ export class InventoryPageComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly authService = inject(AuthService);
   private readonly inventoryApi = inject(InventoryApiService);
+  private readonly roomsApi = inject(RoomsApiService);
   private readonly usersApi = inject(UsersApiService);
   private readonly notificationService = inject(NotificationService);
   private readonly fb = inject(FormBuilder);
@@ -70,7 +78,11 @@ export class InventoryPageComponent implements OnInit {
   protected readonly categories = signal<CatalogEntity[]>([]);
   protected readonly units = signal<UnitOfMeasure[]>([]);
   protected readonly providers = signal<Provider[]>([]);
+  protected readonly areas = signal<CatalogEntity[]>([]);
+  protected readonly rooms = signal<Room[]>([]);
   protected readonly serviceUsers = signal<AppUser[]>([]);
+  protected readonly returnSourceMovements = signal<ReturnSourceMovementOption[]>([]);
+  protected readonly selectedReturnSourceMovementId = signal(0);
   protected readonly loading = signal(false);
   protected readonly detailLoading = signal(false);
   protected readonly saving = signal(false);
@@ -124,7 +136,7 @@ export class InventoryPageComponent implements OnInit {
     quantity: this.fb.nonNullable.control(1, [Validators.required, Validators.min(1)]),
     roomNumber: this.fb.control('', [Validators.pattern(/^\d{3}$/)]),
     areaName: this.fb.control('', [Validators.maxLength(120)]),
-    origin: this.fb.nonNullable.control('', [Validators.required, notBlankValidator]),
+    origin: this.fb.nonNullable.control('CONSUMO_INTERNO', [Validators.required, notBlankValidator]),
     operationalResponsible: this.fb.control('', [Validators.maxLength(120)]),
     referenceText: this.fb.control('', [Validators.maxLength(500)])
   });
@@ -193,6 +205,26 @@ export class InventoryPageComponent implements OnInit {
     this.serviceUsers().map((user) => user.username)
   );
 
+  protected readonly roomOptions = computed(() => {
+    const values = new Set<string>();
+    this.rooms().forEach((room) => room.number && values.add(room.number));
+    this.returnSourceMovements().forEach((movement) => movement.roomNumber && values.add(movement.roomNumber));
+    return this.sortOptions(Array.from(values));
+  });
+
+  protected readonly areaOptions = computed(() => {
+    const values = new Set<string>();
+    this.areas().forEach((area) => area.name && values.add(area.name));
+    this.returnSourceMovements().forEach((movement) => movement.areaName && values.add(movement.areaName));
+    return this.sortOptions(Array.from(values));
+  });
+
+  protected readonly selectedReturnSourceMovement = computed(() =>
+    this.returnSourceMovements().find(
+      (movement) => movement.id === this.selectedReturnSourceMovementId()
+    ) ?? null
+  );
+
   constructor() {
     effect(() => {
       const total = this.orderedItems().length;
@@ -219,6 +251,13 @@ export class InventoryPageComponent implements OnInit {
     this.filtersForm.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       this.catalogFirst.set(0);
     });
+
+    this.returnForm.controls.sourceMovementId.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((sourceMovementId) => {
+        this.selectedReturnSourceMovementId.set(sourceMovementId);
+        this.syncReturnContext(sourceMovementId);
+      });
   }
 
   protected isAdmin(): boolean {
@@ -568,6 +607,8 @@ export class InventoryPageComponent implements OnInit {
     this.dialogSubmitError.set(null);
     this.activeDialog.set('return');
     this.operationItemId.set(item.id);
+    this.loadReturnSourceMovements(item.id);
+    this.selectedReturnSourceMovementId.set(0);
     this.returnForm.reset({
       quantity: 1,
       roomNumber: '',
@@ -583,11 +624,12 @@ export class InventoryPageComponent implements OnInit {
     this.dialogSubmitError.set(null);
     this.activeDialog.set('decrease');
     this.operationItemId.set(item.id);
+    this.loadReturnSourceMovements(item.id);
     this.decreaseForm.reset({
       quantity: 1,
       roomNumber: '',
       areaName: '',
-      origin: '',
+      origin: 'CONSUMO_INTERNO',
       operationalResponsible: '',
       referenceText: ''
     });
@@ -929,10 +971,13 @@ export class InventoryPageComponent implements OnInit {
       quantity: 1,
       roomNumber: '',
       areaName: '',
-      origin: '',
+      origin: 'CONSUMO_INTERNO',
       operationalResponsible: '',
       referenceText: ''
     });
+
+    this.returnSourceMovements.set([]);
+    this.selectedReturnSourceMovementId.set(0);
   }
 
   protected showItemError(
@@ -1038,6 +1083,8 @@ export class InventoryPageComponent implements OnInit {
         providers: this.inventoryApi
           .getProviders()
           .pipe(catchError(() => of([] as Provider[]))),
+        areas: this.inventoryApi.getAreas().pipe(catchError(() => of([] as CatalogEntity[]))),
+        rooms: this.roomsApi.getRooms().pipe(catchError(() => of([] as Room[]))),
         users: this.usersApi.getUsers().pipe(catchError(() => of([] as AppUser[])))
       })
         .pipe(take(1))
@@ -1045,6 +1092,8 @@ export class InventoryPageComponent implements OnInit {
           this.categories.set(result.categories);
           this.units.set(result.units);
           this.providers.set(result.providers);
+          this.areas.set(result.areas);
+          this.rooms.set(result.rooms);
           this.serviceUsers.set(
             result.users.filter((user) => user.active && user.roles.includes('SERVICIO'))
           );
@@ -1057,11 +1106,15 @@ export class InventoryPageComponent implements OnInit {
         providers: this.inventoryApi
           .getProviders()
           .pipe(catchError(() => of([] as Provider[]))),
+        areas: this.inventoryApi.getAreas().pipe(catchError(() => of([] as CatalogEntity[]))),
+        rooms: this.roomsApi.getRooms().pipe(catchError(() => of([] as Room[]))),
         users: this.usersApi.getUsers().pipe(catchError(() => of([] as AppUser[])))
       })
         .pipe(take(1))
         .subscribe((result) => {
           this.providers.set(result.providers);
+          this.areas.set(result.areas);
+          this.rooms.set(result.rooms);
           this.serviceUsers.set(
             result.users.filter((user) => user.active && user.roles.includes('SERVICIO'))
           );
@@ -1069,15 +1122,119 @@ export class InventoryPageComponent implements OnInit {
       return;
     }
 
-    this.usersApi
-      .getUsers()
+    forkJoin({
+      areas: this.inventoryApi.getAreas().pipe(catchError(() => of([] as CatalogEntity[]))),
+      rooms: this.roomsApi.getRooms().pipe(catchError(() => of([] as Room[]))),
+      users: this.usersApi.getUsers().pipe(catchError(() => of([] as AppUser[])))
+    })
+      .pipe(take(1))
+      .subscribe((result) => {
+        this.areas.set(result.areas);
+        this.rooms.set(result.rooms);
+        this.serviceUsers.set(
+          result.users.filter((user) => user.active && user.roles.includes('SERVICIO'))
+        );
+      });
+  }
+
+  private loadReturnSourceMovements(itemId: number): void {
+    this.returnSourceMovements.set([]);
+    this.selectedReturnSourceMovementId.set(0);
+
+    this.inventoryApi
+      .getMovements({})
       .pipe(take(1))
       .subscribe({
-        next: (users) =>
-          this.serviceUsers.set(
-            users.filter((user) => user.active && user.roles.includes('SERVICIO'))
-          )
+        next: (movements) => {
+          const returnedQuantities = new Map<number, number>();
+
+          movements.forEach((movement) => {
+            if (
+              movement.sourceMovementId &&
+              movement.movementType.toUpperCase() === 'DEVOLUCION' &&
+              movement.status.toUpperCase() === 'VALIDO'
+            ) {
+              returnedQuantities.set(
+                movement.sourceMovementId,
+                (returnedQuantities.get(movement.sourceMovementId) ?? 0) + movement.quantity
+              );
+            }
+          });
+
+          this.returnSourceMovements.set(
+            movements
+              .filter((movement) => this.isValidReturnSourceMovement(movement, itemId))
+              .map((movement) => ({
+                ...movement,
+                pendingQuantity: Math.max(
+                  movement.quantity - (returnedQuantities.get(movement.id) ?? 0),
+                  0
+                )
+              }))
+              .filter((movement) => movement.pendingQuantity > 0)
+              .sort(
+                (left, right) =>
+                  new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime()
+              )
+          );
+        },
+        error: () => {
+          this.returnSourceMovements.set([]);
+        }
       });
+  }
+
+  protected returnSourceMovementLabel(movement: ReturnSourceMovementOption): string {
+    const location = movement.roomNumber?.trim() || movement.areaName?.trim() || 'Sin ubicacion';
+    return `#${movement.id} | ${this.formatMovementOrigin(movement.origin)} | ${location} | Pendiente ${movement.pendingQuantity}`;
+  }
+
+  private isValidReturnSourceMovement(movement: InventoryMovement, itemId: number): boolean {
+    if (movement.itemId !== itemId) {
+      return false;
+    }
+
+    if (['ANULADO', 'VOIDED', 'VOID'].includes((movement.status || '').toUpperCase())) {
+      return false;
+    }
+
+    if (movement.sourceMovementId) {
+      return false;
+    }
+
+    return movement.movementType.toUpperCase() === 'SALIDA';
+  }
+
+  private syncReturnContext(sourceMovementId: number): void {
+    const sourceMovement =
+      this.returnSourceMovements().find((movement) => movement.id === sourceMovementId) ?? null;
+
+    this.returnForm.patchValue(
+      {
+        roomNumber: sourceMovement?.roomNumber ?? '',
+        areaName: sourceMovement?.areaName ?? ''
+      },
+      { emitEvent: false }
+    );
+  }
+
+  private formatMovementOrigin(value: string | null | undefined): string {
+    if (!value) {
+      return 'Sin origen';
+    }
+
+    return value
+      .toLowerCase()
+      .replace(/[_-]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .replace(/\b\w/g, (letter) => letter.toUpperCase());
+  }
+
+  private sortOptions(values: string[]): string[] {
+    return values.sort((left, right) =>
+      left.localeCompare(right, 'es-CO', { numeric: true, sensitivity: 'base' })
+    );
   }
 
   private clearControlError(control: { errors: ValidationErrors | null; setErrors: (errors: ValidationErrors | null) => void }, key: string): void {
