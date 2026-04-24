@@ -76,6 +76,44 @@ class RoomServiceTest {
     }
 
     @Test
+    void updateRoomPersistsEditedFields() {
+        Room existing = room(15L, "201");
+        when(roomRepository.findById(15L)).thenReturn(Optional.of(existing));
+        when(roomRepository.existsByNumberAndIdNot("305", 15L)).thenReturn(false);
+        when(roomRepository.save(existing)).thenReturn(existing);
+
+        Room updated = roomService.updateRoom(
+                15L,
+                new CreateRoomRequest("305", "Familiar", "En limpieza", 4, 3, "Vista al jardin"),
+                "admin"
+        );
+
+        assertThat(updated.getNumber()).isEqualTo("305");
+        assertThat(updated.getType()).isEqualTo("FAMILIAR");
+        assertThat(updated.getStatus()).isEqualTo("EN_LIMPIEZA");
+        assertThat(updated.getCapacity()).isEqualTo(4);
+        assertThat(updated.getFloor()).isEqualTo(3);
+        assertThat(updated.getObservations()).isEqualTo("Vista al jardin");
+    }
+
+    @Test
+    void updateRoomThrowsBusinessExceptionWhenNumberAlreadyExistsInAnotherRoom() {
+        Room existing = room(15L, "201");
+        when(roomRepository.findById(15L)).thenReturn(Optional.of(existing));
+        when(roomRepository.existsByNumberAndIdNot("305", 15L)).thenReturn(true);
+
+        assertThatThrownBy(() -> roomService.updateRoom(
+                15L,
+                new CreateRoomRequest("305", "Estandar", "Disponible", 2, 3, null),
+                "admin"
+        ))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("305");
+
+        verify(roomRepository, never()).save(any());
+    }
+
+    @Test
     void getRoomThrowsNotFoundExceptionWhenRoomDoesNotExist() {
         when(roomRepository.findById(88L)).thenReturn(Optional.empty());
 
