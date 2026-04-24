@@ -61,129 +61,7 @@
     <section
       class="surface-card catalogs-workbench assignments-catalog assignments-block admin-content-block pp-surface-solid"
     >
-      @if (showCatalogTabs()) {
-        <div class="catalog-tabs" role="tablist" aria-label="Vista de historial">
-          <button
-            type="button"
-            class="catalog-tab"
-            role="tab"
-            [class.is-active]="catalogView() === 'room'"
-            [attr.aria-selected]="catalogView() === 'room'"
-            (click)="selectCatalogView('room')"
-          >
-            Historial por habitacion
-          </button>
-          <button
-            type="button"
-            class="catalog-tab"
-            role="tab"
-            [class.is-active]="catalogView() === 'global'"
-            [attr.aria-selected]="catalogView() === 'global'"
-            (click)="selectCatalogView('global')"
-          >
-            Historial global
-          </button>
-        </div>
-      }
-
-      @if (showRoomHistoryPanel()) {
-        <div class="assignments-catalog-panel" role="tabpanel" aria-label="Historial por habitacion">
-          <div class="catalog-toolbar">
-            <div class="assignments-catalog-toolbar__primary">
-              <label class="field assignments-toolbar-field">
-                <span>Habitacion</span>
-                <select class="catalog-select catalog-select--grow" [formControl]="historyForm.controls.roomId">
-                  <option value="0">Selecciona una habitacion</option>
-                  @for (room of rooms(); track room.id) {
-                    <option [value]="room.id">{{ roomLabel(room) }}</option>
-                  }
-                </select>
-              </label>
-            </div>
-            <div class="catalog-toolbar__controls">
-              @if (historyRoomNumber(); as rn) {
-                <span class="catalog-filter-chip">{{ 'Hab. ' + rn }}</span>
-              }
-              <span class="catalogs-section-head__count">{{ roomHistory().length }} registros</span>
-              <button
-                pButton
-                type="button"
-                icon="pi pi-clock"
-                label="Ver historial"
-                [disabled]="historyForm.controls.roomId.getRawValue() < 1"
-                [loading]="historyLoading()"
-                (click)="loadRoomHistory()"
-              ></button>
-            </div>
-          </div>
-
-          <div class="catalogs-table-wrap admin-table-block">
-            <p-table
-              [value]="roomHistory()"
-              [loading]="historyLoading()"
-              [paginator]="true"
-              [rows]="10"
-              [rowsPerPageOptions]="[10, 20, 50]"
-              [showCurrentPageReport]="true"
-              currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros"
-              responsiveLayout="scroll"
-              styleClass="catalogs-table"
-            >
-              <ng-template pTemplate="header">
-                <tr>
-                  <th>FECHA</th>
-                  <th>HAB.</th>
-                  <th>ITEM</th>
-                  <th>MOV.</th>
-                  <th>UD.</th>
-                  <th>ENTREGA</th>
-                  <th>HUESPED</th>
-                </tr>
-              </ng-template>
-
-              <ng-template pTemplate="emptymessage">
-                <tr>
-                  <td colspan="7">
-                    <div class="catalog-empty-state">{{ roomHistoryEmptyHint() }}</div>
-                  </td>
-                </tr>
-              </ng-template>
-
-              <ng-template pTemplate="body" let-assignment>
-                <tr>
-                  <td><span class="muted-copy">{{ formatDate(assignment.createdAt) }}</span></td>
-                  <td><span class="code-chip">Hab. {{ assignment.roomNumber }}</span></td>
-                  <td>
-                    <div class="entity-stack">
-                      <strong class="entity-stack__title entity-stack__title--small">{{ assignment.itemName }}</strong>
-                      <span class="entity-stack__meta">Insumo</span>
-                    </div>
-                  </td>
-                  <td>
-                    <span
-                      class="status-pill"
-                      [class.status-pill--entrada]="assignment.assignmentType === 'HABITACION'"
-                      [class.status-pill--salida]="assignment.assignmentType !== 'HABITACION'"
-                      >{{ flowLabel(assignment.assignmentType) }}</span
-                    >
-                  </td>
-                  <td>
-                    <strong class="entity-stack__title entity-stack__title--small">{{ assignment.quantity }}</strong>
-                    <span class="entity-stack__meta">uds</span>
-                  </td>
-                  <td><span class="muted-copy">{{ assignment.deliveredBy }}</span></td>
-                  <td>
-                    <span class="muted-copy">{{ assignment.guestName?.trim() || 'Sin huesped' }}</span>
-                  </td>
-                </tr>
-              </ng-template>
-            </p-table>
-          </div>
-        </div>
-      }
-
-      @if (showGlobalHistoryPanel()) {
-        <div class="assignments-catalog-panel" role="tabpanel" aria-label="Historial global">
+        <div class="assignments-catalog-panel" aria-label="Historial global">
           <form
             [formGroup]="filtersForm"
             class="catalog-toolbar assignments-catalog-toolbar--stack assignments-catalog-toolbar--global"
@@ -312,7 +190,6 @@
             </p-table>
           </div>
         </div>
-      }
     </section>
   }
 </div>
@@ -356,9 +233,9 @@
           <span>Habitacion</span>
           @if (canBrowseRooms()) {
             <select class="field-control" formControlName="roomId">
-              <option value="0">Selecciona una habitacion</option>
+              <option [ngValue]="0">Selecciona una habitacion</option>
               @for (room of rooms(); track room.id) {
-                <option [value]="room.id">{{ roomLabel(room) }}</option>
+                <option [ngValue]="room.id">{{ roomLabel(room) }}</option>
               }
             </select>
           } @else {
@@ -378,9 +255,9 @@
         <label class="field">
           <span>Item</span>
           <select class="field-control" formControlName="itemId">
-            <option value="0">Selecciona un item</option>
+            <option [ngValue]="0">Selecciona un item</option>
             @for (item of items(); track item.id) {
-              <option [value]="item.id">{{ itemLabel(item) }}</option>
+              <option [ngValue]="item.id">{{ itemLabel(item) }}</option>
             }
           </select>
           @if (showAssignmentError('itemId')) {

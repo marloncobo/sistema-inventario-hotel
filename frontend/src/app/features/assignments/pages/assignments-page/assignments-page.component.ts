@@ -54,14 +54,10 @@ export class AssignmentsPageComponent implements OnInit {
   protected readonly items = signal<SupplyItem[]>([]);
   protected readonly serviceUsers = signal<AppUser[]>([]);
   protected readonly assignments = signal<RoomSupplyAssignment[]>([]);
-  protected readonly roomHistory = signal<RoomSupplyAssignment[]>([]);
   protected readonly loading = signal(false);
   protected readonly saving = signal(false);
-  protected readonly historyLoading = signal(false);
   protected readonly submitError = signal<string | null>(null);
   protected readonly movementDialogVisible = signal(false);
-  /** Vista activa cuando el usuario puede ver habitacion y global a la vez. */
-  protected readonly catalogView = signal<'room' | 'global'>('room');
 
   protected readonly assignmentForm = this.fb.group({
     roomId: this.fb.nonNullable.control(0, [Validators.required, Validators.min(1)]),
@@ -83,9 +79,6 @@ export class AssignmentsPageComponent implements OnInit {
     endDate: ['']
   });
 
-  protected readonly historyForm = this.fb.nonNullable.group({
-    roomId: [0]
-  });
   protected readonly overviewFiltersValue = toSignal(
     this.filtersForm.valueChanges.pipe(startWith(this.filtersForm.getRawValue())),
     { initialValue: this.filtersForm.getRawValue() }
@@ -126,8 +119,8 @@ export class AssignmentsPageComponent implements OnInit {
   protected readonly activeOverviewFilterCount = computed(() => this.activeOverviewFilters().length);
 
   ngOnInit(): void {
-    const roomIdParam = Number(this.route.snapshot.queryParamMap.get('roomId'));
-    if (!Number.isNaN(roomIdParam) && roomIdParam > 0) {
+    const roomIdParam = this.queryRoomId();
+    if (roomIdParam > 0) {
       this.assignmentForm.patchValue({ roomId: roomIdParam });
     }
     this.loadBaseData();
@@ -150,37 +143,8 @@ export class AssignmentsPageComponent implements OnInit {
     }
   }
 
-  protected selectCatalogView(view: 'room' | 'global'): void {
-    this.catalogView.set(view);
-  }
-
   protected showAssignmentsCatalog(): boolean {
-    return this.canBrowseRooms() || this.canLoadOverview();
-  }
-
-  protected showCatalogTabs(): boolean {
-    return this.canBrowseRooms() && this.canLoadOverview();
-  }
-
-  protected showRoomHistoryPanel(): boolean {
-    return this.canBrowseRooms() && (!this.canLoadOverview() || this.catalogView() === 'room');
-  }
-
-  protected showGlobalHistoryPanel(): boolean {
-    return this.canLoadOverview() && (!this.canBrowseRooms() || this.catalogView() === 'global');
-  }
-
-  protected historyRoomNumber(): string | null {
-    const id = this.historyForm.controls.roomId.getRawValue();
-    const room = this.rooms().find((r) => r.id === id);
-    return room ? room.number : null;
-  }
-
-  protected roomHistoryEmptyHint(): string {
-    if (this.historyForm.controls.roomId.getRawValue() < 1) {
-      return 'Elige una habitacion y pulsa Ver historial para llenar el catalogo.';
-    }
-    return 'Esta habitacion aun no registra movimientos en el sistema.';
+    return this.canLoadOverview();
   }
 
   protected isServiceRole(): boolean {
@@ -201,6 +165,7 @@ export class AssignmentsPageComponent implements OnInit {
 
   protected loadBaseData(): void {
     this.loading.set(true);
+    const roomIdParam = this.queryRoomId();
 
     const assignments$ = this.canLoadOverview()
       ? this.roomsApi.getAllAssignments({}).pipe(catchError(() => of([] as RoomSupplyAssignment[])))
@@ -243,8 +208,14 @@ export class AssignmentsPageComponent implements OnInit {
             this.assignmentForm.controls.deliveredBy.setValue(this.serviceUsers()[0]!.username);
           }
 
-          if (!result.rooms.length && this.canLoadOverview()) {
-            this.catalogView.set('global');
+          if (roomIdParam > 0) {
+            const room = result.rooms.find((entry) => entry.id === roomIdParam);
+            if (room) {
+              this.filtersForm.patchValue({ roomNumber: room.number });
+              this.loading.set(false);
+              this.loadAssignments();
+              return;
+            }
           }
 
           this.loading.set(false);
@@ -279,27 +250,6 @@ export class AssignmentsPageComponent implements OnInit {
         },
         error: () => {
           this.loading.set(false);
-        }
-      });
-  }
-
-  protected loadRoomHistory(): void {
-    const roomId = this.historyForm.controls.roomId.getRawValue();
-    if (roomId < 1) {
-      return;
-    }
-
-    this.historyLoading.set(true);
-    this.roomsApi
-      .getRoomAssignments(roomId)
-      .pipe(take(1))
-      .subscribe({
-        next: (history) => {
-          this.roomHistory.set(history);
-          this.historyLoading.set(false);
-        },
-        error: () => {
-          this.historyLoading.set(false);
         }
       });
   }
@@ -339,9 +289,6 @@ export class AssignmentsPageComponent implements OnInit {
             assignmentType: raw.assignmentType
           });
           this.loadBaseData();
-          if (this.canBrowseRooms() && this.historyForm.controls.roomId.getRawValue() > 0) {
-            this.loadRoomHistory();
-          }
         },
         error: (error) => {
           this.saving.set(false);
@@ -418,5 +365,10 @@ export class AssignmentsPageComponent implements OnInit {
     }
 
     return 'Valor inválido.';
+  }
+
+  private queryRoomId(): number {
+    const roomId = Number(this.route.snapshot.queryParamMap.get('roomId'));
+    return Number.isNaN(roomId) ? 0 : roomId;
   }
 }
