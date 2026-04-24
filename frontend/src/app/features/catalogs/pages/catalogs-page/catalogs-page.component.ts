@@ -283,7 +283,6 @@ const SORT_OPTIONS: Array<{ value: CatalogSortOption; label: string }> = [
               >
               <ng-template pTemplate="header">
                 <tr>
-                  <th>CODIGO</th>
                   <th>NOMBRE</th>
                   <th>DESCRIPCION</th>
                   <th>ESTADO</th>
@@ -294,7 +293,6 @@ const SORT_OPTIONS: Array<{ value: CatalogSortOption; label: string }> = [
 
               <ng-template pTemplate="body" let-category>
                 <tr>
-                  <td><span class="code-chip">{{ category.code }}</span></td>
                   <td>
                     <div class="entity-stack">
                       <strong class="entity-stack__title">{{ category.name }}</strong>
@@ -325,7 +323,7 @@ const SORT_OPTIONS: Array<{ value: CatalogSortOption; label: string }> = [
 
               <ng-template pTemplate="emptymessage">
                 <tr>
-                  <td colspan="6">
+                  <td colspan="5">
                     <div class="catalog-empty-state">{{ sectionMeta.categories.emptyState }}</div>
                   </td>
                 </tr>
@@ -347,7 +345,6 @@ const SORT_OPTIONS: Array<{ value: CatalogSortOption; label: string }> = [
               >
               <ng-template pTemplate="header">
                 <tr>
-                  <th>CODIGO</th>
                   <th>NOMBRE</th>
                   <th>DESCRIPCION</th>
                   <th>ESTADO</th>
@@ -358,7 +355,6 @@ const SORT_OPTIONS: Array<{ value: CatalogSortOption; label: string }> = [
 
               <ng-template pTemplate="body" let-unit>
                 <tr>
-                  <td><span class="code-chip">{{ unit.code }}</span></td>
                   <td>
                     <div class="entity-stack">
                       <strong class="entity-stack__title">{{ unit.name }}</strong>
@@ -387,7 +383,7 @@ const SORT_OPTIONS: Array<{ value: CatalogSortOption; label: string }> = [
 
               <ng-template pTemplate="emptymessage">
                 <tr>
-                  <td colspan="6">
+                  <td colspan="5">
                     <div class="catalog-empty-state">{{ sectionMeta.units.emptyState }}</div>
                   </td>
                 </tr>
@@ -409,7 +405,6 @@ const SORT_OPTIONS: Array<{ value: CatalogSortOption; label: string }> = [
               >
               <ng-template pTemplate="header">
                 <tr>
-                  <th>CODIGO</th>
                   <th>PROVEEDOR</th>
                   <th>CONTACTO</th>
                   <th>ESTADO</th>
@@ -420,7 +415,6 @@ const SORT_OPTIONS: Array<{ value: CatalogSortOption; label: string }> = [
 
               <ng-template pTemplate="body" let-provider>
                 <tr>
-                  <td><span class="code-chip">{{ provider.code || 'SIN-CODIGO' }}</span></td>
                   <td>
                     <div class="entity-stack">
                       <strong class="entity-stack__title">{{ provider.name }}</strong>
@@ -456,7 +450,7 @@ const SORT_OPTIONS: Array<{ value: CatalogSortOption; label: string }> = [
 
               <ng-template pTemplate="emptymessage">
                 <tr>
-                  <td colspan="6">
+                  <td colspan="5">
                     <div class="catalog-empty-state">{{ sectionMeta.providers.emptyState }}</div>
                   </td>
                 </tr>
@@ -478,7 +472,6 @@ const SORT_OPTIONS: Array<{ value: CatalogSortOption; label: string }> = [
               >
               <ng-template pTemplate="header">
                 <tr>
-                  <th>CODIGO</th>
                   <th>NOMBRE</th>
                   <th>DESCRIPCION</th>
                   <th>ESTADO</th>
@@ -489,7 +482,6 @@ const SORT_OPTIONS: Array<{ value: CatalogSortOption; label: string }> = [
 
               <ng-template pTemplate="body" let-area>
                 <tr>
-                  <td><span class="code-chip">{{ area.code }}</span></td>
                   <td>
                     <div class="entity-stack">
                       <strong class="entity-stack__title">{{ area.name }}</strong>
@@ -520,7 +512,7 @@ const SORT_OPTIONS: Array<{ value: CatalogSortOption; label: string }> = [
 
               <ng-template pTemplate="emptymessage">
                 <tr>
-                  <td colspan="6">
+                  <td colspan="5">
                     <div class="catalog-empty-state">{{ sectionMeta.areas.emptyState }}</div>
                   </td>
                 </tr>
@@ -554,14 +546,6 @@ const SORT_OPTIONS: Array<{ value: CatalogSortOption; label: string }> = [
         }
 
         <div class="form-grid">
-          <label class="field">
-            <span>Codigo</span>
-            <input pInputText type="text" formControlName="code" maxlength="40" />
-            @if (showControlError('code')) {
-              <small>{{ controlError('code') }}</small>
-            }
-          </label>
-
           <label class="field">
             <span>Nombre</span>
             <input pInputText type="text" formControlName="name" maxlength="180" />
@@ -1084,6 +1068,10 @@ const SORT_OPTIONS: Array<{ value: CatalogSortOption; label: string }> = [
         align-items: stretch;
       }
 
+      :host ::ng-deep .catalogs-table .p-datatable-table {
+        min-width: 48rem;
+      }
+
       .catalog-search {
         max-width: none;
       }
@@ -1120,6 +1108,15 @@ const SORT_OPTIONS: Array<{ value: CatalogSortOption; label: string }> = [
 
       .dialog-actions {
         flex-direction: column-reverse;
+      }
+
+      :host ::ng-deep .catalogs-table .p-datatable-table {
+        min-width: 0;
+      }
+
+      :host ::ng-deep .catalogs-table .p-datatable-thead > tr > th,
+      :host ::ng-deep .catalogs-table .p-datatable-tbody > tr > td {
+        padding: 0.75rem 0.7rem;
       }
     }
   `
@@ -1348,6 +1345,12 @@ export class CatalogsPageComponent implements OnInit {
 
   protected submit(): void {
     this.submitError.set(null);
+
+    const generatedCode = this.buildCatalogCode(
+      this.form.controls.name.getRawValue(),
+      this.form.controls.code.getRawValue()
+    );
+    this.form.controls.code.setValue(generatedCode);
 
     if (this.form.invalid) {
       this.form.markAllAsTouched();
@@ -1597,6 +1600,25 @@ export class CatalogsPageComponent implements OnInit {
 
   private compareText(left: string | null | undefined, right: string | null | undefined): number {
     return (left ?? '').localeCompare(right ?? '', 'es', { sensitivity: 'base' });
+  }
+
+  private buildCatalogCode(name: string, currentCode: string): string {
+    const existing = currentCode.trim();
+    if (existing) {
+      return existing.slice(0, 40);
+    }
+
+    const normalized = name
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toUpperCase()
+      .replace(/[^A-Z0-9]+/g, '_')
+      .replace(/^_+|_+$/g, '')
+      .replace(/_+/g, '_')
+      .slice(0, 32);
+
+    const fallback = `CAT_${Date.now().toString().slice(-6)}`;
+    return (normalized || fallback).slice(0, 40);
   }
 
   private escapeCsvValue(value: string): string {

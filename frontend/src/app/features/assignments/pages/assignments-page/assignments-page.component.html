@@ -184,7 +184,7 @@
         <div class="assignments-catalog-panel" role="tabpanel" aria-label="Historial global">
           <form
             [formGroup]="filtersForm"
-            class="catalog-toolbar assignments-catalog-toolbar--stack"
+            class="catalog-toolbar assignments-catalog-toolbar--stack assignments-catalog-toolbar--global"
             (submit)="$event.preventDefault()"
           >
             <div class="assignments-global-filters">
@@ -217,14 +217,10 @@
               </label>
             </div>
             <div class="catalog-toolbar__controls assignments-catalog-toolbar__controls">
-              <span class="catalogs-section-head__count">
-                {{ assignments().length }} registros · {{ totalAssignedQuantity() }} uds ·
-                {{ incomingAssignmentsCount() }} in / {{ outgoingAssignmentsCount() }} out ·
-                {{ activeOverviewFilterCount() }} filtros
-              </span>
               <button
                 pButton
                 type="button"
+                class="assignments-btn-consult"
                 icon="pi pi-filter"
                 label="Consultar"
                 [loading]="loading()"
