@@ -131,14 +131,16 @@ import { CommonModule } from '@angular/common';
   styles: `
     :host {
       display: block;
-      height: 100vh;
-      overflow: hidden;
+      min-height: 100vh;
+      min-height: 100dvh;
+      overflow-x: hidden;
     }
 
     .login-container {
       display: grid;
       grid-template-columns: 1fr minmax(400px, 40%);
-      height: 100%;
+      min-height: 100vh;
+      min-height: 100dvh;
       background: #fff;
     }
 
@@ -184,6 +186,7 @@ import { CommonModule } from '@angular/common';
       position: relative;
       z-index: 10;
       box-shadow: -20px 0 50px rgba(0,0,0,0.05);
+      min-width: 0;
     }
 
     .login-main__content {
@@ -193,6 +196,7 @@ import { CommonModule } from '@angular/common';
       flex-direction: column;
       gap: 1.1rem;
       transform: translateY(0.15rem);
+      padding-block: 0.5rem;
     }
 
     .login-header {
@@ -363,6 +367,7 @@ import { CommonModule } from '@angular/common';
     }
 
     .submit-button {
+      width: 100%;
       background: linear-gradient(135deg, #c8922d 0%, #a67c25 100%) !important;
       border: none !important;
       padding: 1.2rem !important;
@@ -394,11 +399,14 @@ import { CommonModule } from '@angular/common';
         display: none;
       }
       .login-main {
-        padding: 2rem;
+        min-height: 100vh;
+        min-height: 100dvh;
+        padding: 2rem 1.5rem;
       }
 
       .login-main__content {
         transform: none;
+        max-width: 28rem;
       }
 
       .login-header {
@@ -418,6 +426,127 @@ import { CommonModule } from '@angular/common';
       .brand__sparkle--right {
         right: -1.3rem;
         top: 1.4rem;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .login-main {
+        align-items: start;
+        padding: max(1.25rem, env(safe-area-inset-top)) 1rem max(1.25rem, env(safe-area-inset-bottom));
+      }
+
+      .login-main__content {
+        max-width: none;
+        gap: 0.9rem;
+        padding-block: 0;
+      }
+
+      .brand {
+        width: min(12.5rem, calc(100% - 2.5rem));
+      }
+
+      .brand__sparkle--left {
+        left: -1rem;
+      }
+
+      .brand__sparkle--left-small {
+        left: -1.25rem;
+        top: 1.35rem;
+      }
+
+      .brand__sparkle--right {
+        right: -0.95rem;
+        top: 1.2rem;
+      }
+
+      .login-card__header {
+        padding-top: 0.6rem;
+      }
+
+      .login-card__header h1 {
+        font-size: clamp(2rem, 9vw, 2.5rem);
+        margin-bottom: 0.35rem;
+      }
+
+      .login-card__header p {
+        font-size: 0.98rem;
+        line-height: 1.55;
+        max-width: 22rem;
+        margin-inline: auto;
+      }
+
+      .login-form {
+        gap: 1.2rem;
+        margin-top: 1rem;
+      }
+
+      .field {
+        gap: 0.5rem;
+      }
+
+      .field label {
+        font-size: 0.78rem;
+      }
+
+      .input-wrapper i {
+        left: 1rem;
+      }
+
+      .input-wrapper input,
+      .input-wrapper ::ng-deep .p-password input {
+        min-height: 3.5rem;
+        padding: 0.95rem 1rem 0.95rem 2.7rem !important;
+        font-size: 0.98rem !important;
+      }
+
+      .submit-button {
+        margin-top: 0.5rem;
+        padding: 1rem !important;
+      }
+
+      .login-footer {
+        padding-bottom: 0.25rem;
+      }
+    }
+
+    @media (max-width: 420px) {
+      .login-main {
+        padding-inline: 0.85rem;
+      }
+
+      .brand {
+        width: min(11.25rem, calc(100% - 2rem));
+      }
+
+      .brand__sparkle {
+        width: 1.2rem;
+        height: 1.2rem;
+      }
+
+      .brand__sparkle--left-small {
+        width: 0.75rem;
+        height: 0.75rem;
+      }
+
+      .login-card__header h1 {
+        font-size: clamp(1.8rem, 10vw, 2.15rem);
+      }
+
+      .login-card__header p {
+        font-size: 0.92rem;
+      }
+
+      .input-wrapper input,
+      .input-wrapper ::ng-deep .p-password input {
+        border-radius: 0.9rem !important;
+      }
+
+      .submit-button {
+        border-radius: 0.9rem !important;
+      }
+
+      .login-footer {
+        font-size: 0.7rem;
       }
     }
   `
