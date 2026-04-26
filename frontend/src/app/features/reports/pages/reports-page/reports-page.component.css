@@ -72,6 +72,13 @@
   margin-top: 0.45rem !important;
 }
 
+/* En escritorio el DOM va metricas → activo (mejor en movil); order devuelve la tarjeta activa al frente del flujo. */
+@media (min-width: 901px) {
+  .reports-summary-card--active {
+    order: -1;
+  }
+}
+
 .reports-workbench {
   padding: 0;
   overflow: hidden;
@@ -157,6 +164,32 @@
   gap: 0.6rem;
   justify-content: flex-end;
   align-items: center;
+}
+
+.reports-filter-shell__actions-primary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.reports-filter-shell__actions-export {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.reports-export-eyebrow {
+  display: none;
+}
+
+.reports-filter-shell__export-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  justify-content: flex-end;
 }
 
 :host ::ng-deep .reports-filter-shell__actions .p-button {
@@ -334,17 +367,9 @@
   font-size: 0.82rem;
 }
 
-@media (max-width: 960px) {
+@media (max-width: 1100px) {
   .reports-page {
     gap: 1.35rem;
-  }
-
-  .reports-summary {
-    order: 3;
-  }
-
-  .reports-workbench {
-    order: 1;
   }
 
   .reports-filter-shell__header,
@@ -363,14 +388,80 @@
   }
 }
 
-@media (max-width: 720px) {
+@media (max-width: 900px) {
   .reports-page {
     gap: 1.1rem;
   }
 
-  .reports-summary-card {
+  :host ::ng-deep app-page-header .page-header {
+    align-items: center;
+    text-align: center;
+  }
+
+  :host ::ng-deep app-page-header .page-header__copy,
+  :host ::ng-deep app-page-header .page-header__subtitle {
+    margin-inline: auto;
+    text-align: center;
+    width: min(100%, 42rem);
+  }
+
+  .note-banner {
+    text-align: left;
+  }
+
+  /* Gana a .summary-grid global (auto-fit → una columna en pantallas estrechas). */
+  .reports-page .summary-grid.reports-summary {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.65rem;
+  }
+
+  .reports-summary-card--active {
+    grid-column: 1 / -1;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    text-align: left;
+    justify-items: start;
+    min-height: 0;
+    padding: 1rem 1.1rem;
+    gap: 1rem;
+  }
+
+  .reports-summary-card--metric {
     grid-template-columns: 1fr;
     align-items: flex-start;
+    text-align: center;
+    justify-items: center;
+    min-height: 0;
+    padding: 0.85rem 0.65rem;
+    gap: 0.45rem;
+  }
+
+  .reports-summary-card--metric .reports-summary-card__icon {
+    width: 2.5rem;
+    height: 2.5rem;
+    font-size: 0.95rem;
+  }
+
+  .reports-summary-card--metric .reports-summary-card__content span {
+    font-size: 0.68rem;
+    letter-spacing: 0.07em;
+  }
+
+  .reports-summary-card--metric .reports-summary-card__content strong {
+    font-size: 1.85rem;
+    line-height: 1.1;
+  }
+
+  .reports-summary-card--metric .reports-summary-card__content small {
+    font-size: 0.72rem;
+    line-height: 1.35;
+  }
+
+  .reports-summary-card--active .reports-summary-card__icon {
+    width: 3.1rem;
+    height: 3.1rem;
+    font-size: 1.2rem;
   }
 
   .report-tabs,
@@ -384,15 +475,289 @@
   }
 
   .reports-filters-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem 0.85rem;
   }
 
   .report-tab {
     padding-inline: 0.75rem;
   }
 
-  .reports-filter-shell__actions > * {
+  .reports-result-head {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .reports-result-head__identity {
+    display: none;
+  }
+
+  .reports-result-head__stats {
+    justify-content: flex-start;
     width: 100%;
+  }
+
+  .reports-result-head__stats span {
+    justify-content: flex-start;
+    width: auto;
+    max-width: 100%;
+  }
+
+  .reports-filter-shell__actions {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .reports-filter-shell__actions-primary {
+    display: grid;
+    grid-template-columns: 1fr;
+    width: 100%;
+    gap: 0.6rem;
+  }
+
+  .reports-filter-shell__actions-primary > * {
+    width: 100%;
+  }
+
+  .reports-filter-shell__actions-export {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    gap: 0.5rem;
+    padding-top: 0.35rem;
+    border-top: 1px solid rgba(214, 191, 152, 0.2);
+  }
+
+  .reports-export-eyebrow {
+    display: block;
+  }
+
+  .reports-filter-shell__export-buttons {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.45rem;
+    width: 100%;
+  }
+
+  :host ::ng-deep .reports-filter-shell__export-buttons .p-button {
+    min-height: 2.55rem;
+    padding: 0.5rem 0.35rem !important;
+    font-size: 0.68rem !important;
+  }
+
+  :host ::ng-deep .reports-filter-shell__export-buttons .p-button .p-button-label {
+    white-space: normal;
+    line-height: 1.2;
+    text-align: center;
+  }
+
+  :host ::ng-deep .reports-table .p-datatable-table {
+    min-width: 100% !important;
+  }
+
+  :host ::ng-deep .reports-table .p-datatable-thead {
+    display: none;
+  }
+
+  :host ::ng-deep .reports-table .p-datatable-tbody,
+  :host ::ng-deep .reports-table .p-datatable-tbody > tr,
+  :host ::ng-deep .reports-table .p-datatable-tbody > tr > td {
+    display: block;
+    width: 100%;
+  }
+
+  :host ::ng-deep .reports-table .p-datatable-tbody {
+    padding: 0.95rem;
+  }
+
+  :host ::ng-deep .reports-table .p-datatable-tbody > tr {
+    margin-bottom: 0.95rem;
+    padding: 1rem;
+    border: 1px solid rgba(214, 191, 152, 0.22);
+    border-radius: 1.1rem;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(253, 250, 244, 0.96));
+    box-shadow: 0 14px 28px rgba(45, 32, 22, 0.05);
+  }
+
+  :host ::ng-deep .reports-table .p-datatable-tbody > tr:last-child {
+    margin-bottom: 0;
+  }
+
+  :host ::ng-deep .reports-table .p-datatable-tbody > tr > td {
+    width: auto !important;
+    min-width: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    text-align: left !important;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.35rem;
+    align-items: start;
+    white-space: normal;
+    overflow-wrap: break-word;
+    word-break: normal;
+  }
+
+  :host ::ng-deep .reports-table .p-datatable-tbody > tr > td + td {
+    margin-top: 0.8rem;
+    padding-top: 0.8rem !important;
+    border-top: 1px solid rgba(214, 191, 152, 0.18) !important;
+  }
+
+  :host ::ng-deep .reports-table .p-datatable-tbody > tr > td::before {
+    content: '';
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #9a6f14;
+  }
+
+  :host ::ng-deep .reports-table--inventory .p-datatable-tbody > tr > td:nth-child(1)::before {
+    content: 'Codigo';
+  }
+
+  :host ::ng-deep .reports-table--inventory .p-datatable-tbody > tr > td:nth-child(2)::before {
+    content: 'Item';
+  }
+
+  :host ::ng-deep .reports-table--inventory .p-datatable-tbody > tr > td:nth-child(3)::before {
+    content: 'Categoria';
+  }
+
+  :host ::ng-deep .reports-table--inventory .p-datatable-tbody > tr > td:nth-child(4)::before {
+    content: 'Unidad';
+  }
+
+  :host ::ng-deep .reports-table--inventory .p-datatable-tbody > tr > td:nth-child(5)::before {
+    content: 'Stock';
+  }
+
+  :host ::ng-deep .reports-table--inventory .p-datatable-tbody > tr > td:nth-child(6)::before {
+    content: 'Min/Max';
+  }
+
+  :host ::ng-deep .reports-table--inventory .p-datatable-tbody > tr > td:nth-child(7)::before {
+    content: 'Rotacion';
+  }
+
+  :host ::ng-deep .reports-table--inventory .p-datatable-tbody > tr > td:nth-child(8)::before {
+    content: 'Alerta';
+  }
+
+  :host ::ng-deep .reports-table--top-used .p-datatable-tbody > tr > td:nth-child(1)::before {
+    content: 'Item ID';
+  }
+
+  :host ::ng-deep .reports-table--top-used .p-datatable-tbody > tr > td:nth-child(2)::before {
+    content: 'Item';
+  }
+
+  :host ::ng-deep .reports-table--top-used .p-datatable-tbody > tr > td:nth-child(3)::before {
+    content: 'Total usado';
+  }
+
+  :host ::ng-deep .reports-table--consumption .p-datatable-tbody > tr > td:nth-child(1)::before,
+  :host ::ng-deep .reports-table--distribution .p-datatable-tbody > tr > td:nth-child(1)::before {
+    content: 'Habitacion';
+  }
+
+  :host ::ng-deep .reports-table--consumption .p-datatable-tbody > tr > td:nth-child(2)::before,
+  :host ::ng-deep .reports-table--distribution .p-datatable-tbody > tr > td:nth-child(2)::before {
+    content: 'Tipo';
+  }
+
+  :host ::ng-deep .reports-table--consumption .p-datatable-tbody > tr > td:nth-child(3)::before,
+  :host ::ng-deep .reports-table--distribution .p-datatable-tbody > tr > td:nth-child(3)::before {
+    content: 'Item';
+  }
+
+  :host ::ng-deep .reports-table--consumption .p-datatable-tbody > tr > td:nth-child(4)::before {
+    content: 'Asignacion';
+  }
+
+  :host ::ng-deep .reports-table--consumption .p-datatable-tbody > tr > td:nth-child(5)::before {
+    content: 'Entregado';
+  }
+
+  :host ::ng-deep .reports-table--consumption .p-datatable-tbody > tr > td:nth-child(6)::before {
+    content: 'Total';
+  }
+
+  :host ::ng-deep .reports-table--distribution .p-datatable-tbody > tr > td:nth-child(4)::before {
+    content: 'Cantidad';
+  }
+
+  :host ::ng-deep .reports-table--distribution .p-datatable-tbody > tr > td:nth-child(5)::before {
+    content: 'Asignacion';
+  }
+
+  :host ::ng-deep .reports-table--distribution .p-datatable-tbody > tr > td:nth-child(6)::before {
+    content: 'Entregado';
+  }
+
+  :host ::ng-deep .reports-table--distribution .p-datatable-tbody > tr > td:nth-child(7)::before {
+    content: 'Huesped';
+  }
+
+  /* Resumen inventario: dos columnas de datos + alerta a la derecha. */
+  :host ::ng-deep .reports-table--inventory .p-datatable-tbody > tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+    column-gap: 0.85rem;
+    row-gap: 0.4rem;
+    align-items: start;
+  }
+
+  :host ::ng-deep .reports-table--inventory .p-datatable-tbody > tr > td {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+    border-top: none !important;
+  }
+
+  :host ::ng-deep .reports-table--inventory .p-datatable-tbody > tr > td:nth-child(1) {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  :host ::ng-deep .reports-table--inventory .p-datatable-tbody > tr > td:nth-child(2) {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  :host ::ng-deep .reports-table--inventory .p-datatable-tbody > tr > td:nth-child(3) {
+    grid-column: 1;
+    grid-row: 3;
+  }
+
+  :host ::ng-deep .reports-table--inventory .p-datatable-tbody > tr > td:nth-child(4) {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  :host ::ng-deep .reports-table--inventory .p-datatable-tbody > tr > td:nth-child(5) {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  :host ::ng-deep .reports-table--inventory .p-datatable-tbody > tr > td:nth-child(6) {
+    grid-column: 2;
+    grid-row: 3;
+  }
+
+  :host ::ng-deep .reports-table--inventory .p-datatable-tbody > tr > td:nth-child(7) {
+    grid-column: 1 / 3;
+    grid-row: 4;
+  }
+
+  :host ::ng-deep .reports-table--inventory .p-datatable-tbody > tr > td:nth-child(8) {
+    grid-column: 3;
+    grid-row: 1 / span 4;
+    align-self: center;
+    justify-self: end;
+    text-align: right !important;
   }
 }
 
@@ -418,5 +783,38 @@
 
   .report-tab {
     flex: 0 0 auto;
+    scroll-snap-align: start;
+  }
+
+  .reports-page .summary-grid.reports-summary {
+    gap: 0.45rem;
+  }
+
+  .reports-summary-card--metric {
+    padding: 0.7rem 0.4rem;
+  }
+
+  .reports-summary-card--metric .reports-summary-card__icon {
+    width: 2.25rem;
+    height: 2.25rem;
+    font-size: 0.88rem;
+  }
+
+  .reports-summary-card--metric .reports-summary-card__content strong {
+    font-size: 1.55rem;
+  }
+
+  .reports-filters-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .reports-result-head__stats {
+    width: 100%;
+  }
+
+  .reports-result-head__stats span {
+    width: auto;
+    max-width: 100%;
+    justify-content: flex-start;
   }
 }

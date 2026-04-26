@@ -129,15 +129,10 @@
 
           <div class="catalogs-table-wrap admin-table-block">
             <p-table
-              [value]="assignments()"
+              [value]="paginatedAssignments()"
               [loading]="loading()"
-              [paginator]="true"
-              [rows]="10"
-              [rowsPerPageOptions]="[10, 20, 50]"
-              [showCurrentPageReport]="true"
-              currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros"
               responsiveLayout="scroll"
-              styleClass="catalogs-table"
+              styleClass="catalogs-table assignments-table assignments-table--overview"
             >
               <ng-template pTemplate="header">
                 <tr>
@@ -188,6 +183,65 @@
                 </tr>
               </ng-template>
             </p-table>
+
+            <div class="pagination-bar assignments-pagination">
+              <span class="pagination-info">
+                Mostrando {{ pageStart() }} a {{ pageEnd() }} de {{ assignments().length }} registros
+              </span>
+
+              <div class="pagination-controls">
+                <button
+                  type="button"
+                  class="pag-btn"
+                  [disabled]="currentPage() === 1"
+                  (click)="changePage(1)"
+                  aria-label="Primera pagina"
+                >
+                  Primera
+                </button>
+
+                <button
+                  type="button"
+                  class="pag-btn pag-btn--icon"
+                  [disabled]="currentPage() === 1"
+                  (click)="changePage(currentPage() - 1)"
+                  aria-label="Pagina anterior"
+                >
+                  <i class="pi pi-angle-left" aria-hidden="true"></i>
+                </button>
+
+                @for (page of visiblePages(); track page) {
+                  <button
+                    type="button"
+                    class="pag-btn"
+                    [class.active]="page === currentPage()"
+                    (click)="changePage(page)"
+                  >
+                    {{ page }}
+                  </button>
+                }
+
+                <button
+                  type="button"
+                  class="pag-btn pag-btn--icon"
+                  [disabled]="currentPage() === totalPages()"
+                  (click)="changePage(currentPage() + 1)"
+                  aria-label="Pagina siguiente"
+                >
+                  <i class="pi pi-angle-right" aria-hidden="true"></i>
+                </button>
+
+                <button
+                  type="button"
+                  class="pag-btn"
+                  [disabled]="currentPage() === totalPages()"
+                  (click)="changePage(totalPages())"
+                  aria-label="Ultima pagina"
+                >
+                  Ultima
+                </button>
+              </div>
+            </div>
           </div>
         </div>
     </section>

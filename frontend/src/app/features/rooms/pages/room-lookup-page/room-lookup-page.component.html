@@ -73,31 +73,29 @@
           </div>
         </div>
 
-        <div class="pp-metric-strip room-lookup-metric-strip">
-          <article class="pp-metric-card">
-            <p class="pp-metric-card__label">Número</p>
-            <p class="pp-metric-card__value room-lookup-metric__value--md">{{ room.number }}</p>
-            <p class="pp-metric-card__hint">Identificador visible</p>
-          </article>
-          <article class="pp-metric-card">
-            <p class="pp-metric-card__label">Tipo</p>
-            <p class="pp-metric-card__value room-lookup-metric__value--sm">{{ room.type }}</p>
-          </article>
-          <article class="pp-metric-card">
-            <p class="pp-metric-card__label">Estado</p>
-            <p class="pp-metric-card__value room-lookup-metric__value--sm">{{ room.status }}</p>
-          </article>
-          <article class="pp-metric-card">
-            <p class="pp-metric-card__label">Activa</p>
-            <p class="pp-metric-card__value room-lookup-metric__value--md">{{ room.active ? 'Sí' : 'No' }}</p>
-          </article>
-          <article class="pp-metric-card">
-            <p class="pp-metric-card__label">ID interno</p>
-            <p class="pp-metric-card__value room-lookup-metric__value--md">
-              <span class="code-chip">{{ room.id }}</span>
-            </p>
-            <p class="pp-metric-card__hint">Para el formulario de asignaciones</p>
-          </article>
+        <div class="room-lookup-table">
+          <div class="room-lookup-row">
+            <span>Número</span>
+            <strong>{{ room.number }}</strong>
+          </div>
+
+          <div class="room-lookup-row">
+            <span>Tipo</span>
+            <strong>{{ room.type }}</strong>
+          </div>
+
+          <div class="room-lookup-row">
+            <span>Estado</span>
+            <strong class="status">
+              <i class="pi pi-circle-fill"></i>
+              {{ room.status }}
+            </strong>
+          </div>
+
+          <div class="room-lookup-row">
+            <span>Activa</span>
+            <strong>{{ room.active ? 'Sí' : 'No' }}</strong>
+          </div>
         </div>
 
         <div class="room-lookup-actions">

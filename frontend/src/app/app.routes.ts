@@ -69,7 +69,7 @@ export const routes: Routes = [
           summary: 'Consulta centralizada de bitácoras de autenticación, inventario y habitaciones.',
           endpoint:
             'GET /auth/audit · GET /inventory/api/inventory/audit · GET /rooms/api/rooms/audit',
-          note: 'Puedes filtrar la consulta por accion, usuario y rango de fechas.'
+          note: 'Puedes filtrar la consulta por acción, usuario y rango de fechas.'
         }
       },
       {
@@ -120,7 +120,7 @@ export const routes: Routes = [
           summary: 'Historial trazable de entradas, salidas, devoluciones y anulaciones.',
           endpoint:
             'GET /inventory/api/inventory/movements · POST /inventory/api/inventory/movements/{id}/void',
-          note: 'Puedes filtrar por tipo, origen, habitacion, responsable, area y rango de fechas.'
+          note: 'Puedes filtrar por tipo, origen, habitación, responsable, área y rango de fechas.'
         }
       },
       {

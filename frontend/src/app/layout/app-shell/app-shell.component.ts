@@ -21,15 +21,16 @@ import { SidebarComponent } from '../sidebar/sidebar.component';
       <app-sidebar />
 
       <main class="shell__main">
-        <!-- Mobile Trigger (Since Topbar is gone) -->
-        <button
-          type="button"
-          class="shell__mobile-trigger"
-          (click)="layout.toggleMobileMenu()"
-          aria-label="Abrir menu"
-        >
-          <i class="pi pi-bars"></i>
-        </button>
+        <div class="shell__mobile-bar">
+          <button
+            type="button"
+            class="shell__mobile-trigger"
+            (click)="layout.toggleMobileMenu()"
+            aria-label="Abrir menú"
+          >
+            <i class="pi pi-bars"></i>
+          </button>
+        </div>
 
         <section class="shell__content">
           <router-outlet />
@@ -56,13 +57,22 @@ import { SidebarComponent } from '../sidebar/sidebar.component';
       padding: 1.5rem 1.5rem 1.5rem 0; /* Breathable spacing from sidebar */
       transition: margin-left 0.38s cubic-bezier(0.4, 0, 0.2, 1);
       position: relative;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .shell__mobile-bar {
+      display: none;
     }
 
     .shell__content {
+      flex: 1 1 auto;
       min-height: calc(100vh - 3rem);
       padding: 0;
       background: transparent;
       overflow-x: hidden;
+      min-width: 0;
     }
 
     .shell__mobile-trigger {
@@ -88,39 +98,61 @@ import { SidebarComponent } from '../sidebar/sidebar.component';
       transform: scale(0.95);
     }
 
+    @media (min-width: 1024px) and (max-width: 1365px) {
+      .shell {
+        --shell-sidebar-width: 232px;
+      }
+
+      .shell--collapsed {
+        --shell-sidebar-width: 84px;
+      }
+
+      .shell__main {
+        padding: 1.1rem 1rem 1.25rem 0;
+      }
+
+      .shell__content {
+        min-height: calc(100vh - 2.35rem);
+      }
+    }
+
     @media (max-width: 1023px) {
       .shell__main {
         margin-left: 0;
-        padding: 0.75rem 0.75rem 1rem;
+        padding: 0;
+      }
+
+      .shell__mobile-bar {
+        display: flex;
+        justify-content: flex-end;
+        padding: 0.85rem 0.85rem 0;
       }
 
       .shell__mobile-trigger {
         display: grid;
+        position: relative;
+        top: auto;
+        right: auto;
+        margin-left: 0;
+        z-index: 1;
       }
 
       .shell__content {
-        margin-top: 4.5rem;
+        margin-top: 0;
         padding: 0;
-        border-radius: 1.25rem;
-        min-height: calc(100vh - 6rem);
+        min-height: calc(100vh - 2rem);
       }
     }
 
     @media (max-width: 640px) {
-      .shell__main {
-        padding-inline: 0.5rem;
+      .shell__mobile-bar {
+        padding: 0.55rem 0.55rem 0;
       }
 
       .shell__mobile-trigger {
-        top: 0.75rem;
-        right: 0.75rem;
         width: 3rem;
         height: 3rem;
         border-radius: 0.9rem;
-      }
-
-      .shell__content {
-        margin-top: 4rem;
       }
     }
   `

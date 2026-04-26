@@ -62,6 +62,8 @@ export class AssignmentsPageComponent implements OnInit {
   protected readonly saving = signal(false);
   protected readonly submitError = signal<string | null>(null);
   protected readonly movementDialogVisible = signal(false);
+  protected readonly currentPage = signal(1);
+  protected readonly pageSize = 10;
 
   protected readonly assignmentForm = this.fb.group({
     roomId: this.fb.nonNullable.control(0, [Validators.required, Validators.min(1)]),
@@ -121,6 +123,33 @@ export class AssignmentsPageComponent implements OnInit {
     return chips;
   });
   protected readonly activeOverviewFilterCount = computed(() => this.activeOverviewFilters().length);
+  protected readonly totalPages = computed(() =>
+    Math.max(1, Math.ceil(this.assignments().length / this.pageSize))
+  );
+  protected readonly pageStart = computed(() =>
+    this.assignments().length ? (this.currentPage() - 1) * this.pageSize + 1 : 0
+  );
+  protected readonly pageEnd = computed(() =>
+    Math.min(this.currentPage() * this.pageSize, this.assignments().length)
+  );
+  protected readonly paginatedAssignments = computed(() => {
+    const start = (this.currentPage() - 1) * this.pageSize;
+    return this.assignments().slice(start, start + this.pageSize);
+  });
+  protected readonly visiblePages = computed(() => {
+    const totalPages = this.totalPages();
+    const currentPage = this.currentPage();
+    const maxButtons = 5;
+
+    let startPage = Math.max(1, currentPage - 2);
+    let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+
+    if (endPage - startPage + 1 < maxButtons) {
+      startPage = Math.max(1, endPage - maxButtons + 1);
+    }
+
+    return Array.from({ length: endPage - startPage + 1 }, (_, index) => startPage + index);
+  });
 
   ngOnInit(): void {
     const roomIdParam = this.queryRoomId();
@@ -183,6 +212,7 @@ export class AssignmentsPageComponent implements OnInit {
           this.rooms.set(result.rooms);
           this.items.set(result.items.filter((item) => item.active));
           this.assignments.set(result.assignments);
+          this.currentPage.set(1);
 
           const serviceUsers = result.users.filter(
             (user) => user.active && user.roles.includes('SERVICIO')
@@ -246,6 +276,7 @@ export class AssignmentsPageComponent implements OnInit {
       .subscribe({
         next: (assignments) => {
           this.assignments.set(assignments);
+          this.currentPage.set(1);
           this.loading.set(false);
         },
         error: () => {
@@ -332,6 +363,11 @@ export class AssignmentsPageComponent implements OnInit {
       endDate: ''
     });
     this.loadAssignments();
+  }
+
+  protected changePage(page: number): void {
+    const safePage = Math.min(Math.max(page, 1), this.totalPages());
+    this.currentPage.set(safePage);
   }
 
   protected showAssignmentError(

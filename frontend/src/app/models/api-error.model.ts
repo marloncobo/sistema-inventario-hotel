@@ -13,7 +13,7 @@ export interface RestApiError {
 
 export type KnownApiError = AuthApiError | RestApiError | null | undefined;
 
-const DEFAULT_API_ERROR_MESSAGE = 'No fue posible completar la operacion.';
+const DEFAULT_API_ERROR_MESSAGE = 'No fue posible completar la operación.';
 const TECHNICAL_ERROR_HINTS = [
   'http://',
   'https://',
@@ -74,7 +74,7 @@ function sanitizeApiErrorMessage(message: string): string {
   const looksTechnical = TECHNICAL_ERROR_HINTS.some((hint) => lowerCased.includes(hint));
 
   if (looksTechnical || includesTechnicalPath) {
-    return 'No fue posible completar la operacion en este momento.';
+    return 'No fue posible completar la operación en este momento.';
   }
 
   return normalized;

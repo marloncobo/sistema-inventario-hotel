@@ -73,6 +73,28 @@
     </article>
   </section>
 
+  <div class="movements-mobile-actions" aria-hidden="false">
+    <button
+      pButton
+      type="submit"
+      class="movements-btn-primary"
+      form="movements-filter-form"
+      icon="pi pi-filter"
+      label="Consultar"
+      [loading]="loading()"
+    ></button>
+
+    <button
+      pButton
+      type="button"
+      icon="pi pi-eraser"
+      label="Limpiar"
+      severity="secondary"
+      variant="outlined"
+      (click)="clearFilters()"
+    ></button>
+  </div>
+
   <section class="surface-card movements-filter-card">
     <form
       id="movements-filter-form"

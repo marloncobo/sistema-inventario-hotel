@@ -395,11 +395,7 @@
   color: #9b6d18;
 }
 
-.status-pill--entrada {
-  background: rgba(56, 116, 183, 0.12);
-  color: #2c5282;
-}
-
+.status-pill--entrada,
 .status-pill--salida {
   background: rgba(200, 146, 45, 0.12);
   color: #9b6d18;
@@ -616,6 +612,66 @@
 .assignments-table-wrap {
   overflow: hidden;
   background: linear-gradient(180deg, #fffefb, #fff);
+}
+
+.pagination-bar {
+  padding: 1.15rem 1.2rem 1.2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  background: white;
+  border-top: 1px solid rgba(214, 191, 152, 0.18);
+}
+
+.pagination-info {
+  font-size: 0.85rem;
+  color: #8a7867;
+}
+
+.pagination-controls {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.pag-btn {
+  min-width: 2.5rem;
+  height: 2.25rem;
+  padding: 0 0.85rem;
+  border-radius: 8px;
+  border: 1px solid #f0f0f0;
+  background: #fff;
+  color: #6e5f50;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.pag-btn--icon {
+  min-width: 2.4rem;
+  padding: 0;
+}
+
+.pag-btn.active {
+  background: #c8922d;
+  color: #fff;
+  border-color: #c8922d;
+  font-weight: 700;
+}
+
+.pag-btn:hover:not(:disabled):not(.active) {
+  color: #b8892a;
+  border-color: rgba(200, 146, 45, 0.4);
+}
+
+.pag-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
 }
 
 .assignment-date {
@@ -855,7 +911,7 @@
   }
 }
 
-@media (max-width: 960px) {
+@media (max-width: 1100px) {
   .assignments-section-head,
   .assignments-toolbar,
   .assignments-hero__top,
@@ -867,6 +923,9 @@
 
   .assignments-header-actions {
     width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
   }
 
   .assignments-catalog-toolbar--global {
@@ -878,8 +937,11 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .assignments-header-actions .p-button {
-    width: 100%;
+  .assignments-header-actions .p-button,
+  .assignments-header-actions .btn-gold-add {
+    width: auto !important;
+    min-width: min(100%, 15.5rem);
+    margin-inline: auto;
   }
 
   .assignments-toolbar__actions,
@@ -899,10 +961,72 @@
   }
 }
 
-@media (max-width: 720px) {
+@media (max-width: 900px) {
+  .assignments-page {
+    padding-bottom: 5.75rem;
+  }
+
+  .assignments-hero__copy {
+    text-align: left;
+  }
+
+  .assignments-header-actions {
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
+    align-items: flex-start;
+  }
+
+  .assignments-header-actions .btn-gold-add {
+    width: 3.35rem !important;
+    min-width: 3.35rem;
+    height: 3.35rem;
+    margin-inline: 0;
+    padding: 0 !important;
+    border-radius: 999px !important;
+    position: fixed;
+    right: 1rem;
+    bottom: 1.1rem;
+    z-index: 20;
+    box-shadow: 0 10px 24px rgba(200, 146, 45, 0.32) !important;
+  }
+
+  .assignments-header-actions .btn-gold-add .p-button-label {
+    display: none !important;
+  }
+
+  .assignments-header-actions .btn-gold-add .p-button-icon {
+    margin: 0 !important;
+    font-size: 1.22rem;
+  }
+
   .assignments-summary-card {
     grid-template-columns: 1fr;
-    align-items: flex-start;
+    justify-items: start;
+    text-align: left;
+    gap: 0.55rem;
+    padding: 0.95rem 0.85rem;
+  }
+
+  .assignments-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.6rem;
+  }
+
+  .assignments-summary-card__icon {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 0.95rem;
+    font-size: 0.95rem;
+  }
+
+  .assignments-summary-card__content strong {
+    font-size: 1.8rem;
+  }
+
+  .assignments-summary-card__content small {
+    font-size: 0.74rem;
+    line-height: 1.35;
   }
 
   .assignments-section-head,
@@ -914,11 +1038,60 @@
     padding-inline: 1rem;
   }
 
+  .catalog-toolbar.assignments-catalog-toolbar--global {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.8rem;
+    padding: 1rem;
+    border: 1px solid rgba(214, 191, 152, 0.24);
+    border-radius: 1rem;
+    margin: 0.95rem;
+    background: #fffefb;
+  }
+
+  .catalog-toolbar.assignments-catalog-toolbar--global::before {
+    content: 'Filtros de consulta';
+    display: block;
+    font-size: 1rem;
+    font-weight: 800;
+    color: #2a2118;
+    margin-bottom: 0.05rem;
+  }
+
   .assignments-filters-card__actions > *,
   .assignments-toolbar__actions > *,
   .catalog-toolbar__controls > .p-button,
   .assignments-dialog-actions > * {
     width: 100%;
+  }
+
+  .assignments-filters-card__actions,
+  .assignments-toolbar__actions {
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .assignments-filters-card__actions > .p-button,
+  .assignments-toolbar__actions > .p-button {
+    width: min(100%, 15.5rem) !important;
+    margin-inline: auto;
+  }
+
+  .catalog-toolbar__controls.assignments-catalog-toolbar__controls {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 0.65rem;
+  }
+
+  .catalog-toolbar__controls.assignments-catalog-toolbar__controls > .p-button {
+    width: 100% !important;
+    margin-inline: 0;
   }
 
   .assignments-toolbar-field {
@@ -929,12 +1102,217 @@
     flex-direction: column-reverse;
   }
 
+  .pagination-bar {
+    padding: 1rem;
+    justify-content: center;
+    text-align: center;
+    gap: 0.8rem;
+  }
+
+  .pagination-controls {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 0.15rem;
+    scrollbar-width: none;
+    justify-content: center;
+    width: 100%;
+  }
+
+  .pagination-controls::-webkit-scrollbar {
+    display: none;
+  }
+
+  .pag-btn {
+    flex: 0 0 auto;
+    width: auto;
+    min-width: 2.7rem;
+  }
+
   .assignments-dialog-form .pp-form-grid-2 {
     grid-template-columns: 1fr;
   }
 
   .assignments-catalog-toolbar--global .assignments-global-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.55rem 0.7rem;
+  }
+
+  :host ::ng-deep .assignments-table--overview .p-datatable-table {
+    min-width: 100% !important;
+  }
+
+  :host ::ng-deep .assignments-table--overview .p-datatable-thead {
+    display: none;
+  }
+
+  :host ::ng-deep .assignments-table--overview .p-datatable-tbody,
+  :host ::ng-deep .assignments-table--overview .p-datatable-tbody > tr,
+  :host ::ng-deep .assignments-table--overview .p-datatable-tbody > tr > td {
+    display: block;
+    width: 100%;
+  }
+
+  :host ::ng-deep .assignments-table--overview .p-datatable-tbody {
+    padding: 0.2rem 0.95rem 0.95rem;
+  }
+
+  :host ::ng-deep .assignments-table--overview .p-datatable-tbody > tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(7.5rem, 0.8fr);
+    grid-template-areas:
+      'item move'
+      'room qty'
+      'date delivery'
+      'guest guest';
+    column-gap: 0.9rem;
+    row-gap: 0.6rem;
+    margin-bottom: 0.95rem;
+    padding: 1rem;
+    border: 1px solid rgba(214, 191, 152, 0.22);
+    border-radius: 1.1rem;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(253, 250, 244, 0.96));
+    box-shadow: 0 14px 28px rgba(45, 32, 22, 0.05);
+  }
+
+  :host ::ng-deep .assignments-table--overview .p-datatable-tbody > tr:last-child {
+    margin-bottom: 0;
+  }
+
+  :host ::ng-deep .assignments-table--overview .p-datatable-tbody > tr > td {
+    width: auto !important;
+    min-width: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    text-align: left !important;
+    display: grid;
     grid-template-columns: 1fr;
+    gap: 0.35rem;
+    align-items: start;
+    white-space: normal;
+    overflow-wrap: break-word;
+    word-break: normal;
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+    border-top: none !important;
+  }
+
+  :host ::ng-deep .assignments-table--overview .p-datatable-tbody > tr > td:nth-child(1) {
+    grid-area: date;
+  }
+
+  :host ::ng-deep .assignments-table--overview .p-datatable-tbody > tr > td:nth-child(2) {
+    grid-area: room;
+  }
+
+  :host ::ng-deep .assignments-table--overview .p-datatable-tbody > tr > td:nth-child(3) {
+    grid-area: item;
+  }
+
+  :host ::ng-deep .assignments-table--overview .p-datatable-tbody > tr > td:nth-child(4) {
+    grid-area: move;
+    padding-left: 0.68rem !important;
+    border-left: 1px solid rgba(214, 191, 152, 0.26);
+  }
+
+  :host ::ng-deep .assignments-table--overview .p-datatable-tbody > tr > td:nth-child(5) {
+    grid-area: qty;
+    padding-left: 0.68rem !important;
+    border-left: 1px solid rgba(214, 191, 152, 0.26);
+  }
+
+  :host ::ng-deep .assignments-table--overview .p-datatable-tbody > tr > td:nth-child(6) {
+    grid-area: delivery;
+    padding-left: 0.68rem !important;
+    border-left: 1px solid rgba(214, 191, 152, 0.26);
+  }
+
+  :host ::ng-deep .assignments-table--overview .p-datatable-tbody > tr > td:nth-child(7) {
+    grid-area: guest;
+  }
+
+  :host ::ng-deep .assignments-table--overview .p-datatable-tbody > tr > td::before {
+    content: '';
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #9a6f14;
+  }
+
+  :host ::ng-deep .assignments-table--overview .p-datatable-tbody > tr > td:nth-child(1)::before {
+    content: 'Fecha';
+  }
+
+  :host ::ng-deep .assignments-table--overview .p-datatable-tbody > tr > td:nth-child(2)::before {
+    content: 'Hab';
+  }
+
+  :host ::ng-deep .assignments-table--overview .p-datatable-tbody > tr > td:nth-child(3)::before {
+    content: 'Item';
+  }
+
+  :host ::ng-deep .assignments-table--overview .p-datatable-tbody > tr > td:nth-child(4)::before {
+    content: 'Mov';
+  }
+
+  :host ::ng-deep .assignments-table--overview .p-datatable-tbody > tr > td:nth-child(5)::before {
+    content: 'Ud';
+  }
+
+  :host ::ng-deep .assignments-table--overview .p-datatable-tbody > tr > td:nth-child(6)::before {
+    content: 'Entrega';
+  }
+
+  :host ::ng-deep .assignments-table--overview .p-datatable-tbody > tr > td:nth-child(7)::before {
+    content: 'Huesped';
+  }
+}
+
+@media (max-width: 520px) {
+  .assignments-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.55rem;
+  }
+
+  .assignments-catalog-toolbar--global .assignments-global-filters {
+    grid-template-columns: 1fr;
+  }
+
+  :host ::ng-deep .assignments-table--overview .p-datatable-tbody > tr {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      'item'
+      'move'
+      'room'
+      'qty'
+      'date'
+      'delivery'
+      'guest';
+    row-gap: 0.55rem;
+  }
+
+  :host ::ng-deep .assignments-table--overview .p-datatable-tbody > tr > td:nth-child(4),
+  :host ::ng-deep .assignments-table--overview .p-datatable-tbody > tr > td:nth-child(5),
+  :host ::ng-deep .assignments-table--overview .p-datatable-tbody > tr > td:nth-child(6) {
+    padding-left: 0 !important;
+    border-left: none;
+  }
+
+  .assignments-summary-card {
+    padding: 0.85rem 0.72rem;
+  }
+
+  .assignments-summary-card__content strong {
+    font-size: 1.65rem;
+  }
+
+  .assignments-summary-card__content small {
+    font-size: 0.72rem;
+  }
+
+  .pagination-controls .pag-btn:first-child,
+  .pagination-controls .pag-btn:last-child {
+    display: none;
   }
 }
 
