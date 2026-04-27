@@ -1478,7 +1478,8 @@ import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
       }
 
       .header-info h1 {
-        font-size: clamp(2.5rem, 12vw, 4rem);
+        font-size: clamp(1.85rem, 8.3vw, 2.45rem);
+        line-height: 1.08;
       }
 
       .header-info p {
@@ -1539,7 +1540,8 @@ import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
       }
 
       .header-info h1 {
-        font-size: clamp(2.35rem, 15vw, 3.8rem);
+        font-size: clamp(1.75rem, 9vw, 2.25rem);
+        line-height: 1.08;
       }
 
       .header-info {

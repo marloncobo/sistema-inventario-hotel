@@ -956,6 +956,15 @@
     margin-inline: auto;
   }
 
+  .assignments-hero__copy {
+    text-align: center;
+    margin-inline: auto;
+  }
+
+  .assignments-hero__copy .pp-hero-lede {
+    margin-inline: auto;
+  }
+
   .assignments-toolbar__actions,
   .assignments-filters-card__actions,
   .catalog-toolbar__controls,
@@ -983,7 +992,8 @@
   }
 
   .assignments-hero__copy {
-    text-align: left;
+    text-align: center;
+    margin-inline: auto;
   }
 
   .assignments-header-actions {
