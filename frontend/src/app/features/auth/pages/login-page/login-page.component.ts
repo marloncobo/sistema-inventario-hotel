@@ -439,6 +439,7 @@ import { CommonModule } from '@angular/common';
         max-width: none;
         gap: 0.9rem;
         padding-block: 0;
+        margin-top: clamp(2rem, 9vh, 5rem);
       }
 
       .brand {

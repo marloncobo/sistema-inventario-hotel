@@ -1122,11 +1122,7 @@ import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
 
       ::ng-deep .mobile-add-fab.p-button .p-button-icon {
         margin: 0 !important;
-<<<<<<< HEAD
         font-size: 1.35rem;
-=======
-        font-size: 1.95rem;
->>>>>>> da7d5c3defdf1e97326328ee3a1a119d6a7d4738
         color: #ffffff !important;
       }
     }
