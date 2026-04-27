@@ -44,8 +44,6 @@ export const errorInterceptor: HttpInterceptorFn = (request, next) => {
           notificationService.warn('Sesión vencida', 'Debes iniciar sesión nuevamente.');
           void router.navigate(['/login']);
         }
-      } else if (error.status === 403) {
-        notificationService.warn('Acceso restringido', message);
       } else if (error.status >= 500) {
         const shouldNotify = uiStateService.reportIssue({
           kind: 'server',
@@ -56,7 +54,7 @@ export const errorInterceptor: HttpInterceptorFn = (request, next) => {
         if (shouldNotify) {
           notificationService.error('Error del servidor', message);
         }
-      } else if (!isLoginRequest && !hasFieldErrors) {
+      } else if (!isLoginRequest && !hasFieldErrors && error.status !== 403) {
         notificationService.error('Operación no completada', message);
       }
 

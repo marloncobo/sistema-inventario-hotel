@@ -154,7 +154,7 @@ export const routes: Routes = [
           summary: 'Base del módulo de consulta y actualización operativa de habitaciones.',
           endpoint:
             'POST /rooms/api/rooms · GET /rooms/api/rooms · GET /rooms/api/rooms/{id} · PATCH /rooms/api/rooms/{id}/status',
-          note: 'ADMIN puede crear habitaciones; RECEPCION puede cambiar estado; ALMACENISTA solo consulta.'
+          note: 'ADMIN puede crear habitaciones; RECEPCION puede cambiar estado. ALMACENISTA no tiene acceso a esta vista.'
         }
       },
       {

@@ -18,6 +18,7 @@ import type { CreateRoomRequest, Room, RoomSupplyAssignment } from '@models/room
 import { EmptyStateComponent } from '@shared/components/empty-state/empty-state.component';
 import { MinNumberDirective } from '@shared/directives/min-number.directive';
 import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
+import { isHttp403 } from '@shared/utils/http-error.util';
 
 @Component({
   selector: 'app-rooms-page',
@@ -313,6 +314,10 @@ export class RoomsPageComponent implements OnInit {
         },
       error: (error) => {
         this.saving.set(false);
+        if (isHttp403(error)) {
+          this.createSubmitError.set(null);
+          return;
+        }
         const fieldErrors = extractApiFieldErrors(error.error);
         if (Object.keys(fieldErrors).length) {
           applyServerValidationErrors(this.createForm, fieldErrors);
@@ -374,6 +379,10 @@ export class RoomsPageComponent implements OnInit {
         },
         error: (error) => {
           this.saving.set(false);
+          if (isHttp403(error)) {
+            this.statusSubmitError.set(null);
+            return;
+          }
           this.statusSubmitError.set(extractApiErrorMessage(error.error));
         }
       });

@@ -254,7 +254,6 @@ const AUDIT_ACTION_OPTIONS: Record<AuditScope, AuditActionOption[]> = {
                   <th>Entidad</th>
                   <th>Usuario</th>
                   <th>Detalle</th>
-                  <th class="audits-th-chevron" aria-hidden="true"></th>
                 </tr>
               </ng-template>
 
@@ -275,9 +274,6 @@ const AUDIT_ACTION_OPTIONS: Record<AuditScope, AuditActionOption[]> = {
                     </div>
                   </td>
                   <td><span class="audit-detail">{{ log.detail || 'Sin detalle' }}</span></td>
-                  <td class="audits-td-chevron" aria-hidden="true">
-                    <i class="pi pi-angle-right audits-row-chevron-icon"></i>
-                  </td>
                 </tr>
               </ng-template>
             </p-table>
@@ -496,19 +492,6 @@ const AUDIT_ACTION_OPTIONS: Record<AuditScope, AuditActionOption[]> = {
       border: 1px solid rgba(200, 146, 45, 0.2);
     }
 
-    .audits-th-chevron,
-    .audits-td-chevron {
-      display: none !important;
-      width: 0 !important;
-      min-width: 0 !important;
-      max-width: 0 !important;
-      padding: 0 !important;
-      margin: 0 !important;
-      border: none !important;
-      overflow: hidden !important;
-      visibility: hidden !important;
-    }
-
     :host ::ng-deep app-page-header .page-header {
       padding-bottom: 0;
       margin-bottom: 0;
@@ -560,6 +543,7 @@ const AUDIT_ACTION_OPTIONS: Record<AuditScope, AuditActionOption[]> = {
       color: #9b6d18;
     }
 
+    :host ::ng-deep .audits-table .p-paginator .p-paginator-page.p-paginator-page-selected,
     :host ::ng-deep .audits-table .p-paginator .p-paginator-page.p-highlight {
       background: #c8922d;
       border-color: #c8922d;
@@ -601,6 +585,7 @@ const AUDIT_ACTION_OPTIONS: Record<AuditScope, AuditActionOption[]> = {
         box-shadow: none;
       }
 
+      :host ::ng-deep .audits-table .p-paginator-page.p-paginator-page-selected,
       :host ::ng-deep .audits-table .p-paginator-page.p-highlight {
         background: #c8922d;
         border-color: #c8922d;
@@ -608,7 +593,7 @@ const AUDIT_ACTION_OPTIONS: Record<AuditScope, AuditActionOption[]> = {
         font-weight: 700;
       }
 
-      :host ::ng-deep .audits-table .p-paginator-page:not(.p-highlight):hover,
+      :host ::ng-deep .audits-table .p-paginator-page:not(.p-highlight):not(.p-paginator-page-selected):hover,
       :host ::ng-deep .audits-table .p-paginator-prev:hover,
       :host ::ng-deep .audits-table .p-paginator-next:hover,
       :host ::ng-deep .audits-table .p-paginator-first:hover,
@@ -826,44 +811,11 @@ const AUDIT_ACTION_OPTIONS: Record<AuditScope, AuditActionOption[]> = {
         content: 'Detalle';
       }
 
-      :host ::ng-deep .audits-table .p-datatable-tbody > tr > td.audits-td-chevron {
-        display: flex !important;
-        grid-template-columns: unset !important;
-        gap: 0 !important;
-        visibility: visible !important;
-        width: auto !important;
-        min-width: 0 !important;
-        max-width: none !important;
-        overflow: visible !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        border: none !important;
-        align-items: center;
-        justify-content: flex-end;
-      }
-
-      :host ::ng-deep .audits-table .p-datatable-tbody > tr > td.audits-td-chevron::before {
-        display: none !important;
-        content: none !important;
-      }
-
-      .audits-row-chevron-icon {
-        display: grid;
-        place-items: center;
-        width: 2.1rem;
-        height: 2.1rem;
-        border-radius: 999px;
-        color: #b57b17;
-        border: 1px solid rgba(200, 146, 45, 0.28);
-        background: rgba(255, 255, 255, 0.9);
-        font-size: 0.95rem;
-      }
-
       :host ::ng-deep .audits-table .p-datatable-tbody > tr {
         display: grid;
-        grid-template-columns: 1fr auto;
+        grid-template-columns: 1fr;
         grid-template-rows: auto auto auto auto auto;
-        column-gap: 0.65rem;
+        column-gap: 0;
         row-gap: 0.5rem;
         align-items: start;
       }
@@ -886,18 +838,11 @@ const AUDIT_ACTION_OPTIONS: Record<AuditScope, AuditActionOption[]> = {
       }
 
       :host ::ng-deep .audits-table .p-datatable-tbody > tr > td:nth-child(2) {
-        grid-column: 1;
+        grid-column: 1 / -1;
         grid-row: 2;
         justify-self: start;
         align-self: center;
         min-width: 0;
-      }
-
-      :host ::ng-deep .audits-table .p-datatable-tbody > tr > td:nth-child(6) {
-        grid-column: 2;
-        grid-row: 2;
-        align-self: center;
-        justify-self: end;
       }
 
       :host ::ng-deep .audits-table .p-datatable-tbody > tr > td:nth-child(3) {
@@ -1062,6 +1007,72 @@ const AUDIT_ACTION_OPTIONS: Record<AuditScope, AuditActionOption[]> = {
       .audit-filter-shell__actions {
         grid-template-columns: 1fr;
       }
+    }
+
+    /* Unified pagination style (desktop + responsive) */
+    :host ::ng-deep .audits-table .p-paginator {
+      display: grid !important;
+      grid-template-columns: repeat(2, minmax(2.35rem, auto));
+      justify-content: center !important;
+      justify-items: center !important;
+      align-items: center !important;
+      row-gap: 0.6rem !important;
+      column-gap: 0.55rem !important;
+      padding: 1rem 0.95rem 1.1rem !important;
+    }
+
+    :host ::ng-deep .audits-table .p-paginator-first,
+    :host ::ng-deep .audits-table .p-paginator-last {
+      display: none !important;
+    }
+
+    :host ::ng-deep .audits-table .p-paginator-prev {
+      grid-row: 1;
+      grid-column: 1;
+    }
+
+    :host ::ng-deep .audits-table .p-paginator-next {
+      grid-row: 1;
+      grid-column: 2;
+    }
+
+    :host ::ng-deep .audits-table .p-paginator-pages {
+      grid-row: 2;
+      grid-column: 1 / -1;
+      display: flex !important;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    :host ::ng-deep .audits-table .p-paginator-current {
+      grid-row: 3;
+      grid-column: 1 / -1;
+      text-align: center;
+      color: #8a7867;
+      font-size: 0.84rem;
+      margin-top: 0 !important;
+    }
+
+    :host ::ng-deep .audits-table .p-paginator-page,
+    :host ::ng-deep .audits-table .p-paginator-prev,
+    :host ::ng-deep .audits-table .p-paginator-next {
+      min-width: 2.5rem;
+      height: 2.25rem;
+      padding: 0 0.85rem;
+      border-radius: 0.65rem;
+      border: 1px solid #f0f0f0;
+      background: #fff;
+      color: #6e5f50;
+      box-shadow: none;
+    }
+
+    :host ::ng-deep .audits-table .p-paginator-page.p-paginator-page-selected,
+    :host ::ng-deep .audits-table .p-paginator-page.p-highlight {
+      background: #c8922d;
+      border-color: #c8922d;
+      color: #fff;
+      font-weight: 700;
     }
   `
 })

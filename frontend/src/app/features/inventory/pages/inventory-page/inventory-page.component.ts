@@ -31,6 +31,7 @@ import { EmptyStateComponent } from '@shared/components/empty-state/empty-state.
 import { MinNumberDirective } from '@shared/directives/min-number.directive';
 import { notBlankValidator } from '@shared/utils/app-validators.util';
 import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
+import { isHttp403 } from '@shared/utils/http-error.util';
 
 type InventoryDialog = 'item' | 'entry' | 'return' | 'decrease';
 
@@ -661,8 +662,10 @@ export class InventoryPageComponent implements OnInit {
             this.selectItem(item.id);
           }
         },
-        error: () => {
-          this.notificationService.error('Inventario', 'No se pudo desactivar el insumo.');
+        error: (error) => {
+          if (!isHttp403(error)) {
+            this.notificationService.error('Inventario', 'No se pudo desactivar el insumo.');
+          }
         }
       });
   }
@@ -701,8 +704,10 @@ export class InventoryPageComponent implements OnInit {
             this.selectItem(item.id);
           }
         },
-        error: () => {
-          this.notificationService.error('Inventario', 'No se pudo activar el insumo.');
+        error: (error) => {
+          if (!isHttp403(error)) {
+            this.notificationService.error('Inventario', 'No se pudo activar el insumo.');
+          }
         }
       });
   }
@@ -785,6 +790,10 @@ export class InventoryPageComponent implements OnInit {
       },
       error: (error) => {
         this.saving.set(false);
+        if (isHttp403(error)) {
+          this.dialogSubmitError.set(null);
+          return;
+        }
         const fieldErrors = extractApiFieldErrors(error.error);
         if (Object.keys(fieldErrors).length) {
           applyServerValidationErrors(this.itemForm, fieldErrors);
@@ -828,6 +837,10 @@ export class InventoryPageComponent implements OnInit {
         },
         error: (error) => {
           this.saving.set(false);
+          if (isHttp403(error)) {
+            this.dialogSubmitError.set(null);
+            return;
+          }
           const fieldErrors = extractApiFieldErrors(error.error);
           if (Object.keys(fieldErrors).length) {
             applyServerValidationErrors(this.entryForm, fieldErrors);
@@ -877,6 +890,10 @@ export class InventoryPageComponent implements OnInit {
         },
         error: (error) => {
           this.saving.set(false);
+          if (isHttp403(error)) {
+            this.dialogSubmitError.set(null);
+            return;
+          }
           const fieldErrors = extractApiFieldErrors(error.error);
           if (Object.keys(fieldErrors).length) {
             applyServerValidationErrors(this.returnForm, fieldErrors);
@@ -933,6 +950,10 @@ export class InventoryPageComponent implements OnInit {
         },
         error: (error) => {
           this.saving.set(false);
+          if (isHttp403(error)) {
+            this.dialogSubmitError.set(null);
+            return;
+          }
           const fieldErrors = extractApiFieldErrors(error.error);
           if (Object.keys(fieldErrors).length) {
             applyServerValidationErrors(this.decreaseForm, fieldErrors);

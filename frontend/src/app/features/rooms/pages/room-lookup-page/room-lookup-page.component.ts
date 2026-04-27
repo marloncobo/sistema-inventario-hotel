@@ -1,4 +1,5 @@
 import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -9,6 +10,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { RoomsApiService } from '@core/services/api/rooms-api.service';
 import { NotificationService } from '@core/services/ui/notification.service';
 import { extractApiErrorMessage } from '@models/api-error.model';
+import { isHttp403 } from '@shared/utils/http-error.util';
 import type { RoomValidationResponse } from '@models/room.model';
 
 @Component({
@@ -63,7 +65,13 @@ export class RoomLookupPageComponent implements OnInit {
         },
         error: (error) => {
           this.loading.set(false);
-          const message = extractApiErrorMessage(error?.error);
+          if (isHttp403(error)) {
+            this.lookupError.set(null);
+            return;
+          }
+          const message = extractApiErrorMessage(
+            error instanceof HttpErrorResponse ? error.error : undefined
+          );
           this.lookupError.set(message);
           this.notificationService.warn('Habitaciones', message);
         }

@@ -639,3 +639,68 @@
     min-width: 0;
   }
 }
+
+/* Unified pagination style (desktop + responsive) */
+:host ::ng-deep .alerts-table .p-paginator {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(2.35rem, auto));
+  justify-content: center !important;
+  justify-items: center !important;
+  align-items: center !important;
+  row-gap: 0.6rem !important;
+  column-gap: 0.55rem !important;
+  padding: 1rem 0.95rem 1.1rem !important;
+}
+
+:host ::ng-deep .alerts-table .p-paginator-first,
+:host ::ng-deep .alerts-table .p-paginator-last {
+  display: none !important;
+}
+
+:host ::ng-deep .alerts-table .p-paginator-prev {
+  grid-row: 1;
+  grid-column: 1;
+}
+
+:host ::ng-deep .alerts-table .p-paginator-next {
+  grid-row: 1;
+  grid-column: 2;
+}
+
+:host ::ng-deep .alerts-table .p-paginator-pages {
+  grid-row: 2;
+  grid-column: 1 / -1;
+  display: flex !important;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+:host ::ng-deep .alerts-table .p-paginator-current {
+  grid-row: 3;
+  grid-column: 1 / -1;
+  text-align: center;
+  color: #8a7867;
+  font-size: 0.84rem;
+}
+
+:host ::ng-deep .alerts-table .p-paginator-page,
+:host ::ng-deep .alerts-table .p-paginator-prev,
+:host ::ng-deep .alerts-table .p-paginator-next {
+  min-width: 2.5rem;
+  height: 2.25rem;
+  padding: 0 0.85rem;
+  border-radius: 0.65rem;
+  border: 1px solid #f0f0f0;
+  background: #fff;
+  color: #6e5f50;
+  box-shadow: none;
+}
+
+:host ::ng-deep .alerts-table .p-paginator-page.p-paginator-page-selected,
+:host ::ng-deep .alerts-table .p-paginator-page.p-highlight {
+  background: #c8922d;
+  border-color: #c8922d;
+  color: #fff;
+  font-weight: 700;
+}

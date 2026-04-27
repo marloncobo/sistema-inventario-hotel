@@ -431,8 +431,8 @@ import { CommonModule } from '@angular/common';
 
     @media (max-width: 640px) {
       .login-main {
-        align-items: start;
-        padding: max(1.25rem, env(safe-area-inset-top)) 1rem max(1.25rem, env(safe-area-inset-bottom));
+        align-items: center;
+        padding: max(2.5rem, calc(env(safe-area-inset-top) + 1.5rem)) 1rem max(1.5rem, env(safe-area-inset-bottom));
       }
 
       .login-main__content {

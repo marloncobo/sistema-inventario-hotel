@@ -538,6 +538,25 @@ h3 { font-size: 1.35rem; }
   border-radius: 999px;
 }
 
+/*
+ * PrimeNG v20+: la página activa del paginador usa .p-paginator-page-selected.
+ * Las reglas por módulo que apuntaban solo a .p-highlight no aplicaban.
+ */
+.p-paginator .p-paginator-page.p-paginator-page-selected,
+.p-paginator .p-paginator-page.p-highlight {
+  background: #c8922d !important;
+  border-color: #c8922d !important;
+  color: #ffffff !important;
+  font-weight: 700;
+}
+
+.p-paginator .p-paginator-page.p-paginator-page-selected:hover,
+.p-paginator .p-paginator-page.p-highlight:hover {
+  background: #c8922d !important;
+  border-color: #c8922d !important;
+  color: #ffffff !important;
+}
+
 @media (min-width: 1281px) {
   :where(
     .inventory-table,
@@ -838,7 +857,7 @@ h3 { font-size: 1.35rem; }
   box-shadow: none !important;
 }
 
-/* Close icons in dialogs/drawers: always visible */
+/* Close icons in dialogs/drawers: always visible (legacy icon-only controls) */
 .p-dialog .p-dialog-header .p-dialog-header-icon,
 .p-dialog .p-dialog-header .p-dialog-header-close-button,
 .p-dialog .p-dialog-header .p-dialog-header-close,
@@ -856,6 +875,14 @@ h3 { font-size: 1.35rem; }
   box-shadow: none !important;
 }
 
+/* PrimeNG v20: p-button cierre — solo contraste del icono (no forzar fondo transparente). */
+.p-dialog .p-dialog-header .p-button.p-dialog-close-button,
+.p-dialog .p-dialog-header .p-dialog-close-button {
+  color: var(--app-gold) !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
 .p-dialog .p-dialog-header .p-dialog-header-icon .pi,
 .p-dialog .p-dialog-header .p-dialog-header-close-button .pi,
 .p-dialog .p-dialog-header .p-dialog-header-close .pi,
@@ -866,6 +893,7 @@ h3 { font-size: 1.35rem; }
 .p-dialog .p-dialog-header .p-dialog-header-icon .p-icon,
 .p-dialog .p-dialog-header .p-dialog-header-close-button .p-icon,
 .p-dialog .p-dialog-header .p-dialog-header-close .p-icon,
+.p-dialog .p-dialog-header .p-dialog-close-button .p-icon,
 .p-drawer .p-drawer-header .p-drawer-close-button .p-icon,
 .p-drawer .p-drawer-header .p-drawer-header-close .p-icon,
 .p-drawer .p-drawer-header .p-dialog-header-icon .p-icon,
@@ -873,6 +901,7 @@ h3 { font-size: 1.35rem; }
 .p-dialog .p-dialog-header .p-dialog-header-icon .p-button-icon,
 .p-dialog .p-dialog-header .p-dialog-header-close-button .p-button-icon,
 .p-dialog .p-dialog-header .p-dialog-header-close .p-button-icon,
+.p-dialog .p-dialog-header .p-dialog-close-button .p-button-icon,
 .p-drawer .p-drawer-header .p-drawer-close-button .p-button-icon,
 .p-drawer .p-drawer-header .p-drawer-header-close .p-button-icon,
 .p-drawer .p-drawer-header .p-button .p-button-icon {
@@ -895,6 +924,7 @@ h3 { font-size: 1.35rem; }
 .p-dialog .p-dialog-header .p-dialog-header-icon svg,
 .p-dialog .p-dialog-header .p-dialog-header-close-button svg,
 .p-dialog .p-dialog-header .p-dialog-header-close svg,
+.p-dialog .p-dialog-header .p-dialog-close-button svg,
 .p-drawer .p-drawer-header .p-drawer-close-button svg,
 .p-drawer .p-drawer-header .p-drawer-header-close svg,
 .p-drawer .p-drawer-header .p-button svg {
@@ -912,6 +942,11 @@ h3 { font-size: 1.35rem; }
 .p-drawer .p-drawer-header .p-dialog-header-icon:hover,
 .p-drawer .p-drawer-header .p-button:hover {
   background: transparent !important;
+  color: #b57b17 !important;
+}
+
+.p-dialog .p-dialog-header .p-button.p-dialog-close-button:hover,
+.p-dialog .p-dialog-header .p-dialog-close-button:hover {
   color: #b57b17 !important;
 }
 

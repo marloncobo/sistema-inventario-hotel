@@ -16,6 +16,7 @@ import type { AppUser } from '@models/app-user.model';
 import { ROLE_LABELS, type AppRole } from '@models/role.model';
 import { notBlankValidator, passwordStrengthValidator } from '@shared/utils/app-validators.util';
 import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
+import { isHttp403 } from '@shared/utils/http-error.util';
 
 @Component({
   selector: 'app-users-page',
@@ -36,8 +37,8 @@ import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
       <!-- Header Section -->
       <header class="users-header">
         <div class="header-info">
-          <h1>Directorio de Usuarios</h1>
-          <p>Control de accesos y perfiles operativos del equipo Hotel Lunara.</p>
+          <h1 class="users-header__title">Directorio de Usuarios</h1>
+          <p class="users-header__desc">Control de accesos y perfiles operativos del equipo Hotel Lunara.</p>
         </div>
         <button pButton type="button" icon="pi pi-user-plus" label="Añadir Usuario" class="btn-gold-add" (click)="openCreate()"></button>
       </header>
@@ -122,14 +123,10 @@ import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
         </div>
 
         <!-- Data Table -->
-        <p-table 
-          [value]="paginatedUsers()" 
+        <p-table
+          [value]="paginatedUsers()"
           [loading]="loading()"
-          [paginator]="true"
-          [rows]="10"
-          [rowsPerPageOptions]="[5, 10, 20]"
-          [showCurrentPageReport]="true"
-          currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} usuarios"
+          [paginator]="false"
           responsiveLayout="scroll"
           styleClass="lunara-table"
         >
@@ -405,6 +402,24 @@ import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
       color: #8a735c;
       margin: 0.25rem 0 0;
       font-size: 0.9rem;
+    }
+
+    .users-header__title {
+      margin: 0;
+      font-family: var(--pp-font-display, var(--app-font-serif, 'Playfair Display', serif));
+      font-size: clamp(2rem, 3.2vw, 2.7rem);
+      font-weight: 700;
+      line-height: 1.03;
+      color: var(--pp-text, #261c15);
+      letter-spacing: -0.025em;
+    }
+
+    .users-header__desc {
+      margin: 0.55rem 0 0;
+      max-width: 43rem;
+      font-size: 0.96rem;
+      line-height: 1.62;
+      color: var(--pp-text-secondary, #6b5d4f);
     }
 
     .btn-gold-add {
@@ -691,6 +706,7 @@ import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
         border-radius: 0.8rem;
       }
 
+      .p-paginator .p-paginator-page.p-paginator-page-selected,
       .p-paginator .p-paginator-page.p-highlight {
         background: #c8922d;
         border-color: #c8922d;
@@ -883,15 +899,23 @@ import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
         width: 100%;
         display: grid;
         justify-items: center;
+        text-align: center;
       }
 
       .header-info h1 {
-        font-size: clamp(1.95rem, 8.2vw, 2.35rem);
+        font-size: clamp(1.95rem, 6.8vw, 2.55rem);
+        line-height: 1.03;
+        letter-spacing: -0.025em;
       }
 
       .header-info p {
         margin-inline: auto;
-        max-width: 42rem;
+        max-width: 36rem;
+      }
+
+      .users-header__title,
+      .users-header__desc {
+        text-align: center;
       }
 
       .table-toolbar,
@@ -1102,6 +1126,8 @@ import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
         border-radius: 999px !important;
         z-index: 20;
         box-shadow: 0 18px 32px rgba(200, 146, 45, 0.34) !important;
+        background: #c8922d !important;
+        border: none !important;
       }
 
       ::ng-deep .mobile-add-fab.p-button .p-button-label {
@@ -1111,6 +1137,7 @@ import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
       ::ng-deep .mobile-add-fab.p-button .p-button-icon {
         margin: 0 !important;
         font-size: 1.35rem;
+        color: #ffffff !important;
       }
     }
 
@@ -1478,13 +1505,16 @@ import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
       }
 
       .header-info h1 {
-        font-size: clamp(2.5rem, 12vw, 4rem);
+        font-size: clamp(2rem, 9vw, 2.5rem);
+        line-height: 1.03;
       }
 
       .header-info p {
         max-width: 22rem;
-        font-size: 0.95rem;
+        font-size: 0.98rem;
         line-height: 1.55;
+        margin-inline: auto;
+        text-align: center;
       }
 
       .stat-card {
@@ -1539,11 +1569,14 @@ import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
       }
 
       .header-info h1 {
-        font-size: clamp(2.35rem, 15vw, 3.8rem);
+        font-size: clamp(1.8rem, 10vw, 2.15rem);
+        line-height: 1.03;
       }
 
       .header-info {
         flex-basis: 100%;
+        justify-items: center;
+        text-align: center;
       }
 
       .stat-card {
@@ -1591,6 +1624,103 @@ import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
         margin-inline: 0;
         padding-inline: 1rem;
       }
+    }
+
+    /* Unified custom pagination style (desktop + responsive) */
+    .pagination-bar {
+      display: flex;
+      flex-direction: column-reverse;
+      align-items: center;
+      gap: 0.75rem;
+      text-align: center;
+    }
+
+    .pagination-controls {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(2.35rem, auto));
+      justify-content: center;
+      justify-items: center;
+      align-items: center;
+      row-gap: 0.6rem;
+      column-gap: 0.55rem;
+    }
+
+    .pagination-controls > .pag-btn:first-child,
+    .pagination-controls > .pag-btn:last-child {
+      display: none;
+    }
+
+    .pagination-controls > .pag-btn:nth-child(2) {
+      grid-row: 1;
+      grid-column: 1;
+    }
+
+    .pagination-controls > .pag-btn:nth-last-child(2) {
+      grid-row: 1;
+      grid-column: 2;
+    }
+
+    .pagination-controls > .pag-btn:not(:first-child):not(:nth-child(2)):not(:nth-last-child(2)):not(:last-child) {
+      grid-row: 2;
+    }
+
+    .pagination-info {
+      width: 100%;
+      text-align: center;
+      color: #8a7867;
+      font-size: 0.84rem;
+    }
+
+    .pag-btn {
+      min-width: 2.5rem;
+      height: 2.25rem;
+      border-radius: 0.65rem;
+    }
+
+    /* Match same paginator style for PrimeNG table */
+    ::ng-deep .lunara-table .p-paginator {
+      display: grid !important;
+      grid-template-columns: repeat(2, minmax(2.35rem, auto));
+      justify-content: center !important;
+      justify-items: center !important;
+      align-items: center !important;
+      row-gap: 0.6rem !important;
+      column-gap: 0.55rem !important;
+      padding: 1rem 0.95rem 1.1rem !important;
+    }
+
+    ::ng-deep .lunara-table .p-paginator-first,
+    ::ng-deep .lunara-table .p-paginator-last {
+      display: none !important;
+    }
+
+    ::ng-deep .lunara-table .p-paginator-prev {
+      grid-row: 1;
+      grid-column: 1;
+    }
+
+    ::ng-deep .lunara-table .p-paginator-next {
+      grid-row: 1;
+      grid-column: 2;
+    }
+
+    ::ng-deep .lunara-table .p-paginator-pages {
+      grid-row: 2;
+      grid-column: 1 / -1;
+      display: flex !important;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    ::ng-deep .lunara-table .p-paginator-current {
+      grid-row: 3;
+      grid-column: 1 / -1;
+      text-align: center;
+      color: #8a7867;
+      font-size: 0.84rem;
+      order: initial;
+      width: 100%;
     }
   `
 })
@@ -1812,6 +1942,10 @@ export class UsersPageComponent implements OnInit {
       },
       error: (error) => {
         this.saving.set(false);
+        if (isHttp403(error)) {
+          this.submitError.set(null);
+          return;
+        }
         const fieldErrors = extractApiFieldErrors(error.error);
         if (Object.keys(fieldErrors).length) {
           applyServerValidationErrors(this.form, fieldErrors);

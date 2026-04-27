@@ -14,6 +14,7 @@ import type { CatalogEntity, Provider, UnitOfMeasure } from '@models/inventory.m
 import { PageHeaderComponent } from '@shared/components/page-header/page-header.component';
 import { notBlankValidator } from '@shared/utils/app-validators.util';
 import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
+import { isHttp403 } from '@shared/utils/http-error.util';
 
 type CatalogSection = 'categories' | 'units' | 'providers' | 'areas';
 type CatalogStatusFilter = 'all' | 'active' | 'inactive';
@@ -112,19 +113,6 @@ const SORT_OPTIONS: Array<{ value: CatalogSortOption; label: string }> = [
           ></button>
         </div>
       </app-page-header>
-
-      @if (!isAdmin()) {
-        <article class="note-banner">
-          <i class="pi pi-info-circle"></i>
-          <div>
-            <strong>Acceso por perfil</strong>
-            <p>
-              El rol ALMACENISTA solo puede administrar proveedores. Las demas secciones estan
-              disponibles solo para perfiles autorizados.
-            </p>
-          </div>
-        </article>
-      }
 
       <section class="summary-grid catalogs-summary admin-kpi-row">
         @for (card of summaryCards(); track card.section) {
@@ -692,7 +680,7 @@ const SORT_OPTIONS: Array<{ value: CatalogSortOption; label: string }> = [
       padding-bottom: 2rem;
       display: flex;
       flex-direction: column;
-      gap: 1.75rem;
+      gap: 1rem;
     }
 
     .catalogs-header-actions {
@@ -700,28 +688,6 @@ const SORT_OPTIONS: Array<{ value: CatalogSortOption; label: string }> = [
       align-items: center;
       justify-content: center;
       width: 100%;
-    }
-
-    .note-banner {
-      display: flex;
-      align-items: flex-start;
-      gap: 0.9rem;
-      padding: 1rem 1.1rem;
-      border-radius: 1rem;
-      background: rgba(255, 248, 232, 0.7);
-      border: 1px solid rgba(200, 146, 45, 0.18);
-      color: #6b5443;
-    }
-
-    .note-banner i {
-      color: #c8922d;
-      font-size: 1rem;
-      margin-top: 0.15rem;
-    }
-
-    .note-banner p {
-      margin: 0.3rem 0 0;
-      line-height: 1.5;
     }
 
     .catalogs-summary .summary-card {
@@ -1171,6 +1137,12 @@ const SORT_OPTIONS: Array<{ value: CatalogSortOption; label: string }> = [
       margin-bottom: 0;
       border-bottom: none;
       align-items: center;
+      gap: 0.85rem;
+    }
+
+    :host ::ng-deep app-page-header .page-header__subtitle {
+      margin-top: 0.4rem;
+      margin-bottom: 0;
     }
 
     :host ::ng-deep .catalogs-create-button.p-button {
@@ -1260,17 +1232,20 @@ const SORT_OPTIONS: Array<{ value: CatalogSortOption; label: string }> = [
     @media (max-width: 900px) {
       .catalogs-page {
         padding-bottom: 6rem;
+        gap: 0.85rem;
       }
 
       :host ::ng-deep app-page-header .page-header__actions {
         width: 100%;
         display: flex;
         justify-content: center;
+        margin-top: 0;
       }
 
       :host ::ng-deep app-page-header .page-header {
         align-items: center;
         text-align: center;
+        gap: 0.45rem;
       }
 
       :host ::ng-deep app-page-header .page-header__copy,
@@ -1278,6 +1253,10 @@ const SORT_OPTIONS: Array<{ value: CatalogSortOption; label: string }> = [
         margin-inline: auto;
         text-align: center;
         width: min(100%, 42rem);
+      }
+
+      :host ::ng-deep app-page-header .page-header__subtitle {
+        margin-top: 0.2rem;
       }
 
       .catalogs-page .summary-grid.catalogs-summary {
@@ -1396,10 +1375,7 @@ const SORT_OPTIONS: Array<{ value: CatalogSortOption; label: string }> = [
       }
 
       .catalogs-header-actions {
-        width: 100%;
-        display: flex;
-        justify-content: center;
-        align-items: center;
+        display: none;
       }
 
       :host ::ng-deep .catalogs-create-button.p-button {
@@ -1464,6 +1440,8 @@ const SORT_OPTIONS: Array<{ value: CatalogSortOption; label: string }> = [
         border-radius: 999px !important;
         z-index: 20;
         box-shadow: 0 18px 32px rgba(200, 146, 45, 0.34) !important;
+        background: #c8922d !important;
+        border: none !important;
       }
 
       :host ::ng-deep .catalogs-mobile-fab.p-button .p-button-label {
@@ -1473,6 +1451,7 @@ const SORT_OPTIONS: Array<{ value: CatalogSortOption; label: string }> = [
       :host ::ng-deep .catalogs-mobile-fab.p-button .p-button-icon {
         margin: 0 !important;
         font-size: 1.35rem;
+        color: #ffffff !important;
       }
 
       .entity-stack__title {
@@ -1939,6 +1918,10 @@ export class CatalogsPageComponent implements OnInit {
       },
       error: (error: { error?: unknown }) => {
         this.saving.set(false);
+        if (isHttp403(error)) {
+          this.submitError.set(null);
+          return;
+        }
         const fieldErrors = extractApiFieldErrors(error.error as never);
         if (Object.keys(fieldErrors).length) {
           applyServerValidationErrors(this.form, fieldErrors);

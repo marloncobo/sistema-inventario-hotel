@@ -20,6 +20,7 @@ import type { AssignSupplyRequest, AssignmentFilters, Room, RoomSupplyAssignment
 import { MinNumberDirective } from '@shared/directives/min-number.directive';
 import { notBlankValidator } from '@shared/utils/app-validators.util';
 import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
+import { isHttp403 } from '@shared/utils/http-error.util';
 const ASSIGNMENT_FLOW_OPTIONS = [
   { label: 'Salida', value: 'SERVICIO_HABITACION' },
   { label: 'Entrada', value: 'HABITACION' }
@@ -325,6 +326,10 @@ export class AssignmentsPageComponent implements OnInit {
         },
         error: (error) => {
           this.saving.set(false);
+          if (isHttp403(error)) {
+            this.submitError.set(null);
+            return;
+          }
           const fieldErrors = extractApiFieldErrors(error.error);
           if (Object.keys(fieldErrors).length) {
             applyServerValidationErrors(this.assignmentForm, fieldErrors);

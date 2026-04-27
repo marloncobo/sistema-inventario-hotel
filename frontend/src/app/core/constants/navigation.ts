@@ -59,7 +59,7 @@ export const APP_NAV_CATEGORIES: NavigationCategory[] = [
             label: 'Habitaciones',
             route: '/habitaciones',
             icon: 'pi pi-home',
-            description: 'Listado y detalle; creación solo administrador; cambio de estado administrador y recepción; almacenista consulta.',
+            description: 'Listado y detalle; creación solo administrador; cambio de estado administrador y recepción.',
             roles: rolesForShellRoute('habitaciones')
           },
           {
