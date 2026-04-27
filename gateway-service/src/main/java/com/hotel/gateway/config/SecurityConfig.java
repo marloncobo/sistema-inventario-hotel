@@ -53,7 +53,7 @@ public class SecurityConfig {
                         .pathMatchers(HttpMethod.PATCH, "/rooms/api/rooms/*/status").hasAnyRole("ADMIN", "RECEPCION")
                         .pathMatchers(HttpMethod.POST, "/rooms/api/rooms/*/supplies/assign").hasAnyRole("ADMIN", "ALMACENISTA", "SERVICIO")
                         .pathMatchers(HttpMethod.GET, "/rooms/api/rooms/number/**").hasAnyRole("ADMIN", "ALMACENISTA", "RECEPCION", "SERVICIO")
-                        .pathMatchers(HttpMethod.GET, "/rooms/api/rooms", "/rooms/api/rooms/*", "/rooms/api/rooms/*/supplies", "/rooms/api/rooms/supplies").hasAnyRole("ADMIN", "ALMACENISTA", "RECEPCION")
+                        .pathMatchers(HttpMethod.GET, "/rooms/api/rooms", "/rooms/api/rooms/*", "/rooms/api/rooms/*/supplies", "/rooms/api/rooms/supplies").hasAnyRole("ADMIN", "ALMACENISTA", "RECEPCION", "SERVICIO")
                         .pathMatchers("/inventory/**").hasAnyRole("ADMIN", "ALMACENISTA")
                         .pathMatchers("/rooms/**").hasRole("ADMIN")
                         .anyExchange().authenticated()

@@ -51,9 +51,6 @@ public class RoomService {
         if (roomRepository.existsByNumber(request.number())) {
             throw new BusinessException("Ya existe una habitacion con numero " + request.number());
         }
-        if (roomRepository.countByActiveTrue() >= 45) {
-            throw new BusinessException("El hotel tiene configurado un maximo de 45 habitaciones activas");
-        }
         Room saved = roomRepository.save(new Room(
                 request.number(), normalize(request.type()), normalize(request.status()),
                 request.capacity(), request.floor(), request.observations()
@@ -217,7 +214,7 @@ public class RoomService {
         if ("KIT_ASEO".equals(assignmentType) && !List.of("ASEO", "AMENIDADES").contains(category)) {
             throw new BusinessException("Solo se pueden entregar insumos de aseo o amenidades en kits de aseo");
         }
-        if ("SERVICIO_HABITACION".equals(assignmentType) && List.of("LENCERIA", "MANTENIMIENTO").contains(category)) {
+        if ("SERVICIO_HABITACION".equals(assignmentType) && List.of("MANTENIMIENTO").contains(category)) {
             throw new BusinessException("El servicio a la habitacion no permite esta categoria de insumo");
         }
     }
