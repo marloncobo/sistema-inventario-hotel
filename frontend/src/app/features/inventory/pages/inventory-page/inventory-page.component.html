@@ -237,6 +237,11 @@
         <span>Cargando detalle...</span>
       </div>
     } @else if (selectedItem(); as item) {
+      <button type="button" class="inv-detail-back" (click)="detailVisible = false">
+        <i class="pi pi-arrow-left" aria-hidden="true"></i>
+        Volver al inventario
+      </button>
+
       <header class="inv-detail-hero">
         <section class="inv-detail-card__identity">
           <span class="inv-detail-card__code">{{ item.code }}</span>
@@ -482,14 +487,15 @@
                     <span class="inventory-wizard-control__icon">
                       <i class="pi pi-tag" aria-hidden="true"></i>
                     </span>
-                    <input
-                      pInputText
-                      type="text"
+                    <select
                       formControlName="category"
-                      list="inventory-categories"
-                      placeholder="Selecciona una categoria"
-                      class="inventory-wizard-control__input"
-                    />
+                      class="inventory-wizard-control__input inventory-wizard-control__native-select"
+                    >
+                      <option value="">Selecciona una categoria</option>
+                      @for (option of categoryOptions(); track option) {
+                        <option [value]="option">{{ option }}</option>
+                      }
+                    </select>
                     <i class="pi pi-angle-down inventory-wizard-control__chevron" aria-hidden="true"></i>
                   </span>
                   @if (showItemError('category')) {
@@ -506,14 +512,15 @@
                     <span class="inventory-wizard-control__icon">
                       <i class="pi pi-list" aria-hidden="true"></i>
                     </span>
-                    <input
-                      pInputText
-                      type="text"
+                    <select
                       formControlName="unit"
-                      list="inventory-units"
-                      placeholder="Selecciona una unidad"
-                      class="inventory-wizard-control__input"
-                    />
+                      class="inventory-wizard-control__input inventory-wizard-control__native-select"
+                    >
+                      <option value="">Selecciona una unidad</option>
+                      @for (option of unitOptions(); track option) {
+                        <option [value]="option">{{ option }}</option>
+                      }
+                    </select>
                     <i class="pi pi-angle-down inventory-wizard-control__chevron" aria-hidden="true"></i>
                   </span>
                   @if (showItemError('unit')) {
@@ -643,15 +650,15 @@
                   <span class="inventory-wizard-control__icon">
                     <i class="pi pi-briefcase" aria-hidden="true"></i>
                   </span>
-                  <input
-                    pInputText
-                    type="text"
+                  <select
                     formControlName="providerName"
-                    list="inventory-providers"
-                    placeholder="Nombre del proveedor"
-                    maxlength="180"
-                    class="inventory-wizard-control__input"
-                  />
+                    class="inventory-wizard-control__input inventory-wizard-control__native-select"
+                  >
+                    <option value="">Nombre del proveedor</option>
+                    @for (option of providerOptions(); track option) {
+                      <option [value]="option">{{ option }}</option>
+                    }
+                  </select>
                   <i class="pi pi-angle-down inventory-wizard-control__chevron" aria-hidden="true"></i>
                 </span>
                 @if (showItemError('providerName')) {
@@ -1074,20 +1081,3 @@
   </p-dialog>
 }
 
-<datalist id="inventory-categories">
-  @for (option of categoryOptions(); track option) {
-    <option [value]="option"></option>
-  }
-</datalist>
-
-<datalist id="inventory-units">
-  @for (option of unitOptions(); track option) {
-    <option [value]="option"></option>
-  }
-</datalist>
-
-<datalist id="inventory-providers">
-  @for (option of providerOptions(); track option) {
-    <option [value]="option"></option>
-  }
-</datalist>

@@ -1554,3 +1554,253 @@ h3 { font-size: 1.35rem; }
 
 .user-card__status-dot--active { background: #10b981; box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1); }
 .user-card__status-dot--inactive { background: #ef4444; box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1); }
+
+@media (max-width: 900px) {
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-paginator {
+    display: grid !important;
+    grid-template-columns: repeat(4, auto) !important;
+    justify-content: center !important;
+    justify-items: center !important;
+    align-items: center !important;
+    row-gap: 0.55rem !important;
+    column-gap: 0.55rem !important;
+    padding: 0.95rem 0.9rem 1rem !important;
+  }
+
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-paginator .p-paginator-rpp-dropdown {
+    grid-column: 1 / -1 !important;
+    grid-row: 1 !important;
+    max-width: 12rem !important;
+    margin-inline: auto !important;
+  }
+
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-paginator .p-select-label {
+    text-align: center !important;
+  }
+
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-paginator-first,
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-paginator-prev,
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-paginator-next,
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-paginator-last {
+    grid-row: 2 !important;
+    margin: 0 !important;
+  }
+
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-paginator-first {
+    grid-column: 1 !important;
+  }
+
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-paginator-prev {
+    grid-column: 2 !important;
+  }
+
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-paginator-next {
+    grid-column: 3 !important;
+  }
+
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-paginator-last {
+    grid-column: 4 !important;
+  }
+
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-paginator-pages {
+    grid-column: 1 / -1 !important;
+    grid-row: 3 !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    gap: 0.45rem !important;
+    width: 100% !important;
+    max-width: max-content !important;
+    margin-inline: auto !important;
+    overflow: visible !important;
+  }
+
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-paginator-current {
+    grid-column: 1 / -1 !important;
+    grid-row: 4 !important;
+    text-align: center !important;
+    margin: 0.1rem 0 0 !important;
+  }
+
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-paginator > *:not(.p-paginator-rpp-dropdown):not(.p-paginator-first):not(.p-paginator-prev):not(.p-paginator-next):not(.p-paginator-last):not(.p-paginator-pages):not(.p-paginator-current) {
+    grid-column: 1 / -1 !important;
+  }
+
+  .pagination-bar {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 0.8rem !important;
+    text-align: center !important;
+  }
+
+  .pagination-controls {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    width: 100% !important;
+    overflow: visible !important;
+  }
+
+  .pagination-controls::after {
+    content: '';
+    flex-basis: 100%;
+    width: 0;
+    order: 5;
+  }
+
+  .pagination-controls > .pag-btn:first-child {
+    order: 1;
+  }
+
+  .pagination-controls > .pag-btn:nth-child(2) {
+    order: 2;
+  }
+
+  .pagination-controls > .pag-btn:nth-last-child(2) {
+    order: 3;
+  }
+
+  .pagination-controls > .pag-btn:last-child {
+    order: 4;
+  }
+
+  .pagination-controls > .pag-btn:not(:first-child):not(:nth-child(2)):not(:nth-last-child(2)):not(:last-child) {
+    order: 6;
+  }
+
+  .pagination-info {
+    order: 2;
+    width: 100%;
+    text-align: center !important;
+    margin: 0 !important;
+  }
+}

@@ -40,20 +40,32 @@
 }
 
 .btn-gold-add {
-  background: #c8922d !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.65rem !important;
+  min-height: 3.25rem;
+  padding: 0.82rem 1.5rem !important;
+  border-radius: 12px !important;
+  background: linear-gradient(135deg, #c8922d, #dfbb72) !important;
+  color: #fff !important;
   border: none !important;
-  padding: 0.8rem 1.75rem !important;
-  border-radius: 10px !important;
+  box-shadow: 0 10px 24px rgba(200, 146, 45, 0.24) !important;
   font-weight: 600 !important;
   font-size: 0.9rem !important;
-  color: white !important;
-  box-shadow: 0 4px 15px rgba(200, 146, 45, 0.25) !important;
-  transition: all 0.3s ease !important;
+  transition: all 0.25s ease !important;
+  white-space: nowrap !important;
 }
 
 .btn-gold-add:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 20px rgba(200, 146, 45, 0.35) !important;
+}
+
+:host ::ng-deep .btn-gold-add .p-button-icon,
+:host ::ng-deep .btn-gold-add .p-button-label {
+  color: inherit !important;
+  line-height: 1 !important;
 }
 
 .table-container {
@@ -519,6 +531,11 @@
   transform: translateY(-1px);
   border-color: rgba(200, 146, 45, 0.4);
   box-shadow: 0 14px 28px rgba(45, 32, 22, 0.08);
+}
+
+.rooms-detail-action-btn--back {
+  color: #7b5a1f;
+  background: #fffaf2;
 }
 
 .rooms-detail-state {
@@ -1018,6 +1035,10 @@
   }
 
   .rooms-header-actions .btn-gold-add {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0 !important;
     width: 3.35rem !important;
     min-width: 3.35rem;
     height: 3.35rem;
@@ -1031,13 +1052,14 @@
     box-shadow: 0 10px 24px rgba(200, 146, 45, 0.32) !important;
   }
 
-  .rooms-header-actions .btn-gold-add .p-button-label {
+  :host ::ng-deep .rooms-header-actions .btn-gold-add .p-button-label {
     display: none !important;
   }
 
-  .rooms-header-actions .btn-gold-add .p-button-icon {
+  :host ::ng-deep .rooms-header-actions .btn-gold-add .p-button-icon {
     margin: 0 !important;
-    font-size: 1.22rem;
+    font-size: 1.3rem !important;
+    line-height: 1 !important;
   }
 
   .rooms-toolbar {

@@ -12,6 +12,7 @@
           type="button"
           icon="pi pi-plus"
           label="Nueva habitacion"
+          ariaLabel="Nueva habitacion"
           class="btn-gold-add"
           (click)="openCreateDialog()"
         ></button>
@@ -232,6 +233,15 @@
           </div>
 
           <div class="rooms-detail-panel__actions">
+            <button
+              type="button"
+              class="rooms-detail-action-btn rooms-detail-action-btn--back"
+              (click)="detailDialogVisible.set(false)"
+            >
+              <i class="pi pi-arrow-left" aria-hidden="true"></i>
+              <span>Volver a habitaciones</span>
+            </button>
+
             <span class="room-status-inline room-status-inline--detail">
               <span
                 class="room-status-inline__dot"

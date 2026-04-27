@@ -412,3 +412,13 @@
     min-height: 2.85rem;
   }
 }
+
+@media (max-width: 1023px) and (orientation: landscape) and (max-height: 600px) {
+  .sidebar__header {
+    display: none;
+  }
+
+  .sidebar__nav {
+    padding-top: 0.85rem;
+  }
+}

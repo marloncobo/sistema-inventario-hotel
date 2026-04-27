@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, HostListener, inject, OnInit, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
@@ -64,6 +64,7 @@ export class AssignmentsPageComponent implements OnInit {
   protected readonly movementDialogVisible = signal(false);
   protected readonly currentPage = signal(1);
   protected readonly pageSize = 10;
+  protected readonly isMobileViewport = signal(this.detectMobileViewport());
 
   protected readonly assignmentForm = this.fb.group({
     roomId: this.fb.nonNullable.control(0, [Validators.required, Validators.min(1)]),
@@ -152,6 +153,7 @@ export class AssignmentsPageComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    this.syncViewportState();
     const roomIdParam = this.queryRoomId();
     if (roomIdParam > 0) {
       this.assignmentForm.patchValue({ roomId: roomIdParam });
@@ -370,6 +372,11 @@ export class AssignmentsPageComponent implements OnInit {
     this.currentPage.set(safePage);
   }
 
+  @HostListener('window:resize')
+  protected syncViewportState(): void {
+    this.isMobileViewport.set(this.detectMobileViewport());
+  }
+
   protected showAssignmentError(
     controlName: 'roomId' | 'itemId' | 'quantity' | 'deliveredBy' | 'guestName'
   ): boolean {
@@ -406,5 +413,9 @@ export class AssignmentsPageComponent implements OnInit {
   private queryRoomId(): number {
     const roomId = Number(this.route.snapshot.queryParamMap.get('roomId'));
     return Number.isNaN(roomId) ? 0 : roomId;
+  }
+
+  private detectMobileViewport(): boolean {
+    return typeof window !== 'undefined' ? window.innerWidth <= 900 : false;
   }
 }

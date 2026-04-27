@@ -1075,3 +1075,19 @@
     margin-top: 1rem;
   }
 }
+
+@media (max-width: 1023px) and (min-aspect-ratio: 1/1) {
+  .dashboard-banner {
+    justify-items: center;
+    text-align: center;
+  }
+
+  .dashboard-banner__copy {
+    align-items: center;
+  }
+
+  .dashboard-banner__art--left,
+  .dashboard-banner__art--right {
+    justify-content: center;
+  }
+}

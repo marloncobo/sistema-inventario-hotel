@@ -420,6 +420,77 @@
   font-size: 0.82rem;
 }
 
+@media (min-width: 901px) {
+  :host ::ng-deep .movements-table .p-paginator {
+    border: none;
+    border-top: 1px solid rgba(214, 191, 152, 0.18);
+    padding: 0.95rem 1.15rem;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  :host ::ng-deep .movements-table .p-paginator-current {
+    color: #8a7867;
+    font-size: 0.82rem;
+  }
+
+  :host ::ng-deep .movements-table .p-paginator-pages {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  :host ::ng-deep .movements-table .p-paginator-page,
+  :host ::ng-deep .movements-table .p-paginator-prev,
+  :host ::ng-deep .movements-table .p-paginator-next,
+  :host ::ng-deep .movements-table .p-paginator-first,
+  :host ::ng-deep .movements-table .p-paginator-last {
+    min-width: 2.5rem;
+    height: 2.25rem;
+    padding: 0 0.85rem;
+    border-radius: 8px;
+    border: 1px solid #f0f0f0;
+    background: #fff;
+    color: #6e5f50;
+    box-shadow: none;
+  }
+
+  :host ::ng-deep .movements-table .p-paginator-page.p-highlight {
+    background: #c8922d;
+    border-color: #c8922d;
+    color: #fff;
+    font-weight: 700;
+  }
+
+  :host ::ng-deep .movements-table .p-paginator-page:not(.p-highlight):hover,
+  :host ::ng-deep .movements-table .p-paginator-prev:hover,
+  :host ::ng-deep .movements-table .p-paginator-next:hover,
+  :host ::ng-deep .movements-table .p-paginator-first:hover,
+  :host ::ng-deep .movements-table .p-paginator-last:hover {
+    color: #b8892a;
+    border-color: rgba(200, 146, 45, 0.4);
+    background: #fff;
+  }
+
+  :host ::ng-deep .movements-table .p-paginator-first,
+  :host ::ng-deep .movements-table .p-paginator-last {
+    min-width: auto;
+  }
+
+  :host ::ng-deep .movements-table .p-paginator-first .p-icon,
+  :host ::ng-deep .movements-table .p-paginator-last .p-icon {
+    display: none;
+  }
+
+  :host ::ng-deep .movements-table .p-paginator-first::after {
+    content: 'Primera';
+  }
+
+  :host ::ng-deep .movements-table .p-paginator-last::after {
+    content: 'Ultima';
+  }
+}
+
 .movements-dialog-form {
   display: flex;
   flex-direction: column;

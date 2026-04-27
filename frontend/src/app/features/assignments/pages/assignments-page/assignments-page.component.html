@@ -210,15 +210,25 @@
                   <i class="pi pi-angle-left" aria-hidden="true"></i>
                 </button>
 
-                @for (page of visiblePages(); track page) {
+                @if (isMobileViewport()) {
                   <button
                     type="button"
-                    class="pag-btn"
-                    [class.active]="page === currentPage()"
-                    (click)="changePage(page)"
+                    class="pag-btn active"
+                    aria-current="page"
                   >
-                    {{ page }}
+                    {{ currentPage() }}
                   </button>
+                } @else {
+                  @for (page of visiblePages(); track page) {
+                    <button
+                      type="button"
+                      class="pag-btn"
+                      [class.active]="page === currentPage()"
+                      (click)="changePage(page)"
+                    >
+                      {{ page }}
+                    </button>
+                  }
                 }
 
                 <button

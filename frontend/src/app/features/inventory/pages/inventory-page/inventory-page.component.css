@@ -917,6 +917,17 @@
   padding: 0 !important;
 }
 
+.inventory-wizard-control__native-select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  cursor: pointer;
+}
+
+.inventory-wizard-control__native-select::-ms-expand {
+  display: none;
+}
+
 .inventory-wizard-control__input::placeholder,
 .inventory-wizard-textarea__input::placeholder {
   color: #9ca3af;
@@ -1052,6 +1063,31 @@
   justify-content: space-between;
   align-items: flex-end;
   gap: 0.7rem;
+}
+
+.inv-detail-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  width: fit-content;
+  padding: 0.45rem 0.75rem;
+  border: 1px solid rgba(214, 191, 152, 0.4);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.9);
+  color: #8a6418;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    border-color 0.18s ease,
+    background 0.18s ease,
+    transform 0.18s ease;
+}
+
+.inv-detail-back:hover {
+  border-color: rgba(200, 146, 45, 0.7);
+  background: #fff8ec;
+  transform: translateY(-1px);
 }
 
 .inv-detail-card__code {
