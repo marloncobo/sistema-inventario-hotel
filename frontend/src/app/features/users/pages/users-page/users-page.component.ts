@@ -39,7 +39,7 @@ import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
           <h1>Directorio de Usuarios</h1>
           <p>Control de accesos y perfiles operativos del equipo Hotel Lunara.</p>
         </div>
-        <button pButton type="button" icon="pi pi-user-plus" label="Añadir Usuario" class="btn-gold-add" (click)="openCreate()"></button>
+        <button pButton type="button" icon="pi pi-user-plus" label="Añadir usuario" class="btn-gold-add" (click)="openCreate()"></button>
       </header>
 
       <!-- Summary Stats Section -->
@@ -125,10 +125,10 @@ import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
         <p-table 
           [value]="paginatedUsers()" 
           [loading]="loading()"
-          [paginator]="true"
+          [paginator]="false"
           [rows]="10"
           [rowsPerPageOptions]="[5, 10, 20]"
-          [showCurrentPageReport]="true"
+          [showCurrentPageReport]="false"
           currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} usuarios"
           responsiveLayout="scroll"
           styleClass="lunara-table"
@@ -193,7 +193,6 @@ import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
           </ng-template>
         </p-table>
 
-        <!-- Pagination Bar -->
         <div class="pagination-bar">
           <span class="pagination-info">
             Mostrando {{ pageStart() }} a {{ pageEnd() }} de {{ filteredUsers().length }} usuarios
@@ -204,7 +203,7 @@ import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
               class="pag-btn"
               [disabled]="currentPage() === 1"
               (click)="changePage(1)"
-              aria-label="Primera pagina"
+              aria-label="Primera página"
             >
               Primera
             </button>
@@ -241,9 +240,9 @@ import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
               class="pag-btn"
               [disabled]="currentPage() === totalPages()"
               (click)="changePage(totalPages())"
-              aria-label="Ultima pagina"
+              aria-label="Última página"
             >
-              Ultima
+              Última
             </button>
           </div>
         </div>
@@ -254,7 +253,7 @@ import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
         type="button"
         icon="pi pi-plus"
         class="mobile-add-fab"
-        aria-label="Añadir Usuario"
+        aria-label="Añadir usuario"
         (click)="openCreate()"
       ></button>
     </div>
@@ -268,7 +267,7 @@ import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
       class="lunara-drawer"
     >
       <ng-template pTemplate="header">
-        <span class="drawer-title">{{ editingUser() ? 'Editar Usuario' : 'Añadir Usuario' }}</span>
+        <span class="drawer-title">{{ editingUser() ? 'Editar usuario' : 'Añadir usuario' }}</span>
       </ng-template>
 
       <form [formGroup]="form" (ngSubmit)="submit()" class="drawer-form">
@@ -424,6 +423,11 @@ import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
       box-shadow: 0 8px 20px rgba(200, 146, 45, 0.35) !important;
     }
 
+    ::ng-deep .btn-gold-add .p-button-icon,
+    ::ng-deep .btn-gold-add .p-button-label {
+      color: #ffffff !important;
+    }
+
     .mobile-add-fab {
       display: none;
     }
@@ -460,6 +464,11 @@ import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
       color: #c8922d;
       display: grid;
       place-items: center;
+      position: relative;
+    }
+
+    .stat-icon-wrapper > * {
+      opacity: 1;
     }
 
     .stat-svg {
@@ -589,7 +598,12 @@ import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
       border-radius: 10px;
       background: #ffffff;
       font-size: 0.88rem;
+      color: #1a1a1a;
       transition: all 0.2s;
+    }
+
+    .search-box input::placeholder {
+      color: #1a1a1a;
     }
 
     .search-box input:focus {
@@ -828,7 +842,7 @@ import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
 
     /* Pagination */
     .pagination-bar {
-      padding: 1.5rem;
+      padding: 1.1rem 1.5rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -843,6 +857,7 @@ import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
     .pagination-controls {
       display: flex;
       gap: 0.5rem;
+      align-items: center;
     }
 
     @media (max-width: 1200px) {
@@ -886,7 +901,7 @@ import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
       }
 
       .header-info h1 {
-        font-size: clamp(1.95rem, 8.2vw, 2.35rem);
+        font-size: clamp(1.75rem, 7.1vw, 2.05rem);
       }
 
       .header-info p {
@@ -905,10 +920,6 @@ import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
       .lunara-native-select,
       .btn-filter-text {
         width: 100%;
-      }
-
-      .btn-gold-add {
-        display: none !important;
       }
 
       .filter-actions {
@@ -1097,8 +1108,8 @@ import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
         position: fixed;
         right: 1rem;
         bottom: 1rem;
-        width: 3.6rem;
-        height: 3.6rem;
+        width: 5.1rem;
+        height: 5.1rem;
         border-radius: 999px !important;
         z-index: 20;
         box-shadow: 0 18px 32px rgba(200, 146, 45, 0.34) !important;
@@ -1111,7 +1122,11 @@ import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
 
       ::ng-deep .mobile-add-fab.p-button .p-button-icon {
         margin: 0 !important;
+<<<<<<< HEAD
         font-size: 1.35rem;
+=======
+        font-size: 1.95rem;
+>>>>>>> da7d5c3defdf1e97326328ee3a1a119d6a7d4738
         color: #ffffff !important;
       }
     }
@@ -1476,12 +1491,15 @@ import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
 
     @media (max-width: 720px) {
       .users-page-container {
-        padding: 1.5rem 1rem 2.5rem;
+        padding: 1.5rem 1rem 6rem;
+      }
+
+      .btn-gold-add {
+        display: none !important;
       }
 
       .header-info h1 {
-        font-size: clamp(1.85rem, 8.3vw, 2.45rem);
-        line-height: 1.08;
+        font-size: clamp(1.95rem, 8.8vw, 2.4rem);
       }
 
       .header-info p {
@@ -1490,16 +1508,38 @@ import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
         line-height: 1.55;
       }
 
+      .stats-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.75rem;
+      }
+
       .stat-card {
         grid-template-columns: 1fr;
-        align-items: flex-start;
-        gap: 0.9rem;
+        align-items: center;
+        justify-items: center;
+        text-align: center;
+        gap: 0.65rem;
         min-height: 0;
+        padding: 1rem 0.7rem;
+        border-radius: 1.35rem;
       }
 
       .stat-icon-wrapper {
-        width: 3.25rem;
-        height: 3.25rem;
+        width: 3rem;
+        height: 3rem;
+      }
+
+      .stat-label {
+        font-size: 0.62rem;
+      }
+
+      .stat-value {
+        font-size: 1.95rem;
+      }
+
+      .stat-sub {
+        font-size: 0.72rem;
+        line-height: 1.35;
       }
 
       .table-toolbar {
@@ -1542,8 +1582,7 @@ import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
       }
 
       .header-info h1 {
-        font-size: clamp(1.75rem, 9vw, 2.25rem);
-        line-height: 1.08;
+        font-size: clamp(1.9rem, 8.6vw, 2.2rem);
       }
 
       .header-info {
@@ -1555,12 +1594,19 @@ import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
         border-radius: 1.2rem;
       }
 
+      .stats-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.65rem;
+      }
+
       .stat-value {
-        font-size: 2rem;
+        font-size: 1.9rem;
       }
 
       .stat-sub {
         max-width: none;
+        font-size: 0.7rem;
+        line-height: 1.3;
       }
 
       ::ng-deep .lunara-table {
@@ -1927,7 +1973,7 @@ export class UsersPageComponent implements OnInit {
     }
 
     if (control.errors?.['passwordStrength']) {
-      return 'Debe tener minimo 8 caracteres, una mayuscula y un numero.';
+      return 'Debe tener mínimo 8 caracteres, una mayúscula y un número.';
     }
 
     return 'Valor invalido.';

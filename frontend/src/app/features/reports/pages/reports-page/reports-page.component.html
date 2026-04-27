@@ -1,17 +1,17 @@
 <div class="reports-page">
   <app-page-header
-    eyebrow="Analisis"
+    eyebrow="Análisis"
     title="Reportes"
-    subtitle="Consulta reportes operativos y exportaciones desde un panel mas ordenado."
+    subtitle="Consulta reportes operativos y exportaciones desde un panel más ordenado."
   />
 
   @if (!isAdmin()) {
     <article class="note-banner">
       <i class="pi pi-info-circle"></i>
       <div>
-        <strong>Permisos de exportacion</strong>
+        <strong>Permisos de exportación</strong>
         <p>
-          RECEPCION puede consultar reportes de habitaciones, pero la exportacion esta disponible
+          RECEPCIÓN puede consultar reportes de habitaciones, pero la exportación está disponible
           solo para ADMIN.
         </p>
       </div>
@@ -92,7 +92,7 @@
 
         @if (activeReport() === 'consumption' || activeReport() === 'distribution') {
           <label class="field">
-            <span>Habitacion</span>
+            <span>Habitación</span>
             <p-select
               formControlName="roomNumber"
               [options]="roomOptions()"
@@ -104,7 +104,7 @@
           </label>
 
           <label class="field">
-            <span>Tipo de habitacion</span>
+            <span>Tipo de habitación</span>
             <p-select
               formControlName="roomType"
               [options]="roomTypeOptions"
@@ -116,7 +116,7 @@
           </label>
 
           <label class="field">
-            <span>Tipo de asignacion</span>
+            <span>Tipo de asignación</span>
             <p-select
               formControlName="assignmentType"
               [options]="assignmentTypeOptions"
@@ -228,13 +228,13 @@
             >
               <ng-template pTemplate="header">
                 <tr>
-                  <th>Codigo</th>
+                  <th>Código</th>
                   <th>Item</th>
-                  <th>Categoria</th>
+                  <th>Categoría</th>
                   <th>Unidad</th>
                   <th>Stock</th>
                   <th>Min/Max</th>
-                  <th>Rotacion</th>
+                  <th>Rotación</th>
                   <th>Alerta</th>
                 </tr>
               </ng-template>
@@ -243,7 +243,7 @@
                 <tr>
                   <td>{{ row.code }}</td>
                   <td>{{ row.name }}</td>
-                  <td>{{ row.category || 'Sin categoria' }}</td>
+                  <td>{{ row.category || 'Sin categoría' }}</td>
                   <td>{{ row.unit || 'Sin unidad' }}</td>
                   <td>{{ row.currentStock }}</td>
                   <td>{{ row.minStock }} / {{ row.maxStock ?? 'N/A' }}</td>
@@ -300,10 +300,10 @@
             >
               <ng-template pTemplate="header">
                 <tr>
-                  <th>Habitacion</th>
+                  <th>Habitación</th>
                   <th>Tipo</th>
                   <th>Item</th>
-                  <th>Asignacion</th>
+                  <th>Asignación</th>
                   <th>Entregado por</th>
                   <th>Total</th>
                 </tr>
@@ -336,13 +336,13 @@
             >
               <ng-template pTemplate="header">
                 <tr>
-                  <th>Habitacion</th>
+                  <th>Habitación</th>
                   <th>Tipo</th>
                   <th>Item</th>
                   <th>Cantidad</th>
-                  <th>Asignacion</th>
+                  <th>Asignación</th>
                   <th>Entregado por</th>
-                  <th>Huesped</th>
+                  <th>Huésped</th>
                 </tr>
               </ng-template>
 
@@ -354,7 +354,7 @@
                   <td>{{ row.quantity }}</td>
                   <td>{{ row.assignmentType }}</td>
                   <td>{{ row.deliveredBy }}</td>
-                  <td>{{ row.guestName || 'Sin huesped' }}</td>
+                  <td>{{ row.guestName || 'Sin huésped' }}</td>
                 </tr>
               </ng-template>
             </p-table>

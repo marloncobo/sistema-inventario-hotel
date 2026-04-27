@@ -172,19 +172,13 @@
 }
 
 .sidebar__item--active {
-  background: rgba(200, 146, 45, 0.08);
+  background: transparent;
   color: var(--accent-gold);
   font-weight: 600;
 }
 
 .sidebar__item--active::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 3px;
-  background: var(--accent-gold);
+  content: none;
 }
 
 .sidebar__item-icon {

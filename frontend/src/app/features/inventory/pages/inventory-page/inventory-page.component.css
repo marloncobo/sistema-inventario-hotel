@@ -293,12 +293,12 @@
   border: none !important;
   background: transparent !important;
   box-shadow: none !important;
-  color: #5f4a38;
+  color: #1f1f1f;
   font-size: 0.88rem;
 }
 
 .inv-filter-search input::placeholder {
-  color: #9c8b7b;
+  color: #1f1f1f;
 }
 
 .inv-filter-select {
@@ -309,7 +309,7 @@
 .inv-filter-select .field-control {
   width: 100%;
   padding: 0.65rem 2rem 0.65rem 1rem;
-  color: #5f4a38;
+  color: #1f1f1f;
   font-size: 0.84rem;
   font-weight: 500;
 }
@@ -1866,45 +1866,69 @@
     gap: 1.25rem;
   }
 
+  .inv-page-head {
+    align-items: center;
+    text-align: center;
+  }
+
   .inv-page-head__copy {
     display: grid;
     justify-items: center;
   }
 
   .inv-page-head__title {
-    font-size: clamp(1.85rem, 8.3vw, 2.45rem);
-    line-height: 1.08;
+    font-size: clamp(2.5rem, 13vw, 4.1rem);
+    line-height: 0.9;
   }
 
   .inv-page-head__desc {
-    margin: 0.45rem auto 0;
-    max-width: 24rem;
-    font-size: 0.92rem;
-    line-height: 1.55;
-    text-align: center;
+    max-width: 18rem;
+    font-size: 0.95rem;
+    line-height: 1.5;
   }
 
-  .inv-page-head__actions,
-  :host ::ng-deep .inv-page-head__create {
-    width: 100%;
+  .inv-page-head__actions {
+    width: 0;
+    height: 0;
   }
 
   :host ::ng-deep .inv-page-head__create {
+    position: fixed;
+    right: 1rem;
+    bottom: 1rem;
+    width: 5.1rem;
+    height: 5.1rem;
+    min-height: 5.1rem;
+    padding: 0 !important;
+    border-radius: 999px !important;
     justify-content: center !important;
-    min-height: 3.5rem;
-    padding-inline: 1.25rem !important;
+    z-index: 30;
+    box-shadow: 0 22px 40px rgba(200, 146, 45, 0.36) !important;
+  }
+
+  :host ::ng-deep .inv-page-head__create .p-button-label {
+    display: none !important;
+  }
+
+  :host ::ng-deep .inv-page-head__create .p-button-icon {
+    margin: 0 !important;
+    font-size: 1.9rem;
+    color: #ffffff !important;
   }
 
   .inv-stat-strip {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.8rem;
   }
 
   .inv-indicator-card {
-    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-columns: 1fr;
+    justify-items: center;
+    text-align: center;
     align-items: center;
-    gap: 0.9rem;
-    padding: 1rem;
-    border-radius: 1.2rem;
+    gap: 0.55rem;
+    padding: 0.95rem 0.6rem;
+    border-radius: 1.35rem;
   }
 
   .inv-indicator-card__value {
@@ -1912,7 +1936,18 @@
   }
 
   .inv-indicator-card__hint {
-    font-size: 0.78rem;
+    font-size: 0.72rem;
+    line-height: 1.35;
+  }
+
+  .inv-indicator-card__label {
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+  }
+
+  .inv-indicator-card__icon {
+    width: 3rem;
+    height: 3rem;
   }
 
   .inv-filter-shell {
@@ -1976,23 +2011,46 @@
   }
 
   .inv-page-head__title {
-    font-size: clamp(1.75rem, 9vw, 2.25rem);
-    line-height: 1.08;
+    font-size: clamp(2.2rem, 15vw, 3.5rem);
   }
 
   .inv-page-head__desc {
-    max-width: 18rem;
+    max-width: 14rem;
     font-size: 0.88rem;
   }
 
   .inv-indicator-card {
-    grid-template-columns: 1fr;
-    align-items: flex-start;
+    align-items: center;
   }
 
   .inv-indicator-card__icon {
     width: 2.85rem;
     height: 2.85rem;
+  }
+
+  .inv-stat-strip {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.55rem;
+  }
+
+  .inv-indicator-card {
+    padding: 0.85rem 0.45rem;
+    gap: 0.45rem;
+    border-radius: 1.25rem;
+  }
+
+  .inv-indicator-card__label {
+    font-size: 0.58rem;
+    letter-spacing: 0.07em;
+  }
+
+  .inv-indicator-card__value {
+    font-size: 1.7rem;
+  }
+
+  .inv-indicator-card__hint {
+    font-size: 0.68rem;
+    line-height: 1.28;
   }
 
   .inv-filter-shell,

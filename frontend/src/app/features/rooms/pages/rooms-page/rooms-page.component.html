@@ -11,8 +11,8 @@
           pButton
           type="button"
           icon="pi pi-plus"
-          label="Nueva habitacion"
-          ariaLabel="Nueva habitacion"
+          label="Nueva habitación"
+          ariaLabel="Nueva habitación"
           class="btn-gold-add"
           (click)="openCreateDialog()"
         ></button>
@@ -28,7 +28,7 @@
           pInputText
           type="text"
           formControlName="search"
-          placeholder="Buscar por numero o tipo de habitacion..."
+          placeholder="Buscar por número o tipo de habitación..."
         />
       </div>
 
@@ -84,7 +84,7 @@
         >
           <ng-template pTemplate="header">
             <tr>
-              <th style="width: 38%">Habitacion</th>
+              <th style="width: 38%">Habitación</th>
               <th style="width: 26%">Perfil</th>
               <th style="width: 22%">Estado</th>
               <th style="width: 14%">Piso</th>
@@ -152,7 +152,7 @@
             class="pag-btn"
             [disabled]="currentPage() === 1"
             (click)="changePage(1)"
-            aria-label="Primera pagina"
+            aria-label="Primera página"
           >
             Primera
           </button>
@@ -193,9 +193,9 @@
             class="pag-btn"
             [disabled]="currentPage() === totalPages()"
             (click)="changePage(totalPages())"
-            aria-label="Ultima pagina"
+            aria-label="Última página"
           >
-            Ultima
+            Última
           </button>
         </div>
       </div>
@@ -227,7 +227,7 @@
       <div class="rooms-detail-shell">
         <div class="rooms-detail-panel__head rooms-detail-panel__head--selected">
           <div class="rooms-detail-panel__copy">
-            <span class="rooms-detail-panel__eyebrow">Detalle de habitacion</span>
+            <span class="rooms-detail-panel__eyebrow">Detalle de habitación</span>
             <h2>Hab. {{ room.number }}</h2>
             <p>{{ roomTypeLabel(room.type) }} en piso {{ room.floor }} con capacidad para {{ room.capacity }} pax.</p>
           </div>
@@ -387,7 +387,7 @@
   (visibleChange)="createDialogVisible.set($event)"
 >
   <ng-template pTemplate="header">
-    <span class="rooms-dialog-title">Nueva habitacion</span>
+    <span class="rooms-dialog-title">Nueva habitación</span>
   </ng-template>
 
   <form [formGroup]="createForm" class="rooms-dialog-form" (ngSubmit)="submitCreate()">

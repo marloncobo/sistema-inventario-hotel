@@ -305,7 +305,7 @@ export class RoomsPageComponent implements OnInit {
           this.saving.set(false);
           this.createDialogVisible.set(false);
           this.detailDialogVisible.set(true);
-          this.notificationService.success('Habitaciones', 'Habitacion creada.');
+          this.notificationService.success('Habitaciones', 'Habitación creada.');
           this.focusRoom(room);
           this.selectedRoom.set(room);
           this.assignments.set([]);
@@ -476,7 +476,7 @@ export class RoomsPageComponent implements OnInit {
     }
 
     if (errors['familyCapacity']) {
-      return 'La habitacion familiar debe tener capacidad minima de 3 personas.';
+      return 'La habitación familiar debe tener capacidad mínima de 3 personas.';
     }
 
     if (errors['maxlength']) {

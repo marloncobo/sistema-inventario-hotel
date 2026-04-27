@@ -32,19 +32,19 @@ const CATALOG_SECTION_META: Record<
   }
 > = {
   categories: {
-    label: 'Categorias',
+    label: 'Categorías',
     icon: 'pi pi-th-large',
     description: 'Listado de clasificaciones base para organizar el inventario.',
-    searchPlaceholder: 'Buscar por nombre o codigo...',
+    searchPlaceholder: 'Buscar por nombre o código...',
     summaryNote: 'Total registradas',
-    emptyState: 'No hay categorias que coincidan con los filtros aplicados.',
+    emptyState: 'No hay categorías que coincidan con los filtros aplicados.',
     exportName: 'catalogos-categorias'
   },
   units: {
     label: 'Unidades',
     icon: 'pi pi-box',
     description: 'Medidas operativas usadas en entradas, salidas y control de stock.',
-    searchPlaceholder: 'Buscar por nombre, codigo o abreviatura...',
+    searchPlaceholder: 'Buscar por nombre, código o abreviatura...',
     summaryNote: 'Total registradas',
     emptyState: 'No hay unidades que coincidan con los filtros aplicados.',
     exportName: 'catalogos-unidades'
@@ -53,18 +53,18 @@ const CATALOG_SECTION_META: Record<
     label: 'Proveedores',
     icon: 'pi pi-users',
     description: 'Directorio de proveedores activos para abastecimiento y compras.',
-    searchPlaceholder: 'Buscar por nombre, codigo, documento o contacto...',
+    searchPlaceholder: 'Buscar por nombre, código, documento o contacto...',
     summaryNote: 'Total registrados',
     emptyState: 'No hay proveedores que coincidan con los filtros aplicados.',
     exportName: 'catalogos-proveedores'
   },
   areas: {
-    label: 'Areas',
+    label: 'Áreas',
     icon: 'pi pi-building-columns',
-    description: 'Areas operativas habilitadas para distribucion y consumo interno.',
-    searchPlaceholder: 'Buscar por nombre o codigo...',
+    description: 'Áreas operativas habilitadas para distribución y consumo interno.',
+    searchPlaceholder: 'Buscar por nombre o código...',
     summaryNote: 'Total registradas',
-    emptyState: 'No hay areas que coincidan con los filtros aplicados.',
+    emptyState: 'No hay áreas que coincidan con los filtros aplicados.',
     exportName: 'catalogos-areas'
   }
 };
@@ -78,8 +78,8 @@ const STATUS_OPTIONS: Array<{ value: CatalogStatusFilter; label: string }> = [
 const SORT_OPTIONS: Array<{ value: CatalogSortOption; label: string }> = [
   { value: 'name-asc', label: 'Ordenar por: Nombre (A-Z)' },
   { value: 'name-desc', label: 'Ordenar por: Nombre (Z-A)' },
-  { value: 'code-asc', label: 'Ordenar por: Codigo (A-Z)' },
-  { value: 'code-desc', label: 'Ordenar por: Codigo (Z-A)' }
+  { value: 'code-asc', label: 'Ordenar por: Código (A-Z)' },
+  { value: 'code-desc', label: 'Ordenar por: Código (Z-A)' }
 ];
 
 @Component({
@@ -98,8 +98,8 @@ const SORT_OPTIONS: Array<{ value: CatalogSortOption; label: string }> = [
     <div class="catalogs-page">
       <app-page-header
         eyebrow=""
-        title="Catalogos"
-        subtitle="Administra categorias, unidades, proveedores y areas desde un solo lugar."
+        title="Catálogos"
+        subtitle="Administra categorías, unidades, proveedores y áreas desde un solo lugar."
       >
         <div header-actions class="catalogs-header-actions">
           <button
@@ -119,7 +119,7 @@ const SORT_OPTIONS: Array<{ value: CatalogSortOption; label: string }> = [
           <div>
             <strong>Acceso por perfil</strong>
             <p>
-              El rol ALMACENISTA solo puede administrar proveedores. Las demas secciones estan
+              El rol ALMACENISTA solo puede administrar proveedores. Las demás secciones están
               disponibles solo para perfiles autorizados.
             </p>
           </div>
@@ -142,7 +142,7 @@ const SORT_OPTIONS: Array<{ value: CatalogSortOption; label: string }> = [
       </section>
 
       <section class="surface-card catalogs-workbench admin-content-block">
-        <div class="catalog-tabs" role="tablist" aria-label="Secciones de catalogos">
+        <div class="catalog-tabs" role="tablist" aria-label="Secciones de catálogos">
           @for (section of availableSections(); track section.value) {
             <button
               type="button"
@@ -297,7 +297,7 @@ const SORT_OPTIONS: Array<{ value: CatalogSortOption; label: string }> = [
                   <td>
                     <div class="entity-stack">
                       <strong class="entity-stack__title">{{ category.name }}</strong>
-                      <span class="entity-stack__meta">Categoria base para clasificar inventario.</span>
+                      <span class="entity-stack__meta">Categoría base para clasificar inventario.</span>
                     </div>
                   </td>
                   <td>
@@ -313,7 +313,7 @@ const SORT_OPTIONS: Array<{ value: CatalogSortOption; label: string }> = [
                     <button
                       type="button"
                       class="catalog-action-button"
-                      aria-label="Editar categoria"
+                      aria-label="Editar categoría"
                       (click)="openEdit('categories', category)"
                     >
                       <i class="pi pi-pencil"></i>
@@ -536,7 +536,7 @@ const SORT_OPTIONS: Array<{ value: CatalogSortOption; label: string }> = [
               class="pag-btn"
               [disabled]="currentPage() === 1"
               (click)="changePage(1)"
-              aria-label="Primera pagina"
+              aria-label="Primera página"
             >
               Primera
             </button>
@@ -573,9 +573,9 @@ const SORT_OPTIONS: Array<{ value: CatalogSortOption; label: string }> = [
               class="pag-btn"
               [disabled]="currentPage() === totalPages()"
               (click)="changePage(totalPages())"
-              aria-label="Ultima pagina"
+              aria-label="Última página"
             >
-              Ultima
+              Última
             </button>
           </div>
         </div>
@@ -741,6 +741,25 @@ const SORT_OPTIONS: Array<{ value: CatalogSortOption; label: string }> = [
       background: rgba(200, 146, 45, 0.1);
       color: #c8922d;
       font-size: 1.15rem;
+      position: relative;
+    }
+
+    .catalogs-summary__icon > * {
+      opacity: 0;
+    }
+
+    .catalogs-summary__icon::before,
+    .catalogs-summary__icon::after {
+      content: '';
+      position: absolute;
+      width: 1rem;
+      height: 2px;
+      border-radius: 999px;
+      background: #ffffff;
+    }
+
+    .catalogs-summary__icon::after {
+      transform: rotate(90deg);
     }
 
     .catalogs-summary__content {
@@ -1081,6 +1100,25 @@ const SORT_OPTIONS: Array<{ value: CatalogSortOption; label: string }> = [
       color: #c8922d;
       font-size: 1.25rem;
       border: 1px solid rgba(200, 146, 45, 0.15);
+      position: relative;
+    }
+
+    .catalogs-mobile-lead__orb > * {
+      opacity: 0;
+    }
+
+    .catalogs-mobile-lead__orb::before,
+    .catalogs-mobile-lead__orb::after {
+      content: '';
+      position: absolute;
+      width: 1rem;
+      height: 2px;
+      border-radius: 999px;
+      background: #ffffff;
+    }
+
+    .catalogs-mobile-lead__orb::after {
+      transform: rotate(90deg);
     }
 
     .catalogs-mobile-fab {
@@ -1473,6 +1511,7 @@ const SORT_OPTIONS: Array<{ value: CatalogSortOption; label: string }> = [
       :host ::ng-deep .catalogs-mobile-fab.p-button .p-button-icon {
         margin: 0 !important;
         font-size: 1.35rem;
+        color: #ffffff !important;
       }
 
       .entity-stack__title {
@@ -1665,7 +1704,7 @@ export class CatalogsPageComponent implements OnInit {
   );
 
   protected readonly currentSectionLabel = computed(
-    () => this.sectionMeta[this.activeSection()].label ?? 'Catalogos'
+    () => this.sectionMeta[this.activeSection()].label ?? 'Catálogos'
   );
 
   protected readonly filteredCategories = computed(() =>
@@ -1842,7 +1881,7 @@ export class CatalogsPageComponent implements OnInit {
   }
 
   protected describeCategory(category: CatalogEntity): string {
-    return `Codigo interno ${category.code} listo para clasificar insumos y materiales.`;
+    return `Código interno ${category.code} listo para clasificar insumos y materiales.`;
   }
 
   protected describeUnit(unit: UnitOfMeasure): string {
@@ -1852,7 +1891,7 @@ export class CatalogsPageComponent implements OnInit {
   }
 
   protected describeArea(area: CatalogEntity): string {
-    return `Codigo interno ${area.code} habilitado para distribucion y consumo interno.`;
+    return `Código interno ${area.code} habilitado para distribución y consumo interno.`;
   }
 
   protected formatRegistryLabel(id: number): string {
@@ -1934,7 +1973,7 @@ export class CatalogsPageComponent implements OnInit {
         this.saving.set(false);
         this.dialogVisible = false;
         this.resetForm();
-        this.notificationService.success('Catalogos', 'Registro guardado correctamente.');
+        this.notificationService.success('Catálogos', 'Registro guardado correctamente.');
         this.loadSection(this.dialogSection());
       },
       error: (error: { error?: unknown }) => {
@@ -2037,7 +2076,7 @@ export class CatalogsPageComponent implements OnInit {
   protected exportCurrentSection(): void {
     const rows = this.currentExportRows();
     if (!rows.length) {
-      this.notificationService.warn('Catalogos', 'No hay registros visibles para exportar.');
+      this.notificationService.warn('Catálogos', 'No hay registros visibles para exportar.');
       return;
     }
 
@@ -2057,7 +2096,7 @@ export class CatalogsPageComponent implements OnInit {
     anchor.click();
     URL.revokeObjectURL(url);
 
-    this.notificationService.success('Catalogos', 'Exportacion generada correctamente.');
+    this.notificationService.success('Catálogos', 'Exportación generada correctamente.');
   }
 
   private sectionCount(section: CatalogSection): number {

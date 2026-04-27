@@ -224,6 +224,18 @@
   font-size: 0.88rem;
 }
 
+:host ::ng-deep .reports-filter-shell .p-select {
+  min-height: 3.45rem;
+  align-items: center;
+}
+
+:host ::ng-deep .reports-filter-shell .p-select-label {
+  padding: 0.66rem 0.9rem !important;
+  font-size: 0.88rem !important;
+  line-height: 1.2 !important;
+  color: #1f1f1f !important;
+}
+
 .reports-active-filters {
   display: flex;
   flex-wrap: wrap;
@@ -409,6 +421,13 @@
     font-weight: 700;
   }
 
+  :host ::ng-deep .reports-table .p-paginator-page.p-highlight:hover,
+  :host ::ng-deep .reports-table .p-paginator-page.p-highlight:focus {
+    background: #c8922d;
+    border-color: #c8922d;
+    color: #fff;
+  }
+
   :host ::ng-deep .reports-table .p-paginator-page:not(.p-highlight):hover,
   :host ::ng-deep .reports-table .p-paginator-prev:hover,
   :host ::ng-deep .reports-table .p-paginator-next:hover,
@@ -434,7 +453,7 @@
   }
 
   :host ::ng-deep .reports-table .p-paginator-last::after {
-    content: 'Ultima';
+    content: 'Última';
   }
 }
 

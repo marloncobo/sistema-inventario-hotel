@@ -93,13 +93,13 @@
                   pInputText
                   type="text"
                   formControlName="search"
-                  placeholder="Buscar por nombre, codigo o proveedor..."
+                  placeholder="Buscar por nombre, código o proveedor..."
                 />
               </label>
 
               <label class="inv-filter-select">
                 <select class="field-control" formControlName="category" (change)="loadItems()">
-                  <option value="">Todas las categorias</option>
+                  <option value="">Todas las categorías</option>
                   @for (option of categoryOptions(); track option) {
                     <option [value]="option">{{ option }}</option>
                   }
@@ -1080,4 +1080,3 @@
     }
   </p-dialog>
 }
-

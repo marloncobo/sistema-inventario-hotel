@@ -23,9 +23,9 @@ const AUDIT_SCOPE_META: Record<
   }
 > = {
   auth: {
-    label: 'Autenticacion',
+    label: 'Autenticación',
     icon: 'pi pi-shield',
-    description: 'Eventos de acceso, validacion de sesiones y cambios de seguridad.'
+    description: 'Eventos de acceso, validación de sesiones y cambios de seguridad.'
   },
   inventory: {
     label: 'Inventario',
@@ -35,7 +35,7 @@ const AUDIT_SCOPE_META: Record<
   rooms: {
     label: 'Habitaciones',
     icon: 'pi pi-home',
-    description: 'Bitacora operativa de entregas, consumos y actividad sobre habitaciones.'
+    description: 'Bitácora operativa de entregas, consumos y actividad sobre habitaciones.'
   }
 };
 
@@ -46,20 +46,20 @@ type AuditActionOption = {
 
 const AUDIT_ACTION_OPTIONS: Record<AuditScope, AuditActionOption[]> = {
   auth: [
-    { label: 'Inicio de sesion exitoso', value: 'LOGIN_SUCCESS' },
-    { label: 'Inicio de sesion fallido', value: 'LOGIN_FAILED' },
+    { label: 'Inicio de sesión exitoso', value: 'LOGIN_SUCCESS' },
+    { label: 'Inicio de sesión fallido', value: 'LOGIN_FAILED' },
     { label: 'Crear usuario', value: 'CREATE' },
     { label: 'Actualizar usuario', value: 'UPDATE' }
   ],
   inventory: [
-    { label: 'Consultar items', value: 'QUERY_ITEMS' },
+    { label: 'Consultar ítems', value: 'QUERY_ITEMS' },
     { label: 'Consultar movimientos', value: 'QUERY_MOVEMENTS' },
     { label: 'Consultar stock bajo', value: 'QUERY_LOW_STOCK' },
     { label: 'Consultar alertas stock bajo', value: 'QUERY_LOW_STOCK_ALERTS' },
     { label: 'Generar reporte inventario', value: 'GENERATE_INVENTORY_REPORT' },
-    { label: 'Generar reporte mas usados', value: 'GENERATE_TOP_USED_REPORT' },
+    { label: 'Generar reporte más usados', value: 'GENERATE_TOP_USED_REPORT' },
     { label: 'Exportar reporte inventario', value: 'EXPORT_INVENTORY_REPORT' },
-    { label: 'Exportar reporte mas usados', value: 'EXPORT_TOP_USED_REPORT' },
+    { label: 'Exportar reporte más usados', value: 'EXPORT_TOP_USED_REPORT' },
     { label: 'Crear', value: 'CREATE' },
     { label: 'Actualizar', value: 'UPDATE' },
     { label: 'Desactivar', value: 'DEACTIVATE' },
@@ -69,14 +69,14 @@ const AUDIT_ACTION_OPTIONS: Record<AuditScope, AuditActionOption[]> = {
     { label: 'Anular movimiento', value: 'VOID_MOVEMENT' }
   ],
   rooms: [
-    { label: 'Consultar asignaciones por habitacion', value: 'QUERY_ROOM_ASSIGNMENTS' },
+    { label: 'Consultar asignaciones por habitación', value: 'QUERY_ROOM_ASSIGNMENTS' },
     { label: 'Consultar asignaciones', value: 'QUERY_ASSIGNMENTS' },
     { label: 'Generar reporte consumo', value: 'GENERATE_ROOM_CONSUMPTION_REPORT' },
     { label: 'Exportar reporte consumo', value: 'EXPORT_ROOM_CONSUMPTION_REPORT' },
-    { label: 'Generar reporte distribucion', value: 'GENERATE_ROOM_DISTRIBUTION_REPORT' },
-    { label: 'Exportar reporte distribucion', value: 'EXPORT_ROOM_DISTRIBUTION_REPORT' },
-    { label: 'Crear habitacion', value: 'CREATE' },
-    { label: 'Actualizar habitacion', value: 'UPDATE' },
+    { label: 'Generar reporte distribución', value: 'GENERATE_ROOM_DISTRIBUTION_REPORT' },
+    { label: 'Exportar reporte distribución', value: 'EXPORT_ROOM_DISTRIBUTION_REPORT' },
+    { label: 'Crear habitación', value: 'CREATE' },
+    { label: 'Actualizar habitación', value: 'UPDATE' },
     { label: 'Actualizar estado', value: 'UPDATE_STATUS' },
     { label: 'Asignar insumo', value: 'ASSIGN_SUPPLY' }
   ]
@@ -99,7 +99,7 @@ const AUDIT_ACTION_OPTIONS: Record<AuditScope, AuditActionOption[]> = {
     <div class="audits-page">
       <app-page-header
         eyebrow="Control"
-        title="Auditoria"
+        title="Auditoría"
         subtitle="Consulta unificada de eventos de acceso, inventario y habitaciones."
       />
 
@@ -131,7 +131,7 @@ const AUDIT_ACTION_OPTIONS: Record<AuditScope, AuditActionOption[]> = {
             <i class="pi pi-users"></i>
           </div>
           <div class="audits-summary-card__content">
-            <span>Usuarios unicos</span>
+            <span>Usuarios únicos</span>
             <strong>{{ formatMetric(uniqueUsers()) }}</strong>
             <small>Basado en la consulta actual</small>
           </div>
@@ -142,7 +142,7 @@ const AUDIT_ACTION_OPTIONS: Record<AuditScope, AuditActionOption[]> = {
             <i class="pi pi-bolt"></i>
           </div>
           <div class="audits-summary-card__content">
-            <span>Acciones unicas</span>
+            <span>Acciones únicas</span>
             <strong>{{ formatMetric(uniqueActions()) }}</strong>
             <small>Variedad de eventos registrados</small>
           </div>
@@ -150,7 +150,7 @@ const AUDIT_ACTION_OPTIONS: Record<AuditScope, AuditActionOption[]> = {
       </section>
 
       <section class="surface-card audits-workbench admin-content-block">
-        <div class="audit-tabs" role="tablist" aria-label="Alcances de auditoria">
+        <div class="audit-tabs" role="tablist" aria-label="Alcances de auditoría">
           @for (scope of scopes; track scope.value) {
             <button
               type="button"
@@ -166,13 +166,13 @@ const AUDIT_ACTION_OPTIONS: Record<AuditScope, AuditActionOption[]> = {
         <form [formGroup]="filtersForm" class="audit-filter-shell admin-filter-block" (ngSubmit)="search()">
           <div class="filters-grid audits-filters-grid">
             <label class="field">
-              <span>Accion</span>
+              <span>Acción</span>
               <p-select
                 formControlName="action"
                 [options]="currentActionOptions()"
                 optionLabel="label"
                 optionValue="value"
-                placeholder="Selecciona una accion"
+                placeholder="Selecciona una acción"
                 [showClear]="false"
                 styleClass="w-full"
               />
@@ -233,7 +233,7 @@ const AUDIT_ACTION_OPTIONS: Record<AuditScope, AuditActionOption[]> = {
             <div class="audits-empty-state">
               <i class="pi pi-search"></i>
               <strong>Sin eventos para esta consulta</strong>
-              <p>Ajusta los filtros o cambia de alcance para revisar otra bitacora.</p>
+              <p>Ajusta los filtros o cambia de alcance para revisar otra bitácora.</p>
             </div>
           } @else {
             <p-table
@@ -250,7 +250,7 @@ const AUDIT_ACTION_OPTIONS: Record<AuditScope, AuditActionOption[]> = {
               <ng-template pTemplate="header">
                 <tr>
                   <th>Fecha</th>
-                  <th>Accion</th>
+                  <th>Acción</th>
                   <th>Entidad</th>
                   <th>Usuario</th>
                   <th>Detalle</th>
@@ -372,6 +372,19 @@ const AUDIT_ACTION_OPTIONS: Record<AuditScope, AuditActionOption[]> = {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
       gap: 1rem 1.25rem;
+    }
+
+    :host ::ng-deep .audit-filter-shell .p-select {
+      min-height: 3.45rem;
+      align-items: center;
+    }
+
+    :host ::ng-deep .audit-filter-shell .p-select-label,
+    .audit-filter-shell .field-control {
+      padding: 0.66rem 0.9rem !important;
+      font-size: 0.88rem !important;
+      line-height: 1.2 !important;
+      color: #1f1f1f !important;
     }
 
     .audit-filter-shell__actions {
@@ -566,6 +579,13 @@ const AUDIT_ACTION_OPTIONS: Record<AuditScope, AuditActionOption[]> = {
       color: #ffffff;
     }
 
+    :host ::ng-deep .audits-table .p-paginator .p-paginator-page.p-highlight:hover,
+    :host ::ng-deep .audits-table .p-paginator .p-paginator-page.p-highlight:focus {
+      background: #c8922d;
+      border-color: #c8922d;
+      color: #ffffff;
+    }
+
     @media (min-width: 901px) {
       :host ::ng-deep .audits-table .p-paginator {
         border: none;
@@ -608,6 +628,13 @@ const AUDIT_ACTION_OPTIONS: Record<AuditScope, AuditActionOption[]> = {
         font-weight: 700;
       }
 
+      :host ::ng-deep .audits-table .p-paginator-page.p-highlight:hover,
+      :host ::ng-deep .audits-table .p-paginator-page.p-highlight:focus {
+        background: #c8922d;
+        border-color: #c8922d;
+        color: #fff;
+      }
+
       :host ::ng-deep .audits-table .p-paginator-page:not(.p-highlight):hover,
       :host ::ng-deep .audits-table .p-paginator-prev:hover,
       :host ::ng-deep .audits-table .p-paginator-next:hover,
@@ -633,7 +660,7 @@ const AUDIT_ACTION_OPTIONS: Record<AuditScope, AuditActionOption[]> = {
       }
 
       :host ::ng-deep .audits-table .p-paginator-last::after {
-        content: 'Ultima';
+        content: 'Última';
       }
     }
 
@@ -811,7 +838,7 @@ const AUDIT_ACTION_OPTIONS: Record<AuditScope, AuditActionOption[]> = {
       }
 
       :host ::ng-deep .audits-table .p-datatable-tbody > tr > td:nth-child(2)::before {
-        content: 'Accion';
+        content: 'Acción';
       }
 
       :host ::ng-deep .audits-table .p-datatable-tbody > tr > td:nth-child(3)::before {
@@ -1112,7 +1139,7 @@ export class AuditsPageComponent implements OnInit {
     const username = filters.username?.trim() || '';
 
     if (action) {
-      chips.push(`Accion: ${action}`);
+      chips.push(`Acción: ${action}`);
     }
 
     if (username) {

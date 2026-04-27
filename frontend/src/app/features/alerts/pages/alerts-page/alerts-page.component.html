@@ -11,9 +11,9 @@
         <i class="pi pi-exclamation-circle"></i>
       </div>
       <div class="alerts-summary-card__content">
-        <span>Items con stock bajo</span>
+        <span>Ítems con stock bajo</span>
         <strong>{{ lowStockItems().length }}</strong>
-        <small>Insumos detectados con existencias por debajo del minimo configurado.</small>
+        <small>Insumos detectados con existencias por debajo del mínimo configurado.</small>
       </div>
     </article>
 
@@ -35,7 +35,7 @@
       <div class="alerts-summary-card__content">
         <span>Alertas abiertas</span>
         <strong>{{ openAlertsCount() }}</strong>
-        <small>Registros que aun no cuentan con fecha de resolucion.</small>
+        <small>Registros que aún no cuentan con fecha de resolución.</small>
       </div>
     </article>
 
@@ -73,7 +73,7 @@
             [class.alerts-tabs__tab--active]="alertsWorkbenchTab() === 'lowStock'"
             (click)="setAlertsWorkbenchTab('lowStock')"
           >
-            Items con stock bajo
+            Ítems con stock bajo
           </button>
         </div>
       </div>
@@ -87,7 +87,7 @@
               </div>
               <div>
                 <h3>Alertas emitidas</h3>
-                <p>Bitacora principal para revisar el estado de las alertas generadas.</p>
+                <p>Bitácora principal para revisar el estado de las alertas generadas.</p>
               </div>
             </div>
             <div class="alerts-panel__meta">
@@ -181,7 +181,7 @@
                 <i class="pi pi-box"></i>
               </div>
               <div>
-                <h3>Items con stock bajo</h3>
+                <h3>Ítems con stock bajo</h3>
                 <p>Consulta operativa derivada del stock actual del inventario.</p>
               </div>
             </div>
@@ -203,7 +203,7 @@
             @if (!loading() && !lowStockItems().length) {
               <app-empty-state
                 icon="pi pi-inbox"
-                title="Sin items en alerta"
+                title="Sin ítems en alerta"
                 message="No se encontraron insumos con stock bajo para esta consulta."
               />
             } @else {
@@ -215,7 +215,7 @@
                   [rows]="6"
                   [rowsPerPageOptions]="[6, 12, 24]"
                   [showCurrentPageReport]="true"
-                  currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} items"
+                  currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} ítems"
                   responsiveLayout="scroll"
                   styleClass="alerts-table alerts-table--stock"
                 >

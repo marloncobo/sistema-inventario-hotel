@@ -106,6 +106,25 @@
   border: 1px solid rgba(200, 146, 45, 0.2);
   color: #9a6f14;
   font-size: 1.12rem;
+  position: relative;
+}
+
+.assignments-summary-card__icon > * {
+  opacity: 0;
+}
+
+.assignments-summary-card__icon::before,
+.assignments-summary-card__icon::after {
+  content: '';
+  position: absolute;
+  width: 1.1rem;
+  height: 2px;
+  border-radius: 999px;
+  background: #ffffff;
+}
+
+.assignments-summary-card__icon::after {
+  transform: rotate(90deg);
 }
 
 .assignments-summary-card__content {
@@ -956,15 +975,6 @@
     margin-inline: auto;
   }
 
-  .assignments-hero__copy {
-    text-align: center;
-    margin-inline: auto;
-  }
-
-  .assignments-hero__copy .pp-hero-lede {
-    margin-inline: auto;
-  }
-
   .assignments-toolbar__actions,
   .assignments-filters-card__actions,
   .catalog-toolbar__controls,
@@ -992,8 +1002,7 @@
   }
 
   .assignments-hero__copy {
-    text-align: center;
-    margin-inline: auto;
+    text-align: left;
   }
 
   .assignments-header-actions {

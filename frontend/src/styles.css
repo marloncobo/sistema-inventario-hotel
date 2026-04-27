@@ -269,6 +269,259 @@ h3 { font-size: 1.35rem; }
   font-size: 0.82rem;
 }
 
+:where(
+  .inventory-table,
+  .rooms-table,
+  .assignments-table,
+  .movements-table,
+  .alerts-table,
+  .reports-table,
+  .audits-table,
+  .catalogs-table
+) .p-paginator {
+  border: none !important;
+  border-top: 1px solid rgba(214, 191, 152, 0.18) !important;
+  padding: 0.95rem 1.15rem !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  gap: 0.8rem 1rem !important;
+  flex-wrap: wrap !important;
+  background: #fff !important;
+}
+
+:where(
+  .inventory-table,
+  .rooms-table,
+  .assignments-table,
+  .movements-table,
+  .alerts-table,
+  .reports-table,
+  .audits-table,
+  .catalogs-table
+) .p-paginator-current {
+  color: #9b8570 !important;
+  font-size: 0.82rem !important;
+  font-weight: 500 !important;
+}
+
+:where(
+  .inventory-table,
+  .rooms-table,
+  .assignments-table,
+  .movements-table,
+  .alerts-table,
+  .reports-table,
+  .audits-table,
+  .catalogs-table
+) .p-paginator-pages {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.55rem !important;
+  flex-wrap: wrap !important;
+}
+
+:where(
+  .inventory-table,
+  .rooms-table,
+  .assignments-table,
+  .movements-table,
+  .alerts-table,
+  .reports-table,
+  .audits-table,
+  .catalogs-table
+) .p-paginator .p-paginator-element {
+  min-width: 2.55rem !important;
+  height: 2.55rem !important;
+  padding: 0 0.9rem !important;
+  border-radius: 0.8rem !important;
+  border: 1px solid rgba(214, 191, 152, 0.38) !important;
+  background: #ffffff !important;
+  color: #7a654f !important;
+  box-shadow: none !important;
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease !important;
+}
+
+:where(
+  .inventory-table,
+  .rooms-table,
+  .assignments-table,
+  .movements-table,
+  .alerts-table,
+  .reports-table,
+  .audits-table,
+  .catalogs-table
+) .p-paginator .p-paginator-element:hover {
+  border-color: rgba(200, 146, 45, 0.48) !important;
+  background: #fffaf1 !important;
+  color: #b27a16 !important;
+  transform: translateY(-1px);
+}
+
+:where(
+  .inventory-table,
+  .rooms-table,
+  .assignments-table,
+  .movements-table,
+  .alerts-table,
+  .reports-table,
+  .audits-table,
+  .catalogs-table
+) .p-paginator .p-paginator-page.p-highlight {
+  background: #c8922d !important;
+  border-color: #c8922d !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  box-shadow: none !important;
+}
+
+:where(
+  .inventory-table,
+  .rooms-table,
+  .assignments-table,
+  .movements-table,
+  .alerts-table,
+  .reports-table,
+  .audits-table,
+  .catalogs-table
+) .p-paginator .p-paginator-page.p-highlight:hover,
+:where(
+  .inventory-table,
+  .rooms-table,
+  .assignments-table,
+  .movements-table,
+  .alerts-table,
+  .reports-table,
+  .audits-table,
+  .catalogs-table
+) .p-paginator .p-paginator-page.p-highlight:focus {
+  background: #c8922d !important;
+  border-color: #c8922d !important;
+  color: #ffffff !important;
+}
+
+:where(
+  .inventory-table,
+  .rooms-table,
+  .assignments-table,
+  .movements-table,
+  .alerts-table,
+  .reports-table,
+  .audits-table,
+  .catalogs-table
+) .p-paginator-first,
+:where(
+  .inventory-table,
+  .rooms-table,
+  .assignments-table,
+  .movements-table,
+  .alerts-table,
+  .reports-table,
+  .audits-table,
+  .catalogs-table
+) .p-paginator-last {
+  min-width: auto !important;
+  padding-inline: 1rem !important;
+}
+
+:where(
+  .inventory-table,
+  .rooms-table,
+  .assignments-table,
+  .movements-table,
+  .alerts-table,
+  .reports-table,
+  .audits-table,
+  .catalogs-table
+) .p-paginator-first .p-icon,
+:where(
+  .inventory-table,
+  .rooms-table,
+  .assignments-table,
+  .movements-table,
+  .alerts-table,
+  .reports-table,
+  .audits-table,
+  .catalogs-table
+) .p-paginator-last .p-icon {
+  display: none !important;
+}
+
+:where(
+  .inventory-table,
+  .rooms-table,
+  .assignments-table,
+  .movements-table,
+  .alerts-table,
+  .reports-table,
+  .audits-table,
+  .catalogs-table
+) .p-paginator-first::after {
+  content: 'Primera';
+}
+
+:where(
+  .inventory-table,
+  .rooms-table,
+  .assignments-table,
+  .movements-table,
+  .alerts-table,
+  .reports-table,
+  .audits-table,
+  .catalogs-table
+) .p-paginator-last::after {
+  content: 'Última';
+}
+
+:where(.reports-page, .audits-page) :where(.field-control, .p-inputtext),
+:where(.reports-page, .audits-page) :where(.p-select, .p-select-label, .p-select-dropdown) {
+  border-radius: 1rem !important;
+}
+
+:where(.reports-page, .audits-page) :where(.field-control, .p-inputtext, .p-select) {
+  min-height: 3.45rem !important;
+  border: 1px solid rgba(200, 146, 45, 0.42) !important;
+  background: #ffffff !important;
+  color: #1f1f1f !important;
+  box-shadow: none !important;
+}
+
+:where(.reports-page, .audits-page) :where(.field-control, .p-inputtext)::placeholder,
+:where(.reports-page, .audits-page) .p-select-label {
+  color: #1f1f1f !important;
+}
+
+:where(.reports-page, .audits-page) :where(.field-control, .p-inputtext),
+:where(.reports-page, .audits-page) .p-select-label {
+  padding: 0.66rem 0.9rem !important;
+  font-size: 0.88rem !important;
+  font-weight: 400 !important;
+  line-height: 1.2 !important;
+}
+
+:where(.reports-page, .audits-page) .p-select {
+  display: flex !important;
+  align-items: center !important;
+}
+
+:where(.reports-page, .audits-page) .p-select-dropdown {
+  color: #9a7a4b !important;
+}
+
+:where(.reports-page, .audits-page) .p-select-label.p-placeholder,
+:where(.reports-page, .audits-page) :where(option, .p-select-option) {
+  color: #1f1f1f !important;
+}
+
+:where(.reports-page, .audits-page) :where(.field-control, .p-inputtext, .p-select):focus,
+:where(.reports-page, .audits-page) :where(.field-control, .p-inputtext, .p-select):focus-within {
+  border-color: #c8922d !important;
+  box-shadow: 0 0 0 3px rgba(200, 146, 45, 0.12) !important;
+}
+
 /* Admin Layout Architecture - hierarchy and spacing only */
 :where(
   .dashboard-page,
@@ -1802,5 +2055,391 @@ h3 { font-size: 1.35rem; }
     width: 100%;
     text-align: center !important;
     margin: 0 !important;
+  }
+}
+
+/* Unified filter controls and pagination visuals */
+.lunara-native-select,
+.catalog-select,
+select.field-control {
+  min-height: 3.45rem !important;
+  padding: 0.82rem 3rem 0.82rem 1rem !important;
+  border-radius: 1.1rem !important;
+  border: 1px solid rgba(200, 146, 45, 0.34) !important;
+  background-color: #ffffff !important;
+  color: #1f1f1f !important;
+  font-size: 0.92rem !important;
+  font-weight: 500 !important;
+  line-height: 1.2 !important;
+  box-shadow: none !important;
+  cursor: pointer !important;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='18' height='18' viewBox='0 0 18 18' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4.5 6.75L9 11.25L13.5 6.75' stroke='%23A37C3E' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 1rem center !important;
+  background-size: 1rem !important;
+}
+
+.lunara-native-select:focus,
+.catalog-select:focus,
+select.field-control:focus {
+  outline: none !important;
+  border-color: #c8922d !important;
+  box-shadow: 0 0 0 4px rgba(200, 146, 45, 0.12) !important;
+}
+
+:where(.reports-page, .audits-page) :where(.field-control, .p-inputtext, .p-select) {
+  min-height: 3.45rem !important;
+  border-radius: 1.1rem !important;
+  border: 1px solid rgba(200, 146, 45, 0.34) !important;
+  background: #ffffff !important;
+  box-shadow: none !important;
+}
+
+:where(.reports-page, .audits-page) :where(.field-control, .p-inputtext),
+:where(.reports-page, .audits-page) .p-select-label {
+  padding: 0.82rem 1rem !important;
+  color: #1f1f1f !important;
+  font-size: 0.92rem !important;
+  font-weight: 500 !important;
+  line-height: 1.2 !important;
+}
+
+:where(.reports-page, .audits-page) .p-select-dropdown {
+  width: 2.9rem !important;
+  color: #a37c3e !important;
+}
+
+:where(.reports-page, .audits-page) :where(.field-control, .p-inputtext, .p-select):focus,
+:where(.reports-page, .audits-page) :where(.field-control, .p-inputtext, .p-select):focus-within {
+  border-color: #c8922d !important;
+  box-shadow: 0 0 0 4px rgba(200, 146, 45, 0.12) !important;
+}
+
+.pagination-info,
+:where(
+  .inventory-table,
+  .rooms-table,
+  .assignments-table,
+  .movements-table,
+  .alerts-table,
+  .reports-table,
+  .audits-table,
+  .catalogs-table
+) .p-paginator-current {
+  color: #9b948a !important;
+  font-size: 0.94rem !important;
+  font-weight: 400 !important;
+}
+
+.pag-btn,
+:where(
+  .inventory-table,
+  .rooms-table,
+  .assignments-table,
+  .movements-table,
+  .alerts-table,
+  .reports-table,
+  .audits-table,
+  .catalogs-table
+) .p-paginator .p-paginator-element {
+  min-width: 3rem !important;
+  height: 3rem !important;
+  padding: 0 1rem !important;
+  border-radius: 1rem !important;
+  border: 1px solid rgba(214, 191, 152, 0.46) !important;
+  background: #ffffff !important;
+  color: #6b5a4b !important;
+  font-size: 0.95rem !important;
+  font-weight: 500 !important;
+  box-shadow: none !important;
+  transition:
+    background-color 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease,
+    transform 0.18s ease !important;
+}
+
+.pag-btn--icon,
+:where(
+  .inventory-table,
+  .rooms-table,
+  .assignments-table,
+  .movements-table,
+  .alerts-table,
+  .reports-table,
+  .audits-table,
+  .catalogs-table
+) .p-paginator .p-paginator-prev,
+:where(
+  .inventory-table,
+  .rooms-table,
+  .assignments-table,
+  .movements-table,
+  .alerts-table,
+  .reports-table,
+  .audits-table,
+  .catalogs-table
+) .p-paginator .p-paginator-next {
+  min-width: 3rem !important;
+  padding: 0 !important;
+}
+
+.pagination-controls > .pag-btn:first-child,
+.pagination-controls > .pag-btn:last-child,
+:where(
+  .inventory-table,
+  .rooms-table,
+  .assignments-table,
+  .movements-table,
+  .alerts-table,
+  .reports-table,
+  .audits-table,
+  .catalogs-table
+) .p-paginator-first,
+:where(
+  .inventory-table,
+  .rooms-table,
+  .assignments-table,
+  .movements-table,
+  .alerts-table,
+  .reports-table,
+  .audits-table,
+  .catalogs-table
+) .p-paginator-last {
+  min-width: auto !important;
+  padding-inline: 1.28rem !important;
+}
+
+.pag-btn.active,
+:where(
+  .inventory-table,
+  .rooms-table,
+  .assignments-table,
+  .movements-table,
+  .alerts-table,
+  .reports-table,
+  .audits-table,
+  .catalogs-table
+) .p-paginator .p-paginator-page.p-highlight,
+:where(
+  .inventory-table,
+  .rooms-table,
+  .assignments-table,
+  .movements-table,
+  .alerts-table,
+  .reports-table,
+  .audits-table,
+  .catalogs-table
+) .p-paginator .p-paginator-page.p-highlight:hover,
+:where(
+  .inventory-table,
+  .rooms-table,
+  .assignments-table,
+  .movements-table,
+  .alerts-table,
+  .reports-table,
+  .audits-table,
+  .catalogs-table
+) .p-paginator .p-paginator-page.p-highlight:focus {
+  background: linear-gradient(135deg, #c8922d, #dbad52) !important;
+  border-color: #c8922d !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+}
+
+.pag-btn:hover:not(:disabled):not(.active),
+:where(
+  .inventory-table,
+  .rooms-table,
+  .assignments-table,
+  .movements-table,
+  .alerts-table,
+  .reports-table,
+  .audits-table,
+  .catalogs-table
+) .p-paginator .p-paginator-element:hover:not(.p-disabled):not(.p-highlight) {
+  background: #fffaf1 !important;
+  border-color: rgba(200, 146, 45, 0.48) !important;
+  color: #ab7c1b !important;
+  transform: translateY(-1px) !important;
+}
+
+.pag-btn:disabled,
+:where(
+  .inventory-table,
+  .rooms-table,
+  .assignments-table,
+  .movements-table,
+  .alerts-table,
+  .reports-table,
+  .audits-table,
+  .catalogs-table
+) .p-paginator .p-paginator-element.p-disabled {
+  opacity: 0.46 !important;
+  color: #c4bbae !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+}
+
+.pagination-controls .pag-btn i,
+:where(
+  .inventory-table,
+  .rooms-table,
+  .assignments-table,
+  .movements-table,
+  .alerts-table,
+  .reports-table,
+  .audits-table,
+  .catalogs-table
+) .p-paginator .p-icon {
+  font-size: 0.95rem !important;
+}
+
+:where(
+  .inventory-table,
+  .rooms-table,
+  .assignments-table,
+  .movements-table,
+  .alerts-table,
+  .reports-table,
+  .audits-table,
+  .catalogs-table
+) .p-paginator .p-paginator-rpp-dropdown {
+  min-height: 3rem !important;
+  border-radius: 1rem !important;
+  border: 1px solid rgba(214, 191, 152, 0.46) !important;
+  background: #ffffff !important;
+  box-shadow: none !important;
+}
+
+:where(
+  .inventory-table,
+  .rooms-table,
+  .assignments-table,
+  .movements-table,
+  .alerts-table,
+  .reports-table,
+  .audits-table,
+  .catalogs-table
+) .p-paginator .p-paginator-rpp-dropdown:focus-within {
+  border-color: #c8922d !important;
+  box-shadow: 0 0 0 4px rgba(200, 146, 45, 0.12) !important;
+}
+
+:where(
+  .inventory-table,
+  .rooms-table,
+  .assignments-table,
+  .movements-table,
+  .alerts-table,
+  .reports-table,
+  .audits-table,
+  .catalogs-table
+) .p-paginator .p-paginator-rpp-dropdown .p-select-label {
+  padding: 0.82rem 1rem !important;
+  color: #1f1f1f !important;
+  font-size: 0.92rem !important;
+  font-weight: 500 !important;
+}
+
+:where(
+  .inventory-table,
+  .rooms-table,
+  .assignments-table,
+  .movements-table,
+  .alerts-table,
+  .reports-table,
+  .audits-table,
+  .catalogs-table
+) .p-paginator .p-paginator-rpp-dropdown .p-select-dropdown {
+  width: 2.9rem !important;
+  color: #a37c3e !important;
+}
+
+@media (max-width: 900px) {
+  .pag-btn,
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-paginator .p-paginator-element {
+    min-width: 2.7rem !important;
+    height: 2.7rem !important;
+    font-size: 0.9rem !important;
+  }
+
+  .pagination-controls > .pag-btn:first-child,
+  .pagination-controls > .pag-btn:last-child,
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-paginator-first,
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-paginator-last {
+    padding-inline: 1.05rem !important;
+  }
+}
+
+@media (max-width: 520px) {
+  .pag-btn,
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-paginator .p-paginator-element {
+    min-width: 2.35rem !important;
+    height: 2.35rem !important;
+    padding-inline: 0.82rem !important;
+  }
+
+  .pag-btn--icon,
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-paginator .p-paginator-prev,
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-paginator .p-paginator-next {
+    min-width: 2.35rem !important;
   }
 }

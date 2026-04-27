@@ -133,14 +133,7 @@
 }
 
 .alerts-tabs__tab--active::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 3px;
-  border-radius: 3px 3px 0 0;
-  background: var(--app-gold, #c8922d);
+  content: none;
 }
 
 .alerts-tab-panel {
@@ -397,6 +390,52 @@
   font-size: 0.82rem;
 }
 
+:host ::ng-deep .alerts-table .p-paginator-rpp-dropdown {
+  display: none !important;
+}
+
+@media (min-width: 901px) {
+  :host ::ng-deep .alerts-table .p-paginator-pages {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  :host ::ng-deep .alerts-table .p-paginator-page,
+  :host ::ng-deep .alerts-table .p-paginator-prev,
+  :host ::ng-deep .alerts-table .p-paginator-next,
+  :host ::ng-deep .alerts-table .p-paginator-first,
+  :host ::ng-deep .alerts-table .p-paginator-last {
+    min-width: 2.5rem;
+    height: 2.25rem;
+    padding: 0 0.85rem;
+    border-radius: 8px;
+    border: 1px solid #f0f0f0;
+    background: #fff;
+    color: #6e5f50;
+    box-shadow: none;
+  }
+
+  :host ::ng-deep .alerts-table .p-paginator-page.p-highlight,
+  :host ::ng-deep .alerts-table .p-paginator-page.p-highlight:hover,
+  :host ::ng-deep .alerts-table .p-paginator-page.p-highlight:focus {
+    background: #c8922d !important;
+    border-color: #c8922d !important;
+    color: #fff !important;
+    font-weight: 700 !important;
+  }
+
+  :host ::ng-deep .alerts-table .p-paginator-page:not(.p-highlight):hover,
+  :host ::ng-deep .alerts-table .p-paginator-prev:hover,
+  :host ::ng-deep .alerts-table .p-paginator-next:hover,
+  :host ::ng-deep .alerts-table .p-paginator-first:hover,
+  :host ::ng-deep .alerts-table .p-paginator-last:hover {
+    color: #b8892a;
+    border-color: rgba(200, 146, 45, 0.4);
+    background: #fff;
+  }
+}
+
 @media (max-width: 960px) {
   .alerts-panel__header {
     flex-direction: column;
@@ -597,11 +636,11 @@
   }
 
   :host ::ng-deep .alerts-table--alerts .p-datatable-tbody > tr > td:nth-child(6)::before {
-    content: 'Accion';
+    content: 'Acción';
   }
 
   :host ::ng-deep .alerts-table--stock .p-datatable-tbody > tr > td:nth-child(1)::before {
-    content: 'Codigo';
+    content: 'Código';
   }
 
   :host ::ng-deep .alerts-table--stock .p-datatable-tbody > tr > td:nth-child(2)::before {
@@ -613,7 +652,7 @@
   }
 
   :host ::ng-deep .alerts-table--stock .p-datatable-tbody > tr > td:nth-child(4)::before {
-    content: 'Minimo';
+    content: 'Mínimo';
   }
 
   :host ::ng-deep .alerts-table-action.p-button {

@@ -462,6 +462,13 @@
     font-weight: 700;
   }
 
+  :host ::ng-deep .movements-table .p-paginator-page.p-highlight:hover,
+  :host ::ng-deep .movements-table .p-paginator-page.p-highlight:focus {
+    background: #c8922d;
+    border-color: #c8922d;
+    color: #fff;
+  }
+
   :host ::ng-deep .movements-table .p-paginator-page:not(.p-highlight):hover,
   :host ::ng-deep .movements-table .p-paginator-prev:hover,
   :host ::ng-deep .movements-table .p-paginator-next:hover,
@@ -487,7 +494,7 @@
   }
 
   :host ::ng-deep .movements-table .p-paginator-last::after {
-    content: 'Ultima';
+    content: 'Última';
   }
 }
 
@@ -771,11 +778,11 @@
   }
 
   :host ::ng-deep .movements-table .p-datatable-tbody > tr > td:nth-child(4)::before {
-    content: 'Habitacion';
+    content: 'Habitación';
   }
 
   :host ::ng-deep .movements-table .p-datatable-tbody > tr > td:nth-child(5)::before {
-    content: 'Area';
+    content: 'Área';
   }
 
   :host ::ng-deep .movements-table .p-datatable-tbody > tr > td:nth-child(6)::before {
@@ -791,7 +798,7 @@
   }
 
   :host ::ng-deep .movements-table .p-datatable-tbody > tr > td:nth-child(9)::before {
-    content: 'Accion';
+    content: 'Acción';
   }
 
   :host ::ng-deep .movements-table .p-datatable-tbody > tr > td:last-child .p-button {
