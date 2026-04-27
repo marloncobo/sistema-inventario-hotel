@@ -1,0 +1,90 @@
+<!-- Backdrop for mobile -->
+@if (layout.mobileMenuOpen()) {
+  <button
+    type="button"
+    class="sidebar-backdrop"
+    (click)="closeSidebar()"
+    aria-label="Cerrar menu"
+  ></button>
+}
+
+<aside
+  class="sidebar"
+  [class.sidebar--collapsed]="layout.sidebarCollapsed()"
+  [class.sidebar--mobile-open]="layout.mobileMenuOpen()"
+>
+  <!-- Header: Discrete Logo -->
+  <!-- Header: Branding Pixel-Perfect -->
+  <header class="sidebar__header">
+    <div class="sidebar__brand">
+      <div class="sidebar__sparkle sidebar__sparkle--left" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="currentColor">
+          <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.937A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .962 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.582a.5.5 0 0 1 0 .962L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.962 0z"/>
+        </svg>
+      </div>
+      <div class="sidebar__sparkle sidebar__sparkle--left-small" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="currentColor">
+          <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.937A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .962 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.582a.5.5 0 0 1 0 .962L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.962 0z"/>
+        </svg>
+      </div>
+      <img
+        class="sidebar__brand-image"
+        src="/images/lunara-login-logo-cropped.png"
+        alt="Logo de Lunara"
+      />
+      <div class="sidebar__sparkle sidebar__sparkle--right" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="currentColor">
+          <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.937A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .962 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.582a.5.5 0 0 1 0 .962L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.962 0z"/>
+        </svg>
+      </div>
+    </div>
+  </header>
+
+  <!-- Navigation: SaaS-style List -->
+  <nav class="sidebar__nav">
+    <div class="sidebar__scroll">
+      @for (category of navCategories(); track category.id) {
+        <div class="sidebar__section">
+          <h3 class="sidebar__section-title">{{ category.label }}</h3>
+
+          <div class="sidebar__items">
+            @for (group of category.groups; track group.title) {
+              @for (item of group.items; track item.label) {
+                <a
+                  [routerLink]="item.route"
+                  routerLinkActive="sidebar__item--active"
+                  [routerLinkActiveOptions]="{ exact: true }"
+                  class="sidebar__item"
+                  (click)="closeSidebar()"
+                  [title]="item.label"
+                >
+                  <div class="sidebar__item-icon">
+                    <i [class]="item.icon"></i>
+                  </div>
+                  <span class="sidebar__item-label">{{ item.label }}</span>
+                </a>
+              }
+            }
+          </div>
+        </div>
+      }
+    </div>
+  </nav>
+
+  <!-- Footer: Compact User Block -->
+  <footer class="sidebar__footer">
+    <div class="sidebar__user">
+      <div class="sidebar__user-avatar">
+        {{ username().charAt(0).toUpperCase() }}
+      </div>
+    <div class="sidebar__user-info">
+      <span class="sidebar__user-name">{{ username() }}</span>
+    </div>
+  </div>
+
+    <button type="button" class="sidebar__logout" (click)="logout()" title="Cerrar sesión">
+      <i class="pi pi-sign-out"></i>
+      <span>Salir</span>
+    </button>
+  </footer>
+</aside>

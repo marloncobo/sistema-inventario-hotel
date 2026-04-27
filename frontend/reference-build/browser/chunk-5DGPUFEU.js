@@ -1,0 +1,1 @@
+import{a as e,b as s}from"./chunk-S4Q2GMFW.js";function a(r,o){r.setErrors(s(e({},r.errors??{}),{server:o})),r.markAsTouched()}function c(r,o){Object.entries(o).forEach(([i,n])=>{let t=r.get(i);t&&a(t,n)})}export{c as a};

@@ -1,0 +1,252 @@
+<div class="alerts-page">
+  <app-page-header
+    eyebrow="Control"
+    title="Alertas de inventario"
+    subtitle="Seguimiento de stock bajo y alertas operativas para priorizar reposiciones."
+  />
+
+  <section class="summary-grid alerts-summary admin-kpi-row">
+    <article class="summary-card alerts-summary-card">
+      <div class="alerts-summary-card__icon">
+        <i class="pi pi-exclamation-circle"></i>
+      </div>
+      <div class="alerts-summary-card__content">
+        <span>Ítems con stock bajo</span>
+        <strong>{{ lowStockItems().length }}</strong>
+        <small>Insumos detectados con existencias por debajo del mínimo configurado.</small>
+      </div>
+    </article>
+
+    <article class="summary-card alerts-summary-card">
+      <div class="alerts-summary-card__icon">
+        <i class="pi pi-bell"></i>
+      </div>
+      <div class="alerts-summary-card__content">
+        <span>Alertas visibles</span>
+        <strong>{{ alerts().length }}</strong>
+        <small>Resultados cargados para la vista actual de seguimiento.</small>
+      </div>
+    </article>
+
+    <article class="summary-card alerts-summary-card">
+      <div class="alerts-summary-card__icon">
+        <i class="pi pi-unlock"></i>
+      </div>
+      <div class="alerts-summary-card__content">
+        <span>Alertas abiertas</span>
+        <strong>{{ openAlertsCount() }}</strong>
+        <small>Registros que aún no cuentan con fecha de resolución.</small>
+      </div>
+    </article>
+
+    <article class="summary-card alerts-summary-card">
+      <div class="alerts-summary-card__icon">
+        <i class="pi pi-check-circle"></i>
+      </div>
+      <div class="alerts-summary-card__content">
+        <span>Alertas resueltas</span>
+        <strong>{{ resolvedAlertsCount() }}</strong>
+        <small>Incidencias cerradas que permanecen en el historial visible.</small>
+      </div>
+    </article>
+  </section>
+
+  <section class="surface-card alerts-workbench admin-content-block">
+    <div class="alerts-tabbed-panel">
+      <div class="alerts-tabs" role="tablist">
+        <div class="alerts-tabs-group">
+          <button
+            type="button"
+            role="tab"
+            class="alerts-tabs__tab"
+            [attr.aria-selected]="alertsWorkbenchTab() === 'emitted'"
+            [class.alerts-tabs__tab--active]="alertsWorkbenchTab() === 'emitted'"
+            (click)="setAlertsWorkbenchTab('emitted')"
+          >
+            Alertas emitidas
+          </button>
+          <button
+            type="button"
+            role="tab"
+            class="alerts-tabs__tab"
+            [attr.aria-selected]="alertsWorkbenchTab() === 'lowStock'"
+            [class.alerts-tabs__tab--active]="alertsWorkbenchTab() === 'lowStock'"
+            (click)="setAlertsWorkbenchTab('lowStock')"
+          >
+            Ítems con stock bajo
+          </button>
+        </div>
+      </div>
+
+      @if (alertsWorkbenchTab() === 'emitted') {
+        <div class="alerts-tab-panel" role="tabpanel">
+          <div class="alerts-panel__header alerts-panel__header--tabbed">
+            <div class="alerts-panel__title-wrap">
+              <div class="alerts-panel__icon">
+                <i class="pi pi-bell"></i>
+              </div>
+              <div>
+                <h3>Alertas emitidas</h3>
+                <p>Bitácora principal para revisar el estado de las alertas generadas.</p>
+              </div>
+            </div>
+            <div class="alerts-panel__meta">
+              <span class="alerts-panel__badge alerts-panel__badge--records">{{ alerts().length }} registros</span>
+              <button
+                pButton
+                type="button"
+                class="alerts-btn-reload"
+                icon="pi pi-refresh"
+                label="Recargar"
+                [loading]="loading()"
+                (click)="loadData()"
+              ></button>
+            </div>
+          </div>
+
+          <div class="alerts-panel__body alerts-panel__body--table">
+            @if (!loading() && !alerts().length) {
+              <app-empty-state
+                icon="pi pi-bell-slash"
+                title="Sin alertas disponibles"
+                message="No hay alertas de bajo stock para el filtro actual."
+              />
+            } @else {
+              <div class="alerts-table-wrap admin-table-block">
+                <p-table
+                  [value]="alerts()"
+                  [loading]="loading()"
+                  [paginator]="true"
+                  [rows]="6"
+                  [rowsPerPageOptions]="[6, 12, 24]"
+                  [showCurrentPageReport]="true"
+                  currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} alertas"
+                  responsiveLayout="scroll"
+                  styleClass="alerts-table alerts-table--alerts"
+                >
+                  <ng-template pTemplate="header">
+                    <tr>
+                      <th>ID</th>
+                      <th>Ítem</th>
+                      <th>Tipo de alerta</th>
+                      <th>Estado</th>
+                      <th>Fecha</th>
+                      <th>Acción</th>
+                    </tr>
+                  </ng-template>
+
+                  <ng-template pTemplate="body" let-alert>
+                    <tr>
+                      <td><span class="alerts-id-cell">{{ alert.id }}</span></td>
+                      <td>
+                        <div class="alerts-entity">
+                          <strong>{{ alert.itemName }}</strong>
+                          <span>Stock {{ alert.currentStock }} · Mín. {{ alert.minStock }}</span>
+                        </div>
+                      </td>
+                      <td><span class="alerts-type-pill">Bajo stock</span></td>
+                      <td>
+                        <p-tag
+                          [value]="alert.status"
+                          [severity]="alert.resolvedAt ? 'success' : 'warn'"
+                        ></p-tag>
+                      </td>
+                      <td>
+                        <span class="alerts-date">{{ formatAlertRowDate(alert.createdAt) }}</span>
+                      </td>
+                      <td>
+                        <a
+                          pButton
+                          type="button"
+                          class="alerts-table-action"
+                          [routerLink]="['/inventario']"
+                          icon="pi pi-arrow-up-right"
+                          [rounded]="true"
+                          [text]="true"
+                          severity="secondary"
+                        ></a>
+                      </td>
+                    </tr>
+                  </ng-template>
+                </p-table>
+              </div>
+            }
+          </div>
+        </div>
+      } @else {
+        <div class="alerts-tab-panel" role="tabpanel">
+          <div class="alerts-panel__header alerts-panel__header--tabbed">
+            <div class="alerts-panel__title-wrap">
+              <div class="alerts-panel__icon">
+                <i class="pi pi-box"></i>
+              </div>
+              <div>
+                <h3>Ítems con stock bajo</h3>
+                <p>Consulta operativa derivada del stock actual del inventario.</p>
+              </div>
+            </div>
+            <div class="alerts-panel__meta">
+              <span class="alerts-panel__badge alerts-panel__badge--records">{{ lowStockItems().length }} registros</span>
+              <button
+                pButton
+                type="button"
+                class="alerts-btn-reload"
+                icon="pi pi-refresh"
+                label="Recargar"
+                [loading]="loading()"
+                (click)="loadData()"
+              ></button>
+            </div>
+          </div>
+
+          <div class="alerts-panel__body alerts-panel__body--table">
+            @if (!loading() && !lowStockItems().length) {
+              <app-empty-state
+                icon="pi pi-inbox"
+                title="Sin ítems en alerta"
+                message="No se encontraron insumos con stock bajo para esta consulta."
+              />
+            } @else {
+              <div class="alerts-table-wrap admin-table-block">
+                <p-table
+                  [value]="lowStockItems()"
+                  [loading]="loading()"
+                  [paginator]="true"
+                  [rows]="6"
+                  [rowsPerPageOptions]="[6, 12, 24]"
+                  [showCurrentPageReport]="true"
+                  currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} ítems"
+                  responsiveLayout="scroll"
+                  styleClass="alerts-table alerts-table--stock"
+                >
+                  <ng-template pTemplate="header">
+                    <tr>
+                      <th>Código</th>
+                      <th>Nombre</th>
+                      <th>Stock</th>
+                      <th>Mínimo</th>
+                    </tr>
+                  </ng-template>
+
+                  <ng-template pTemplate="body" let-item>
+                    <tr>
+                      <td><span class="alerts-code-chip">{{ item.code }}</span></td>
+                      <td>
+                        <div class="alerts-entity">
+                          <strong>{{ item.name }}</strong>
+                          <span>{{ item.category || 'Sin categoría' }}</span>
+                        </div>
+                      </td>
+                      <td><span class="alerts-stock">{{ item.stock }}</span></td>
+                      <td><span class="alerts-min">{{ item.minStock }}</span></td>
+                    </tr>
+                  </ng-template>
+                </p-table>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  </section>
+</div>

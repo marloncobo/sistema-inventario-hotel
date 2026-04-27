@@ -1,0 +1,1 @@
+var a=r=>{let t=r.value;return t==null||typeof t!="string"?null:t.trim().length===0?{blank:!0}:null},e=r=>{let t=r.value;if(t==null||t==="")return null;if(typeof t!="string")return{passwordStrength:!0};let n=t.length>=8,l=/[A-Z]/.test(t),o=/\d/.test(t);return n&&l&&o?null:{passwordStrength:!0}};export{a,e as b};

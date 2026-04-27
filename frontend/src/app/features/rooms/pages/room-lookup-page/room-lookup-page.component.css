@@ -1,0 +1,340 @@
+:host {
+  display: block;
+}
+
+.room-lookup-page {
+  max-width: 1700px;
+  margin: 0 auto;
+  padding: 3rem 4rem 6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  background: #ffffff;
+}
+
+.room-lookup-page .room-lookup-hero {
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.room-lookup-hero {
+  padding: 0 !important;
+}
+
+.room-lookup-hero__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.room-lookup-hero__copy {
+  max-width: 46rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.room-lookup-workbench {
+  padding: 0;
+  overflow: hidden;
+  background: #ffffff;
+  border: 1px solid rgba(214, 191, 152, 0.22);
+  border-radius: 18px;
+  box-shadow: 0 18px 42px rgba(45, 32, 22, 0.06);
+}
+
+.room-lookup-section-head {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid rgba(214, 191, 152, 0.18);
+  background: #fdfbf7;
+}
+
+.room-lookup-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 0.85rem;
+  padding: 1rem 1.15rem 0.8rem;
+  border-bottom: 1px solid rgba(214, 191, 152, 0.11);
+  background: transparent;
+}
+
+.room-lookup-toolbar__primary {
+  min-width: 0;
+}
+
+.room-lookup-toolbar__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.room-lookup-field {
+  display: grid;
+  gap: 0.45rem;
+  width: 100%;
+  max-width: 22rem;
+}
+
+.room-lookup-field > span {
+  font-size: 0.73rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #7b6754;
+}
+
+.room-lookup-input {
+  width: 100%;
+  min-height: 3.15rem;
+  padding: 0.65rem 1rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(214, 191, 152, 0.22);
+  background: #ffffff;
+  color: #5f4a38;
+  font-size: 0.88rem;
+  outline: none;
+}
+
+.room-lookup-input:focus {
+  border-color: #c8922d;
+  box-shadow: 0 0 0 3px rgba(200, 146, 45, 0.1);
+}
+
+.room-lookup-field-error {
+  display: block;
+  margin-top: 0.35rem;
+  color: #c2410c;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.room-lookup-api-banner {
+  margin: 1rem 1.25rem 0;
+}
+
+.room-lookup-result-block {
+  padding: 1.15rem 1.25rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.room-lookup-result-head {
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+}
+
+.room-lookup-metric-strip {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.room-lookup-metric__value--sm {
+  font-size: 1.05rem !important;
+  line-height: 1.25;
+  word-break: normal;
+  overflow-wrap: anywhere;
+}
+
+.room-lookup-metric__value--md {
+  font-size: 1.35rem !important;
+}
+
+.room-lookup-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding-top: 0.15rem;
+}
+
+.code-chip {
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+  color: #5f4a38;
+  font-weight: 700;
+}
+
+.room-lookup-cta {
+  text-decoration: none !important;
+}
+
+.btn-gold-add {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.55rem !important;
+  min-height: 3.15rem;
+  padding: 0.75rem 1.1rem !important;
+  border-radius: 1rem !important;
+  border: none !important;
+  background: linear-gradient(135deg, #c8922d, #dfbb72) !important;
+  color: #ffffff !important;
+  box-shadow: 0 10px 24px rgba(200, 146, 45, 0.24) !important;
+  font-size: 0.82rem !important;
+  font-weight: 700 !important;
+  transition: all 0.25s ease !important;
+  white-space: nowrap !important;
+}
+
+.btn-gold-add:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(200, 146, 45, 0.35) !important;
+}
+
+@media (max-width: 1200px) {
+  .room-lookup-page {
+    padding: 2rem 2rem 4rem;
+  }
+
+  .room-lookup-metric-strip {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .room-lookup-page {
+    padding: 1.5rem 1.25rem 4rem;
+  }
+
+  .room-lookup-toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .room-lookup-toolbar__actions {
+    justify-content: flex-start;
+  }
+
+  .room-lookup-field {
+    max-width: none;
+  }
+
+  .room-lookup-metric-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .room-lookup-page {
+    padding: 1.25rem 1rem 3rem;
+    gap: 1.25rem;
+  }
+
+  .room-lookup-hero__top,
+  .room-lookup-hero__copy,
+  .room-lookup-section-head .pp-section-head__copy {
+    text-align: center;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .room-lookup-result-head .pp-section-head__copy {
+    text-align: left;
+    justify-content: flex-start;
+    align-items: flex-start;
+    width: 100%;
+  }
+
+  .room-lookup-section-head,
+  .room-lookup-toolbar,
+  .room-lookup-result-block {
+    padding-inline: 1rem;
+  }
+
+  .room-lookup-result-head {
+    margin-bottom: 0.35rem;
+  }
+
+  .room-lookup-toolbar__actions .btn-gold-add,
+  .room-lookup-actions .btn-gold-add {
+    width: 100%;
+  }
+
+  .room-lookup-metric-strip {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .room-lookup-page {
+    padding: 1rem 0.75rem 2.5rem;
+  }
+
+  .room-lookup-section-head,
+  .room-lookup-toolbar,
+  .room-lookup-result-block {
+    padding-inline: 0.9rem;
+  }
+
+  .room-lookup-api-banner {
+    margin-inline: 0.9rem;
+  }
+
+}
+.room-lookup-table {
+  display: grid;
+  gap: 0.4rem;
+  padding: 0.25rem 0;
+}
+
+.room-lookup-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 0.25rem;
+  border-bottom: 1px solid rgba(214, 191, 152, 0.18);
+}
+
+.room-lookup-row:last-child {
+  border-bottom: none;
+}
+
+.room-lookup-row span {
+  color: #8a7867;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.room-lookup-row strong {
+  font-weight: 700;
+  color: #3d2b1f;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/* estado */
+.room-lookup-row .status {
+  color: #1f9d55;
+}
+
+.room-lookup-row .status i {
+  font-size: 0.5rem;
+}
+
+@media (max-width: 640px) {
+  .room-lookup-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+    padding-inline: 0;
+    padding-block: 0.85rem;
+  }
+
+  .room-lookup-row span {
+    font-size: 0.77rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .room-lookup-row strong {
+    font-size: 1.03rem;
+  }
+}

@@ -1,0 +1,373 @@
+<div class="movements-page">
+  <app-page-header
+    eyebrow="Control"
+    title="Movimientos"
+    subtitle="Historial trazable de entradas, devoluciones, salidas y anulaciones sobre el inventario de Lunara."
+  >
+    <div header-actions class="movements-header-actions">
+      <button
+        pButton
+        type="submit"
+        class="movements-btn-primary"
+        form="movements-filter-form"
+        icon="pi pi-filter"
+        label="Consultar"
+        [loading]="loading()"
+      ></button>
+
+      <button
+        pButton
+        type="button"
+        icon="pi pi-eraser"
+        label="Limpiar"
+        severity="secondary"
+        variant="outlined"
+        (click)="clearFilters()"
+      ></button>
+    </div>
+  </app-page-header>
+
+  <section class="summary-grid movements-summary admin-kpi-row">
+    <article class="summary-card movements-summary-card">
+      <div class="movements-summary-card__icon">
+        <i class="pi pi-database"></i>
+      </div>
+      <div class="movements-summary-card__content">
+        <span>Total movimientos</span>
+        <strong>{{ formatMetric(movements().length) }}</strong>
+        <small>Consulta actual</small>
+      </div>
+    </article>
+
+    <article class="summary-card movements-summary-card">
+      <div class="movements-summary-card__icon">
+        <i class="pi pi-arrow-down-left"></i>
+      </div>
+      <div class="movements-summary-card__content">
+        <span>Entradas</span>
+        <strong>{{ formatMetric(entryCount()) }}</strong>
+        <small>Según el tipo interpretado</small>
+      </div>
+    </article>
+
+    <article class="summary-card movements-summary-card">
+      <div class="movements-summary-card__icon">
+        <i class="pi pi-arrow-up-right"></i>
+      </div>
+      <div class="movements-summary-card__content">
+        <span>Salidas</span>
+        <strong>{{ formatMetric(exitCount()) }}</strong>
+        <small>Movimientos operativos visibles</small>
+      </div>
+    </article>
+
+    <article class="summary-card movements-summary-card">
+      <div class="movements-summary-card__icon">
+        <i class="pi pi-ban"></i>
+      </div>
+      <div class="movements-summary-card__content">
+        <span>Movimientos anulados</span>
+        <strong>{{ formatMetric(voidedCount()) }}</strong>
+        <small>Según estado reportado</small>
+      </div>
+    </article>
+  </section>
+
+  <div class="movements-mobile-actions" aria-hidden="false">
+    <button
+      pButton
+      type="submit"
+      class="movements-btn-primary"
+      form="movements-filter-form"
+      icon="pi pi-filter"
+      label="Consultar"
+      [loading]="loading()"
+    ></button>
+
+    <button
+      pButton
+      type="button"
+      icon="pi pi-eraser"
+      label="Limpiar"
+      severity="secondary"
+      variant="outlined"
+      (click)="clearFilters()"
+    ></button>
+  </div>
+
+  <section class="surface-card movements-filter-card">
+    <form
+      id="movements-filter-form"
+      [formGroup]="filtersForm"
+      class="movements-filter-form"
+      (ngSubmit)="loadMovements()"
+    >
+      <div class="movements-section-head">
+        <div class="movements-section-head__identity">
+          <div class="movements-section-head__icon">
+            <i class="pi pi-filter"></i>
+          </div>
+
+          <div class="movements-section-head__copy">
+            <h3>Filtros de consulta</h3>
+            <p>Define los criterios para buscar movimientos.</p>
+          </div>
+        </div>
+
+        <span class="movements-counter">
+          {{ formatMetric(activeFilterCount()) }} filtros activos
+        </span>
+      </div>
+
+      <div class="movements-filters-grid movements-filters-grid--primary">
+        <label class="field">
+          <span>Habitación</span>
+          <select class="field-control" formControlName="roomNumber">
+            <option value="">Todas</option>
+            @for (room of roomOptions(); track room) {
+              <option [value]="room">{{ room }}</option>
+            }
+          </select>
+        </label>
+
+        <label class="field">
+          <span>Responsable</span>
+          <select class="field-control" formControlName="responsible">
+            <option value="">Todos</option>
+            @for (user of responsibleOptions(); track user) {
+              <option [value]="user">{{ user }}</option>
+            }
+          </select>
+        </label>
+
+        <label class="field">
+          <span>Responsable operativo</span>
+          <select class="field-control" formControlName="operationalResponsible">
+            <option value="">Todos</option>
+            @for (user of operationalResponsibleOptions(); track user) {
+              <option [value]="user">{{ user }}</option>
+            }
+          </select>
+        </label>
+
+        <label class="field">
+          <span>Área</span>
+          <select class="field-control" formControlName="areaName">
+            <option value="">Todas</option>
+            @for (area of areaOptions(); track area) {
+              <option [value]="area">{{ area }}</option>
+            }
+          </select>
+        </label>
+
+        <label class="field">
+          <span>Fecha inicial</span>
+          <input class="field-control" type="date" formControlName="startDate" />
+        </label>
+
+        <label class="field">
+          <span>Fecha final</span>
+          <input class="field-control" type="date" formControlName="endDate" />
+        </label>
+      </div>
+
+      @if (advancedFiltersVisible()) {
+        <div class="movements-filters-grid movements-filters-grid--advanced">
+          <label class="field">
+            <span>Tipo</span>
+            <select class="field-control" formControlName="type">
+              <option value="">Todos</option>
+              @for (option of typeOptions(); track option.value) {
+                <option [value]="option.value">{{ option.label }}</option>
+              }
+            </select>
+          </label>
+
+          <label class="field">
+            <span>Origen</span>
+            <select class="field-control" formControlName="origin">
+              <option value="">Todos</option>
+              @for (option of originOptions(); track option.value) {
+                <option [value]="option.value">{{ option.label }}</option>
+              }
+            </select>
+          </label>
+        </div>
+      }
+
+      <button type="button" class="movements-more-filters" (click)="toggleAdvancedFilters()">
+        <i class="pi" [class.pi-angle-down]="!advancedFiltersVisible()" [class.pi-angle-up]="advancedFiltersVisible()"></i>
+        <span>{{ advancedFiltersVisible() ? 'Ocultar filtros extra' : 'Más filtros' }}</span>
+        @if (advancedFilterCount() > 0) {
+          <small>{{ formatMetric(advancedFilterCount()) }}</small>
+        }
+      </button>
+    </form>
+
+    @if (activeFilterCount() > 0) {
+      <div class="movements-active-filters">
+        @for (chip of activeFilterChips(); track chip) {
+          <span class="movements-chip">{{ chip }}</span>
+        }
+      </div>
+    }
+  </section>
+
+  <section class="surface-card movements-logbook">
+    <div class="movements-logbook__head">
+      <div class="movements-section-head movements-section-head--compact">
+        <div class="movements-section-head__identity">
+          <div class="movements-section-head__icon">
+            <i class="pi pi-history"></i>
+          </div>
+
+          <div class="movements-section-head__copy">
+            <h3>Bitácora de movimientos</h3>
+            <p>Registro de entradas y salidas según los filtros seleccionados.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="movements-logbook__meta">
+        <span class="movements-counter">{{ formatMetric(movements().length) }} registros</span>
+        <span class="movements-counter movements-counter--soft">{{ formatMetric(entryCount()) }} entradas</span>
+        <span class="movements-counter movements-counter--soft">{{ formatMetric(exitCount()) }} salidas</span>
+
+        <button
+          pButton
+          type="button"
+          icon="pi pi-refresh"
+          severity="secondary"
+          variant="text"
+          [rounded]="true"
+          [loading]="loading()"
+          (click)="loadMovements()"
+        ></button>
+      </div>
+    </div>
+
+    <div class="movements-table-wrap admin-table-block">
+      @if (!loading() && !movements().length) {
+        <div class="movements-empty-state">
+          <div class="movements-empty-state__icon">
+            <i class="pi pi-inbox"></i>
+          </div>
+          <strong>Sin movimientos</strong>
+          <p>No se encontraron registros con los filtros seleccionados.</p>
+        </div>
+      } @else {
+        <p-table
+          [value]="movements()"
+          [loading]="loading()"
+          [paginator]="true"
+          [rows]="10"
+          [showCurrentPageReport]="true"
+          paginatorTemplate="CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink"
+          currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} movimientos"
+          responsiveLayout="scroll"
+          styleClass="movements-table"
+        >
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Fecha y hora</th>
+              <th>Item</th>
+              <th>Tipo</th>
+              <th>Habitación</th>
+              <th>Área</th>
+              <th>Responsable</th>
+              <th>Responsable operativo</th>
+              <th>Estado</th>
+              <th class="text-right">Acciones</th>
+            </tr>
+          </ng-template>
+
+          <ng-template pTemplate="body" let-movement>
+            <tr>
+              <td><span class="movement-date">{{ formatDate(movement.createdAt) }}</span></td>
+              <td>
+                <div class="movement-entity">
+                  <strong>{{ movement.itemName }}</strong>
+                  <span>{{ itemMetaLabel(movement) }}</span>
+                </div>
+              </td>
+              <td>
+                <span
+                  class="movement-type-chip"
+                  [class.movement-type-chip--exit]="movementTypeLabel(movement) === 'Salida'"
+                >
+                  {{ movementTypeLabel(movement) }}
+                </span>
+              </td>
+              <td><span class="movement-text">{{ roomLabel(movement) }}</span></td>
+              <td><span class="movement-text">{{ areaLabel(movement) }}</span></td>
+              <td>
+                <div class="movement-entity">
+                  <strong>{{ responsibleLabel(movement) }}</strong>
+                  <span>Responsable del registro</span>
+                </div>
+              </td>
+              <td>
+                <div class="movement-entity">
+                  <strong>{{ operationalResponsibleLabel(movement) }}</strong>
+                  <span>{{ operationalHintLabel(movement) }}</span>
+                </div>
+              </td>
+              <td>
+                <span class="movement-status-pill" [attr.data-tone]="statusTone(movement)">
+                  {{ statusLabel(movement) }}
+                </span>
+              </td>
+              <td class="text-right">
+                @if (canVoid(movement)) {
+                  <button
+                    pButton
+                    type="button"
+                    icon="pi pi-ban"
+                    label="Anular"
+                    size="small"
+                    severity="danger"
+                    variant="outlined"
+                    (click)="openVoidDialog(movement)"
+                  ></button>
+                } @else {
+                  <span class="movement-action-muted">Sin acción</span>
+                }
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      }
+    </div>
+  </section>
+</div>
+
+<p-dialog
+  [visible]="voidDialogVisible()"
+  [modal]="true"
+  [draggable]="false"
+  [style]="{ width: 'min(34rem, 96vw)' }"
+  header="Anular movimiento"
+  (visibleChange)="voidDialogVisible.set($event)"
+>
+  <form [formGroup]="voidForm" class="movements-dialog-form" (ngSubmit)="submitVoid()">
+    <label class="field">
+      <span>Motivo</span>
+      <textarea class="field-control field-control--textarea" formControlName="reason"></textarea>
+      @if (showVoidError()) {
+        <small>{{ voidError() }}</small>
+      }
+    </label>
+
+    <div class="movements-dialog-actions">
+      <button
+        pButton
+        type="button"
+        label="Cancelar"
+        severity="secondary"
+        variant="text"
+        (click)="voidDialogVisible.set(false)"
+      ></button>
+      <button pButton type="submit" label="Confirmar anulación" [loading]="saving()"></button>
+    </div>
+  </form>
+</p-dialog>

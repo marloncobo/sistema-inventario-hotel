@@ -1,0 +1,2059 @@
+@import 'tailwindcss';
+@import 'primeicons/primeicons.css';
+@import './styles-responsive-polish.css';
+
+:root {
+  color-scheme: light;
+  font-family: 'Inter', -apple-system, system-ui, sans-serif;
+  background: #ffffff;
+  color: #1a1a1a;
+
+  /* Refined Luxury Palette */
+  --app-gold: #c8922d;
+  --app-gold-light: #e6bd6a;
+  --app-gold-soft: rgba(200, 146, 45, 0.08);
+  --app-brown: #3d2b1f;
+  --app-bg: #ffffff;
+  --app-surface: rgba(255, 255, 255, 0.75);
+  --app-border: rgba(214, 191, 152, 0.35);
+  --app-shadow: 0 12px 30px rgba(61, 43, 31, 0.05);
+  --app-rounded: 1.5rem;
+  --app-rounded-sm: 0.75rem;
+
+  /* Admin / listados: menos recuadros, misma familia cromática */
+  --admin-strip-bg: linear-gradient(
+    165deg,
+    rgba(255, 255, 255, 0.99) 0%,
+    rgba(253, 250, 244, 0.96) 55%,
+    rgba(250, 246, 237, 0.94) 100%
+  );
+  --admin-strip-border: rgba(200, 146, 45, 0.12);
+  --admin-panel-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(252, 248, 240, 0.95));
+  --admin-panel-border: rgba(200, 146, 45, 0.1);
+  --admin-panel-shadow: 0 6px 22px rgba(61, 43, 31, 0.038);
+
+  /* Typography */
+  --app-font-serif: 'Playfair Display', Georgia, serif;
+  --app-font-sans: 'Inter', -apple-system, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+}
+
+html,
+body {
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+body {
+  margin: 0;
+  background: var(--app-bg);
+  color: var(--app-brown);
+  line-height: 1.6;
+}
+
+body::selection {
+  background: var(--app-gold-soft);
+  color: var(--app-brown);
+}
+
+/* Scrollbar Refinement */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(200, 146, 45, 0.2);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(200, 146, 45, 0.4);
+}
+
+/* Typography Hierarchy */
+h1, h2, h3, h4, .p-dialog .p-dialog-title {
+  font-family: var(--app-font-serif);
+  font-weight: 700;
+  color: var(--app-brown);
+  letter-spacing: -0.01em;
+}
+
+h1 { font-size: clamp(2rem, 4vw, 2.75rem); line-height: 1.1; }
+h2 { font-size: 1.75rem; }
+h3 { font-size: 1.35rem; }
+
+/* Surface Card - Clean & Modern */
+.surface-card {
+  padding: 2rem;
+  border-radius: var(--app-rounded);
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  box-shadow: var(--app-shadow);
+  backdrop-filter: blur(16px);
+  animation: surface-enter 0.4s cubic-bezier(0.2, 0, 0.2, 1);
+}
+
+/* Paneles de gestión: un solo contenedor suave, sin doble marco frío */
+:where(
+  .movements-page,
+  .alerts-page,
+  .audits-page,
+  .reports-page,
+  .catalogs-page,
+  .assignments-page
+) > .surface-card {
+  padding: 1.5rem 1.65rem;
+  background: var(--admin-panel-bg);
+  border: 1px solid var(--admin-panel-border);
+  box-shadow: var(--admin-panel-shadow);
+  backdrop-filter: blur(10px);
+}
+
+@keyframes surface-enter {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Summary Grid - Professional Density */
+.summary-grid {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+.dashboard-page,
+.inventory-page,
+.rooms-page,
+.movements-page,
+.reports-page,
+.alerts-page,
+.assignments-page,
+.audits-page,
+.catalogs-page {
+  width: 100%;
+  max-width: 1700px !important;
+  margin: 0 auto !important;
+  padding: 3rem 4rem 2rem !important;
+}
+
+.summary-card {
+  padding: 1.75rem;
+  border-radius: var(--app-rounded);
+  background: white;
+  border: 1px solid var(--app-border);
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.summary-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(61, 43, 31, 0.05);
+  border-color: var(--app-gold-light);
+}
+
+.summary-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--app-gold), transparent);
+  opacity: 0.7;
+}
+
+.summary-card span {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #8a735c;
+}
+
+.summary-card strong {
+  font-family: var(--app-font-serif);
+  font-size: 2.25rem;
+  color: var(--app-brown);
+  line-height: 1;
+  margin: 0.25rem 0;
+}
+
+.summary-card small {
+  font-size: 0.8rem;
+  color: #a3907d;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+/* Data Tables - SaaS Excellence */
+.p-datatable {
+  border-radius: var(--app-rounded-sm);
+  overflow: hidden;
+}
+
+.p-datatable .p-datatable-thead > tr > th {
+  background: #fdfbf7;
+  color: #5d4837;
+  font-weight: 700;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 1.25rem 1rem;
+  border-bottom: 2px solid rgba(214, 191, 152, 0.2);
+}
+
+.p-datatable .p-datatable-tbody > tr {
+  background: transparent;
+  transition: background 0.2s;
+}
+
+.p-datatable .p-datatable-tbody > tr:hover {
+  background: rgba(200, 146, 45, 0.03) !important;
+}
+
+.p-datatable .p-datatable-tbody > tr > td {
+  padding: 1rem;
+  border-bottom: 1px solid rgba(214, 191, 152, 0.1);
+  font-size: 0.9rem;
+  min-width: 0;
+  overflow-wrap: break-word;
+  word-break: normal;
+}
+
+.inventory-page app-page-header .page-header {
+  padding-bottom: 0;
+  margin-bottom: 0;
+  border-bottom: none;
+  align-items: center;
+}
+
+.inventory-table .p-datatable-table {
+  min-width: 68rem;
+}
+
+.inventory-table .p-datatable-thead > tr > th {
+  padding: 1rem 1.15rem;
+  background: #fdfbf7;
+  color: #7b6754;
+  font-size: 0.73rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.inventory-table .p-datatable-tbody > tr > td {
+  padding: 1rem 1.15rem;
+  vertical-align: middle;
+}
+
+.inventory-table .p-datatable-tbody > tr:last-child > td {
+  border-bottom: none;
+}
+
+.inventory-table .p-paginator {
+  border: none;
+  border-top: 1px solid rgba(214, 191, 152, 0.18);
+  padding: 0.95rem 1.15rem;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.inventory-table .p-paginator-current {
+  color: #8a7867;
+  font-size: 0.82rem;
+}
+
+:where(
+  .inventory-table,
+  .rooms-table,
+  .assignments-table,
+  .movements-table,
+  .alerts-table,
+  .reports-table,
+  .audits-table,
+  .catalogs-table
+) .p-paginator {
+  border: none !important;
+  border-top: 1px solid rgba(214, 191, 152, 0.18) !important;
+  padding: 0.95rem 1.15rem !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  gap: 0.8rem 1rem !important;
+  flex-wrap: wrap !important;
+  background: #fff !important;
+}
+
+:where(
+  .inventory-table,
+  .rooms-table,
+  .assignments-table,
+  .movements-table,
+  .alerts-table,
+  .reports-table,
+  .audits-table,
+  .catalogs-table
+) .p-paginator-current {
+  color: #9b8570 !important;
+  font-size: 0.82rem !important;
+  font-weight: 500 !important;
+}
+
+:where(
+  .inventory-table,
+  .rooms-table,
+  .assignments-table,
+  .movements-table,
+  .alerts-table,
+  .reports-table,
+  .audits-table,
+  .catalogs-table
+) .p-paginator-pages {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.55rem !important;
+  flex-wrap: wrap !important;
+}
+
+:where(
+  .inventory-table,
+  .rooms-table,
+  .assignments-table,
+  .movements-table,
+  .alerts-table,
+  .reports-table,
+  .audits-table,
+  .catalogs-table
+) .p-paginator .p-paginator-element {
+  min-width: 2.55rem !important;
+  height: 2.55rem !important;
+  padding: 0 0.9rem !important;
+  border-radius: 0.8rem !important;
+  border: 1px solid rgba(214, 191, 152, 0.38) !important;
+  background: #ffffff !important;
+  color: #7a654f !important;
+  box-shadow: none !important;
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease !important;
+}
+
+:where(
+  .inventory-table,
+  .rooms-table,
+  .assignments-table,
+  .movements-table,
+  .alerts-table,
+  .reports-table,
+  .audits-table,
+  .catalogs-table
+) .p-paginator .p-paginator-element:hover {
+  border-color: rgba(200, 146, 45, 0.48) !important;
+  background: #fffaf1 !important;
+  color: #b27a16 !important;
+  transform: translateY(-1px);
+}
+
+:where(
+  .inventory-table,
+  .rooms-table,
+  .assignments-table,
+  .movements-table,
+  .alerts-table,
+  .reports-table,
+  .audits-table,
+  .catalogs-table
+) .p-paginator .p-paginator-page.p-highlight {
+  background: #c8922d !important;
+  border-color: #c8922d !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  box-shadow: none !important;
+}
+
+:where(
+  .inventory-table,
+  .rooms-table,
+  .assignments-table,
+  .movements-table,
+  .alerts-table,
+  .reports-table,
+  .audits-table,
+  .catalogs-table
+) .p-paginator .p-paginator-page.p-highlight:hover,
+:where(
+  .inventory-table,
+  .rooms-table,
+  .assignments-table,
+  .movements-table,
+  .alerts-table,
+  .reports-table,
+  .audits-table,
+  .catalogs-table
+) .p-paginator .p-paginator-page.p-highlight:focus {
+  background: #c8922d !important;
+  border-color: #c8922d !important;
+  color: #ffffff !important;
+}
+
+:where(
+  .inventory-table,
+  .rooms-table,
+  .assignments-table,
+  .movements-table,
+  .alerts-table,
+  .reports-table,
+  .audits-table,
+  .catalogs-table
+) .p-paginator-first,
+:where(
+  .inventory-table,
+  .rooms-table,
+  .assignments-table,
+  .movements-table,
+  .alerts-table,
+  .reports-table,
+  .audits-table,
+  .catalogs-table
+) .p-paginator-last {
+  min-width: auto !important;
+  padding-inline: 1rem !important;
+}
+
+:where(
+  .inventory-table,
+  .rooms-table,
+  .assignments-table,
+  .movements-table,
+  .alerts-table,
+  .reports-table,
+  .audits-table,
+  .catalogs-table
+) .p-paginator-first .p-icon,
+:where(
+  .inventory-table,
+  .rooms-table,
+  .assignments-table,
+  .movements-table,
+  .alerts-table,
+  .reports-table,
+  .audits-table,
+  .catalogs-table
+) .p-paginator-last .p-icon {
+  display: none !important;
+}
+
+:where(
+  .inventory-table,
+  .rooms-table,
+  .assignments-table,
+  .movements-table,
+  .alerts-table,
+  .reports-table,
+  .audits-table,
+  .catalogs-table
+) .p-paginator-first::after {
+  content: 'Primera';
+}
+
+:where(
+  .inventory-table,
+  .rooms-table,
+  .assignments-table,
+  .movements-table,
+  .alerts-table,
+  .reports-table,
+  .audits-table,
+  .catalogs-table
+) .p-paginator-last::after {
+  content: 'Última';
+}
+
+:where(.reports-page, .audits-page) :where(.field-control, .p-inputtext),
+:where(.reports-page, .audits-page) :where(.p-select, .p-select-label, .p-select-dropdown) {
+  border-radius: 1rem !important;
+}
+
+:where(.reports-page, .audits-page) :where(.field-control, .p-inputtext, .p-select) {
+  min-height: 3.45rem !important;
+  border: 1px solid rgba(200, 146, 45, 0.42) !important;
+  background: #ffffff !important;
+  color: #1f1f1f !important;
+  box-shadow: none !important;
+}
+
+:where(.reports-page, .audits-page) :where(.field-control, .p-inputtext)::placeholder,
+:where(.reports-page, .audits-page) .p-select-label {
+  color: #1f1f1f !important;
+}
+
+:where(.reports-page, .audits-page) :where(.field-control, .p-inputtext),
+:where(.reports-page, .audits-page) .p-select-label {
+  padding: 0.66rem 0.9rem !important;
+  font-size: 0.88rem !important;
+  font-weight: 400 !important;
+  line-height: 1.2 !important;
+}
+
+:where(.reports-page, .audits-page) .p-select {
+  display: flex !important;
+  align-items: center !important;
+}
+
+:where(.reports-page, .audits-page) .p-select-dropdown {
+  color: #9a7a4b !important;
+}
+
+:where(.reports-page, .audits-page) .p-select-label.p-placeholder,
+:where(.reports-page, .audits-page) :where(option, .p-select-option) {
+  color: #1f1f1f !important;
+}
+
+:where(.reports-page, .audits-page) :where(.field-control, .p-inputtext, .p-select):focus,
+:where(.reports-page, .audits-page) :where(.field-control, .p-inputtext, .p-select):focus-within {
+  border-color: #c8922d !important;
+  box-shadow: 0 0 0 3px rgba(200, 146, 45, 0.12) !important;
+}
+
+/* Admin Layout Architecture - hierarchy and spacing only */
+:where(
+  .dashboard-page,
+  .inventory-page,
+  .rooms-page,
+  .assignments-page,
+  .movements-page,
+  .alerts-page,
+  .audits-page,
+  .reports-page,
+  .catalogs-page
+) {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+:where(
+  .dashboard-page,
+  .inventory-page,
+  .rooms-page,
+  .assignments-page,
+  .movements-page,
+  .alerts-page,
+  .audits-page,
+  .reports-page,
+  .catalogs-page
+) > * {
+  min-width: 0;
+}
+
+:where(
+  .inventory-summary,
+  .rooms-summary,
+  .assignments-summary,
+  .movements-summary,
+  .alerts-summary,
+  .audits-summary,
+  .reports-summary,
+  .catalogs-summary,
+  .dashboard-metrics
+) {
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+}
+
+
+
+.admin-filter-block {
+  padding: 0.85rem 1.35rem;
+  border-bottom: 1px solid rgba(200, 146, 45, 0.1);
+  background: rgba(255, 253, 249, 0.55);
+}
+
+.admin-content-block {
+  margin-top: 0.25rem;
+}
+
+.admin-table-block {
+  padding-top: 0.5rem;
+}
+
+:where(
+  .inventory-workbench,
+  .rooms-workbench,
+  .assignments-block,
+  .movements-workbench,
+  .alerts-workbench,
+  .reports-workbench,
+  .audits-workbench,
+  .catalogs-workbench
+) {
+  margin-top: 0.25rem;
+}
+
+:where(
+  .inventory-filters,
+  .assignments-filter-shell,
+  .assignments-history-controls,
+  .movements-filter-shell,
+  .alerts-filter-shell,
+  .reports-filter-shell,
+  .audit-filter-shell,
+  .catalog-toolbar
+) {
+  gap: 1rem 1.25rem;
+}
+
+:where(.admin-filter-block) :where(.filters-grid, .form-grid) {
+  gap: 1rem 1.25rem;
+}
+
+:where(
+  .inventory-filters__actions,
+  .assignments-form__actions,
+  .assignments-filter-shell__actions,
+  .assignments-history-controls__actions,
+  .movements-filter-shell__actions,
+  .alerts-filter-shell__actions,
+  .reports-filter-shell__actions,
+  .audit-filter-shell__actions,
+  .catalog-toolbar__controls
+) {
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+:where(
+  .inventory-table-wrap,
+  .rooms-table-wrap,
+  .assignments-table-wrap,
+  .movements-table-wrap,
+  .alerts-table-wrap,
+  .reports-table-wrap,
+  .audits-table-wrap,
+  .catalogs-table-wrap
+) {
+  padding: 0 1.15rem 1.15rem;
+  background: transparent;
+}
+
+:where(
+  .inventory-result-stats,
+  .rooms-result-stats,
+  .assignments-stats,
+  .movements-result-head__stats,
+  .reports-result-head__stats,
+  .audits-result-head__stats,
+  .catalogs-section-head__actions
+) {
+  row-gap: 0.6rem;
+}
+
+:where(
+  .inventory-table,
+  .rooms-table,
+  .assignments-table,
+  .movements-table,
+  .alerts-table,
+  .reports-table,
+  .audits-table,
+  .catalogs-table
+) .p-datatable-wrapper {
+  width: 100%;
+  border-radius: var(--app-rounded-sm);
+  border: 1px solid rgba(214, 191, 152, 0.2);
+  scrollbar-gutter: stable both-edges;
+  overscroll-behavior-inline: contain;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: visible;
+}
+
+:where(
+  .inventory-table,
+  .rooms-table,
+  .assignments-table,
+  .movements-table,
+  .alerts-table,
+  .reports-table,
+  .audits-table,
+  .catalogs-table
+) .p-datatable-thead > tr > th {
+  white-space: normal;
+  overflow-wrap: break-word;
+  word-break: normal;
+  vertical-align: bottom;
+}
+
+:where(
+  .inventory-table,
+  .rooms-table,
+  .assignments-table,
+  .movements-table,
+  .alerts-table,
+  .reports-table,
+  .audits-table,
+  .catalogs-table
+) .p-paginator {
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+:where(
+  .inventory-table,
+  .rooms-table,
+  .assignments-table,
+  .movements-table,
+  .alerts-table,
+  .reports-table,
+  .audits-table,
+  .catalogs-table
+) .p-paginator .p-paginator-current {
+  margin-inline-end: auto;
+}
+
+:where(
+  .inventory-table,
+  .rooms-table,
+  .assignments-table,
+  .movements-table,
+  .alerts-table,
+  .reports-table,
+  .audits-table,
+  .catalogs-table
+) .p-paginator .p-paginator-pages {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+:where(
+  .inventory-table,
+  .rooms-table,
+  .assignments-table,
+  .movements-table,
+  .alerts-table,
+  .reports-table,
+  .audits-table,
+  .catalogs-table
+) .p-paginator .p-paginator-page,
+:where(
+  .inventory-table,
+  .rooms-table,
+  .assignments-table,
+  .movements-table,
+  .alerts-table,
+  .reports-table,
+  .audits-table,
+  .catalogs-table
+) .p-paginator .p-paginator-first,
+:where(
+  .inventory-table,
+  .rooms-table,
+  .assignments-table,
+  .movements-table,
+  .alerts-table,
+  .reports-table,
+  .audits-table,
+  .catalogs-table
+) .p-paginator .p-paginator-prev,
+:where(
+  .inventory-table,
+  .rooms-table,
+  .assignments-table,
+  .movements-table,
+  .alerts-table,
+  .reports-table,
+  .audits-table,
+  .catalogs-table
+) .p-paginator .p-paginator-next,
+:where(
+  .inventory-table,
+  .rooms-table,
+  .assignments-table,
+  .movements-table,
+  .alerts-table,
+  .reports-table,
+  .audits-table,
+  .catalogs-table
+) .p-paginator .p-paginator-last {
+  min-width: 2.35rem;
+  height: 2.35rem;
+  border-radius: 999px;
+}
+
+@media (min-width: 1281px) {
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-datatable-wrapper {
+    max-height: 62vh;
+    overflow: auto;
+  }
+
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-datatable-thead > tr > th {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    white-space: nowrap;
+  }
+
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-datatable-thead > tr > th:first-child,
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-datatable-tbody > tr > td:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    background: inherit;
+  }
+
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-datatable-thead > tr > th:first-child {
+    z-index: 4;
+  }
+}
+
+@media (min-width: 1024px) and (max-width: 1365px) {
+  .dashboard-page,
+  .inventory-page,
+  .rooms-page,
+  .movements-page,
+  .reports-page,
+  .alerts-page,
+  .assignments-page,
+  .audits-page,
+  .catalogs-page {
+    padding: 2.25rem 2rem 1.85rem !important;
+  }
+}
+
+@media (max-width: 1280px) {
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-datatable-thead > tr > th,
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-datatable-tbody > tr > td {
+    padding: 0.85rem 0.95rem;
+  }
+
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-paginator {
+    padding-inline: 0.95rem;
+  }
+
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-paginator .p-paginator-current {
+    order: -1;
+    flex: 1 1 100%;
+  }
+}
+
+@media (max-width: 1023px) {
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-datatable-wrapper {
+    max-height: none;
+    overflow-y: visible;
+  }
+
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-datatable-thead > tr > th {
+    white-space: normal;
+  }
+}
+
+@media (max-width: 900px) {
+  .dashboard-page,
+  .inventory-page,
+  .rooms-page,
+  .movements-page,
+  .reports-page,
+  .alerts-page,
+  .assignments-page,
+  .audits-page,
+  .catalogs-page {
+    padding: 1.2rem 0.95rem 1.6rem !important;
+    gap: 1.25rem;
+  }
+
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-datatable-wrapper {
+    overflow: auto !important;
+    border: none;
+    scrollbar-gutter: auto;
+  }
+}
+
+/* Form Design - Clean & Aligned */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.field label, .field > span {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #5d4837;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.validation-banner {
+  display: grid;
+  gap: 0.55rem;
+  padding: 0.95rem 1rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(200, 146, 45, 0.28);
+  background: linear-gradient(135deg, rgba(255, 250, 240, 0.98), rgba(255, 255, 255, 0.98));
+  color: #7c5d18;
+}
+
+.validation-banner strong {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: #8f6817;
+  font-size: 0.92rem;
+}
+
+.validation-banner p,
+.validation-banner ul {
+  margin: 0;
+  color: #8a735c;
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
+.validation-banner ul {
+  padding-left: 1.1rem;
+}
+
+.validation-banner--danger {
+  border-color: rgba(220, 38, 38, 0.18);
+  background: linear-gradient(135deg, rgba(254, 242, 242, 0.98), rgba(255, 251, 235, 0.98));
+}
+
+.validation-banner--danger strong {
+  color: #b45309;
+}
+
+.field-control, .p-inputtext, .p-multiselect, .p-password input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: var(--app-rounded-sm) !important;
+  border: 1px solid rgba(214, 191, 152, 0.5) !important;
+  background: white !important;
+  transition: all 0.3s;
+  font-size: 0.95rem;
+}
+
+.p-inputtext:focus, .p-multiselect-focus {
+  border-color: var(--app-gold) !important;
+  box-shadow: 0 0 0 4px var(--app-gold-soft) !important;
+  outline: none;
+}
+
+/* Professional Buttons */
+.p-button {
+  border-radius: var(--app-rounded-sm) !important;
+  padding: 0.75rem 1.5rem !important;
+  font-weight: 600 !important;
+  font-size: 0.88rem !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  border: none !important;
+  background: linear-gradient(135deg, var(--app-gold), var(--app-gold-light)) !important;
+  color: var(--app-brown) !important;
+  box-shadow: 0 4px 12px rgba(200, 146, 45, 0.2) !important;
+}
+
+.p-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(200, 146, 45, 0.3) !important;
+  filter: brightness(1.05);
+}
+
+.p-button.p-button-secondary {
+  background: #f4f4f5 !important;
+  color: #52525b !important;
+  box-shadow: none !important;
+}
+
+.p-button.p-button-secondary:hover {
+  background: #e4e4e7 !important;
+}
+
+.p-button.p-button-text {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Close icons in dialogs/drawers: always visible */
+.p-dialog .p-dialog-header .p-dialog-header-icon,
+.p-dialog .p-dialog-header .p-dialog-header-close-button,
+.p-dialog .p-dialog-header .p-dialog-header-close,
+.p-dialog .p-dialog-header .p-button.p-dialog-header-icon,
+.p-dialog .p-dialog-header .p-button.p-dialog-header-close,
+.p-drawer .p-drawer-header .p-drawer-close-button,
+.p-drawer .p-drawer-header .p-drawer-header-close,
+.p-drawer .p-drawer-header .p-dialog-header-icon,
+.p-drawer .p-drawer-header .p-button {
+  color: var(--app-gold) !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.p-dialog .p-dialog-header .p-dialog-header-icon .pi,
+.p-dialog .p-dialog-header .p-dialog-header-close-button .pi,
+.p-dialog .p-dialog-header .p-dialog-header-close .pi,
+.p-drawer .p-drawer-header .p-drawer-close-button .pi,
+.p-drawer .p-drawer-header .p-drawer-header-close .pi,
+.p-drawer .p-drawer-header .p-dialog-header-icon .pi,
+.p-drawer .p-drawer-header .p-button .pi,
+.p-dialog .p-dialog-header .p-dialog-header-icon .p-icon,
+.p-dialog .p-dialog-header .p-dialog-header-close-button .p-icon,
+.p-dialog .p-dialog-header .p-dialog-header-close .p-icon,
+.p-drawer .p-drawer-header .p-drawer-close-button .p-icon,
+.p-drawer .p-drawer-header .p-drawer-header-close .p-icon,
+.p-drawer .p-drawer-header .p-dialog-header-icon .p-icon,
+.p-drawer .p-drawer-header .p-button .p-icon,
+.p-dialog .p-dialog-header .p-dialog-header-icon .p-button-icon,
+.p-dialog .p-dialog-header .p-dialog-header-close-button .p-button-icon,
+.p-dialog .p-dialog-header .p-dialog-header-close .p-button-icon,
+.p-drawer .p-drawer-header .p-drawer-close-button .p-button-icon,
+.p-drawer .p-drawer-header .p-drawer-header-close .p-button-icon,
+.p-drawer .p-drawer-header .p-button .p-button-icon {
+  color: var(--app-gold) !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  fill: var(--app-gold) !important;
+  stroke: var(--app-gold) !important;
+}
+
+.p-dialog .p-dialog-header .p-dialog-header-icon::before,
+.p-dialog .p-dialog-header .p-dialog-header-close-button::before,
+.p-dialog .p-dialog-header .p-dialog-header-close::before,
+.p-drawer .p-drawer-header .p-drawer-close-button::before,
+.p-drawer .p-drawer-header .p-drawer-header-close::before {
+  color: var(--app-gold) !important;
+  opacity: 1 !important;
+}
+
+.p-dialog .p-dialog-header .p-dialog-header-icon svg,
+.p-dialog .p-dialog-header .p-dialog-header-close-button svg,
+.p-dialog .p-dialog-header .p-dialog-header-close svg,
+.p-drawer .p-drawer-header .p-drawer-close-button svg,
+.p-drawer .p-drawer-header .p-drawer-header-close svg,
+.p-drawer .p-drawer-header .p-button svg {
+  color: var(--app-gold) !important;
+  fill: var(--app-gold) !important;
+  stroke: var(--app-gold) !important;
+  opacity: 1 !important;
+}
+
+.p-dialog .p-dialog-header .p-dialog-header-icon:hover,
+.p-dialog .p-dialog-header .p-dialog-header-close-button:hover,
+.p-dialog .p-dialog-header .p-dialog-header-close:hover,
+.p-drawer .p-drawer-header .p-drawer-close-button:hover,
+.p-drawer .p-drawer-header .p-drawer-header-close:hover,
+.p-drawer .p-drawer-header .p-dialog-header-icon:hover,
+.p-drawer .p-drawer-header .p-button:hover {
+  background: transparent !important;
+  color: #b57b17 !important;
+}
+
+/* Status Tags */
+.p-tag {
+  border-radius: 6px !important;
+  padding: 0.25rem 0.625rem !important;
+  font-size: 0.7rem !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+}
+
+.p-tag-success { background: #dcfce7 !important; color: #166534 !important; }
+.p-tag-info { background: #e0f2fe !important; color: #075985 !important; }
+.p-tag-danger { background: #fee2e2 !important; color: #991b1b !important; }
+
+/* Responsive Utility Spacing */
+.space-y-8 > * + * { margin-top: 2.5rem; }
+.form-grid {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+@media (max-width: 1200px) {
+  .dashboard-page,
+  .inventory-page,
+  .rooms-page,
+  .movements-page,
+  .reports-page,
+  .alerts-page,
+  .assignments-page,
+  .audits-page,
+  .catalogs-page {
+    padding: 2rem 2rem 2rem !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .surface-card { padding: 1.25rem; }
+  .summary-grid { gap: 1rem; }
+  .summary-card {
+    padding: 1.25rem;
+    min-height: 0;
+  }
+
+  .dashboard-page,
+  .inventory-page,
+  .rooms-page,
+  .movements-page,
+  .reports-page,
+  .alerts-page,
+  .assignments-page,
+  .audits-page,
+  .catalogs-page {
+    padding: 1rem 0.9rem 1.5rem !important;
+  }
+
+  :where(
+    .inventory-table-wrap,
+    .rooms-table-wrap,
+    .assignments-table-wrap,
+    .movements-table-wrap,
+    .alerts-table-wrap,
+    .reports-table-wrap,
+    .audits-table-wrap,
+    .catalogs-table-wrap
+  ) {
+    padding: 0 1rem 1rem;
+  }
+
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-datatable-wrapper {
+    max-height: none;
+    border-radius: 1rem;
+    scrollbar-gutter: auto;
+  }
+
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-paginator {
+    padding: 0.8rem 0.9rem;
+    gap: 0.75rem;
+  }
+
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-paginator .p-paginator-pages {
+    max-width: 100%;
+    overflow-x: auto;
+    padding-bottom: 0.1rem;
+    scrollbar-width: none;
+  }
+
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-paginator .p-paginator-pages::-webkit-scrollbar {
+    display: none;
+  }
+
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-datatable-thead > tr > th,
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-datatable-tbody > tr > td {
+    padding: 0.8rem 0.9rem;
+  }
+
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-datatable-table {
+    min-width: max-content;
+  }
+
+  .inventory-table .p-datatable-table {
+    min-width: 50rem;
+  }
+
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-paginator {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-paginator-current {
+    width: 100%;
+    text-align: center;
+    order: 3;
+  }
+}
+
+@media (max-width: 1023px) {
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-datatable-thead > tr > th:first-child,
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-datatable-tbody > tr > td:first-child {
+    position: static;
+  }
+}
+
+@media (max-width: 560px) {
+  .summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .summary-card {
+    padding: 1.1rem;
+    border-radius: 1.2rem;
+  }
+
+  .summary-card strong {
+    font-size: 2rem;
+  }
+
+  .summary-card small {
+    font-size: 0.78rem;
+  }
+
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-datatable-thead > tr > th,
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-datatable-tbody > tr > td {
+    padding: 0.72rem 0.78rem;
+  }
+
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-paginator {
+    display: grid !important;
+    grid-template-columns: repeat(5, max-content) !important;
+    justify-content: center !important;
+    align-items: center !important;
+    padding: 0.85rem 0.75rem 1rem !important;
+    gap: 0.55rem !important;
+  }
+
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-paginator .p-paginator-element {
+    min-width: 2.1rem;
+    height: 2.1rem;
+  }
+
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-paginator-pages {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    grid-column: 3 !important;
+  }
+
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-paginator-first,
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-paginator-prev,
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-paginator-next,
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-paginator-last {
+    justify-self: center !important;
+  }
+
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-paginator-first {
+    grid-column: 1 !important;
+  }
+
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-paginator-prev {
+    grid-column: 2 !important;
+  }
+
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-paginator-next {
+    grid-column: 4 !important;
+  }
+
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-paginator-last {
+    grid-column: 5 !important;
+  }
+
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-paginator-rpp-dropdown {
+    grid-column: 1 / -1 !important;
+    min-width: 4.9rem;
+    margin-top: 0.2rem;
+    border-radius: 0.9rem;
+    justify-self: center !important;
+  }
+
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-paginator-rpp-dropdown .p-select-label {
+    padding-inline: 0.9rem;
+    text-align: center;
+  }
+
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-paginator-current {
+    margin-top: 0.15rem;
+    font-size: 0.8rem;
+    line-height: 1.45;
+    grid-column: 1 / -1 !important;
+  }
+
+  .inventory-table .p-datatable-table {
+    min-width: 42rem;
+  }
+}
+
+@media (max-width: 420px) {
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-paginator {
+    grid-template-columns: max-content max-content max-content max-content max-content !important;
+    gap: 0.45rem 0.35rem !important;
+    padding-inline: 0.65rem !important;
+  }
+
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-paginator-first,
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-paginator-last {
+    display: none !important;
+  }
+
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-paginator-pages {
+    grid-column: 2 / 4 !important;
+    gap: 0.3rem;
+  }
+
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-paginator-prev {
+    grid-column: 1 !important;
+  }
+
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-paginator-next {
+    grid-column: 5 !important;
+  }
+
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-paginator-rpp-dropdown {
+    min-width: 4.5rem;
+  }
+}
+
+/* User Card Specialized Styles */
+.user-card {
+  background: white;
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-rounded);
+  padding: 1.75rem;
+  transition: all 0.3s cubic-bezier(0.2, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  height: 100%;
+}
+
+.user-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 20px 45px rgba(61, 43, 31, 0.08);
+  border-color: var(--app-gold-light);
+}
+
+.user-card__header {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.user-card__avatar {
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--app-font-serif);
+  font-weight: 700;
+  font-size: 1.5rem;
+  background: linear-gradient(135deg, #fdfbf7, #f5f0e6);
+  border: 2px solid var(--app-gold-soft);
+  color: var(--app-gold);
+}
+
+.user-card__info h4 {
+  margin: 0;
+  font-size: 1.15rem;
+  font-family: var(--app-font-sans);
+  color: var(--app-brown);
+}
+
+.user-card__info p {
+  margin: 0.1rem 0 0;
+  font-size: 0.8rem;
+  color: #a3907d;
+  font-weight: 500;
+}
+
+.user-card__body {
+  flex-grow: 1;
+  margin-bottom: 1.5rem;
+}
+
+.user-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 1.25rem;
+  border-top: 1px solid rgba(214, 191, 152, 0.15);
+}
+
+.user-card__status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.user-card__status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.user-card__status-dot--active { background: #10b981; box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1); }
+.user-card__status-dot--inactive { background: #ef4444; box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1); }
+
+@media (max-width: 900px) {
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-paginator {
+    display: grid !important;
+    grid-template-columns: repeat(4, auto) !important;
+    justify-content: center !important;
+    justify-items: center !important;
+    align-items: center !important;
+    row-gap: 0.55rem !important;
+    column-gap: 0.55rem !important;
+    padding: 0.95rem 0.9rem 1rem !important;
+  }
+
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-paginator .p-paginator-rpp-dropdown {
+    grid-column: 1 / -1 !important;
+    grid-row: 1 !important;
+    max-width: 12rem !important;
+    margin-inline: auto !important;
+  }
+
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-paginator .p-select-label {
+    text-align: center !important;
+  }
+
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-paginator-first,
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-paginator-prev,
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-paginator-next,
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-paginator-last {
+    grid-row: 2 !important;
+    margin: 0 !important;
+  }
+
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-paginator-first {
+    grid-column: 1 !important;
+  }
+
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-paginator-prev {
+    grid-column: 2 !important;
+  }
+
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-paginator-next {
+    grid-column: 3 !important;
+  }
+
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-paginator-last {
+    grid-column: 4 !important;
+  }
+
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-paginator-pages {
+    grid-column: 1 / -1 !important;
+    grid-row: 3 !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    gap: 0.45rem !important;
+    width: 100% !important;
+    max-width: max-content !important;
+    margin-inline: auto !important;
+    overflow: visible !important;
+  }
+
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-paginator-current {
+    grid-column: 1 / -1 !important;
+    grid-row: 4 !important;
+    text-align: center !important;
+    margin: 0.1rem 0 0 !important;
+  }
+
+  :where(
+    .inventory-table,
+    .rooms-table,
+    .assignments-table,
+    .movements-table,
+    .alerts-table,
+    .reports-table,
+    .audits-table,
+    .catalogs-table
+  ) .p-paginator > *:not(.p-paginator-rpp-dropdown):not(.p-paginator-first):not(.p-paginator-prev):not(.p-paginator-next):not(.p-paginator-last):not(.p-paginator-pages):not(.p-paginator-current) {
+    grid-column: 1 / -1 !important;
+  }
+
+  .pagination-bar {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 0.8rem !important;
+    text-align: center !important;
+  }
+
+  .pagination-controls {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    width: 100% !important;
+    overflow: visible !important;
+  }
+
+  .pagination-controls::after {
+    content: '';
+    flex-basis: 100%;
+    width: 0;
+    order: 5;
+  }
+
+  .pagination-controls > .pag-btn:first-child {
+    order: 1;
+  }
+
+  .pagination-controls > .pag-btn:nth-child(2) {
+    order: 2;
+  }
+
+  .pagination-controls > .pag-btn:nth-last-child(2) {
+    order: 3;
+  }
+
+  .pagination-controls > .pag-btn:last-child {
+    order: 4;
+  }
+
+  .pagination-controls > .pag-btn:not(:first-child):not(:nth-child(2)):not(:nth-last-child(2)):not(:last-child) {
+    order: 6;
+  }
+
+  .pagination-info {
+    order: 2;
+    width: 100%;
+    text-align: center !important;
+    margin: 0 !important;
+  }
+}

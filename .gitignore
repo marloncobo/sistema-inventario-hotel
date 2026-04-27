@@ -1,0 +1,21 @@
+target/
+.mvn/timing.properties
+.idea/
+.vscode/
+*.iml
+*.log
+.DS_Store
+Thumbs.db
+
+# Runtime/local environment
+.env
+.env.*
+!.env.example
+cloud-run/env.*.yaml
+!cloud-run/env.*.example.yaml
+
+# Docker/PostgreSQL local data
+*.pid
+*.tmp
+docker-data/
+pgdata/

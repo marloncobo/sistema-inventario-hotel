@@ -1,0 +1,68 @@
+<div class="dashboard-page">
+  <ng-template #illustration let-art="art" let-size="size">
+
+  <div class="dashboard-art" [attr.data-art]="art" [attr.data-size]="size || 'card'" aria-hidden="true">
+      <span class="dashboard-art__shadow"></span>
+      <span class="dashboard-art__plate"></span>
+      <span class="dashboard-art__spark dashboard-art__spark--one"></span>
+      <span class="dashboard-art__spark dashboard-art__spark--two"></span>
+      <span class="dashboard-art__primary"></span>
+      <span class="dashboard-art__secondary"></span>
+      <span class="dashboard-art__accent"></span>
+    </div>
+
+</ng-template>
+
+  @if (loading()) {
+    <section class="surface-card dashboard-loading">
+      <p-progress-spinner strokeWidth="4" animationDuration=".7s" />
+      <p>Cargando el panorama operativo...</p>
+    </section>
+  } @else {
+    <header class="surface-card dashboard-hero">
+      <div class="dashboard-hero__copy">
+        <span class="dashboard-date">{{ todayLabel }}</span>
+        <h1>Hola, {{ displayName() }}</h1>
+        <p>{{ headerSummary() }}</p>
+      </div>
+    </header>
+
+    @if (kpiCards().length) {
+      <section class="dashboard-kpis">
+        @for (card of kpiCards(); track card.label) {
+          <article class="surface-card dashboard-kpi-card" [attr.data-tone]="card.tone">
+            <div class="dashboard-kpi-card__art">
+              <ng-container
+                [ngTemplateOutlet]="illustration"
+                [ngTemplateOutletContext]="{ art: card.art, size: 'card' }"
+              />
+            </div>
+
+            <div class="dashboard-kpi-card__content">
+              <span>{{ card.label }}</span>
+              <strong>{{ card.value }}</strong>
+              <small>{{ card.helper }}</small>
+            </div>
+          </article>
+        }
+      </section>
+    }
+
+
+
+    <section class="surface-card dashboard-banner" [attr.data-tone]="statusBanner().tone">
+      <div class="dashboard-banner__art dashboard-banner__art--left">
+        <ng-container
+          [ngTemplateOutlet]="illustration"
+          [ngTemplateOutletContext]="{ art: bannerLeftArt(), size: 'banner' }"
+        />
+      </div>
+
+      <div class="dashboard-banner__copy">
+        <span>Estado general</span>
+        <h2>{{ statusBanner().title }}</h2>
+        <p>{{ statusBanner().text }}</p>
+      </div>
+    </section>
+  }
+</div>
