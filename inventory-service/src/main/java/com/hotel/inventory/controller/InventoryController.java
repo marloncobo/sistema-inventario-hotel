@@ -19,10 +19,20 @@ import jakarta.validation.Valid;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
+import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.BorderStyle;
+import org.apache.poi.ss.usermodel.FillPatternType;
+import org.apache.poi.ss.usermodel.Font;
+import org.apache.poi.ss.usermodel.HorizontalAlignment;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.xssf.usermodel.XSSFCellStyle;
+import org.apache.poi.xssf.usermodel.XSSFColor;
+import org.apache.poi.xssf.usermodel.XSSFFont;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
@@ -35,12 +45,27 @@ import org.springframework.web.bind.annotation.*;
 import java.nio.charset.StandardCharsets;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.awt.Color;
+import java.math.BigDecimal;
+import java.text.Normalizer;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 
 @RestController
 @RequestMapping("/api/inventory")
 public class InventoryController {
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+    private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+    private static final Color EXPORT_GOLD = new Color(200, 146, 45);
+    private static final Color EXPORT_GOLD_LIGHT = new Color(230, 189, 106);
+    private static final Color EXPORT_BROWN = new Color(61, 43, 31);
+    private static final Color EXPORT_MUTED = new Color(138, 115, 92);
+    private static final Color EXPORT_CREAM = new Color(253, 251, 247);
+    private static final Color EXPORT_IVORY = new Color(245, 237, 225);
     private final InventoryService inventoryService;
     private final AuditService auditService;
 
@@ -170,12 +195,12 @@ public class InventoryController {
         auditService.record("EXPORT_INVENTORY_REPORT", "InventorySummaryReport", null, username(authentication), "format=" + normalizedFormat);
         List<InventorySummaryReport> rows = inventoryService.inventoryReport(startDate, endDate);
         if ("pdf".equals(normalizedFormat)) {
-            return download("inventory-report.pdf", MediaType.APPLICATION_PDF, inventoryPdf(rows));
+            return download("inventory-report.pdf", MediaType.APPLICATION_PDF, inventoryPdf(rows, startDate, endDate));
         }
         if ("csv".equals(normalizedFormat)) {
-            return download("inventory-report.csv", new MediaType("text", "csv", StandardCharsets.UTF_8), inventoryCsv(rows));
+            return download("inventory-report.csv", new MediaType("text", "csv", StandardCharsets.UTF_8), inventoryCsv(rows, startDate, endDate));
         }
-        return download("inventory-report.xlsx", MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"), inventoryXlsx(rows));
+        return download("inventory-report.xlsx", MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"), inventoryXlsx(rows, startDate, endDate));
     }
 
     @GetMapping("/reports/top-used/export")
@@ -190,12 +215,12 @@ public class InventoryController {
         auditService.record("EXPORT_TOP_USED_REPORT", "TopUsedItemReport", null, username(authentication), "format=" + normalizedFormat);
         List<TopUsedItemReport> rows = inventoryService.topUsedItems(startDate, endDate);
         if ("pdf".equals(normalizedFormat)) {
-            return download("top-used-report.pdf", MediaType.APPLICATION_PDF, topUsedPdf(rows));
+            return download("top-used-report.pdf", MediaType.APPLICATION_PDF, topUsedPdf(rows, startDate, endDate));
         }
         if ("csv".equals(normalizedFormat)) {
-            return download("top-used-report.csv", new MediaType("text", "csv", StandardCharsets.UTF_8), topUsedCsv(rows));
+            return download("top-used-report.csv", new MediaType("text", "csv", StandardCharsets.UTF_8), topUsedCsv(rows, startDate, endDate));
         }
-        return download("top-used-report.xlsx", MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"), topUsedXlsx(rows));
+        return download("top-used-report.xlsx", MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"), topUsedXlsx(rows, startDate, endDate));
     }
 
     private String username(Authentication authentication) {
@@ -225,57 +250,75 @@ public class InventoryController {
         return normalized;
     }
 
-    private byte[] inventoryCsv(List<InventorySummaryReport> rows) {
-        StringBuilder csv = new StringBuilder("itemId,code,name,category,unit,currentStock,minStock,maxStock,lowStock,turnoverQuantity\n");
-        rows.forEach(row -> csv.append(csv(row.itemId())).append(',').append(csv(row.code())).append(',').append(csv(row.name())).append(',')
+    private byte[] inventoryCsv(List<InventorySummaryReport> rows, LocalDate startDate, LocalDate endDate) {
+        StringBuilder csv = csvMetadata("Reporte general de inventario", startDate, endDate, rows.size());
+        csv.append("Codigo,Nombre,Categoria,Unidad,Stock actual,Stock minimo,Stock maximo,Stock bajo,Rotacion\n");
+        rows.forEach(row -> csv.append(csv(row.code())).append(',').append(csv(row.name())).append(',')
                 .append(csv(row.category())).append(',').append(csv(row.unit())).append(',').append(csv(row.currentStock())).append(',')
-                .append(csv(row.minStock())).append(',').append(csv(row.maxStock())).append(',').append(csv(row.lowStock())).append(',')
-                .append(csv(row.turnoverQuantity())).append('\n'));
+                .append(csv(row.minStock())).append(',').append(csv(row.maxStock())).append(',').append(csv(row.lowStock() ? "Si" : "No")).append(',')
+                .append(csv(decimal(row.turnoverQuantity()))).append('\n'));
         return csv.toString().getBytes(StandardCharsets.UTF_8);
     }
 
-    private byte[] inventoryXlsx(List<InventorySummaryReport> rows) throws IOException {
+    private byte[] inventoryXlsx(List<InventorySummaryReport> rows, LocalDate startDate, LocalDate endDate) throws IOException {
         try (XSSFWorkbook workbook = new XSSFWorkbook(); ByteArrayOutputStream output = new ByteArrayOutputStream()) {
             Sheet sheet = workbook.createSheet("Inventario");
-            Row header = sheet.createRow(0);
-            String[] headers = {"itemId", "code", "name", "category", "unit", "currentStock", "minStock", "maxStock", "lowStock", "turnoverQuantity"};
-            for (int i = 0; i < headers.length; i++) header.createCell(i).setCellValue(headers[i]);
-            for (int i = 0; i < rows.size(); i++) {
-                InventorySummaryReport row = rows.get(i);
-                Row excelRow = sheet.createRow(i + 1);
-                excelRow.createCell(0).setCellValue(row.itemId());
-                excelRow.createCell(1).setCellValue(row.code());
-                excelRow.createCell(2).setCellValue(row.name());
-                excelRow.createCell(3).setCellValue(row.category());
-                excelRow.createCell(4).setCellValue(row.unit());
-                excelRow.createCell(5).setCellValue(row.currentStock());
-                excelRow.createCell(6).setCellValue(row.minStock());
-                if (row.maxStock() != null) {
-                    excelRow.createCell(7).setCellValue(row.maxStock());
-                } else {
-                    excelRow.createCell(7).setBlank();
-                }
-                excelRow.createCell(8).setCellValue(row.lowStock());
-                excelRow.createCell(9).setCellValue(row.turnoverQuantity().doubleValue());
-            }
+            writeWorkbookReport(
+                    workbook,
+                    sheet,
+                    "Reporte general de inventario",
+                    startDate,
+                    endDate,
+                    rows.size(),
+                    List.of("Codigo", "Nombre", "Categoria", "Unidad", "Stock actual", "Stock minimo", "Stock maximo", "Stock bajo", "Rotacion"),
+                    rows,
+                    List.of(
+                            InventorySummaryReport::code,
+                            InventorySummaryReport::name,
+                            InventorySummaryReport::category,
+                            InventorySummaryReport::unit,
+                            row -> row.currentStock(),
+                            row -> row.minStock(),
+                            InventorySummaryReport::maxStock,
+                            row -> row.lowStock() ? "Si" : "No",
+                            row -> decimal(row.turnoverQuantity())
+                    )
+            );
             workbook.write(output);
             return output.toByteArray();
         }
     }
 
-    private byte[] inventoryPdf(List<InventorySummaryReport> rows) throws IOException {
+    private byte[] inventoryPdf(List<InventorySummaryReport> rows, LocalDate startDate, LocalDate endDate) throws IOException {
         try (PDDocument document = new PDDocument(); ByteArrayOutputStream output = new ByteArrayOutputStream()) {
-            writePdfLines(document, "Reporte general de inventario", rows.stream()
-                    .map(row -> row.code() + " - " + row.name() + " | stock: " + row.currentStock() + " | bajo: " + row.lowStock())
-                    .toList());
+            writePdfTable(
+                    document,
+                    "Reporte general de inventario",
+                    reportMetadata(startDate, endDate, rows.size()),
+                    List.of("Codigo", "Nombre", "Categoria", "Stock", "Min", "Max", "Bajo", "Rotacion"),
+                    List.of(60f, 160f, 100f, 45f, 40f, 40f, 40f, 55f),
+                    rows.stream()
+                            .map(row -> List.of(
+                                    safe(row.code()),
+                                    safe(row.name()),
+                                    safe(row.category()),
+                                    safe(row.currentStock()),
+                                    safe(row.minStock()),
+                                    safe(row.maxStock()),
+                                    row.lowStock() ? "Si" : "No",
+                                    decimal(row.turnoverQuantity())
+                            ))
+                            .toList()
+            );
             document.save(output);
             return output.toByteArray();
         }
     }
 
-    private byte[] topUsedCsv(List<TopUsedItemReport> rows) {
-        StringBuilder csv = new StringBuilder("itemId,itemName,totalQuantity\n");
-        rows.forEach(row -> csv.append(csv(row.itemId())).append(',').append(csv(row.itemName())).append(',').append(csv(row.totalQuantity())).append('\n'));
+    private byte[] topUsedCsv(List<TopUsedItemReport> rows, LocalDate startDate, LocalDate endDate) {
+        StringBuilder csv = csvMetadata("Reporte de insumos mas utilizados", startDate, endDate, rows.size());
+        csv.append("Insumo,Cantidad total\n");
+        rows.forEach(row -> csv.append(csv(row.itemName())).append(',').append(csv(row.totalQuantity())).append('\n'));
         return csv.toString().getBytes(StandardCharsets.UTF_8);
     }
 
@@ -290,58 +333,354 @@ public class InventoryController {
         return text;
     }
 
-    private byte[] topUsedXlsx(List<TopUsedItemReport> rows) throws IOException {
+    private byte[] topUsedXlsx(List<TopUsedItemReport> rows, LocalDate startDate, LocalDate endDate) throws IOException {
         try (XSSFWorkbook workbook = new XSSFWorkbook(); ByteArrayOutputStream output = new ByteArrayOutputStream()) {
             Sheet sheet = workbook.createSheet("Mas usados");
-            Row header = sheet.createRow(0);
-            String[] headers = {"itemId", "itemName", "totalQuantity"};
-            for (int i = 0; i < headers.length; i++) header.createCell(i).setCellValue(headers[i]);
-            for (int i = 0; i < rows.size(); i++) {
-                TopUsedItemReport row = rows.get(i);
-                Row excelRow = sheet.createRow(i + 1);
-                excelRow.createCell(0).setCellValue(row.itemId());
-                excelRow.createCell(1).setCellValue(row.itemName());
-                excelRow.createCell(2).setCellValue(row.totalQuantity());
-            }
+            writeWorkbookReport(
+                    workbook,
+                    sheet,
+                    "Reporte de insumos mas utilizados",
+                    startDate,
+                    endDate,
+                    rows.size(),
+                    List.of("Insumo", "Cantidad total"),
+                    rows,
+                    List.of(
+                            TopUsedItemReport::itemName,
+                            TopUsedItemReport::totalQuantity
+                    )
+            );
             workbook.write(output);
             return output.toByteArray();
         }
     }
 
-    private byte[] topUsedPdf(List<TopUsedItemReport> rows) throws IOException {
+    private byte[] topUsedPdf(List<TopUsedItemReport> rows, LocalDate startDate, LocalDate endDate) throws IOException {
         try (PDDocument document = new PDDocument(); ByteArrayOutputStream output = new ByteArrayOutputStream()) {
-            writePdfLines(document, "Reporte de insumos mas utilizados", rows.stream()
-                    .map(row -> row.itemName() + " | total: " + row.totalQuantity())
-                    .toList());
+            writePdfTable(
+                    document,
+                    "Reporte de insumos mas utilizados",
+                    reportMetadata(startDate, endDate, rows.size()),
+                    List.of("Insumo", "Cantidad total"),
+                    List.of(420f, 120f),
+                    rows.stream()
+                            .map(row -> List.of(safe(row.itemName()), safe(row.totalQuantity())))
+                            .toList()
+            );
             document.save(output);
             return output.toByteArray();
         }
     }
 
-    private void writePdfLines(PDDocument document, String title, List<String> lines) throws IOException {
-        PDType1Font font = new PDType1Font(Standard14Fonts.FontName.HELVETICA);
-        int index = 0;
-        boolean firstPage = true;
-        while (index < lines.size() || firstPage) {
-            firstPage = false;
-            PDPage page = new PDPage();
-            document.addPage(page);
-            try (PDPageContentStream content = new PDPageContentStream(document, page)) {
-                content.setFont(font, 10);
-                content.beginText();
-                content.newLineAtOffset(40, 750);
-                content.showText(index == 0 ? title : title + " (continuacion)");
-                content.newLineAtOffset(0, -18);
-                int lineCount = 0;
-                while (index < lines.size() && lineCount < 48) {
-                    content.showText(lines.get(index));
-                    content.newLineAtOffset(0, -14);
-                    index++;
-                    lineCount++;
-                }
-                content.endText();
+    private <T> void writeWorkbookReport(
+            XSSFWorkbook workbook,
+            Sheet sheet,
+            String title,
+            LocalDate startDate,
+            LocalDate endDate,
+            int totalRows,
+            List<String> headers,
+            List<T> rows,
+            List<Function<T, Object>> extractors
+    ) {
+        XSSFCellStyle titleStyle = workbook.createCellStyle();
+        XSSFFont titleFont = workbook.createFont();
+        titleFont.setBold(true);
+        titleFont.setFontHeightInPoints((short) 14);
+        titleFont.setColor(new XSSFColor(EXPORT_BROWN, null));
+        titleStyle.setFont(titleFont);
+        titleStyle.setFillForegroundColor(new XSSFColor(EXPORT_CREAM, null));
+        titleStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
+        XSSFCellStyle metadataStyle = workbook.createCellStyle();
+        XSSFFont metadataFont = workbook.createFont();
+        metadataFont.setItalic(true);
+        metadataFont.setColor(new XSSFColor(EXPORT_MUTED, null));
+        metadataStyle.setFont(metadataFont);
+        metadataStyle.setFillForegroundColor(new XSSFColor(EXPORT_IVORY, null));
+        metadataStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
+        XSSFCellStyle headerStyle = workbook.createCellStyle();
+        XSSFFont headerFont = workbook.createFont();
+        headerFont.setBold(true);
+        headerFont.setColor(new XSSFColor(EXPORT_BROWN, null));
+        headerStyle.setFont(headerFont);
+        headerStyle.setFillForegroundColor(new XSSFColor(EXPORT_GOLD_LIGHT, null));
+        headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        headerStyle.setAlignment(HorizontalAlignment.CENTER);
+        headerStyle.setBorderBottom(BorderStyle.THIN);
+        headerStyle.setBottomBorderColor(new XSSFColor(EXPORT_GOLD, null));
+
+        XSSFCellStyle bodyStyle = workbook.createCellStyle();
+        bodyStyle.setFillForegroundColor(new XSSFColor(Color.WHITE, null));
+        bodyStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
+        XSSFCellStyle alternateBodyStyle = workbook.createCellStyle();
+        alternateBodyStyle.setFillForegroundColor(new XSSFColor(EXPORT_CREAM, null));
+        alternateBodyStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
+        int rowIndex = 0;
+        Row titleRow = sheet.createRow(rowIndex++);
+        Cell titleCell = titleRow.createCell(0);
+        titleCell.setCellValue(title);
+        titleCell.setCellStyle(titleStyle);
+
+        for (String metadata : reportMetadata(startDate, endDate, totalRows)) {
+            Row metadataRow = sheet.createRow(rowIndex++);
+            Cell metadataCell = metadataRow.createCell(0);
+            metadataCell.setCellValue(metadata);
+            metadataCell.setCellStyle(metadataStyle);
+        }
+
+        rowIndex++;
+        Row headerRow = sheet.createRow(rowIndex++);
+        for (int i = 0; i < headers.size(); i++) {
+            Cell cell = headerRow.createCell(i);
+            cell.setCellValue(headers.get(i));
+            cell.setCellStyle(headerStyle);
+        }
+
+        int dataIndex = 0;
+        for (T row : rows) {
+            Row dataRow = sheet.createRow(rowIndex++);
+            CellStyle rowStyle = dataIndex++ % 2 == 0 ? bodyStyle : alternateBodyStyle;
+            for (int i = 0; i < extractors.size(); i++) {
+                Cell cell = dataRow.createCell(i);
+                writeCell(cell, extractors.get(i).apply(row), rowStyle);
             }
         }
+
+        sheet.createFreezePane(0, headerRow.getRowNum() + 1);
+        sheet.setAutoFilter(new org.apache.poi.ss.util.CellRangeAddress(headerRow.getRowNum(), headerRow.getRowNum(), 0, headers.size() - 1));
+        for (int i = 0; i < headers.size(); i++) {
+            sheet.autoSizeColumn(i);
+            sheet.setColumnWidth(i, Math.min(sheet.getColumnWidth(i) + 1200, 18000));
+        }
+    }
+
+    private void writeCell(Cell cell, Object value) {
+        writeCell(cell, value, null);
+    }
+
+    private void writeCell(Cell cell, Object value, CellStyle style) {
+        if (style != null) {
+            cell.setCellStyle(style);
+        }
+        if (value == null) {
+            cell.setBlank();
+            return;
+        }
+        if (value instanceof Number number) {
+            cell.setCellValue(number.doubleValue());
+            return;
+        }
+        cell.setCellValue(String.valueOf(value));
+    }
+
+    private void writePdfTable(
+            PDDocument document,
+            String title,
+            List<String> metadataLines,
+            List<String> headers,
+            List<Float> columnWidths,
+            List<List<String>> rows
+    ) throws IOException {
+        PDType1Font titleFont = new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD);
+        PDType1Font bodyFont = new PDType1Font(Standard14Fonts.FontName.HELVETICA);
+        PDType1Font headerFont = new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD);
+        PDRectangle pageSize = new PDRectangle(PDRectangle.LETTER.getHeight(), PDRectangle.LETTER.getWidth());
+        float margin = 36f;
+        float rowHeight = 18f;
+        float tableWidth = columnWidths.stream().reduce(0f, Float::sum);
+        int rowIndex = 0;
+        boolean firstPage = true;
+
+        while (rowIndex < rows.size() || firstPage) {
+            firstPage = false;
+            PDPage page = new PDPage(pageSize);
+            document.addPage(page);
+            try (PDPageContentStream content = new PDPageContentStream(document, page)) {
+                float y = pageSize.getHeight() - margin;
+                y = writeText(content, title, titleFont, 14, margin, y);
+                for (String metadata : metadataLines) {
+                    y = writeText(content, metadata, bodyFont, 9, margin, y - 4);
+                }
+                y -= 14;
+                drawTableRow(content, y, margin, rowHeight, tableWidth, columnWidths, headers, headerFont, 9, true, false);
+                y -= rowHeight;
+
+                while (rowIndex < rows.size() && y > margin + rowHeight) {
+                    drawTableRow(content, y, margin, rowHeight, tableWidth, columnWidths, rows.get(rowIndex), bodyFont, 8.5f, false, rowIndex % 2 == 1);
+                    y -= rowHeight;
+                    rowIndex++;
+                }
+            }
+        }
+    }
+
+    private float writeText(PDPageContentStream content, String text, PDType1Font font, float fontSize, float x, float y) throws IOException {
+        content.beginText();
+        content.setFont(font, fontSize);
+        content.newLineAtOffset(x, y);
+        content.showText(pdfText(font, truncate(text, 110)));
+        content.endText();
+        return y - (fontSize + 2);
+    }
+
+    private void drawTableRow(
+            PDPageContentStream content,
+            float y,
+            float startX,
+            float rowHeight,
+            float tableWidth,
+        List<Float> columnWidths,
+        List<String> values,
+        PDType1Font font,
+        float fontSize,
+        boolean header,
+        boolean alternate
+    ) throws IOException {
+        if (header) {
+            setFillColor(content, EXPORT_GOLD_LIGHT);
+            content.addRect(startX, y - rowHeight, tableWidth, rowHeight);
+            content.fill();
+        } else if (alternate) {
+            setFillColor(content, EXPORT_CREAM);
+            content.addRect(startX, y - rowHeight, tableWidth, rowHeight);
+            content.fill();
+        }
+
+        float x = startX;
+        setStrokeColor(content, EXPORT_GOLD_LIGHT);
+        for (int i = 0; i < columnWidths.size(); i++) {
+            float width = columnWidths.get(i);
+            content.addRect(x, y - rowHeight, width, rowHeight);
+            content.stroke();
+
+            content.beginText();
+            setFillColor(content, header ? EXPORT_BROWN : EXPORT_BROWN);
+            content.setFont(font, fontSize);
+            content.newLineAtOffset(x + 3, y - 12);
+            content.showText(pdfText(font, truncate(values.get(i), widthToChars(width))));
+            content.endText();
+            x += width;
+        }
+        setFillColor(content, Color.BLACK);
+    }
+
+    private void setFillColor(PDPageContentStream content, Color color) throws IOException {
+        content.setNonStrokingColor(
+                color.getRed() / 255f,
+                color.getGreen() / 255f,
+                color.getBlue() / 255f
+        );
+    }
+
+    private void setStrokeColor(PDPageContentStream content, Color color) throws IOException {
+        content.setStrokingColor(
+                color.getRed() / 255f,
+                color.getGreen() / 255f,
+                color.getBlue() / 255f
+        );
+    }
+
+    private int widthToChars(float width) {
+        return Math.max(4, (int) ((width - 6) / 4.8f));
+    }
+
+    private String truncate(String text, int maxLength) {
+        if (text == null) {
+            return "";
+        }
+        if (text.length() <= maxLength) {
+            return text;
+        }
+        return text.substring(0, Math.max(0, maxLength - 3)) + "...";
+    }
+
+    private String pdfText(PDType1Font font, String text) throws IOException {
+        if (text == null || text.isBlank()) {
+            return "";
+        }
+
+        String normalized = text
+                .replace('\r', ' ')
+                .replace('\n', ' ')
+                .replace('\t', ' ');
+
+        StringBuilder builder = new StringBuilder(normalized.length());
+        for (int offset = 0; offset < normalized.length(); ) {
+            int codePoint = normalized.codePointAt(offset);
+            String candidate = new String(Character.toChars(codePoint));
+            String safe = supportedGlyph(font, candidate);
+            builder.append(safe != null ? safe : '?');
+            offset += Character.charCount(codePoint);
+        }
+        return builder.toString();
+    }
+
+    private String supportedGlyph(PDType1Font font, String candidate) throws IOException {
+        if (candidate.isBlank()) {
+            return " ";
+        }
+        if (canEncode(font, candidate)) {
+            return candidate;
+        }
+
+        String asciiFallback = Normalizer.normalize(candidate, Normalizer.Form.NFD)
+                .replaceAll("\\p{M}+", "");
+        if (!asciiFallback.isBlank() && canEncode(font, asciiFallback)) {
+            return asciiFallback;
+        }
+        return null;
+    }
+
+    private boolean canEncode(PDType1Font font, String text) throws IOException {
+        try {
+            font.encode(text);
+            return true;
+        } catch (IllegalArgumentException ex) {
+            return false;
+        }
+    }
+
+    private List<String> reportMetadata(LocalDate startDate, LocalDate endDate, int totalRows) {
+        List<String> metadata = new ArrayList<>();
+        metadata.add("Generado: " + DATE_TIME_FORMATTER.format(LocalDateTime.now()));
+        metadata.add("Periodo: " + formatDateRange(startDate, endDate));
+        metadata.add("Total registros: " + totalRows);
+        return metadata;
+    }
+
+    private StringBuilder csvMetadata(String title, LocalDate startDate, LocalDate endDate, int totalRows) {
+        StringBuilder csv = new StringBuilder("\uFEFF");
+        csv.append(csv(title)).append('\n');
+        csv.append(csv("Generado")).append(',').append(csv(DATE_TIME_FORMATTER.format(LocalDateTime.now()))).append('\n');
+        csv.append(csv("Periodo")).append(',').append(csv(formatDateRange(startDate, endDate))).append('\n');
+        csv.append(csv("Total registros")).append(',').append(csv(totalRows)).append('\n');
+        csv.append('\n');
+        return csv;
+    }
+
+    private String formatDateRange(LocalDate startDate, LocalDate endDate) {
+        if (startDate == null && endDate == null) {
+            return "Sin filtro";
+        }
+        if (startDate == null) {
+            return "Hasta " + DATE_FORMATTER.format(endDate);
+        }
+        if (endDate == null) {
+            return "Desde " + DATE_FORMATTER.format(startDate);
+        }
+        return DATE_FORMATTER.format(startDate) + " al " + DATE_FORMATTER.format(endDate);
+    }
+
+    private String decimal(BigDecimal value) {
+        return value == null ? "" : value.stripTrailingZeros().toPlainString();
+    }
+
+    private String safe(Object value) {
+        return value == null ? "" : String.valueOf(value);
     }
 
     private void validateDateRange(LocalDate startDate, LocalDate endDate) {

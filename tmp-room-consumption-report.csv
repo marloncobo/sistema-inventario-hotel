@@ -1,0 +1,16 @@
+﻿Reporte de consumo por habitacion
+Generado,27/04/2026 01:31
+Periodo,Sin filtro
+Total registros,10
+
+Habitacion,Tipo habitacion,Insumo,Tipo asignacion,Entregado por,Cantidad total
+102,ESTANDAR,Shampoo individual,KIT_ASEO,Ana Maria,8
+102,ESTANDAR,Jugo Postman 1776475886387 250ml Actualizado,MINIBAR,Housekeeping,1
+102,ESTANDAR,Jugo Postman 1776524030739 250ml Actualizado,MINIBAR,Prueba Codex,1
+102,ESTANDAR,Jugo Postman 1776524030739 250ml Actualizado,MINIBAR,Prueba Codex Servicio,1
+103,EJECUTIVA,Jugo de naranja 250ml,MINIBAR,Cantinero,7
+103,EJECUTIVA,Shampoo individual,KIT_ASEO,Ana Maria,4
+103,EJECUTIVA,Jugo de naranja 250ml,SERVICIO_HABITACION,postman_user_1776475886387,3
+103,EJECUTIVA,Shampoo individual,KIT_ASEO,Ana Lopez,2
+103,EJECUTIVA,Jabón,SERVICIO_HABITACION,servicio,1
+304,ESTANDAR,Jugo Postman 1776524030739 250ml Actualizado,SERVICIO_HABITACION,servicio,2

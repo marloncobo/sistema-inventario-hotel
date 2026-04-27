@@ -1,0 +1,16 @@
+﻿Reporte general de inventario
+Generado,27/04/2026 01:31
+Periodo,Sin filtro
+Total registros,10
+
+Codigo,Nombre,Categoria,Unidad,Stock actual,Stock minimo,Stock maximo,Stock bajo,Rotacion
+INS-0002,Jugo Postman 1776963536554 250ml,MINIBAR,UND,20,5,80,No,0
+LEN-001,Toalla facial,LENCERIA,UND,40,12,100,No,0
+POSTMAN-ITEM-1776476054677,Jugo Postman 1776476054677 250ml Actualizado,MINIBAR,UND,35,6,90,No,0
+POSTMAN-ITEM-1776476075290,Jugo Postman 1776476075290 250ml Actualizado,MINIBAR,UND,35,6,90,No,0
+POSTMAN-ITEM-1776476288739,Jugo Postman 1776476288739 250ml Actualizado,MINIBAR,UND,33,6,90,No,2
+POSTMAN-ITEM-1776524030739,Jugo Postman 1776524030739 250ml Actualizado,MINIBAR,UND,26,6,90,No,5
+INS-0001,Jabón,ASEO,G,17,6,20,No,2
+POSTMAN-ITEM-1776476449086,Jugo Postman 1776476449086 250ml Actualizado,MINIBAR,UND,35,6,90,No,0
+MIN-900,Jugo de naranja 250ml,MINIBAR,UND,2,6,90,Si,10
+ASE-001,Shampoo individual,ASEO,UND,34,15,200,No,17
