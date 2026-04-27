@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, effect, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { take } from 'rxjs';
 import { ButtonModule } from 'primeng/button';
@@ -89,7 +89,7 @@ import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
               type="text" 
               placeholder="Buscar por nombre, correo o rol..." 
               [value]="searchQuery()"
-              (input)="searchQuery.set($any($event.target).value)"
+              (input)="onSearchInput($event)"
             />
           </div>
 
@@ -98,7 +98,7 @@ import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
               class="lunara-native-select" 
               aria-label="Filtrar por rol"
               [value]="roleFilter()"
-              (change)="roleFilter.set($any($event.target).value)"
+              (change)="onRoleFilterChange($event)"
             >
               <option value="">Todos los roles</option>
               @for (opt of roleOptions; track opt.value) {
@@ -123,7 +123,7 @@ import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
 
         <!-- Data Table -->
         <p-table 
-          [value]="filteredUsers()" 
+          [value]="paginatedUsers()" 
           [loading]="loading()"
           [paginator]="true"
           [rows]="10"
@@ -192,14 +192,78 @@ import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
             </tr>
           </ng-template>
         </p-table>
+
+        <!-- Pagination Bar -->
+        <div class="pagination-bar">
+          <span class="pagination-info">
+            Mostrando {{ pageStart() }} a {{ pageEnd() }} de {{ filteredUsers().length }} usuarios
+          </span>
+          <div class="pagination-controls">
+            <button
+              type="button"
+              class="pag-btn"
+              [disabled]="currentPage() === 1"
+              (click)="changePage(1)"
+              aria-label="Primera pagina"
+            >
+              Primera
+            </button>
+            <button
+              type="button"
+              class="pag-btn pag-btn--icon"
+              [disabled]="currentPage() === 1"
+              (click)="changePage(currentPage() - 1)"
+              aria-label="Pagina anterior"
+            >
+              <i class="pi pi-angle-left"></i>
+            </button>
+            @for (page of visiblePages(); track page) {
+              <button
+                type="button"
+                class="pag-btn"
+                [class.active]="page === currentPage()"
+                (click)="changePage(page)"
+              >
+                {{ page }}
+              </button>
+            }
+            <button
+              type="button"
+              class="pag-btn pag-btn--icon"
+              [disabled]="currentPage() === totalPages()"
+              (click)="changePage(currentPage() + 1)"
+              aria-label="Pagina siguiente"
+            >
+              <i class="pi pi-angle-right"></i>
+            </button>
+            <button
+              type="button"
+              class="pag-btn"
+              [disabled]="currentPage() === totalPages()"
+              (click)="changePage(totalPages())"
+              aria-label="Ultima pagina"
+            >
+              Ultima
+            </button>
+          </div>
+        </div>
       </div>
+
+      <button
+        pButton
+        type="button"
+        icon="pi pi-plus"
+        class="mobile-add-fab"
+        aria-label="Añadir Usuario"
+        (click)="openCreate()"
+      ></button>
     </div>
 
     <p-drawer
       [(visible)]="dialogVisible"
       position="right"
       [modal]="true"
-      [style]="{ width: '420px', border: 'none' }"
+      [style]="{ width: 'min(26rem, 100vw)', border: 'none' }"
       (onHide)="resetForm()"
       class="lunara-drawer"
     >
@@ -328,9 +392,11 @@ import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
 
     .header-info h1 {
       font-family: var(--app-font-serif, 'Playfair Display', serif);
-      font-size: 2.75rem;
+      font-size: clamp(2rem, 4vw, 2.75rem);
+      line-height: 1.1;
+      letter-spacing: -0.01em;
       margin: 0;
-      color: #1a1a1a;
+      color: var(--app-brown, #1a1a1a);
       font-weight: 700;
       line-height: 0.96;
     }
@@ -356,6 +422,10 @@ import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
     .btn-gold-add:hover {
       transform: translateY(-2px);
       box-shadow: 0 8px 20px rgba(200, 146, 45, 0.35) !important;
+    }
+
+    .mobile-add-fab {
+      display: none;
     }
 
     /* Stats Grid */
@@ -439,11 +509,41 @@ import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
 
     @media (max-width: 720px) {
       .stats-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.6rem;
       }
 
       .stat-card {
-        padding: 1.25rem;
+        min-height: 0;
+        padding: 0.75rem 0.55rem;
+        grid-template-columns: 1fr;
+        justify-items: center;
+        text-align: center;
+        gap: 0.45rem;
+      }
+
+      .stat-icon-wrapper {
+        width: 2.45rem;
+        height: 2.45rem;
+      }
+
+      .stat-svg {
+        width: 0.95rem;
+        height: 0.95rem;
+      }
+
+      .stat-label {
+        font-size: 0.66rem;
+        letter-spacing: 0.06em;
+      }
+
+      .stat-value {
+        font-size: 1.95rem;
+      }
+
+      .stat-sub {
+        font-size: 0.72rem;
+        line-height: 1.35;
       }
     }
 
@@ -724,6 +824,326 @@ import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
       border-color: #c8922d;
       color: white;
       transform: scale(1.1);
+    }
+
+    /* Pagination */
+    .pagination-bar {
+      padding: 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: white;
+    }
+
+    .pagination-info {
+      font-size: 0.85rem;
+      color: #999;
+    }
+
+    .pagination-controls {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    @media (max-width: 1200px) {
+      .users-page-container {
+        padding: 2rem 2rem 3rem;
+      }
+
+      .users-header,
+      .table-toolbar {
+        flex-wrap: wrap;
+        align-items: stretch;
+        gap: 1rem;
+      }
+
+      .search-box {
+        max-width: none;
+      }
+
+      .filter-actions {
+        flex-wrap: wrap;
+        justify-content: flex-start;
+      }
+    }
+
+    @media (max-width: 900px) {
+      .users-page-container {
+        padding: 1.1rem 0.95rem 6rem;
+      }
+
+      .users-header {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 0.85rem;
+      }
+
+      .header-info {
+        width: 100%;
+        display: grid;
+        justify-items: center;
+      }
+
+      .header-info h1 {
+        font-size: clamp(1.95rem, 8.2vw, 2.35rem);
+      }
+
+      .header-info p {
+        margin-inline: auto;
+        max-width: 42rem;
+      }
+
+      .table-toolbar,
+      .pagination-bar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.85rem;
+      }
+
+      .filter-actions > *,
+      .lunara-native-select,
+      .btn-filter-text {
+        width: 100%;
+      }
+
+      .btn-gold-add {
+        display: none !important;
+      }
+
+      .filter-actions {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .stat-sub {
+        white-space: normal;
+        overflow: visible;
+        text-overflow: clip;
+        max-width: none;
+      }
+
+      ::ng-deep .lunara-table .p-datatable-table {
+        min-width: 100% !important;
+      }
+
+      ::ng-deep .lunara-table .p-datatable-thead {
+        display: none;
+      }
+
+      ::ng-deep .lunara-table .p-datatable-tbody,
+      ::ng-deep .lunara-table .p-datatable-tbody > tr,
+      ::ng-deep .lunara-table .p-datatable-tbody > tr > td {
+        display: block;
+        width: 100%;
+      }
+
+      ::ng-deep .lunara-table .p-datatable-tbody {
+        padding: 0.95rem;
+      }
+
+      ::ng-deep .lunara-table .p-datatable-tbody > tr {
+        margin-bottom: 0.95rem;
+        padding: 1rem;
+        border: 1px solid rgba(214, 191, 152, 0.22);
+        border-radius: 1.1rem;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(253, 250, 244, 0.96));
+        box-shadow: 0 14px 28px rgba(45, 32, 22, 0.05);
+      }
+
+      ::ng-deep .lunara-table .p-datatable-tbody > tr:last-child {
+        margin-bottom: 0;
+      }
+
+      ::ng-deep .lunara-table .p-datatable-tbody > tr > td {
+        width: auto !important;
+        min-width: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        text-align: left !important;
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 0.35rem;
+        align-items: start;
+        white-space: normal;
+        overflow-wrap: break-word;
+        word-break: normal;
+      }
+
+      ::ng-deep .lunara-table .p-datatable-tbody > tr > td + td {
+        margin-top: 0.8rem;
+        padding-top: 0.8rem !important;
+        border-top: 1px solid rgba(214, 191, 152, 0.18) !important;
+      }
+
+      ::ng-deep .lunara-table .p-datatable-tbody > tr > td::before {
+        content: '';
+        font-size: 0.68rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #9a6f14;
+      }
+
+      ::ng-deep .lunara-table .p-datatable-tbody > tr > td:nth-child(1)::before {
+        content: 'Usuario';
+      }
+
+      ::ng-deep .lunara-table .p-datatable-tbody > tr > td:nth-child(2)::before {
+        content: 'Roles';
+      }
+
+      ::ng-deep .lunara-table .p-datatable-tbody > tr > td:nth-child(3)::before {
+        content: 'Estado';
+      }
+
+      ::ng-deep .lunara-table .p-datatable-tbody > tr > td:nth-child(4)::before {
+        content: 'Ultimo acceso';
+      }
+
+      ::ng-deep .lunara-table .p-datatable-tbody > tr > td:nth-child(5)::before {
+        content: 'Acciones';
+      }
+
+      /* Reorganiza cada usuario como tarjeta: identidad arriba + datos en rejilla. */
+      ::ng-deep .lunara-table .p-datatable-tbody > tr {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+        column-gap: 0.85rem;
+        row-gap: 0.45rem;
+        align-items: start;
+      }
+
+      ::ng-deep .lunara-table .p-datatable-tbody > tr > td {
+        margin-top: 0 !important;
+        padding-top: 0 !important;
+        border-top: none !important;
+      }
+
+      ::ng-deep .lunara-table .p-datatable-tbody > tr > td:nth-child(1) {
+        grid-column: 1 / -1;
+        grid-row: 1;
+      }
+
+      ::ng-deep .lunara-table .p-datatable-tbody > tr > td:nth-child(2) {
+        grid-column: 1;
+        grid-row: 2;
+      }
+
+      ::ng-deep .lunara-table .p-datatable-tbody > tr > td:nth-child(3) {
+        grid-column: 2;
+        grid-row: 2;
+      }
+
+      ::ng-deep .lunara-table .p-datatable-tbody > tr > td:nth-child(4) {
+        grid-column: 1 / 3;
+        grid-row: 3;
+      }
+
+      ::ng-deep .lunara-table .p-datatable-tbody > tr > td:nth-child(5) {
+        grid-column: 3;
+        grid-row: 2 / span 2;
+        justify-self: end;
+        align-self: center;
+      }
+
+      .user-info-cell {
+        gap: 0.75rem;
+      }
+
+      .avatar-box {
+        width: 2.35rem;
+        height: 2.35rem;
+        font-size: 1.05rem;
+      }
+
+      .user-name {
+        font-size: 1.05rem;
+      }
+
+      .user-email {
+        font-size: 0.82rem;
+      }
+
+      .actions-cell {
+        justify-content: flex-end;
+      }
+
+      .btn-action {
+        width: 2.4rem;
+        height: 2.4rem;
+      }
+
+      .pagination-controls {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        justify-content: flex-start;
+        padding-bottom: 0.15rem;
+        scrollbar-width: none;
+      }
+
+      .pagination-controls::-webkit-scrollbar {
+        display: none;
+      }
+
+      .pag-btn {
+        width: auto;
+        min-width: 2.7rem;
+        flex: 0 0 auto;
+      }
+
+      .mobile-add-fab {
+        display: inline-flex;
+        position: fixed;
+        right: 1rem;
+        bottom: 1rem;
+        width: 3.6rem;
+        height: 3.6rem;
+        border-radius: 999px !important;
+        z-index: 20;
+        box-shadow: 0 18px 32px rgba(200, 146, 45, 0.34) !important;
+      }
+
+      ::ng-deep .mobile-add-fab.p-button .p-button-label {
+        display: none;
+      }
+
+      ::ng-deep .mobile-add-fab.p-button .p-button-icon {
+        margin: 0 !important;
+        font-size: 1.35rem;
+      }
+    }
+
+    .pag-btn {
+      min-width: 2.5rem;
+      height: 2.25rem;
+      padding: 0 0.85rem;
+      border-radius: 8px;
+      border: 1px solid #f0f0f0;
+      background: white;
+      color: #666;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .pag-btn--icon {
+      min-width: 2.4rem;
+      padding: 0;
+    }
+
+    .pag-btn.active {
+      background: #c8922d;
+      border-color: #c8922d;
+      color: white;
+      font-weight: 700;
+    }
+
+    .pag-btn:hover:not(.active) {
+      border-color: #c8922d;
+      color: #c8922d;
     }
 
     /* Drawer Styles */
@@ -1187,6 +1607,8 @@ export class UsersPageComponent implements OnInit {
   protected readonly searchQuery = signal('');
   protected readonly roleFilter = signal<AppRole | ''>('');
   protected readonly statusFilter = signal<boolean | null>(null);
+  protected readonly currentPage = signal(1);
+  protected readonly pageSize = 10;
   protected dialogVisible = false;
 
   protected readonly statusOptions = [
@@ -1231,6 +1653,42 @@ export class UsersPageComponent implements OnInit {
   protected readonly distinctRoles = computed(() =>
     Array.from(new Set(this.users().flatMap((user) => user.roles)))
   );
+  protected readonly totalPages = computed(() =>
+    Math.max(1, Math.ceil(this.filteredUsers().length / this.pageSize))
+  );
+  protected readonly pageStart = computed(() =>
+    this.filteredUsers().length ? (this.currentPage() - 1) * this.pageSize + 1 : 0
+  );
+  protected readonly pageEnd = computed(() =>
+    Math.min(this.currentPage() * this.pageSize, this.filteredUsers().length)
+  );
+  protected readonly paginatedUsers = computed(() => {
+    const start = (this.currentPage() - 1) * this.pageSize;
+    return this.filteredUsers().slice(start, start + this.pageSize);
+  });
+  protected readonly visiblePages = computed(() => {
+    const totalPages = this.totalPages();
+    const currentPage = this.currentPage();
+    const maxButtons = 5;
+
+    let startPage = Math.max(1, currentPage - 2);
+    let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+
+    if (endPage - startPage + 1 < maxButtons) {
+      startPage = Math.max(1, endPage - maxButtons + 1);
+    }
+
+    return Array.from({ length: endPage - startPage + 1 }, (_, index) => startPage + index);
+  });
+
+  constructor() {
+    effect(() => {
+      const total = this.totalPages();
+      if (this.currentPage() > total) {
+        this.currentPage.set(total);
+      }
+    });
+  }
 
   protected readonly form = this.fb.nonNullable.group({
     username: ['', [Validators.required, notBlankValidator]],
@@ -1244,12 +1702,24 @@ export class UsersPageComponent implements OnInit {
     this.searchQuery.set('');
     this.roleFilter.set('');
     this.statusFilter.set(null);
+    this.currentPage.set(1);
+  }
+
+  protected onSearchInput(event: Event): void {
+    this.searchQuery.set((event.target as HTMLInputElement).value);
+    this.currentPage.set(1);
+  }
+
+  protected onRoleFilterChange(event: Event): void {
+    this.roleFilter.set((event.target as HTMLSelectElement).value as AppRole | '');
+    this.currentPage.set(1);
   }
 
   protected onStatusChange(event: Event): void {
     const val = (event.target as HTMLSelectElement).value;
     if (val === '') this.statusFilter.set(null);
     else this.statusFilter.set(val === 'true');
+    this.currentPage.set(1);
   }
 
   ngOnInit(): void {
@@ -1264,6 +1734,7 @@ export class UsersPageComponent implements OnInit {
       .subscribe({
         next: (users) => {
           this.users.set(users);
+          this.currentPage.set(1);
           this.loading.set(false);
         },
         error: () => {
@@ -1415,6 +1886,13 @@ export class UsersPageComponent implements OnInit {
   protected lastAccessLabel(user: AppUser): string {
     const labels = ['Hoy, 09:42', 'Ayer, 18:22', '2 días atrás', 'Hace 3 días'];
     return labels[Math.abs(user.id) % labels.length];
+  }
+
+  protected changePage(page: number): void {
+    if (page < 1 || page > this.totalPages()) {
+      return;
+    }
+    this.currentPage.set(page);
   }
 
   protected showControlError(controlName: 'username' | 'email' | 'password' | 'roles'): boolean {

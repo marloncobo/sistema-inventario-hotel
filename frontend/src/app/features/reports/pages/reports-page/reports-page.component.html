@@ -19,18 +19,7 @@
   }
 
   <section class="summary-grid reports-summary admin-kpi-row">
-    <article class="summary-card reports-summary-card reports-summary-card--active">
-      <div class="reports-summary-card__icon">
-        <i [class]="currentReportMeta().icon"></i>
-      </div>
-      <div class="reports-summary-card__content">
-        <span>Reporte activo</span>
-        <strong class="reports-summary-card__title">{{ currentReportMeta().label }}</strong>
-        <small>{{ currentReportMeta().description }}</small>
-      </div>
-    </article>
-
-    <article class="summary-card reports-summary-card">
+    <article class="summary-card reports-summary-card reports-summary-card--metric">
       <div class="reports-summary-card__icon">
         <i class="pi pi-database"></i>
       </div>
@@ -41,7 +30,7 @@
       </div>
     </article>
 
-    <article class="summary-card reports-summary-card">
+    <article class="summary-card reports-summary-card reports-summary-card--metric">
       <div class="reports-summary-card__icon">
         <i class="pi pi-chart-bar"></i>
       </div>
@@ -52,7 +41,7 @@
       </div>
     </article>
 
-    <article class="summary-card reports-summary-card">
+    <article class="summary-card reports-summary-card reports-summary-card--metric">
       <div class="reports-summary-card__icon">
         <i class="pi pi-sliders-h"></i>
       </div>
@@ -60,6 +49,17 @@
         <span>Filtros activos</span>
         <strong>{{ activeFilterCount() }}</strong>
         <small>Campos aplicados en esta vista</small>
+      </div>
+    </article>
+
+    <article class="summary-card reports-summary-card reports-summary-card--active">
+      <div class="reports-summary-card__icon">
+        <i [class]="currentReportMeta().icon"></i>
+      </div>
+      <div class="reports-summary-card__content">
+        <span>Reporte activo</span>
+        <strong class="reports-summary-card__title">{{ currentReportMeta().label }}</strong>
+        <small>{{ currentReportMeta().description }}</small>
       </div>
     </article>
   </section>
@@ -93,17 +93,38 @@
         @if (activeReport() === 'consumption' || activeReport() === 'distribution') {
           <label class="field">
             <span>Habitacion</span>
-            <input pInputText type="text" formControlName="roomNumber" placeholder="Ej: 204" />
+            <p-select
+              formControlName="roomNumber"
+              [options]="roomOptions()"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Todas las habitaciones"
+              styleClass="w-full"
+            />
           </label>
 
           <label class="field">
             <span>Tipo de habitacion</span>
-            <input pInputText type="text" formControlName="roomType" placeholder="Suite, doble, sencilla..." />
+            <p-select
+              formControlName="roomType"
+              [options]="roomTypeOptions"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Todos los tipos"
+              styleClass="w-full"
+            />
           </label>
 
           <label class="field">
             <span>Tipo de asignacion</span>
-            <input pInputText type="text" formControlName="assignmentType" placeholder="Cortesia, reposicion..." />
+            <p-select
+              formControlName="assignmentType"
+              [options]="assignmentTypeOptions"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Todas las asignaciones"
+              styleClass="w-full"
+            />
           </label>
         }
 
@@ -116,37 +137,44 @@
       </div>
 
       <div class="reports-filter-shell__actions">
-        <button
-          pButton
-          type="submit"
-          class="reports-btn-primary"
-          icon="pi pi-filter"
-          label="Consultar"
-          [loading]="loading()"
-        ></button>
+        <div class="reports-filter-shell__actions-primary">
+          <button
+            pButton
+            type="submit"
+            class="reports-btn-primary"
+            icon="pi pi-filter"
+            label="Consultar"
+            [loading]="loading()"
+          ></button>
 
-        <button
-          pButton
-          type="button"
-          icon="pi pi-eraser"
-          label="Limpiar"
-          severity="secondary"
-          variant="outlined"
-          (click)="clearFilters()"
-        ></button>
+          <button
+            pButton
+            type="button"
+            icon="pi pi-eraser"
+            label="Limpiar"
+            severity="secondary"
+            variant="outlined"
+            (click)="clearFilters()"
+          ></button>
+        </div>
 
         @if (canExport()) {
-          @for (format of exportFormats; track format) {
-            <button
-              pButton
-              type="button"
-              [label]="'Exportar ' + format.toUpperCase()"
-              severity="secondary"
-              variant="outlined"
-              [loading]="exporting()"
-              (click)="exportReport(format)"
-            ></button>
-          }
+          <div class="reports-filter-shell__actions-export" aria-label="Exportar">
+            <span class="reports-export-eyebrow">Exportar</span>
+            <div class="reports-filter-shell__export-buttons">
+              @for (format of exportFormats; track format) {
+                <button
+                  pButton
+                  type="button"
+                  [label]="'Exportar ' + format.toUpperCase()"
+                  severity="secondary"
+                  variant="outlined"
+                  [loading]="exporting()"
+                  (click)="exportReport(format)"
+                ></button>
+              }
+            </div>
+          </div>
         }
       </div>
     </form>
@@ -196,7 +224,7 @@
               [showCurrentPageReport]="true"
               currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros"
               responsiveLayout="scroll"
-              styleClass="reports-table"
+              styleClass="reports-table reports-table--inventory"
             >
               <ng-template pTemplate="header">
                 <tr>
@@ -238,7 +266,7 @@
               [showCurrentPageReport]="true"
               currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros"
               responsiveLayout="scroll"
-              styleClass="reports-table"
+              styleClass="reports-table reports-table--top-used"
             >
               <ng-template pTemplate="header">
                 <tr>
@@ -268,7 +296,7 @@
               [showCurrentPageReport]="true"
               currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros"
               responsiveLayout="scroll"
-              styleClass="reports-table"
+              styleClass="reports-table reports-table--consumption"
             >
               <ng-template pTemplate="header">
                 <tr>
@@ -304,7 +332,7 @@
               [showCurrentPageReport]="true"
               currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros"
               responsiveLayout="scroll"
-              styleClass="reports-table"
+              styleClass="reports-table reports-table--distribution"
             >
               <ng-template pTemplate="header">
                 <tr>

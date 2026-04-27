@@ -14,7 +14,7 @@ import { BreadcrumbsComponent } from '../breadcrumbs/breadcrumbs.component';
           <button
             type="button"
             class="topbar__icon-button topbar__mobile"
-            aria-label="Abrir menu"
+            aria-label="Abrir menú"
             (click)="layout.toggleMobileMenu()"
           >
             <i class="pi pi-bars" aria-hidden="true"></i>
@@ -23,7 +23,7 @@ import { BreadcrumbsComponent } from '../breadcrumbs/breadcrumbs.component';
           <button
             type="button"
             class="topbar__icon-button topbar__desktop"
-            [attr.aria-label]="layout.sidebarCollapsed() ? 'Expandir menu' : 'Contraer menu'"
+            [attr.aria-label]="layout.sidebarCollapsed() ? 'Expandir menú' : 'Contraer menú'"
             (click)="layout.toggleSidebar()"
           >
             <i

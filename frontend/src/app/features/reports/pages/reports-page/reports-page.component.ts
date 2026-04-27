@@ -7,7 +7,6 @@ import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
-import { EXPORT_FORMAT_OPTIONS } from '@core/constants/domain-options';
 import { AuthService } from '@core/services/auth.service';
 import { InventoryApiService } from '@core/services/api/inventory-api.service';
 import { RoomsApiService } from '@core/services/api/rooms-api.service';
@@ -16,7 +15,15 @@ import { NotificationService } from '@core/services/ui/notification.service';
 import type { InventorySummaryReport, TopUsedItemReport } from '@models/inventory.model';
 import type { RoomConsumptionReport, RoomDistributionReport } from '@models/room.model';
 import { EmptyStateComponent } from '@shared/components/empty-state/empty-state.component';
+import { SelectModule } from 'primeng/select';
+import type { Room } from '@models/room.model';
 import { PageHeaderComponent } from '@shared/components/page-header/page-header.component';
+import {
+  ASSIGNMENT_TYPE_OPTIONS,
+  EXPORT_FORMAT_OPTIONS,
+  ROOM_TYPES
+} from '@core/constants/domain-options';
+
 
 type ReportKey = 'inventory' | 'top-used' | 'consumption' | 'distribution';
 
@@ -70,6 +77,7 @@ const REPORT_META: Record<
     InputTextModule,
     EmptyStateComponent,
     PageHeaderComponent,
+    SelectModule,
     TableModule,
     TagModule
   ],
@@ -77,6 +85,25 @@ const REPORT_META: Record<
   styleUrls: ['./reports-page.component.css']
 })
 export class ReportsPageComponent implements OnInit {
+
+  protected readonly rooms = signal<Room[]>([]);
+
+  protected readonly roomTypeOptions = ROOM_TYPES.map((value) => ({
+    label: this.formatLabel(value),
+    value
+  }));
+
+  protected readonly assignmentTypeOptions = ASSIGNMENT_TYPE_OPTIONS.map((value) => ({
+    label: this.formatLabel(value),
+    value
+  }));
+
+  protected readonly roomOptions = computed(() =>
+    this.rooms().map((room) => ({
+      label: `${room.number} - ${this.formatLabel(room.type)}`,
+      value: room.number
+    }))
+  );
   private readonly authService = inject(AuthService);
   private readonly inventoryApi = inject(InventoryApiService);
   private readonly roomsApi = inject(RoomsApiService);
@@ -192,7 +219,23 @@ export class ReportsPageComponent implements OnInit {
 
   ngOnInit(): void {
     this.activeReport.set(this.availableReports()[0]?.key ?? 'consumption');
+
+    this.roomsApi
+      .getRooms()
+      .pipe(take(1))
+      .subscribe({
+        next: (rooms) => this.rooms.set(rooms),
+        error: () => this.rooms.set([])
+      });
+
     this.loadReport();
+  }
+
+  protected formatLabel(value: string): string {
+    return value
+      .replace(/_/g, ' ')
+      .toLowerCase()
+      .replace(/\b\w/g, (letter) => letter.toUpperCase());
   }
 
   protected isAdmin(): boolean {

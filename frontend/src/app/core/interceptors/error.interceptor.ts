@@ -41,7 +41,7 @@ export const errorInterceptor: HttpInterceptorFn = (request, next) => {
           notificationService.error('Acceso denegado', message);
         } else {
           authService.logout(false);
-          notificationService.warn('Sesion vencida', 'Debes iniciar sesion nuevamente.');
+          notificationService.warn('Sesión vencida', 'Debes iniciar sesión nuevamente.');
           void router.navigate(['/login']);
         }
       } else if (error.status === 403) {
@@ -57,7 +57,7 @@ export const errorInterceptor: HttpInterceptorFn = (request, next) => {
           notificationService.error('Error del servidor', message);
         }
       } else if (!isLoginRequest && !hasFieldErrors) {
-        notificationService.error('Operacion no completada', message);
+        notificationService.error('Operación no completada', message);
       }
 
       return throwError(() => error);

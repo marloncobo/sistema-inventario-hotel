@@ -10,6 +10,7 @@ import { TagModule } from 'primeng/tag';
 import { AuditApiService } from '@core/services/api/audit-api.service';
 import type { AuditFilters, AuditLog } from '@models/audit.model';
 import { PageHeaderComponent } from '@shared/components/page-header/page-header.component';
+import { SelectModule } from 'primeng/select';
 
 type AuditScope = 'auth' | 'inventory' | 'rooms';
 
@@ -38,6 +39,49 @@ const AUDIT_SCOPE_META: Record<
   }
 };
 
+type AuditActionOption = {
+  label: string;
+  value: string;
+};
+
+const AUDIT_ACTION_OPTIONS: Record<AuditScope, AuditActionOption[]> = {
+  auth: [
+    { label: 'Inicio de sesion exitoso', value: 'LOGIN_SUCCESS' },
+    { label: 'Inicio de sesion fallido', value: 'LOGIN_FAILED' },
+    { label: 'Crear usuario', value: 'CREATE' },
+    { label: 'Actualizar usuario', value: 'UPDATE' }
+  ],
+  inventory: [
+    { label: 'Consultar items', value: 'QUERY_ITEMS' },
+    { label: 'Consultar movimientos', value: 'QUERY_MOVEMENTS' },
+    { label: 'Consultar stock bajo', value: 'QUERY_LOW_STOCK' },
+    { label: 'Consultar alertas stock bajo', value: 'QUERY_LOW_STOCK_ALERTS' },
+    { label: 'Generar reporte inventario', value: 'GENERATE_INVENTORY_REPORT' },
+    { label: 'Generar reporte mas usados', value: 'GENERATE_TOP_USED_REPORT' },
+    { label: 'Exportar reporte inventario', value: 'EXPORT_INVENTORY_REPORT' },
+    { label: 'Exportar reporte mas usados', value: 'EXPORT_TOP_USED_REPORT' },
+    { label: 'Crear', value: 'CREATE' },
+    { label: 'Actualizar', value: 'UPDATE' },
+    { label: 'Desactivar', value: 'DEACTIVATE' },
+    { label: 'Entrada de stock', value: 'STOCK_ENTRY' },
+    { label: 'Salida de stock', value: 'STOCK_EXIT' },
+    { label: 'Retorno de stock', value: 'STOCK_RETURN' },
+    { label: 'Anular movimiento', value: 'VOID_MOVEMENT' }
+  ],
+  rooms: [
+    { label: 'Consultar asignaciones por habitacion', value: 'QUERY_ROOM_ASSIGNMENTS' },
+    { label: 'Consultar asignaciones', value: 'QUERY_ASSIGNMENTS' },
+    { label: 'Generar reporte consumo', value: 'GENERATE_ROOM_CONSUMPTION_REPORT' },
+    { label: 'Exportar reporte consumo', value: 'EXPORT_ROOM_CONSUMPTION_REPORT' },
+    { label: 'Generar reporte distribucion', value: 'GENERATE_ROOM_DISTRIBUTION_REPORT' },
+    { label: 'Exportar reporte distribucion', value: 'EXPORT_ROOM_DISTRIBUTION_REPORT' },
+    { label: 'Crear habitacion', value: 'CREATE' },
+    { label: 'Actualizar habitacion', value: 'UPDATE' },
+    { label: 'Actualizar estado', value: 'UPDATE_STATUS' },
+    { label: 'Asignar insumo', value: 'ASSIGN_SUPPLY' }
+  ]
+};
+
 @Component({
   selector: 'app-audits-page',
   standalone: true,
@@ -48,6 +92,7 @@ const AUDIT_SCOPE_META: Record<
     InputTextModule,
     PageHeaderComponent,
     TableModule,
+    SelectModule,
     TagModule
   ],
   template: `
@@ -122,7 +167,15 @@ const AUDIT_SCOPE_META: Record<
           <div class="filters-grid audits-filters-grid">
             <label class="field">
               <span>Accion</span>
-              <input pInputText type="text" formControlName="action" placeholder="LOGIN, CREATE, UPDATE..." />
+              <p-select
+                formControlName="action"
+                [options]="currentActionOptions()"
+                optionLabel="label"
+                optionValue="value"
+                placeholder="Selecciona una accion"
+                [showClear]="false"
+                styleClass="w-full"
+              />
             </label>
 
             <label class="field">
@@ -171,6 +224,10 @@ const AUDIT_SCOPE_META: Record<
           </div>
         }
 
+        <div class="audits-results-head">
+          <h3>Resultados</h3>
+        </div>
+
         <div class="audits-table-wrap admin-table-block">
           @if (!loading() && !logs().length) {
             <div class="audits-empty-state">
@@ -197,6 +254,7 @@ const AUDIT_SCOPE_META: Record<
                   <th>Entidad</th>
                   <th>Usuario</th>
                   <th>Detalle</th>
+                  <th class="audits-th-chevron" aria-hidden="true"></th>
                 </tr>
               </ng-template>
 
@@ -217,6 +275,9 @@ const AUDIT_SCOPE_META: Record<
                     </div>
                   </td>
                   <td><span class="audit-detail">{{ log.detail || 'Sin detalle' }}</span></td>
+                  <td class="audits-td-chevron" aria-hidden="true">
+                    <i class="pi pi-angle-right audits-row-chevron-icon"></i>
+                  </td>
                 </tr>
               </ng-template>
             </p-table>
@@ -350,6 +411,17 @@ const AUDIT_SCOPE_META: Record<
       font-weight: 600;
     }
 
+    .audits-results-head {
+      padding: 0.95rem 1.25rem 0.15rem;
+    }
+
+    .audits-results-head h3 {
+      margin: 0;
+      color: #3d2b1f;
+      font-size: 1.5rem;
+      line-height: 1.1;
+    }
+
     .audits-table-wrap {
       overflow: hidden;
       background: white;
@@ -424,6 +496,19 @@ const AUDIT_SCOPE_META: Record<
       border: 1px solid rgba(200, 146, 45, 0.2);
     }
 
+    .audits-th-chevron,
+    .audits-td-chevron {
+      display: none !important;
+      width: 0 !important;
+      min-width: 0 !important;
+      max-width: 0 !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      border: none !important;
+      overflow: hidden !important;
+      visibility: hidden !important;
+    }
+
     :host ::ng-deep app-page-header .page-header {
       padding-bottom: 0;
       margin-bottom: 0;
@@ -480,22 +565,74 @@ const AUDIT_SCOPE_META: Record<
       border-color: #c8922d;
       color: #ffffff;
     }
-    @media (max-width: 720px) {
+    @media (max-width: 900px) {
       .audits-page {
         gap: 1.1rem;
       }
 
-      .audits-summary {
-        order: 3;
+      :host ::ng-deep app-page-header .page-header {
+        align-items: center;
+        text-align: center;
       }
 
+      :host ::ng-deep app-page-header .page-header__copy,
+      :host ::ng-deep app-page-header .page-header__subtitle {
+        margin-inline: auto;
+        text-align: center;
+        width: min(100%, 42rem);
+      }
+
+      .audits-summary,
       .audits-workbench {
-        order: 1;
+        order: initial;
+      }
+
+      .audits-page .summary-grid.audits-summary {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.65rem;
       }
 
       .audits-summary-card {
         grid-template-columns: 1fr;
-        align-items: flex-start;
+        justify-items: start;
+        text-align: left;
+        min-height: 0;
+        padding: 0.95rem 0.85rem;
+        gap: 0.5rem;
+      }
+
+      .audits-summary-card__icon {
+        width: 2.5rem;
+        height: 2.5rem;
+        font-size: 0.95rem;
+      }
+
+      .audits-summary-card__content span {
+        font-size: 0.68rem;
+        letter-spacing: 0.07em;
+      }
+
+      .audits-summary-card:not(.audits-summary-card--scope) .audits-summary-card__content strong {
+        font-size: 1.95rem;
+      }
+
+      .audits-summary-card--scope .audits-summary-card__title {
+        font-size: 1.12rem !important;
+        line-height: 1.25 !important;
+        margin-top: 0.35rem !important;
+      }
+
+      .audits-summary-card__content small {
+        font-size: 0.75rem;
+        line-height: 1.35;
+      }
+
+      .audit-filter-shell {
+        background: rgba(253, 251, 247, 0.92);
+        border-radius: 1rem;
+        border: 1px solid rgba(214, 191, 152, 0.2);
+        margin-inline: 0.35rem;
       }
 
       .audit-tabs,
@@ -511,26 +648,253 @@ const AUDIT_SCOPE_META: Record<
         padding-inline: 0.75rem;
       }
 
+      .audits-filters-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.75rem 0.8rem;
+      }
+
+      .audit-filter-shell__actions {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        width: 100%;
+        gap: 0.6rem;
+      }
+
       .audit-filter-shell__actions > * {
         width: 100%;
       }
 
-      .audits-table-wrap {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
+      .audits-results-head {
+        padding: 0.85rem 1rem 0.1rem;
+      }
+
+      .audits-results-head h3 {
+        font-size: 1.05rem;
       }
 
       :host ::ng-deep .audits-table .p-datatable-table {
-        min-width: 46rem;
+        min-width: 100% !important;
       }
 
-      :host ::ng-deep .audits-table .p-datatable-thead > tr > th,
+      :host ::ng-deep .audits-table .p-datatable-thead {
+        display: none;
+      }
+
+      :host ::ng-deep .audits-table .p-datatable-tbody,
+      :host ::ng-deep .audits-table .p-datatable-tbody > tr,
       :host ::ng-deep .audits-table .p-datatable-tbody > tr > td {
-        padding: 0.85rem 0.8rem;
+        display: block;
+        width: 100%;
+      }
+
+      :host ::ng-deep .audits-table .p-datatable-tbody {
+        padding: 0.95rem;
+      }
+
+      :host ::ng-deep .audits-table .p-datatable-tbody > tr {
+        margin-bottom: 0.95rem;
+        padding: 1rem;
+        border: 1px solid rgba(214, 191, 152, 0.22);
+        border-radius: 1.1rem;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(253, 250, 244, 0.96));
+        box-shadow: 0 14px 28px rgba(45, 32, 22, 0.05);
+      }
+
+      :host ::ng-deep .audits-table .p-datatable-tbody > tr:last-child {
+        margin-bottom: 0;
+      }
+
+      :host ::ng-deep .audits-table .p-datatable-tbody > tr > td {
+        width: auto !important;
+        min-width: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        text-align: left !important;
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 0.35rem;
+        align-items: start;
+        white-space: normal;
+        overflow-wrap: break-word;
+        word-break: normal;
+      }
+
+      :host ::ng-deep .audits-table .p-datatable-tbody > tr > td + td {
+        margin-top: 0.8rem;
+        padding-top: 0.8rem !important;
+        border-top: 1px solid rgba(214, 191, 152, 0.18) !important;
+      }
+
+      :host ::ng-deep .audits-table .p-datatable-tbody > tr > td::before {
+        content: '';
+        font-size: 0.68rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #9a6f14;
+      }
+
+      :host ::ng-deep .audits-table .p-datatable-tbody > tr > td:nth-child(1)::before {
+        content: 'Fecha';
+      }
+
+      :host ::ng-deep .audits-table .p-datatable-tbody > tr > td:nth-child(2)::before {
+        content: 'Accion';
+      }
+
+      :host ::ng-deep .audits-table .p-datatable-tbody > tr > td:nth-child(3)::before {
+        content: 'Entidad';
+      }
+
+      :host ::ng-deep .audits-table .p-datatable-tbody > tr > td:nth-child(4)::before {
+        content: 'Usuario';
+      }
+
+      :host ::ng-deep .audits-table .p-datatable-tbody > tr > td:nth-child(5)::before {
+        content: 'Detalle';
+      }
+
+      :host ::ng-deep .audits-table .p-datatable-tbody > tr > td.audits-td-chevron {
+        display: flex !important;
+        grid-template-columns: unset !important;
+        gap: 0 !important;
+        visibility: visible !important;
+        width: auto !important;
+        min-width: 0 !important;
+        max-width: none !important;
+        overflow: visible !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        align-items: center;
+        justify-content: flex-end;
+      }
+
+      :host ::ng-deep .audits-table .p-datatable-tbody > tr > td.audits-td-chevron::before {
+        display: none !important;
+        content: none !important;
+      }
+
+      .audits-row-chevron-icon {
+        display: grid;
+        place-items: center;
+        width: 2.1rem;
+        height: 2.1rem;
+        border-radius: 999px;
+        color: #b57b17;
+        border: 1px solid rgba(200, 146, 45, 0.28);
+        background: rgba(255, 255, 255, 0.9);
+        font-size: 0.95rem;
+      }
+
+      :host ::ng-deep .audits-table .p-datatable-tbody > tr {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        grid-template-rows: auto auto auto auto auto;
+        column-gap: 0.65rem;
+        row-gap: 0.5rem;
+        align-items: start;
+      }
+
+      :host ::ng-deep .audits-table .p-datatable-tbody > tr > td + td {
+        margin-top: 0 !important;
+        padding-top: 0 !important;
+        border-top: none !important;
+      }
+
+      :host ::ng-deep .audits-table .p-datatable-tbody > tr > td:nth-child(1)::before,
+      :host ::ng-deep .audits-table .p-datatable-tbody > tr > td:nth-child(2)::before {
+        content: none !important;
+        display: none !important;
+      }
+
+      :host ::ng-deep .audits-table .p-datatable-tbody > tr > td:nth-child(1) {
+        grid-column: 1 / -1;
+        grid-row: 1;
+      }
+
+      :host ::ng-deep .audits-table .p-datatable-tbody > tr > td:nth-child(2) {
+        grid-column: 1;
+        grid-row: 2;
+        justify-self: start;
+        align-self: center;
+        min-width: 0;
+      }
+
+      :host ::ng-deep .audits-table .p-datatable-tbody > tr > td:nth-child(6) {
+        grid-column: 2;
+        grid-row: 2;
+        align-self: center;
+        justify-self: end;
+      }
+
+      :host ::ng-deep .audits-table .p-datatable-tbody > tr > td:nth-child(3) {
+        grid-column: 1 / -1;
+        grid-row: 3;
+        padding-top: 0.65rem !important;
+        margin-top: 0.35rem !important;
+        border-top: 1px solid rgba(214, 191, 152, 0.22) !important;
+      }
+
+      :host ::ng-deep .audits-table .p-datatable-tbody > tr > td:nth-child(4) {
+        grid-column: 1 / -1;
+        grid-row: 4;
+        padding-top: 0.55rem !important;
+        border-top: 1px solid rgba(214, 191, 152, 0.16) !important;
+      }
+
+      :host ::ng-deep .audits-table .p-datatable-tbody > tr > td:nth-child(5) {
+        grid-column: 1 / -1;
+        grid-row: 5;
+        padding-top: 0.55rem !important;
+        border-top: 1px solid rgba(214, 191, 152, 0.16) !important;
+      }
+
+      :host ::ng-deep .audits-table .audit-date {
+        white-space: normal;
+        font-size: 0.82rem;
+        line-height: 1.4;
+        display: block;
+        max-width: 100%;
+      }
+
+      :host ::ng-deep .audits-table .audit-action-tag {
+        max-width: min(100%, 16rem);
+        white-space: normal;
+        justify-content: center;
+        text-align: center;
+        line-height: 1.25;
+        font-size: 0.68rem;
+        padding: 0.32rem 0.55rem;
+      }
+
+      :host ::ng-deep .audits-table .audit-entity strong {
+        overflow-wrap: anywhere;
+        word-break: break-word;
+      }
+
+      :host ::ng-deep .audits-table .audit-detail {
+        font-weight: 600;
+        color: #5f4a38;
       }
     }
 
     @media (max-width: 560px) {
+      .audits-page .summary-grid.audits-summary {
+        gap: 0.5rem;
+      }
+
+      .audits-summary-card {
+        padding: 0.75rem 0.65rem;
+        gap: 0.45rem;
+      }
+
+      .audits-summary-card__icon {
+        width: 2.25rem;
+        height: 2.25rem;
+        font-size: 0.88rem;
+      }
+
       .audit-tabs {
         overflow-x: auto;
         flex-wrap: nowrap;
@@ -550,8 +914,12 @@ const AUDIT_SCOPE_META: Record<
         padding-inline: 0.9rem;
       }
 
-      :host ::ng-deep .audits-table .p-datatable-table {
-        min-width: 40rem;
+      .audits-filters-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .audit-filter-shell__actions {
+        grid-template-columns: 1fr;
       }
     }
   `
@@ -559,6 +927,10 @@ const AUDIT_SCOPE_META: Record<
 export class AuditsPageComponent implements OnInit {
   private readonly auditApi = inject(AuditApiService);
   private readonly fb = inject(FormBuilder);
+
+  protected readonly currentActionOptions = computed(
+    () => AUDIT_ACTION_OPTIONS[this.activeScope()]
+  );
 
   protected readonly scopeMeta = AUDIT_SCOPE_META;
   protected readonly scopes = [
@@ -624,6 +996,7 @@ export class AuditsPageComponent implements OnInit {
 
   protected setScope(scope: AuditScope): void {
     this.activeScope.set(scope);
+    this.filtersForm.patchValue({ action: '' });
     this.search();
   }
 

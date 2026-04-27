@@ -14,7 +14,7 @@ import { UiStateService } from '@core/services/ui/ui-state.service';
 
       <aside class="global-busy-pill">
         <i class="pi pi-spin pi-spinner"></i>
-        <span>Sincronizando informacion</span>
+        <span>Sincronizando información</span>
       </aside>
     }
 

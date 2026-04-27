@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, effect, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { catchError, forkJoin, Observable, of, take } from 'rxjs';
 import { ButtonModule } from 'primeng/button';
@@ -271,18 +271,14 @@ const SORT_OPTIONS: Array<{ value: CatalogSortOption; label: string }> = [
           @switch (activeSection()) {
             @case ('categories') {
               <p-table
-                [value]="filteredCategories()"
+                [value]="paginatedCategories()"
                 [loading]="loading()"
-                [paginator]="true"
-                [rows]="10"
-                [rowsPerPageOptions]="rowsPerPageOptions"
-                [showCurrentPageReport]="true"
-                currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros"
                 responsiveLayout="scroll"
                 styleClass="catalogs-table"
               >
               <ng-template pTemplate="header">
                 <tr>
+                  <th class="catalogs-th-mobile-lead" aria-hidden="true"></th>
                   <th>NOMBRE</th>
                   <th>DESCRIPCION</th>
                   <th>ESTADO</th>
@@ -293,6 +289,11 @@ const SORT_OPTIONS: Array<{ value: CatalogSortOption; label: string }> = [
 
               <ng-template pTemplate="body" let-category>
                 <tr>
+                  <td class="catalogs-td-mobile-lead" aria-hidden="true">
+                    <div class="catalogs-mobile-lead__orb">
+                      <i [class]="sectionMeta[activeSection()].icon"></i>
+                    </div>
+                  </td>
                   <td>
                     <div class="entity-stack">
                       <strong class="entity-stack__title">{{ category.name }}</strong>
@@ -323,7 +324,7 @@ const SORT_OPTIONS: Array<{ value: CatalogSortOption; label: string }> = [
 
               <ng-template pTemplate="emptymessage">
                 <tr>
-                  <td colspan="5">
+                  <td colspan="6">
                     <div class="catalog-empty-state">{{ sectionMeta.categories.emptyState }}</div>
                   </td>
                 </tr>
@@ -333,18 +334,14 @@ const SORT_OPTIONS: Array<{ value: CatalogSortOption; label: string }> = [
 
             @case ('units') {
               <p-table
-                [value]="filteredUnits()"
+                [value]="paginatedUnits()"
                 [loading]="loading()"
-                [paginator]="true"
-                [rows]="10"
-                [rowsPerPageOptions]="rowsPerPageOptions"
-                [showCurrentPageReport]="true"
-                currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros"
                 responsiveLayout="scroll"
                 styleClass="catalogs-table"
               >
               <ng-template pTemplate="header">
                 <tr>
+                  <th class="catalogs-th-mobile-lead" aria-hidden="true"></th>
                   <th>NOMBRE</th>
                   <th>DESCRIPCION</th>
                   <th>ESTADO</th>
@@ -355,6 +352,11 @@ const SORT_OPTIONS: Array<{ value: CatalogSortOption; label: string }> = [
 
               <ng-template pTemplate="body" let-unit>
                 <tr>
+                  <td class="catalogs-td-mobile-lead" aria-hidden="true">
+                    <div class="catalogs-mobile-lead__orb">
+                      <i [class]="sectionMeta[activeSection()].icon"></i>
+                    </div>
+                  </td>
                   <td>
                     <div class="entity-stack">
                       <strong class="entity-stack__title">{{ unit.name }}</strong>
@@ -383,7 +385,7 @@ const SORT_OPTIONS: Array<{ value: CatalogSortOption; label: string }> = [
 
               <ng-template pTemplate="emptymessage">
                 <tr>
-                  <td colspan="5">
+                  <td colspan="6">
                     <div class="catalog-empty-state">{{ sectionMeta.units.emptyState }}</div>
                   </td>
                 </tr>
@@ -393,18 +395,14 @@ const SORT_OPTIONS: Array<{ value: CatalogSortOption; label: string }> = [
 
             @case ('providers') {
               <p-table
-                [value]="filteredProviders()"
+                [value]="paginatedProviders()"
                 [loading]="loading()"
-                [paginator]="true"
-                [rows]="10"
-                [rowsPerPageOptions]="rowsPerPageOptions"
-                [showCurrentPageReport]="true"
-                currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros"
                 responsiveLayout="scroll"
                 styleClass="catalogs-table"
               >
               <ng-template pTemplate="header">
                 <tr>
+                  <th class="catalogs-th-mobile-lead" aria-hidden="true"></th>
                   <th>PROVEEDOR</th>
                   <th>CONTACTO</th>
                   <th>ESTADO</th>
@@ -415,6 +413,11 @@ const SORT_OPTIONS: Array<{ value: CatalogSortOption; label: string }> = [
 
               <ng-template pTemplate="body" let-provider>
                 <tr>
+                  <td class="catalogs-td-mobile-lead" aria-hidden="true">
+                    <div class="catalogs-mobile-lead__orb">
+                      <i [class]="sectionMeta[activeSection()].icon"></i>
+                    </div>
+                  </td>
                   <td>
                     <div class="entity-stack">
                       <strong class="entity-stack__title">{{ provider.name }}</strong>
@@ -450,7 +453,7 @@ const SORT_OPTIONS: Array<{ value: CatalogSortOption; label: string }> = [
 
               <ng-template pTemplate="emptymessage">
                 <tr>
-                  <td colspan="5">
+                  <td colspan="6">
                     <div class="catalog-empty-state">{{ sectionMeta.providers.emptyState }}</div>
                   </td>
                 </tr>
@@ -460,18 +463,14 @@ const SORT_OPTIONS: Array<{ value: CatalogSortOption; label: string }> = [
 
             @case ('areas') {
               <p-table
-                [value]="filteredAreas()"
+                [value]="paginatedAreas()"
                 [loading]="loading()"
-                [paginator]="true"
-                [rows]="10"
-                [rowsPerPageOptions]="rowsPerPageOptions"
-                [showCurrentPageReport]="true"
-                currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros"
                 responsiveLayout="scroll"
                 styleClass="catalogs-table"
               >
               <ng-template pTemplate="header">
                 <tr>
+                  <th class="catalogs-th-mobile-lead" aria-hidden="true"></th>
                   <th>NOMBRE</th>
                   <th>DESCRIPCION</th>
                   <th>ESTADO</th>
@@ -482,6 +481,11 @@ const SORT_OPTIONS: Array<{ value: CatalogSortOption; label: string }> = [
 
               <ng-template pTemplate="body" let-area>
                 <tr>
+                  <td class="catalogs-td-mobile-lead" aria-hidden="true">
+                    <div class="catalogs-mobile-lead__orb">
+                      <i [class]="sectionMeta[activeSection()].icon"></i>
+                    </div>
+                  </td>
                   <td>
                     <div class="entity-stack">
                       <strong class="entity-stack__title">{{ area.name }}</strong>
@@ -512,7 +516,7 @@ const SORT_OPTIONS: Array<{ value: CatalogSortOption; label: string }> = [
 
               <ng-template pTemplate="emptymessage">
                 <tr>
-                  <td colspan="5">
+                  <td colspan="6">
                     <div class="catalog-empty-state">{{ sectionMeta.areas.emptyState }}</div>
                   </td>
                 </tr>
@@ -521,8 +525,70 @@ const SORT_OPTIONS: Array<{ value: CatalogSortOption; label: string }> = [
             }
           }
         </div>
+
+        <div class="pagination-bar catalogs-pagination">
+          <span class="pagination-info">
+            Mostrando {{ pageStart() }} a {{ pageEnd() }} de {{ currentRows().length }} registros
+          </span>
+          <div class="pagination-controls">
+            <button
+              type="button"
+              class="pag-btn"
+              [disabled]="currentPage() === 1"
+              (click)="changePage(1)"
+              aria-label="Primera pagina"
+            >
+              Primera
+            </button>
+            <button
+              type="button"
+              class="pag-btn pag-btn--icon"
+              [disabled]="currentPage() === 1"
+              (click)="changePage(currentPage() - 1)"
+              aria-label="Pagina anterior"
+            >
+              <i class="pi pi-angle-left"></i>
+            </button>
+            @for (page of visiblePages(); track page) {
+              <button
+                type="button"
+                class="pag-btn"
+                [class.active]="page === currentPage()"
+                (click)="changePage(page)"
+              >
+                {{ page }}
+              </button>
+            }
+            <button
+              type="button"
+              class="pag-btn pag-btn--icon"
+              [disabled]="currentPage() === totalPages()"
+              (click)="changePage(currentPage() + 1)"
+              aria-label="Pagina siguiente"
+            >
+              <i class="pi pi-angle-right"></i>
+            </button>
+            <button
+              type="button"
+              class="pag-btn"
+              [disabled]="currentPage() === totalPages()"
+              (click)="changePage(totalPages())"
+              aria-label="Ultima pagina"
+            >
+              Ultima
+            </button>
+          </div>
+        </div>
       </section>
 
+      <button
+        pButton
+        type="button"
+        icon="pi pi-plus"
+        class="catalogs-mobile-fab"
+        aria-label="Nuevo registro"
+        (click)="openCreate(activeSection())"
+      ></button>
     </div>
 
     <p-dialog
@@ -632,6 +698,8 @@ const SORT_OPTIONS: Array<{ value: CatalogSortOption; label: string }> = [
     .catalogs-header-actions {
       display: flex;
       align-items: center;
+      justify-content: center;
+      width: 100%;
     }
 
     .note-banner {
@@ -853,6 +921,66 @@ const SORT_OPTIONS: Array<{ value: CatalogSortOption; label: string }> = [
       background: white;
     }
 
+    .pagination-bar {
+      padding: 1.5rem 1.2rem 1.2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+      background: white;
+      border-top: 1px solid rgba(214, 191, 152, 0.18);
+    }
+
+    .pagination-info {
+      font-size: 0.85rem;
+      color: #8a7867;
+    }
+
+    .pagination-controls {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .pag-btn {
+      min-width: 2.5rem;
+      height: 2.25rem;
+      padding: 0 0.85rem;
+      border-radius: 8px;
+      border: 1px solid #f0f0f0;
+      background: #fff;
+      color: #6e5f50;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.25rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .pag-btn--icon {
+      min-width: 2.4rem;
+      padding: 0;
+    }
+
+    .pag-btn.active {
+      background: #c8922d;
+      color: #fff;
+      border-color: #c8922d;
+      font-weight: 700;
+    }
+
+    .pag-btn:hover:not(:disabled):not(.active) {
+      color: #b8892a;
+      border-color: rgba(200, 146, 45, 0.4);
+    }
+
+    .pag-btn:disabled {
+      opacity: 0.45;
+      cursor: default;
+    }
+
     .entity-stack {
       display: flex;
       flex-direction: column;
@@ -902,14 +1030,61 @@ const SORT_OPTIONS: Array<{ value: CatalogSortOption; label: string }> = [
     }
 
     .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
       padding: 0.42rem 0.82rem;
       background: rgba(200, 146, 45, 0.12);
       color: #9b6d18;
     }
 
+    .status-pill::before {
+      content: '';
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      background: #22c55e;
+      box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.15);
+    }
+
     .status-pill--inactive {
       background: rgba(145, 158, 171, 0.12);
       color: #64748b;
+    }
+
+    .status-pill--inactive::before {
+      background: #94a3b8;
+      box-shadow: none;
+    }
+
+    .catalogs-th-mobile-lead,
+    .catalogs-td-mobile-lead {
+      display: none !important;
+      width: 0 !important;
+      min-width: 0 !important;
+      max-width: 0 !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      border: none !important;
+      overflow: hidden !important;
+      visibility: hidden !important;
+    }
+
+    .catalogs-mobile-lead__orb {
+      width: 3.1rem;
+      height: 3.1rem;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      background: rgba(200, 146, 45, 0.1);
+      color: #c8922d;
+      font-size: 1.25rem;
+      border: 1px solid rgba(200, 146, 45, 0.15);
+    }
+
+    .catalogs-mobile-fab {
+      display: none;
     }
 
     .muted-copy {
@@ -1060,7 +1235,7 @@ const SORT_OPTIONS: Array<{ value: CatalogSortOption; label: string }> = [
       padding-top: 0.5rem;
     }
 
-    @media (max-width: 960px) {
+    @media (max-width: 1100px) {
       .catalog-toolbar,
       .catalogs-section-head,
       .catalog-active-filters {
@@ -1082,28 +1257,188 @@ const SORT_OPTIONS: Array<{ value: CatalogSortOption; label: string }> = [
       }
     }
 
-    @media (max-width: 720px) {
-      .catalogs-summary .summary-card {
-        grid-template-columns: 1fr;
-        align-items: flex-start;
+    @media (max-width: 900px) {
+      .catalogs-page {
+        padding-bottom: 6rem;
       }
 
-      .catalog-tabs,
-      .catalog-toolbar,
-      .catalogs-section-head {
+      :host ::ng-deep app-page-header .page-header__actions {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+      }
+
+      :host ::ng-deep app-page-header .page-header {
+        align-items: center;
+        text-align: center;
+      }
+
+      :host ::ng-deep app-page-header .page-header__copy,
+      :host ::ng-deep app-page-header .page-header__subtitle {
+        margin-inline: auto;
+        text-align: center;
+        width: min(100%, 42rem);
+      }
+
+      .catalogs-page .summary-grid.catalogs-summary {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.65rem;
+      }
+
+      .catalogs-summary .summary-card {
+        grid-template-columns: 1fr;
+        justify-items: center;
+        text-align: center;
+        align-items: flex-start;
+        min-height: 0;
+        padding: 0.85rem 0.65rem;
+        gap: 0.45rem;
+      }
+
+      .catalogs-summary__icon {
+        width: 2.5rem;
+        height: 2.5rem;
+        font-size: 0.95rem;
+      }
+
+      .catalogs-summary__content span {
+        font-size: 0.68rem;
+        letter-spacing: 0.07em;
+      }
+
+      .catalogs-summary__content strong {
+        font-size: 1.85rem;
+        line-height: 1.1;
+      }
+
+      .catalogs-summary__content small {
+        font-size: 0.72rem;
+        line-height: 1.35;
+      }
+
+      .catalog-tabs {
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        scrollbar-width: none;
         padding-inline: 1rem;
       }
 
+      .catalog-tabs::-webkit-scrollbar {
+        display: none;
+      }
+
       .catalog-tab {
+        flex: 0 0 auto;
         padding-inline: 0.75rem;
       }
 
-      .catalog-select {
+      .catalog-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.85rem;
+        padding: 1rem;
+        margin-inline: 0.35rem;
+        background: rgba(253, 251, 247, 0.92);
+        border: 1px solid rgba(214, 191, 152, 0.2);
+        border-radius: 1rem;
+        border-bottom: 1px solid rgba(214, 191, 152, 0.18);
+      }
+
+      .catalog-search {
+        max-width: none;
+        flex: 1 1 auto;
+      }
+
+      .catalog-toolbar__controls {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        width: 100%;
+        gap: 0.55rem 0.65rem;
+        justify-content: stretch;
+      }
+
+      .catalog-toolbar__controls > .catalog-select {
+        grid-column: 1 / -1;
+        width: 100%;
+        min-width: 0;
+      }
+
+      .catalog-toolbar__controls > .catalog-toolbar__button {
+        width: 100%;
+        min-width: 0;
+      }
+
+      .catalogs-section-head {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.85rem;
+        padding: 1rem;
+      }
+
+      .catalogs-section-head__actions {
+        justify-content: stretch;
+        width: 100%;
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .catalogs-section-head__count {
+        text-align: center;
+      }
+
+      :host ::ng-deep .catalogs-section-head__actions .p-button {
         width: 100%;
       }
 
-      .catalog-toolbar__controls > * {
+      .catalog-active-filters {
+        padding-inline: 1rem;
+      }
+
+      .catalogs-header-actions {
         width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      :host ::ng-deep .catalogs-create-button.p-button {
+        display: none !important;
+      }
+
+      .catalogs-pagination {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 0.75rem;
+      }
+
+      .catalogs-pagination .pagination-info {
+        width: 100%;
+        text-align: center;
+      }
+
+      .pagination-bar {
+        padding: 1rem;
+      }
+
+      .pagination-controls {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        padding-bottom: 0.15rem;
+        padding-inline: 0.1rem 0.45rem;
+        scrollbar-width: none;
+        justify-content: center;
+      }
+
+      .pagination-controls::-webkit-scrollbar {
+        display: none;
+      }
+
+      .pag-btn {
+        flex: 0 0 auto;
+        width: auto;
+        min-width: 2.7rem;
       }
 
       .catalogs-table-wrap {
@@ -1119,13 +1454,151 @@ const SORT_OPTIONS: Array<{ value: CatalogSortOption; label: string }> = [
         flex-direction: column-reverse;
       }
 
-      :host ::ng-deep .catalogs-table .p-datatable-table {
-        min-width: 0;
+      .catalogs-mobile-fab {
+        display: inline-flex;
+        position: fixed;
+        right: 1rem;
+        bottom: 1rem;
+        width: 3.6rem;
+        height: 3.6rem;
+        border-radius: 999px !important;
+        z-index: 20;
+        box-shadow: 0 18px 32px rgba(200, 146, 45, 0.34) !important;
       }
 
-      :host ::ng-deep .catalogs-table .p-datatable-thead > tr > th,
+      :host ::ng-deep .catalogs-mobile-fab.p-button .p-button-label {
+        display: none;
+      }
+
+      :host ::ng-deep .catalogs-mobile-fab.p-button .p-button-icon {
+        margin: 0 !important;
+        font-size: 1.35rem;
+      }
+
+      .entity-stack__title {
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        font-size: 0.92rem;
+      }
+
+      .entity-stack__title--small {
+        text-transform: none;
+        letter-spacing: normal;
+      }
+
+      :host ::ng-deep .catalogs-table .p-datatable-table {
+        min-width: 100% !important;
+      }
+
+      :host ::ng-deep .catalogs-table .p-datatable-thead {
+        display: none;
+      }
+
+      :host ::ng-deep .catalogs-table .p-datatable-tbody {
+        padding: 0.95rem;
+      }
+
+      :host ::ng-deep .catalogs-table .p-datatable-tbody > tr {
+        display: grid;
+        grid-template-columns: 3.15rem 1fr auto;
+        gap: 0.55rem 0.65rem;
+        align-items: start;
+        margin-bottom: 0.95rem;
+        padding: 1rem;
+        border: 1px solid rgba(214, 191, 152, 0.22);
+        border-radius: 1.1rem;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(253, 250, 244, 0.96));
+        box-shadow: 0 14px 28px rgba(45, 32, 22, 0.05);
+      }
+
+      :host ::ng-deep .catalogs-table .p-datatable-tbody > tr:last-child {
+        margin-bottom: 0;
+      }
+
       :host ::ng-deep .catalogs-table .p-datatable-tbody > tr > td {
-        padding: 0.75rem 0.7rem;
+        width: auto !important;
+        min-width: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        text-align: left !important;
+        display: block;
+        white-space: normal;
+        overflow-wrap: break-word;
+        word-break: normal;
+      }
+
+      :host ::ng-deep .catalogs-table .p-datatable-tbody > tr > td + td {
+        margin-top: 0 !important;
+        padding-top: 0 !important;
+        border-top: none !important;
+      }
+
+      :host ::ng-deep .catalogs-table .p-datatable-tbody > tr > td::before {
+        display: none !important;
+        content: none !important;
+      }
+
+      :host ::ng-deep .catalogs-table .p-datatable-tbody > tr > td.catalogs-td-mobile-lead {
+        display: flex !important;
+        visibility: visible !important;
+        width: auto !important;
+        min-width: 0 !important;
+        max-width: none !important;
+        overflow: visible !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        grid-column: 1;
+        grid-row: 1 / span 3;
+        align-self: start;
+        justify-content: center;
+      }
+
+      :host ::ng-deep .catalogs-table .p-datatable-tbody > tr > td:nth-child(2) {
+        grid-column: 2;
+        grid-row: 1;
+      }
+
+      :host ::ng-deep .catalogs-table .p-datatable-tbody > tr > td:nth-child(3) {
+        grid-column: 2;
+        grid-row: 2;
+      }
+
+      :host ::ng-deep .catalogs-table .p-datatable-tbody > tr > td:nth-child(4) {
+        grid-column: 3;
+        grid-row: 1;
+        justify-self: end;
+        align-self: start;
+      }
+
+      :host ::ng-deep .catalogs-table .p-datatable-tbody > tr > td:nth-child(5) {
+        grid-column: 2;
+        grid-row: 3;
+      }
+
+      :host ::ng-deep .catalogs-table .p-datatable-tbody > tr > td:nth-child(6) {
+        grid-column: 3;
+        grid-row: 2 / span 2;
+        align-self: end;
+        justify-self: end;
+      }
+
+      :host ::ng-deep .catalogs-table .catalog-action-button {
+        width: 2.35rem;
+        height: 2.35rem;
+        border-radius: 999px;
+      }
+
+      :host ::ng-deep .catalogs-table .action-cell,
+      :host ::ng-deep .catalogs-table .text-right {
+        text-align: right !important;
+      }
+    }
+
+    @media (max-width: 520px) {
+      .pagination-controls .pag-btn:first-child,
+      .pagination-controls .pag-btn:last-child {
+        display: none;
       }
     }
 
@@ -1161,6 +1634,8 @@ export class CatalogsPageComponent implements OnInit {
   protected readonly sortOption = signal<CatalogSortOption>('name-asc');
   protected readonly filtersPanelOpen = signal(false);
   protected readonly submitError = signal<string | null>(null);
+  protected readonly currentPage = signal(1);
+  protected readonly pageSize = 10;
   protected dialogVisible = false;
 
   protected readonly availableSections = computed(() => {
@@ -1245,6 +1720,37 @@ export class CatalogsPageComponent implements OnInit {
   );
 
   protected readonly currentVisibleCount = computed(() => this.currentRows().length);
+  protected readonly totalPages = computed(() =>
+    Math.max(1, Math.ceil(this.currentRows().length / this.pageSize))
+  );
+  protected readonly pageStart = computed(() =>
+    this.currentRows().length ? (this.currentPage() - 1) * this.pageSize + 1 : 0
+  );
+  protected readonly pageEnd = computed(() =>
+    Math.min(this.currentPage() * this.pageSize, this.currentRows().length)
+  );
+  protected readonly paginatedCategories = computed(() =>
+    this.paginateRows(this.filteredCategories())
+  );
+  protected readonly paginatedUnits = computed(() => this.paginateRows(this.filteredUnits()));
+  protected readonly paginatedProviders = computed(() =>
+    this.paginateRows(this.filteredProviders())
+  );
+  protected readonly paginatedAreas = computed(() => this.paginateRows(this.filteredAreas()));
+  protected readonly visiblePages = computed(() => {
+    const totalPages = this.totalPages();
+    const currentPage = this.currentPage();
+    const maxButtons = 5;
+
+    let startPage = Math.max(1, currentPage - 2);
+    let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+
+    if (endPage - startPage + 1 < maxButtons) {
+      startPage = Math.max(1, endPage - maxButtons + 1);
+    }
+
+    return Array.from({ length: endPage - startPage + 1 }, (_, index) => startPage + index);
+  });
 
   protected readonly hasFiltersApplied = computed(
     () =>
@@ -1283,6 +1789,23 @@ export class CatalogsPageComponent implements OnInit {
     active: [true]
   });
 
+  constructor() {
+    effect(() => {
+      this.activeSection();
+      this.searchQuery();
+      this.statusFilter();
+      this.sortOption();
+      this.currentPage.set(1);
+    });
+
+    effect(() => {
+      const total = this.totalPages();
+      if (this.currentPage() > total) {
+        this.currentPage.set(total);
+      }
+    });
+  }
+
   ngOnInit(): void {
     this.activeSection.set(this.availableSections()[0]?.value ?? 'providers');
     this.loadOverview();
@@ -1311,6 +1834,7 @@ export class CatalogsPageComponent implements OnInit {
     this.statusFilter.set('all');
     this.sortOption.set('name-asc');
     this.filtersPanelOpen.set(false);
+    this.currentPage.set(1);
   }
 
   protected toggleFiltersPanel(): void {
@@ -1549,7 +2073,7 @@ export class CatalogsPageComponent implements OnInit {
     }
   }
 
-  private currentRows(): Array<CatalogEntity | UnitOfMeasure | Provider> {
+  protected currentRows(): Array<CatalogEntity | UnitOfMeasure | Provider> {
     switch (this.activeSection()) {
       case 'categories':
         return this.filteredCategories();
@@ -1560,6 +2084,13 @@ export class CatalogsPageComponent implements OnInit {
       default:
         return this.filteredProviders();
     }
+  }
+
+  protected changePage(page: number): void {
+    if (page < 1 || page > this.totalPages()) {
+      return;
+    }
+    this.currentPage.set(page);
   }
 
   private currentExportRows(): Array<Record<string, string>> {
@@ -1599,6 +2130,11 @@ export class CatalogsPageComponent implements OnInit {
           Registro: this.formatRegistryLabel(provider.id)
         }));
     }
+  }
+
+  private paginateRows<T>(rows: T[]): T[] {
+    const start = (this.currentPage() - 1) * this.pageSize;
+    return rows.slice(start, start + this.pageSize);
   }
 
   private matchesStatus(active: boolean): boolean {
