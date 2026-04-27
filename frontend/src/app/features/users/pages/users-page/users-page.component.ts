@@ -1102,6 +1102,7 @@ import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
         border-radius: 999px !important;
         z-index: 20;
         box-shadow: 0 18px 32px rgba(200, 146, 45, 0.34) !important;
+        color: #ffffff !important;
       }
 
       ::ng-deep .mobile-add-fab.p-button .p-button-label {
@@ -1111,6 +1112,7 @@ import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
       ::ng-deep .mobile-add-fab.p-button .p-button-icon {
         margin: 0 !important;
         font-size: 1.35rem;
+        color: #ffffff !important;
       }
     }
 
