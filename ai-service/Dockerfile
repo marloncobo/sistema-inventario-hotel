@@ -5,8 +5,8 @@ COPY ai-service/pom.xml ai-service/pom.xml
 COPY inventory-service/pom.xml inventory-service/pom.xml
 COPY rooms-service/pom.xml rooms-service/pom.xml
 COPY gateway-service/pom.xml gateway-service/pom.xml
-COPY gateway-service/src gateway-service/src
-RUN mvn -pl gateway-service -am package -DskipTests
+COPY ai-service/src ai-service/src
+RUN mvn -pl ai-service -am package -DskipTests
 
 FROM eclipse-temurin:21-jre
 WORKDIR /app
@@ -15,7 +15,7 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/* \
     && groupadd --system spring \
     && useradd --system --gid spring spring
-COPY --from=build /workspace/gateway-service/target/*.jar app.jar
+COPY --from=build /workspace/ai-service/target/*.jar app.jar
 EXPOSE 8080
 USER spring:spring
 HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=5 \

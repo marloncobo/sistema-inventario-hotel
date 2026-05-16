@@ -47,6 +47,12 @@ gcloud builds submit `
 
 ```powershell
 gcloud builds submit `
+  --config cloud-run/cloudbuild.ai.yaml `
+  --substitutions=_REGION=$REGION,_REPOSITORY=$REPOSITORY,_TAG=$TAG
+```
+
+```powershell
+gcloud builds submit `
   --config cloud-run/cloudbuild.gateway.yaml `
   --substitutions=_REGION=$REGION,_REPOSITORY=$REPOSITORY,_TAG=$TAG
 ```
@@ -64,20 +70,22 @@ Copia los ejemplos y completa los valores reales:
 ```powershell
 Copy-Item cloud-run/env.inventory.example.yaml cloud-run/env.inventory.yaml
 Copy-Item cloud-run/env.rooms.example.yaml cloud-run/env.rooms.yaml
+Copy-Item cloud-run/env.ai.example.yaml cloud-run/env.ai.yaml
 Copy-Item cloud-run/env.gateway.example.yaml cloud-run/env.gateway.yaml
 ```
 
-Usa el mismo `JWT_SECRET` en los tres servicios.
+Usa el mismo `JWT_SECRET` en los cuatro servicios.
 
 Para `SPRING_DATASOURCE_URL`, usa la direccion de tu PostgreSQL disponible para Cloud Run. Si usas Cloud SQL con IP privada, configura Serverless VPC Access y usa la IP privada de la instancia.
 
 ## 4. Orden recomendado de despliegue
 
-Ejecuta primero `inventory-service` y `rooms-service`. Cuando Cloud Run te entregue sus URLs finales, actualiza:
+Ejecuta primero `inventory-service` y `rooms-service`. Luego despliega `ai-service`. Cuando Cloud Run te entregue sus URLs finales, actualiza:
 
 - `cloud-run/env.inventory.yaml` con `ROOMS_SERVICE_URL`
 - `cloud-run/env.rooms.yaml` con `INVENTORY_SERVICE_URL`
-- `cloud-run/env.gateway.yaml` con `INVENTORY_SERVICE_URL` y `ROOMS_SERVICE_URL`
+- `cloud-run/env.ai.yaml` con `INVENTORY_SERVICE_URL` y `GEMINI_API_KEY`
+- `cloud-run/env.gateway.yaml` con `INVENTORY_SERVICE_URL`, `ROOMS_SERVICE_URL` y `AI_SERVICE_URL`
 
 Luego vuelve a lanzar el pipeline del gateway:
 
@@ -94,6 +102,7 @@ Prueba los health checks:
 ```powershell
 curl https://inventory-service-xxxxx-uc.a.run.app/actuator/health
 curl https://rooms-service-xxxxx-uc.a.run.app/actuator/health
+curl https://ai-service-xxxxx-uc.a.run.app/actuator/health
 curl https://gateway-service-xxxxx-uc.a.run.app/actuator/health
 ```
 

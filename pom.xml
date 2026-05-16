@@ -10,6 +10,7 @@
     <name>hotel-inventory-microservices</name>
 
     <modules>
+        <module>ai-service</module>
         <module>inventory-service</module>
         <module>rooms-service</module>
         <module>gateway-service</module>
