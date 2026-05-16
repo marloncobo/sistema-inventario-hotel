@@ -1,0 +1,312 @@
+[
+  {
+    "category": "Resumen y estado",
+    "name": "Resumen general",
+    "question": "Dame un resumen del estado actual del inventario."
+  },
+  {
+    "category": "Resumen y estado",
+    "name": "Stock general",
+    "question": "Como esta hoy el stock general del hotel?"
+  },
+  {
+    "category": "Resumen y estado",
+    "name": "Riesgos operativos",
+    "question": "Resume los principales riesgos operativos del inventario."
+  },
+  {
+    "category": "Resumen y estado",
+    "name": "Categorias comprometidas",
+    "question": "Que categorias estan mas comprometidas en este momento?"
+  },
+  {
+    "category": "Resumen y estado",
+    "name": "Desabastecimiento",
+    "question": "Hay senales de desabastecimiento inminente?"
+  },
+  {
+    "category": "Stock bajo y reabastecimiento",
+    "name": "Productos bajos",
+    "question": "Que productos estan bajos de stock?"
+  },
+  {
+    "category": "Stock bajo y reabastecimiento",
+    "name": "Reabastecer primero",
+    "question": "Que productos debo reabastecer primero?"
+  },
+  {
+    "category": "Stock bajo y reabastecimiento",
+    "name": "Compra urgente",
+    "question": "Ordena los productos mas urgentes para compra."
+  },
+  {
+    "category": "Stock bajo y reabastecimiento",
+    "name": "Debajo del minimo",
+    "question": "Que productos estan por debajo del stock minimo?"
+  },
+  {
+    "category": "Stock bajo y reabastecimiento",
+    "name": "Agotados",
+    "question": "Que productos estan agotados o casi agotados?"
+  },
+  {
+    "category": "Stock bajo y reabastecimiento",
+    "name": "Prioridad hoy",
+    "question": "Que compras deberia priorizar hoy?"
+  },
+  {
+    "category": "Stock bajo y reabastecimiento",
+    "name": "Solo 5 productos",
+    "question": "Si solo pudiera comprar 5 productos, cuales serian?"
+  },
+  {
+    "category": "Consumo y uso",
+    "name": "Mas usados",
+    "question": "Que productos son los mas usados?"
+  },
+  {
+    "category": "Consumo y uso",
+    "name": "Consumo promedio",
+    "question": "Cuales tienen mayor consumo promedio?"
+  },
+  {
+    "category": "Consumo y uso",
+    "name": "Mayor rotacion",
+    "question": "Que productos muestran mayor rotacion?"
+  },
+  {
+    "category": "Consumo y uso",
+    "name": "Salen mas rapido",
+    "question": "Que productos salen mas rapido del inventario?"
+  },
+  {
+    "category": "Consumo y uso",
+    "name": "Alto consumo y poco stock",
+    "question": "Que articulos tienen alto consumo pero poco stock?"
+  },
+  {
+    "category": "Consumo y uso",
+    "name": "Alto uso y alto riesgo",
+    "question": "Que productos combinan alto uso con alto riesgo de agotarse?"
+  },
+  {
+    "category": "Movimientos recientes",
+    "name": "Resumen movimientos",
+    "question": "Resume los movimientos recientes del inventario."
+  },
+  {
+    "category": "Movimientos recientes",
+    "name": "Cambios importantes",
+    "question": "Que cambios importantes hubo en los ultimos movimientos?"
+  },
+  {
+    "category": "Movimientos recientes",
+    "name": "Mas salidas",
+    "question": "Que productos tuvieron mas salidas recientemente?"
+  },
+  {
+    "category": "Movimientos recientes",
+    "name": "Explican stock bajo",
+    "question": "Que movimientos podrian explicar el stock bajo actual?"
+  },
+  {
+    "category": "Movimientos recientes",
+    "name": "Patron preocupante",
+    "question": "Ves un patron preocupante en los movimientos recientes?"
+  },
+  {
+    "category": "Movimientos recientes",
+    "name": "Areas consumiendo mas",
+    "question": "Que areas o tipos de movimiento estan consumiendo mas insumos?"
+  },
+  {
+    "category": "Alertas",
+    "name": "Alertas abiertas",
+    "question": "Que alertas de stock bajo estan abiertas?"
+  },
+  {
+    "category": "Alertas",
+    "name": "Atencion inmediata",
+    "question": "Que alertas requieren atencion inmediata?"
+  },
+  {
+    "category": "Alertas",
+    "name": "Alertas persistentes",
+    "question": "Que productos tienen alertas repetidas o persistentes?"
+  },
+  {
+    "category": "Alertas",
+    "name": "Impacto operativo",
+    "question": "Resume las alertas activas y su impacto operativo."
+  },
+  {
+    "category": "Alertas",
+    "name": "Mala planificacion",
+    "question": "Que alertas sugieren mala planificacion de reposicion?"
+  },
+  {
+    "category": "Proveedores",
+    "name": "Proveedores criticos",
+    "question": "Que proveedores estan asociados a los productos mas criticos?"
+  },
+  {
+    "category": "Proveedores",
+    "name": "Mismo proveedor",
+    "question": "Que productos criticos dependen del mismo proveedor?"
+  },
+  {
+    "category": "Proveedores",
+    "name": "Contactar primero",
+    "question": "Que proveedor deberia contactarse primero segun el riesgo actual?"
+  },
+  {
+    "category": "Proveedores",
+    "name": "Resumen alto consumo",
+    "question": "Resume los proveedores vinculados a productos de alto consumo."
+  },
+  {
+    "category": "Proveedores",
+    "name": "Concentracion de riesgo",
+    "question": "Hay concentracion de riesgo en pocos proveedores?"
+  },
+  {
+    "category": "Areas del hotel",
+    "name": "Mas movimientos",
+    "question": "Que areas del hotel estan relacionadas con mas movimientos?"
+  },
+  {
+    "category": "Areas del hotel",
+    "name": "Mas consumo",
+    "question": "Que areas parecen consumir mas insumos?"
+  },
+  {
+    "category": "Areas del hotel",
+    "name": "Mas expuestas",
+    "question": "Que areas estan mas expuestas a quiebres de stock?"
+  },
+  {
+    "category": "Areas del hotel",
+    "name": "Relacion areas consumo riesgo",
+    "question": "Resume la relacion entre areas, consumo y riesgo."
+  },
+  {
+    "category": "Areas del hotel",
+    "name": "Seguimiento semanal",
+    "question": "Que areas deberian recibir mayor seguimiento esta semana?"
+  },
+  {
+    "category": "Categorias",
+    "name": "Categorias con riesgo",
+    "question": "Que categorias tienen mayor riesgo de desabastecimiento?"
+  },
+  {
+    "category": "Categorias",
+    "name": "Categorias con alertas",
+    "question": "Que categorias concentran mas productos en alerta?"
+  },
+  {
+    "category": "Categorias",
+    "name": "Mayor consumo promedio",
+    "question": "Que categorias muestran mayor consumo promedio?"
+  },
+  {
+    "category": "Categorias",
+    "name": "Estado categorias criticas",
+    "question": "Resume el estado de las categorias mas criticas."
+  },
+  {
+    "category": "Categorias",
+    "name": "Categoria vulnerable",
+    "question": "Cual es la categoria mas vulnerable hoy?"
+  },
+  {
+    "category": "Analisis y recomendaciones",
+    "name": "Mayor riesgo de agotarse",
+    "question": "Que productos tienen mayor riesgo de agotarse pronto?"
+  },
+  {
+    "category": "Analisis y recomendaciones",
+    "name": "Decisiones de hoy",
+    "question": "Que decisiones recomiendas tomar hoy con este inventario?"
+  },
+  {
+    "category": "Analisis y recomendaciones",
+    "name": "Plan corto",
+    "question": "Dame un plan corto de reabastecimiento para hoy."
+  },
+  {
+    "category": "Analisis y recomendaciones",
+    "name": "Reducir quiebre",
+    "question": "Dame recomendaciones operativas para reducir el riesgo de quiebre."
+  },
+  {
+    "category": "Analisis y recomendaciones",
+    "name": "Problemas de gestion",
+    "question": "Que problemas ves en la gestion actual del inventario?"
+  },
+  {
+    "category": "Analisis y recomendaciones",
+    "name": "Indicadores diarios",
+    "question": "Que indicadores deberian vigilarse diariamente?"
+  },
+  {
+    "category": "Analisis y recomendaciones",
+    "name": "Monitoreo cercano",
+    "question": "Que productos requieren monitoreo mas cercano?"
+  },
+  {
+    "category": "Analisis y recomendaciones",
+    "name": "Cuellos de botella",
+    "question": "Donde ves los principales cuellos de botella?"
+  },
+  {
+    "category": "Comparativas",
+    "name": "Stock vs minimo",
+    "question": "Compara stock actual vs stock minimo en los productos criticos."
+  },
+  {
+    "category": "Comparativas",
+    "name": "Mas usados vs alertas",
+    "question": "Compara los productos mas usados con los productos en alerta."
+  },
+  {
+    "category": "Comparativas",
+    "name": "Consumidos vs urgentes",
+    "question": "Que diferencia hay entre los mas consumidos y los mas urgentes para reponer?"
+  },
+  {
+    "category": "Comparativas",
+    "name": "Mas usados coinciden",
+    "question": "Los productos mas usados coinciden con los mas riesgosos?"
+  },
+  {
+    "category": "Comparativas",
+    "name": "Proveedores de criticos",
+    "question": "Que proveedores soportan los productos mas usados y criticos?"
+  },
+  {
+    "category": "Validacion",
+    "name": "Puede estimar promedio",
+    "question": "Con la informacion disponible puedes estimar consumo promedio?"
+  },
+  {
+    "category": "Validacion",
+    "name": "Que falta",
+    "question": "Que informacion te falta para dar una mejor recomendacion?"
+  },
+  {
+    "category": "Validacion",
+    "name": "Limitaciones",
+    "question": "Puedes responder con certeza o hay limitaciones en los datos?"
+  },
+  {
+    "category": "Validacion",
+    "name": "Conclusiones firmes",
+    "question": "Que conclusiones si puedes afirmar y cuales no?"
+  },
+  {
+    "category": "Validacion",
+    "name": "Bloque mas util",
+    "question": "Que bloque de datos del contexto fue mas util para tu analisis?"
+  }
+]

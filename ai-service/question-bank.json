@@ -1,0 +1,127 @@
+{
+  "service": "ai-service",
+  "endpoint": "POST /api/ai/inventory-assistant",
+  "description": "Banco de preguntas sugeridas para probar el asistente de inventario del hotel.",
+  "requestTemplate": {
+    "question": "Dame un resumen del estado actual del inventario."
+  },
+  "categories": [
+    {
+      "name": "Resumen y estado",
+      "questions": [
+        "Dame un resumen del estado actual del inventario.",
+        "¿Cómo está hoy el stock general del hotel?",
+        "Resume los principales riesgos operativos del inventario.",
+        "¿Qué categorías están más comprometidas en este momento?",
+        "¿Hay señales de desabastecimiento inminente?"
+      ]
+    },
+    {
+      "name": "Stock bajo y reabastecimiento",
+      "questions": [
+        "¿Qué productos están bajos de stock?",
+        "¿Qué productos debo reabastecer primero?",
+        "Ordena los productos más urgentes para compra.",
+        "¿Qué productos están por debajo del stock mínimo?",
+        "¿Qué productos están agotados o casi agotados?",
+        "¿Qué compras debería priorizar hoy?",
+        "Si solo pudiera comprar 5 productos, ¿cuáles serían?"
+      ]
+    },
+    {
+      "name": "Consumo y uso",
+      "questions": [
+        "¿Qué productos son los más usados?",
+        "¿Cuáles tienen mayor consumo promedio?",
+        "¿Qué productos muestran mayor rotación?",
+        "¿Qué productos salen más rápido del inventario?",
+        "¿Qué artículos tienen alto consumo pero poco stock?",
+        "¿Qué productos combinan alto uso con alto riesgo de agotarse?"
+      ]
+    },
+    {
+      "name": "Movimientos recientes",
+      "questions": [
+        "Resume los movimientos recientes del inventario.",
+        "¿Qué cambios importantes hubo en los últimos movimientos?",
+        "¿Qué productos tuvieron más salidas recientemente?",
+        "¿Qué movimientos podrían explicar el stock bajo actual?",
+        "¿Ves un patrón preocupante en los movimientos recientes?",
+        "¿Qué áreas o tipos de movimiento están consumiendo más insumos?"
+      ]
+    },
+    {
+      "name": "Alertas",
+      "questions": [
+        "¿Qué alertas de stock bajo están abiertas?",
+        "¿Qué alertas requieren atención inmediata?",
+        "¿Qué productos tienen alertas repetidas o persistentes?",
+        "Resume las alertas activas y su impacto operativo.",
+        "¿Qué alertas sugieren mala planificación de reposición?"
+      ]
+    },
+    {
+      "name": "Proveedores",
+      "questions": [
+        "¿Qué proveedores están asociados a los productos más críticos?",
+        "¿Qué productos críticos dependen del mismo proveedor?",
+        "¿Qué proveedor debería contactarse primero según el riesgo actual?",
+        "Resume los proveedores vinculados a productos de alto consumo.",
+        "¿Hay concentración de riesgo en pocos proveedores?"
+      ]
+    },
+    {
+      "name": "Áreas del hotel",
+      "questions": [
+        "¿Qué áreas del hotel están relacionadas con más movimientos?",
+        "¿Qué áreas parecen consumir más insumos?",
+        "¿Qué áreas están más expuestas a quiebres de stock?",
+        "Resume la relación entre áreas, consumo y riesgo.",
+        "¿Qué áreas deberían recibir mayor seguimiento esta semana?"
+      ]
+    },
+    {
+      "name": "Categorías",
+      "questions": [
+        "¿Qué categorías tienen mayor riesgo de desabastecimiento?",
+        "¿Qué categorías concentran más productos en alerta?",
+        "¿Qué categorías muestran mayor consumo promedio?",
+        "Resume el estado de las categorías más críticas.",
+        "¿Cuál es la categoría más vulnerable hoy?"
+      ]
+    },
+    {
+      "name": "Análisis y recomendaciones",
+      "questions": [
+        "¿Qué productos tienen mayor riesgo de agotarse pronto?",
+        "¿Qué decisiones recomiendas tomar hoy con este inventario?",
+        "Dame un plan corto de reabastecimiento para hoy.",
+        "Dame recomendaciones operativas para reducir el riesgo de quiebre.",
+        "¿Qué problemas ves en la gestión actual del inventario?",
+        "¿Qué indicadores deberían vigilarse diariamente?",
+        "¿Qué productos requieren monitoreo más cercano?",
+        "¿Dónde ves los principales cuellos de botella?"
+      ]
+    },
+    {
+      "name": "Comparativas",
+      "questions": [
+        "Compara stock actual vs stock mínimo en los productos críticos.",
+        "Compara los productos más usados con los productos en alerta.",
+        "¿Qué diferencia hay entre los más consumidos y los más urgentes para reponer?",
+        "¿Los productos más usados coinciden con los más riesgosos?",
+        "¿Qué proveedores soportan los productos más usados y críticos?"
+      ]
+    },
+    {
+      "name": "Validación",
+      "questions": [
+        "¿Con la información disponible puedes estimar consumo promedio?",
+        "¿Qué información te falta para dar una mejor recomendación?",
+        "¿Puedes responder con certeza o hay limitaciones en los datos?",
+        "¿Qué conclusiones sí puedes afirmar y cuáles no?",
+        "¿Qué bloque de datos del contexto fue más útil para tu análisis?"
+      ]
+    }
+  ]
+}
