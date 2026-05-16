@@ -576,6 +576,40 @@
   padding: 0.75rem 0.65rem;
 }
 
+.inv-stock-location-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.inv-stock-location-list li {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.15rem 0.75rem;
+  padding: 0.55rem 0.65rem;
+  border-radius: 0.75rem;
+  background: rgba(216, 170, 92, 0.08);
+}
+
+.inv-stock-location-list span {
+  font-size: 0.78rem;
+  color: #867667;
+}
+
+.inv-stock-location-list em {
+  grid-row: span 2;
+  align-self: center;
+  font-style: normal;
+  font-weight: 700;
+}
+
+.inv-detail-stock-locations {
+  margin-top: 0.5rem;
+}
+
 .inv-detail-card--drawer {
   position: relative;
   min-height: 100%;

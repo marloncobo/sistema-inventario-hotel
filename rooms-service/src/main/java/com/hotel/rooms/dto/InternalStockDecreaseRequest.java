@@ -6,6 +6,7 @@ public record InternalStockDecreaseRequest(
         String roomNumber,
         String areaName,
         String origin,
+        String targetLocationType,
         String operationalResponsible,
         String referenceText
 ) {}

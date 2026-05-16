@@ -11,6 +11,12 @@ export const SHELL_ROUTE_ROLES = {
   catalogos: ['ADMIN', 'ALMACENISTA'],
   inventario: ['ADMIN', 'ALMACENISTA', 'SERVICIO'],
   movimientos: ['ADMIN', 'ALMACENISTA'],
+  ubicaciones: ['ADMIN', 'ALMACENISTA', 'SERVICIO'],
+  documentos: ['ADMIN', 'ALMACENISTA'],
+  'par-habitaciones': ['ADMIN', 'ALMACENISTA', 'SERVICIO'],
+  reposicion: ['ADMIN', 'ALMACENISTA', 'SERVICIO'],
+  conteos: ['ADMIN', 'ALMACENISTA'],
+  diferencias: ['ADMIN'],
   alertas: ['ADMIN', 'ALMACENISTA'],
   habitaciones: ['ADMIN', 'RECEPCION', 'SERVICIO'],
   /** GET /rooms/number/{n}: mismo alcance que el gateway (todos los roles activos). */

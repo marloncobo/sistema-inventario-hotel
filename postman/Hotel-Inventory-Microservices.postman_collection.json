@@ -1,1303 +1,1916 @@
-﻿{
-    "info":  {
-                 "name":  "Hotel Inventory Microservices",
-                 "_postman_id":  "c5c8ca34-b34a-4441-b91f-5d8881111111",
-                 "description":  "Coleccion de QA para probar el sistema por el API Gateway. Ejecuta primero Auth / Login admin para guardar el token activo. Los otros logins guardan tokens alternos sin reemplazar el token admin. Los endpoints de Health directos usan los puertos publicados por Docker Compose.",
-                 "schema":  "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
-             },
-    "auth":  {
-                 "type":  "bearer",
-                 "bearer":  [
-                                {
-                                    "key":  "token",
-                                    "value":  "{{token}}",
-                                    "type":  "string"
-                                }
-                            ]
-             },
-    "event":  [
-                  {
-                      "listen":  "prerequest",
-                      "script":  {
-                                     "type":  "text/javascript",
-                                     "exec":  [
-                                                  "if (!pm.collectionVariables.get(\u0027runId\u0027)) {",
-                                                  "  pm.collectionVariables.set(\u0027runId\u0027, Date.now().toString());",
-                                                  "}",
-                                                  "pm.request.headers.upsert({ key: \u0027Accept\u0027, value: \u0027application/json\u0027 });"
-                                              ]
-                                 }
-                  },
-                  {
-                      "listen":  "test",
-                      "script":  {
-                                     "type":  "text/javascript",
-                                     "exec":  [
-                                                  "pm.test(\u0027Status code is not 5xx\u0027, function () {",
-                                                  "  pm.expect(pm.response.code).to.be.below(500);",
-                                                  "});",
-                                                  "pm.test(\u0027Response time is reasonable\u0027, function () {",
-                                                  "  pm.expect(pm.response.responseTime).to.be.below(5000);",
-                                                  "});"
-                                              ]
-                                 }
-                  }
-              ],
-    "variable":  [
-                     {
-                         "key":  "baseUrl",
-                         "value":  "http://localhost:8080"
-                     },
-                     {
-                         "key":  "inventoryUrl",
-                         "value":  "http://localhost:8081"
-                     },
-                     {
-                         "key":  "roomsUrl",
-                         "value":  "http://localhost:8082"
-                     },
-                     {
-                         "key":  "token",
-                         "value":  ""
-                     },
-                     {
-                         "key":  "username",
-                         "value":  "admin"
-                     },
-                     {
-                         "key":  "itemId",
-                         "value":  "1"
-                     },
-                     {
-                         "key":  "movementId",
-                         "value":  "1"
-                     },
-                     {
-                         "key":  "roomId",
-                         "value":  "1"
-                     },
-                     {
-                         "key":  "roomNumber",
-                         "value":  "101"
-                     },
-                     {
-                         "key":  "categoryId",
-                         "value":  "1"
-                     },
-                     {
-                         "key":  "unitId",
-                         "value":  "1"
-                     },
-                     {
-                         "key":  "providerId",
-                         "value":  "1"
-                     },
-                     {
-                         "key":  "areaId",
-                         "value":  "1"
-                     },
-                     {
-                         "key":  "userId",
-                         "value":  "1"
-                     },
-                     {
-                         "key":  "category",
-                         "value":  "MINIBAR"
-                     },
-                     {
-                         "key":  "startDate",
-                         "value":  "2026-04-01"
-                     },
-                     {
-                         "key":  "endDate",
-                         "value":  "2026-04-30"
-                     },
-                     {
-                         "key":  "operationalResponsible",
-                         "value":  "Almacen"
-                     },
-                     {
-                         "key":  "runId",
-                         "value":  ""
-                     },
-                     {
-                         "key":  "createdMovementId",
-                         "value":  ""
-                     },
-                     {
-                         "key":  "roles",
-                         "value":  ""
-                     },
-                     {
-                         "key":  "almacenToken",
-                         "value":  ""
-                     },
-                     {
-                         "key":  "recepcionToken",
-                         "value":  ""
-                     },
-                     {
-                         "key":  "servicioToken",
-                         "value":  ""
-                     },
-                     {
-                         "key":  "assignmentItemId",
-                         "value":  "1"
-                     },
-                     {
-                         "key":  "kitAseoItemId",
-                         "value":  "2"
-                     },
-                     {
-                         "key":  "minibarItemId",
-                         "value":  "1"
-                     }
-                 ],
-    "item":  [
-                 {
-                     "name":  "Auth",
-                     "item":  [
-                                  {
-                                      "name":  "Login admin",
-                                      "request":  {
-                                                      "auth":  {
-                                                                   "type":  "noauth"
-                                                               },
-                                                      "method":  "POST",
-                                                      "header":  [
-                                                                     {
-                                                                         "key":  "Content-Type",
-                                                                         "value":  "application/json"
-                                                                     }
-                                                                 ],
-                                                      "body":  {
-                                                                   "mode":  "raw",
-                                                                   "raw":  "{\n  \"username\": \"admin\",\n  \"password\": \"Admin123\"\n}"
-                                                               },
-                                                      "url":  "{{baseUrl}}/auth/login"
-                                                  },
-                                      "event":  [
-                                                    {
-                                                        "listen":  "test",
-                                                        "script":  {
-                                                                       "type":  "text/javascript",
-                                                                       "exec":  [
-                                                                                    "pm.test(\u0027Login exitoso\u0027, function () { pm.response.to.have.status(200); });",
-                                                                                    "const json = pm.response.json();",
-                                                                                    "pm.collectionVariables.set(\u0027runId\u0027, Date.now().toString());",
-                                                                                    "pm.collectionVariables.set(\u0027token\u0027, json.token);",
-                                                                                    "pm.collectionVariables.set(\u0027username\u0027, json.username);",
-                                                                                    "pm.collectionVariables.set(\u0027roles\u0027, (json.roles || []).join(\u0027,\u0027));",
-                                                                                    "pm.test(\u0027Token admin activo guardado\u0027, function () { pm.expect(pm.collectionVariables.get(\u0027token\u0027)).to.not.be.empty; });"
-                                                                                ]
-                                                                   }
-                                                    }
-                                                ]
-                                  },
-                                  {
-                                      "name":  "Login almacenista",
-                                      "request":  {
-                                                      "auth":  {
-                                                                   "type":  "noauth"
-                                                               },
-                                                      "method":  "POST",
-                                                      "header":  [
-                                                                     {
-                                                                         "key":  "Content-Type",
-                                                                         "value":  "application/json"
-                                                                     }
-                                                                 ],
-                                                      "body":  {
-                                                                   "mode":  "raw",
-                                                                   "raw":  "{\n  \"username\": \"almacen\",\n  \"password\": \"Almacen123\"\n}"
-                                                               },
-                                                      "url":  "{{baseUrl}}/auth/login"
-                                                  },
-                                      "event":  [
-                                                    {
-                                                        "listen":  "test",
-                                                        "script":  {
-                                                                       "type":  "text/javascript",
-                                                                       "exec":  [
-                                                                                    "pm.test(\u0027Login exitoso\u0027, function () { pm.response.to.have.status(200); });",
-                                                                                    "const json = pm.response.json();",
-                                                                                    "pm.collectionVariables.set(\u0027almacenToken\u0027, json.token);",
-                                                                                    "pm.test(\u0027Token alterno guardado\u0027, function () { pm.expect(pm.collectionVariables.get(\u0027almacenToken\u0027)).to.not.be.empty; });"
-                                                                                ]
-                                                                   }
-                                                    }
-                                                ]
-                                  },
-                                  {
-                                      "name":  "Login recepcion",
-                                      "request":  {
-                                                      "auth":  {
-                                                                   "type":  "noauth"
-                                                               },
-                                                      "method":  "POST",
-                                                      "header":  [
-                                                                     {
-                                                                         "key":  "Content-Type",
-                                                                         "value":  "application/json"
-                                                                     }
-                                                                 ],
-                                                      "body":  {
-                                                                   "mode":  "raw",
-                                                                   "raw":  "{\n  \"username\": \"recepcion\",\n  \"password\": \"Recepcion123\"\n}"
-                                                               },
-                                                      "url":  "{{baseUrl}}/auth/login"
-                                                  },
-                                      "event":  [
-                                                    {
-                                                        "listen":  "test",
-                                                        "script":  {
-                                                                       "type":  "text/javascript",
-                                                                       "exec":  [
-                                                                                    "pm.test(\u0027Login exitoso\u0027, function () { pm.response.to.have.status(200); });",
-                                                                                    "const json = pm.response.json();",
-                                                                                    "pm.collectionVariables.set(\u0027recepcionToken\u0027, json.token);",
-                                                                                    "pm.test(\u0027Token alterno guardado\u0027, function () { pm.expect(pm.collectionVariables.get(\u0027recepcionToken\u0027)).to.not.be.empty; });"
-                                                                                ]
-                                                                   }
-                                                    }
-                                                ]
-                                  },
-                                  {
-                                      "name":  "Login servicio",
-                                      "request":  {
-                                                      "auth":  {
-                                                                   "type":  "noauth"
-                                                               },
-                                                      "method":  "POST",
-                                                      "header":  [
-                                                                     {
-                                                                         "key":  "Content-Type",
-                                                                         "value":  "application/json"
-                                                                     }
-                                                                 ],
-                                                      "body":  {
-                                                                   "mode":  "raw",
-                                                                   "raw":  "{\n  \"username\": \"servicio\",\n  \"password\": \"Servicio123\"\n}"
-                                                               },
-                                                      "url":  "{{baseUrl}}/auth/login"
-                                                  },
-                                      "event":  [
-                                                    {
-                                                        "listen":  "test",
-                                                        "script":  {
-                                                                       "type":  "text/javascript",
-                                                                       "exec":  [
-                                                                                    "pm.test(\u0027Login exitoso\u0027, function () { pm.response.to.have.status(200); });",
-                                                                                    "const json = pm.response.json();",
-                                                                                    "pm.collectionVariables.set(\u0027servicioToken\u0027, json.token);",
-                                                                                    "pm.test(\u0027Token alterno guardado\u0027, function () { pm.expect(pm.collectionVariables.get(\u0027servicioToken\u0027)).to.not.be.empty; });"
-                                                                                ]
-                                                                   }
-                                                    }
-                                                ]
-                                  },
-                                  {
-                                      "name":  "Listar usuarios",
-                                      "request":  {
-                                                      "method":  "GET",
-                                                      "header":  [
-
-                                                                 ],
-                                                      "url":  "{{baseUrl}}/auth/users"
-                                                  }
-                                  },
-                                  {
-                                      "name":  "Crear usuario",
-                                      "request":  {
-                                                      "method":  "POST",
-                                                      "header":  [
-                                                                     {
-                                                                         "key":  "Content-Type",
-                                                                         "value":  "application/json"
-                                                                     }
-                                                                 ],
-                                                      "body":  {
-                                                                   "mode":  "raw",
-                                                                   "raw":  "{\n  \"username\": \"postman_user_{{runId}}\",\n  \"password\": \"Postman123\",\n  \"roles\": [\n    \"RECEPCION\"\n  ],\n  \"active\": true\n}"
-                                                               },
-                                                      "url":  "{{baseUrl}}/auth/users"
-                                                  },
-                                      "event":  [
-                                                    {
-                                                        "listen":  "test",
-                                                        "script":  {
-                                                                       "type":  "text/javascript",
-                                                                       "exec":  [
-                                                                                    "if (pm.response.code \u003e= 200 \u0026\u0026 pm.response.code \u003c 300) {",
-                                                                                    "  const json = pm.response.json();",
-                                                                                    "  if (json.id !== undefined) pm.collectionVariables.set(\u0027userId\u0027, json.id);",
-                                                                                    "}"
-                                                                                ]
-                                                                   }
-                                                    }
-                                                ]
-                                  },
-                                  {
-                                      "name":  "Actualizar usuario",
-                                      "request":  {
-                                                      "method":  "PUT",
-                                                      "header":  [
-                                                                     {
-                                                                         "key":  "Content-Type",
-                                                                         "value":  "application/json"
-                                                                     }
-                                                                 ],
-                                                      "body":  {
-                                                                   "mode":  "raw",
-                                                                   "raw":  "{\n  \"username\": \"postman_user_{{runId}}\",\n  \"password\": \"Postman123\",\n  \"roles\": [\n    \"RECEPCION\",\n    \"SERVICIO\"\n  ],\n  \"active\": true\n}"
-                                                               },
-                                                      "url":  "{{baseUrl}}/auth/users/{{userId}}"
-                                                  }
-                                  },
-                                  {
-                                      "name":  "Auditoria gateway",
-                                      "request":  {
-                                                      "method":  "GET",
-                                                      "header":  [
-
-                                                                 ],
-                                                      "url":  "{{baseUrl}}/auth/audit?action=LOGIN_SUCCESS\u0026username={{username}}\u0026startDate={{startDate}}\u0026endDate={{endDate}}"
-                                                  }
-                                  }
-                              ]
-                 },
-                 {
-                     "name":  "Inventory - Catalogos",
-                     "item":  [
-                                  {
-                                      "name":  "Listar categorias",
-                                      "request":  {
-                                                      "method":  "GET",
-                                                      "header":  [
-
-                                                                 ],
-                                                      "url":  "{{baseUrl}}/inventory/api/inventory/catalogs/categories"
-                                                  }
-                                  },
-                                  {
-                                      "name":  "Crear categoria",
-                                      "request":  {
-                                                      "method":  "POST",
-                                                      "header":  [
-                                                                     {
-                                                                         "key":  "Content-Type",
-                                                                         "value":  "application/json"
-                                                                     }
-                                                                 ],
-                                                      "body":  {
-                                                                   "mode":  "raw",
-                                                                   "raw":  "{\n  \"code\": \"POSTMAN_CAT_{{runId}}\",\n  \"name\": \"Categoria Postman {{runId}}\",\n  \"abbreviation\": \"PMC\",\n  \"active\": true\n}"
-                                                               },
-                                                      "url":  "{{baseUrl}}/inventory/api/inventory/catalogs/categories"
-                                                  },
-                                      "event":  [
-                                                    {
-                                                        "listen":  "test",
-                                                        "script":  {
-                                                                       "type":  "text/javascript",
-                                                                       "exec":  [
-                                                                                    "if (pm.response.code \u003e= 200 \u0026\u0026 pm.response.code \u003c 300) {",
-                                                                                    "  const json = pm.response.json();",
-                                                                                    "  if (json.id !== undefined) pm.collectionVariables.set(\u0027categoryId\u0027, json.id);",
-                                                                                    "}"
-                                                                                ]
-                                                                   }
-                                                    }
-                                                ]
-                                  },
-                                  {
-                                      "name":  "Actualizar categoria",
-                                      "request":  {
-                                                      "method":  "PUT",
-                                                      "header":  [
-                                                                     {
-                                                                         "key":  "Content-Type",
-                                                                         "value":  "application/json"
-                                                                     }
-                                                                 ],
-                                                      "body":  {
-                                                                   "mode":  "raw",
-                                                                   "raw":  "{\n  \"code\": \"POSTMAN_CAT_{{runId}}\",\n  \"name\": \"Categoria Postman {{runId}} Actualizada\",\n  \"abbreviation\": \"PMC\",\n  \"active\": true\n}"
-                                                               },
-                                                      "url":  "{{baseUrl}}/inventory/api/inventory/catalogs/categories/{{categoryId}}"
-                                                  }
-                                  },
-                                  {
-                                      "name":  "Listar unidades",
-                                      "request":  {
-                                                      "method":  "GET",
-                                                      "header":  [
-
-                                                                 ],
-                                                      "url":  "{{baseUrl}}/inventory/api/inventory/catalogs/units"
-                                                  }
-                                  },
-                                  {
-                                      "name":  "Crear unidad",
-                                      "request":  {
-                                                      "method":  "POST",
-                                                      "header":  [
-                                                                     {
-                                                                         "key":  "Content-Type",
-                                                                         "value":  "application/json"
-                                                                     }
-                                                                 ],
-                                                      "body":  {
-                                                                   "mode":  "raw",
-                                                                   "raw":  "{\n  \"code\": \"POSTMAN_UND_{{runId}}\",\n  \"name\": \"Unidad Postman {{runId}}\",\n  \"abbreviation\": \"U{{runId}}\",\n  \"active\": true\n}"
-                                                               },
-                                                      "url":  "{{baseUrl}}/inventory/api/inventory/catalogs/units"
-                                                  },
-                                      "event":  [
-                                                    {
-                                                        "listen":  "test",
-                                                        "script":  {
-                                                                       "type":  "text/javascript",
-                                                                       "exec":  [
-                                                                                    "if (pm.response.code \u003e= 200 \u0026\u0026 pm.response.code \u003c 300) {",
-                                                                                    "  const json = pm.response.json();",
-                                                                                    "  if (json.id !== undefined) pm.collectionVariables.set(\u0027unitId\u0027, json.id);",
-                                                                                    "}"
-                                                                                ]
-                                                                   }
-                                                    }
-                                                ]
-                                  },
-                                  {
-                                      "name":  "Actualizar unidad",
-                                      "request":  {
-                                                      "method":  "PUT",
-                                                      "header":  [
-                                                                     {
-                                                                         "key":  "Content-Type",
-                                                                         "value":  "application/json"
-                                                                     }
-                                                                 ],
-                                                      "body":  {
-                                                                   "mode":  "raw",
-                                                                   "raw":  "{\n  \"code\": \"POSTMAN_UND_{{runId}}\",\n  \"name\": \"Unidad Postman {{runId}} Actualizada\",\n  \"abbreviation\": \"U{{runId}}\",\n  \"active\": true\n}"
-                                                               },
-                                                      "url":  "{{baseUrl}}/inventory/api/inventory/catalogs/units/{{unitId}}"
-                                                  }
-                                  },
-                                  {
-                                      "name":  "Listar proveedores",
-                                      "request":  {
-                                                      "method":  "GET",
-                                                      "header":  [
-
-                                                                 ],
-                                                      "url":  "{{baseUrl}}/inventory/api/inventory/catalogs/providers"
-                                                  }
-                                  },
-                                  {
-                                      "name":  "Crear proveedor",
-                                      "request":  {
-                                                      "method":  "POST",
-                                                      "header":  [
-                                                                     {
-                                                                         "key":  "Content-Type",
-                                                                         "value":  "application/json"
-                                                                     }
-                                                                 ],
-                                                      "body":  {
-                                                                   "mode":  "raw",
-                                                                   "raw":  "{\n  \"code\": \"POSTMAN_PROV_{{runId}}\",\n  \"name\": \"Proveedor Postman {{runId}} SAS\",\n  \"documentNumber\": \"{{runId}}\",\n  \"phone\": \"3001234567\",\n  \"email\": \"proveedor.postman@example.com\",\n  \"active\": true\n}"
-                                                               },
-                                                      "url":  "{{baseUrl}}/inventory/api/inventory/catalogs/providers"
-                                                  },
-                                      "event":  [
-                                                    {
-                                                        "listen":  "test",
-                                                        "script":  {
-                                                                       "type":  "text/javascript",
-                                                                       "exec":  [
-                                                                                    "if (pm.response.code \u003e= 200 \u0026\u0026 pm.response.code \u003c 300) {",
-                                                                                    "  const json = pm.response.json();",
-                                                                                    "  if (json.id !== undefined) pm.collectionVariables.set(\u0027providerId\u0027, json.id);",
-                                                                                    "}"
-                                                                                ]
-                                                                   }
-                                                    }
-                                                ]
-                                  },
-                                  {
-                                      "name":  "Actualizar proveedor",
-                                      "request":  {
-                                                      "method":  "PUT",
-                                                      "header":  [
-                                                                     {
-                                                                         "key":  "Content-Type",
-                                                                         "value":  "application/json"
-                                                                     }
-                                                                 ],
-                                                      "body":  {
-                                                                   "mode":  "raw",
-                                                                   "raw":  "{\n  \"code\": \"POSTMAN_PROV_{{runId}}\",\n  \"name\": \"Proveedor Postman {{runId}} Actualizado SAS\",\n  \"documentNumber\": \"{{runId}}\",\n  \"phone\": \"3001234567\",\n  \"email\": \"proveedor.postman@example.com\",\n  \"active\": true\n}"
-                                                               },
-                                                      "url":  "{{baseUrl}}/inventory/api/inventory/catalogs/providers/{{providerId}}"
-                                                  }
-                                  },
-                                  {
-                                      "name":  "Listar areas",
-                                      "request":  {
-                                                      "method":  "GET",
-                                                      "header":  [
-
-                                                                 ],
-                                                      "url":  "{{baseUrl}}/inventory/api/inventory/catalogs/areas"
-                                                  }
-                                  },
-                                  {
-                                      "name":  "Crear area",
-                                      "request":  {
-                                                      "method":  "POST",
-                                                      "header":  [
-                                                                     {
-                                                                         "key":  "Content-Type",
-                                                                         "value":  "application/json"
-                                                                     }
-                                                                 ],
-                                                      "body":  {
-                                                                   "mode":  "raw",
-                                                                   "raw":  "{\n  \"code\": \"POSTMAN_AREA_{{runId}}\",\n  \"name\": \"Area Postman {{runId}}\",\n  \"abbreviation\": \"PAR\",\n  \"active\": true\n}"
-                                                               },
-                                                      "url":  "{{baseUrl}}/inventory/api/inventory/catalogs/areas"
-                                                  },
-                                      "event":  [
-                                                    {
-                                                        "listen":  "test",
-                                                        "script":  {
-                                                                       "type":  "text/javascript",
-                                                                       "exec":  [
-                                                                                    "if (pm.response.code \u003e= 200 \u0026\u0026 pm.response.code \u003c 300) {",
-                                                                                    "  const json = pm.response.json();",
-                                                                                    "  if (json.id !== undefined) pm.collectionVariables.set(\u0027areaId\u0027, json.id);",
-                                                                                    "}"
-                                                                                ]
-                                                                   }
-                                                    }
-                                                ]
-                                  },
-                                  {
-                                      "name":  "Actualizar area",
-                                      "request":  {
-                                                      "method":  "PUT",
-                                                      "header":  [
-                                                                     {
-                                                                         "key":  "Content-Type",
-                                                                         "value":  "application/json"
-                                                                     }
-                                                                 ],
-                                                      "body":  {
-                                                                   "mode":  "raw",
-                                                                   "raw":  "{\n  \"code\": \"POSTMAN_AREA_{{runId}}\",\n  \"name\": \"Area Postman {{runId}} Actualizada\",\n  \"abbreviation\": \"PAR\",\n  \"active\": true\n}"
-                                                               },
-                                                      "url":  "{{baseUrl}}/inventory/api/inventory/catalogs/areas/{{areaId}}"
-                                                  }
-                                  }
-                              ]
-                 },
-                 {
-                     "name":  "Inventory - Insumos y Stock",
-                     "item":  [
-                                  {
-                                      "name":  "Listar insumos",
-                                      "request":  {
-                                                      "method":  "GET",
-                                                      "header":  [
-
-                                                                 ],
-                                                      "url":  "{{baseUrl}}/inventory/api/inventory/items"
-                                                  },
-                                      "event":  [
-                                                    {
-                                                        "listen":  "test",
-                                                        "script":  {
-                                                                       "type":  "text/javascript",
-                                                                       "exec":  [
-                                                                                    "pm.test(\u0027Lista de insumos OK\u0027, function () { pm.response.to.have.status(200); });",
-                                                                                    "const items = pm.response.json();",
-                                                                                    "if (Array.isArray(items) \u0026\u0026 items.length \u003e 0 \u0026\u0026 !pm.collectionVariables.get(\u0027itemId\u0027)) { pm.collectionVariables.set(\u0027itemId\u0027, items[0].id); }",
-                                                                                    "if (Array.isArray(items)) {",
-                                                                                    "  const minibar = items.find(item =\u003e item.active === true \u0026\u0026 item.category === \u0027MINIBAR\u0027 \u0026\u0026 item.stock \u003e 2);",
-                                                                                    "  const aseo = items.find(item =\u003e item.active === true \u0026\u0026 item.category === \u0027ASEO\u0027 \u0026\u0026 item.stock \u003e 2);",
-                                                                                    "  if (minibar) pm.collectionVariables.set(\u0027minibarItemId\u0027, minibar.id);",
-                                                                                    "  if (aseo) pm.collectionVariables.set(\u0027kitAseoItemId\u0027, aseo.id);",
-                                                                                    "}"
-                                                                                ]
-                                                                   }
-                                                    }
-                                                ]
-                                  },
-                                  {
-                                      "name":  "Listar insumos por categoria",
-                                      "request":  {
-                                                      "method":  "GET",
-                                                      "header":  [
-
-                                                                 ],
-                                                      "url":  "{{baseUrl}}/inventory/api/inventory/items?category={{category}}"
-                                                  }
-                                  },
-                                  {
-                                      "name":  "Crear insumo",
-                                      "request":  {
-                                                      "method":  "POST",
-                                                      "header":  [
-                                                                     {
-                                                                         "key":  "Content-Type",
-                                                                         "value":  "application/json"
-                                                                     }
-                                                                 ],
-                                                      "body":  {
-                                                                   "mode":  "raw",
-                                                                   "raw":  "{\n  \"code\": \"POSTMAN-ITEM-{{runId}}\",\n  \"name\": \"Jugo Postman {{runId}} 250ml\",\n  \"description\": \"Producto para pruebas desde Postman\",\n  \"category\": \"MINIBAR\",\n  \"unit\": \"UND\",\n  \"providerName\": \"Distribuciones Hoteleras SAS\",\n  \"stock\": 20,\n  \"minStock\": 5,\n  \"maxStock\": 80\n}"
-                                                               },
-                                                      "url":  "{{baseUrl}}/inventory/api/inventory/items"
-                                                  },
-                                      "event":  [
-                                                    {
-                                                        "listen":  "test",
-                                                        "script":  {
-                                                                       "type":  "text/javascript",
-                                                                       "exec":  [
-                                                                                    "if (pm.response.code \u003e= 200 \u0026\u0026 pm.response.code \u003c 300) {",
-                                                                                    "  const json = pm.response.json();",
-                                                                                    "  if (json.id !== undefined) pm.collectionVariables.set(\u0027itemId\u0027, json.id);",
-                                                                                    "}"
-                                                                                ]
-                                                                   }
-                                                    }
-                                                ]
-                                  },
-                                  {
-                                      "name":  "Obtener insumo por id",
-                                      "request":  {
-                                                      "method":  "GET",
-                                                      "header":  [
-
-                                                                 ],
-                                                      "url":  "{{baseUrl}}/inventory/api/inventory/items/{{itemId}}"
-                                                  }
-                                  },
-                                  {
-                                      "name":  "Actualizar insumo",
-                                      "request":  {
-                                                      "method":  "PUT",
-                                                      "header":  [
-                                                                     {
-                                                                         "key":  "Content-Type",
-                                                                         "value":  "application/json"
-                                                                     }
-                                                                 ],
-                                                      "body":  {
-                                                                   "mode":  "raw",
-                                                                   "raw":  "{\n  \"code\": \"POSTMAN-ITEM-{{runId}}\",\n  \"name\": \"Jugo Postman {{runId}} 250ml Actualizado\",\n  \"description\": \"Producto actualizado desde Postman\",\n  \"category\": \"MINIBAR\",\n  \"unit\": \"UND\",\n  \"providerName\": \"Distribuciones Hoteleras SAS\",\n  \"minStock\": 6,\n  \"maxStock\": 90,\n  \"active\": true\n}"
-                                                               },
-                                                      "url":  "{{baseUrl}}/inventory/api/inventory/items/{{itemId}}"
-                                                  }
-                                  },
-                                  {
-                                      "name":  "Registrar entrada de stock",
-                                      "request":  {
-                                                      "method":  "POST",
-                                                      "header":  [
-                                                                     {
-                                                                         "key":  "Content-Type",
-                                                                         "value":  "application/json"
-                                                                     }
-                                                                 ],
-                                                      "body":  {
-                                                                   "mode":  "raw",
-                                                                   "raw":  "{\n  \"quantity\": 15,\n  \"providerName\": \"Distribuciones Hoteleras SAS\",\n  \"referenceText\": \"Compra proveedor desde Postman\"\n}"
-                                                               },
-                                                      "url":  "{{baseUrl}}/inventory/api/inventory/items/{{itemId}}/entries"
-                                                  },
-                                      "event":  [
-                                                    {
-                                                        "listen":  "test",
-                                                        "script":  {
-                                                                       "type":  "text/javascript",
-                                                                       "exec":  [
-                                                                                    "pm.test(\u0027Entrada registrada\u0027, function () { pm.response.to.have.status(200); });",
-                                                                                    "const json = pm.response.json();",
-                                                                                    "if (json.id !== undefined) pm.collectionVariables.set(\u0027itemId\u0027, json.id);"
-                                                                                ]
-                                                                   }
-                                                    }
-                                                ]
-                                  },
-                                  {
-                                      "name":  "Registrar salida interna",
-                                      "request":  {
-                                                      "method":  "POST",
-                                                      "header":  [
-                                                                     {
-                                                                         "key":  "Content-Type",
-                                                                         "value":  "application/json"
-                                                                     }
-                                                                 ],
-                                                      "body":  {
-                                                                   "mode":  "raw",
-                                                                   "raw":  "{\n  \"itemId\": {{itemId}},\n  \"quantity\": 2,\n  \"roomNumber\": null,\n  \"areaName\": \"LIMPIEZA\",\n  \"origin\": \"CONSUMO_INTERNO\",\n  \"operationalResponsible\": \"{{operationalResponsible}}\",\n  \"referenceText\": \"Salida directa desde Postman\"\n}"
-                                                               },
-                                                      "url":  "{{baseUrl}}/inventory/api/inventory/internal/items/decrease"
-                                                  },
-                                      "event":  [
-                                                    {
-                                                        "listen":  "test",
-                                                        "script":  {
-                                                                       "type":  "text/javascript",
-                                                                       "exec":  [
-                                                                                    "pm.test(\u0027Salida interna registrada\u0027, function () { pm.response.to.have.status(200); });",
-                                                                                    "const json = pm.response.json();",
-                                                                                    "if (json.movementId !== undefined) pm.collectionVariables.set(\u0027createdMovementId\u0027, json.movementId);",
-                                                                                    "if (json.itemId !== undefined) pm.collectionVariables.set(\u0027itemId\u0027, json.itemId);"
-                                                                                ]
-                                                                   }
-                                                    }
-                                                ]
-                                  },
-                                  {
-                                      "name":  "Registrar devolucion de stock",
-                                      "request":  {
-                                                      "method":  "POST",
-                                                      "header":  [
-                                                                     {
-                                                                         "key":  "Content-Type",
-                                                                         "value":  "application/json"
-                                                                     }
-                                                                 ],
-                                                      "body":  {
-                                                                   "mode":  "raw",
-                                                                   "raw":  "{\n  \"quantity\": 1,\n  \"roomNumber\": \"{{roomNumber}}\",\n  \"areaName\": null,\n  \"operationalResponsible\": \"{{operationalResponsible}}\",\n  \"referenceText\": \"Devolucion desde Postman\",\n  \"sourceMovementId\": null\n}"
-                                                               },
-                                                      "url":  "{{baseUrl}}/inventory/api/inventory/items/{{itemId}}/returns"
-                                                  }
-                                  },
-                                  {
-                                      "name":  "Listar movimientos",
-                                      "request":  {
-                                                      "method":  "GET",
-                                                      "header":  [
-
-                                                                 ],
-                                                      "url":  "{{baseUrl}}/inventory/api/inventory/movements"
-                                                  },
-                                      "event":  [
-                                                    {
-                                                        "listen":  "test",
-                                                        "script":  {
-                                                                       "type":  "text/javascript",
-                                                                       "exec":  [
-                                                                                    "pm.test(\u0027Lista de movimientos OK\u0027, function () { pm.response.to.have.status(200); });",
-                                                                                    "const movements = pm.response.json();",
-                                                                                    "if (Array.isArray(movements) \u0026\u0026 movements.length \u003e 0) { pm.collectionVariables.set(\u0027movementId\u0027, movements[0].id); }",
-                                                                                    "const created = pm.collectionVariables.get(\u0027createdMovementId\u0027);",
-                                                                                    "if (created) { pm.collectionVariables.set(\u0027movementId\u0027, created); }"
-                                                                                ]
-                                                                   }
-                                                    }
-                                                ]
-                                  },
-                                  {
-                                      "name":  "Listar movimientos filtrados",
-                                      "request":  {
-                                                      "method":  "GET",
-                                                      "header":  [
-
-                                                                 ],
-                                                      "url":  "{{baseUrl}}/inventory/api/inventory/movements?type=SALIDA\u0026origin=HABITACION\u0026roomNumber={{roomNumber}}\u0026operationalResponsible={{operationalResponsible}}\u0026startDate={{startDate}}\u0026endDate={{endDate}}"
-                                                  }
-                                  },
-                                  {
-                                      "name":  "Ver stock bajo",
-                                      "request":  {
-                                                      "method":  "GET",
-                                                      "header":  [
-
-                                                                 ],
-                                                      "url":  "{{baseUrl}}/inventory/api/inventory/items/low-stock"
-                                                  }
-                                  },
-                                  {
-                                      "name":  "Ver alertas de stock bajo",
-                                      "request":  {
-                                                      "method":  "GET",
-                                                      "header":  [
-
-                                                                 ],
-                                                      "url":  "{{baseUrl}}/inventory/api/inventory/alerts/low-stock?openOnly=true"
-                                                  }
-                                  },
-                                  {
-                                      "name":  "Anular movimiento",
-                                      "request":  {
-                                                      "method":  "POST",
-                                                      "header":  [
-                                                                     {
-                                                                         "key":  "Content-Type",
-                                                                         "value":  "application/json"
-                                                                     }
-                                                                 ],
-                                                      "body":  {
-                                                                   "mode":  "raw",
-                                                                   "raw":  "{\n  \"reason\": \"Anulacion de prueba desde Postman\"\n}"
-                                                               },
-                                                      "url":  "{{baseUrl}}/inventory/api/inventory/movements/{{movementId}}/void"
-                                                  },
-                                      "event":  [
-                                                    {
-                                                        "listen":  "test",
-                                                        "script":  {
-                                                                       "type":  "text/javascript",
-                                                                       "exec":  [
-                                                                                    "pm.test(\u0027Anulacion procesada o rechazada por regla de negocio\u0027, function () { pm.expect([200, 400, 404]).to.include(pm.response.code); });"
-                                                                                ]
-                                                                   }
-                                                    }
-                                                ]
-                                  },
-                                  {
-                                      "name":  "Inactivar insumo",
-                                      "request":  {
-                                                      "method":  "PATCH",
-                                                      "header":  [
-
-                                                                 ],
-                                                      "url":  "{{baseUrl}}/inventory/api/inventory/items/{{itemId}}/deactivate"
-                                                  }
-                                  }
-                              ]
-                 },
-                 {
-                     "name":  "Inventory - Reportes y Auditoria",
-                     "item":  [
-                                  {
-                                      "name":  "Reporte de inventario",
-                                      "request":  {
-                                                      "method":  "GET",
-                                                      "header":  [
-
-                                                                 ],
-                                                      "url":  "{{baseUrl}}/inventory/api/inventory/reports/inventory?startDate={{startDate}}\u0026endDate={{endDate}}"
-                                                  }
-                                  },
-                                  {
-                                      "name":  "Reporte top usados",
-                                      "request":  {
-                                                      "method":  "GET",
-                                                      "header":  [
-
-                                                                 ],
-                                                      "url":  "{{baseUrl}}/inventory/api/inventory/reports/top-used?startDate={{startDate}}\u0026endDate={{endDate}}"
-                                                  }
-                                  },
-                                  {
-                                      "name":  "Exportar inventario XLSX",
-                                      "request":  {
-                                                      "method":  "GET",
-                                                      "header":  [
-
-                                                                 ],
-                                                      "url":  "{{baseUrl}}/inventory/api/inventory/reports/inventory/export?format=xlsx\u0026startDate={{startDate}}\u0026endDate={{endDate}}"
-                                                  }
-                                  },
-                                  {
-                                      "name":  "Exportar inventario CSV",
-                                      "request":  {
-                                                      "method":  "GET",
-                                                      "header":  [
-
-                                                                 ],
-                                                      "url":  "{{baseUrl}}/inventory/api/inventory/reports/inventory/export?format=csv\u0026startDate={{startDate}}\u0026endDate={{endDate}}"
-                                                  }
-                                  },
-                                  {
-                                      "name":  "Exportar inventario PDF",
-                                      "request":  {
-                                                      "method":  "GET",
-                                                      "header":  [
-
-                                                                 ],
-                                                      "url":  "{{baseUrl}}/inventory/api/inventory/reports/inventory/export?format=pdf\u0026startDate={{startDate}}\u0026endDate={{endDate}}"
-                                                  }
-                                  },
-                                  {
-                                      "name":  "Exportar top usados XLSX",
-                                      "request":  {
-                                                      "method":  "GET",
-                                                      "header":  [
-
-                                                                 ],
-                                                      "url":  "{{baseUrl}}/inventory/api/inventory/reports/top-used/export?format=xlsx\u0026startDate={{startDate}}\u0026endDate={{endDate}}"
-                                                  }
-                                  },
-                                  {
-                                      "name":  "Exportar top usados CSV",
-                                      "request":  {
-                                                      "method":  "GET",
-                                                      "header":  [
-
-                                                                 ],
-                                                      "url":  "{{baseUrl}}/inventory/api/inventory/reports/top-used/export?format=csv\u0026startDate={{startDate}}\u0026endDate={{endDate}}"
-                                                  }
-                                  },
-                                  {
-                                      "name":  "Exportar top usados PDF",
-                                      "request":  {
-                                                      "method":  "GET",
-                                                      "header":  [
-
-                                                                 ],
-                                                      "url":  "{{baseUrl}}/inventory/api/inventory/reports/top-used/export?format=pdf\u0026startDate={{startDate}}\u0026endDate={{endDate}}"
-                                                  }
-                                  },
-                                  {
-                                      "name":  "Auditoria inventario",
-                                      "request":  {
-                                                      "method":  "GET",
-                                                      "header":  [
-
-                                                                 ],
-                                                      "url":  "{{baseUrl}}/inventory/api/inventory/audit?action=QUERY_ITEMS\u0026username={{username}}\u0026startDate={{startDate}}\u0026endDate={{endDate}}"
-                                                  }
-                                  }
-                              ]
-                 },
-                 {
-                     "name":  "Rooms - Habitaciones y Asignaciones",
-                     "item":  [
-                                  {
-                                      "name":  "Listar habitaciones",
-                                      "request":  {
-                                                      "method":  "GET",
-                                                      "header":  [
-
-                                                                 ],
-                                                      "url":  "{{baseUrl}}/rooms/api/rooms"
-                                                  },
-                                      "event":  [
-                                                    {
-                                                        "listen":  "test",
-                                                        "script":  {
-                                                                       "type":  "text/javascript",
-                                                                       "exec":  [
-                                                                                    "pm.test(\u0027Lista de habitaciones OK\u0027, function () { pm.response.to.have.status(200); });",
-                                                                                    "const rooms = pm.response.json();",
-                                                                                    "if (Array.isArray(rooms) \u0026\u0026 rooms.length \u003e 0) {",
-                                                                                    "  pm.collectionVariables.set(\u0027roomId\u0027, rooms[0].id);",
-                                                                                    "  pm.collectionVariables.set(\u0027roomNumber\u0027, rooms[0].number);",
-                                                                                    "}"
-                                                                                ]
-                                                                   }
-                                                    }
-                                                ]
-                                  },
-                                  {
-                                      "name":  "Crear habitacion (opcional, puede fallar si ya existen 45)",
-                                      "request":  {
-                                                      "method":  "POST",
-                                                      "header":  [
-                                                                     {
-                                                                         "key":  "Content-Type",
-                                                                         "value":  "application/json"
-                                                                     }
-                                                                 ],
-                                                      "body":  {
-                                                                   "mode":  "raw",
-                                                                   "raw":  "{\n  \"number\": \"405\",\n  \"type\": \"EJECUTIVA\",\n  \"status\": \"DISPONIBLE\",\n  \"capacity\": 2,\n  \"floor\": 4,\n  \"observations\": \"Habitacion de prueba desde Postman\"\n}"
-                                                               },
-                                                      "url":  "{{baseUrl}}/rooms/api/rooms"
-                                                  },
-                                      "event":  [
-                                                    {
-                                                        "listen":  "test",
-                                                        "script":  {
-                                                                       "type":  "text/javascript",
-                                                                       "exec":  [
-                                                                                    "pm.test(\u0027Habitacion creada o limite de 45 aplicado\u0027, function () { pm.expect([200, 400, 409]).to.include(pm.response.code); });",
-                                                                                    "if (pm.response.code \u003e= 200 \u0026\u0026 pm.response.code \u003c 300) {",
-                                                                                    "  const json = pm.response.json();",
-                                                                                    "  if (json.id !== undefined) pm.collectionVariables.set(\u0027roomId\u0027, json.id);",
-                                                                                    "  if (json.number !== undefined) pm.collectionVariables.set(\u0027roomNumber\u0027, json.number);",
-                                                                                    "}"
-                                                                                ]
-                                                                   }
-                                                    }
-                                                ]
-                                  },
-                                  {
-                                      "name":  "Obtener habitacion por id",
-                                      "request":  {
-                                                      "method":  "GET",
-                                                      "header":  [
-
-                                                                 ],
-                                                      "url":  "{{baseUrl}}/rooms/api/rooms/{{roomId}}"
-                                                  }
-                                  },
-                                  {
-                                      "name":  "Obtener habitacion por numero",
-                                      "request":  {
-                                                      "method":  "GET",
-                                                      "header":  [
-
-                                                                 ],
-                                                      "url":  "{{baseUrl}}/rooms/api/rooms/number/{{roomNumber}}"
-                                                  }
-                                  },
-                                  {
-                                      "name":  "Actualizar estado de habitacion",
-                                      "request":  {
-                                                      "method":  "PATCH",
-                                                      "header":  [
-                                                                     {
-                                                                         "key":  "Content-Type",
-                                                                         "value":  "application/json"
-                                                                     }
-                                                                 ],
-                                                      "body":  {
-                                                                   "mode":  "raw",
-                                                                   "raw":  "{\n  \"status\": \"OCUPADA\"\n}"
-                                                               },
-                                                      "url":  "{{baseUrl}}/rooms/api/rooms/{{roomId}}/status"
-                                                  }
-                                  },
-                                  {
-                                      "name":  "Asignar insumo a habitacion",
-                                      "request":  {
-                                                      "method":  "POST",
-                                                      "header":  [
-                                                                     {
-                                                                         "key":  "Content-Type",
-                                                                         "value":  "application/json"
-                                                                     }
-                                                                 ],
-                                                      "body":  {
-                                                                   "mode":  "raw",
-                                                                   "raw":  "{\n  \"itemId\": {{kitAseoItemId}},\n  \"quantity\": 2,\n  \"deliveredBy\": \"Ana Maria\",\n  \"guestName\": \"Carlos Perez\",\n  \"assignmentType\": \"KIT_ASEO\"\n}"
-                                                               },
-                                                      "url":  "{{baseUrl}}/rooms/api/rooms/{{roomId}}/supplies/assign"
-                                                  },
-                                      "event":  [
-                                                    {
-                                                        "listen":  "test",
-                                                        "script":  {
-                                                                       "type":  "text/javascript",
-                                                                       "exec":  [
-                                                                                    "pm.test(\u0027Asignacion creada\u0027, function () { pm.response.to.have.status(200); });",
-                                                                                    "const json = pm.response.json();",
-                                                                                    "if (json.roomId !== undefined) pm.collectionVariables.set(\u0027roomId\u0027, json.roomId);"
-                                                                                ]
-                                                                   }
-                                                    }
-                                                ]
-                                  },
-                                  {
-                                      "name":  "Reponer minibar",
-                                      "request":  {
-                                                      "method":  "POST",
-                                                      "header":  [
-                                                                     {
-                                                                         "key":  "Content-Type",
-                                                                         "value":  "application/json"
-                                                                     }
-                                                                 ],
-                                                      "body":  {
-                                                                   "mode":  "raw",
-                                                                   "raw":  "{\n  \"itemId\": {{minibarItemId}},\n  \"quantity\": 1,\n  \"deliveredBy\": \"Housekeeping\",\n  \"guestName\": \"Carlos Perez\",\n  \"assignmentType\": \"MINIBAR\"\n}"
-                                                               },
-                                                      "url":  "{{baseUrl}}/rooms/api/rooms/{{roomId}}/supplies/assign"
-                                                  },
-                                      "event":  [
-                                                    {
-                                                        "listen":  "test",
-                                                        "script":  {
-                                                                       "type":  "text/javascript",
-                                                                       "exec":  [
-                                                                                    "pm.test(\u0027Reposicion creada\u0027, function () { pm.response.to.have.status(200); });"
-                                                                                ]
-                                                                   }
-                                                    }
-                                                ]
-                                  },
-                                  {
-                                      "name":  "Ver asignaciones de una habitacion",
-                                      "request":  {
-                                                      "method":  "GET",
-                                                      "header":  [
-
-                                                                 ],
-                                                      "url":  "{{baseUrl}}/rooms/api/rooms/{{roomId}}/supplies"
-                                                  }
-                                  },
-                                  {
-                                      "name":  "Ver todas las asignaciones",
-                                      "request":  {
-                                                      "method":  "GET",
-                                                      "header":  [
-
-                                                                 ],
-                                                      "url":  "{{baseUrl}}/rooms/api/rooms/supplies"
-                                                  }
-                                  },
-                                  {
-                                      "name":  "Ver asignaciones filtradas",
-                                      "request":  {
-                                                      "method":  "GET",
-                                                      "header":  [
-
-                                                                 ],
-                                                      "url":  "{{baseUrl}}/rooms/api/rooms/supplies?roomNumber={{roomNumber}}\u0026assignmentType=MINIBAR\u0026startDate={{startDate}}\u0026endDate={{endDate}}"
-                                                  }
-                                  }
-                              ]
-                 },
-                 {
-                     "name":  "Rooms - Reportes y Auditoria",
-                     "item":  [
-                                  {
-                                      "name":  "Reporte consumo habitaciones",
-                                      "request":  {
-                                                      "method":  "GET",
-                                                      "header":  [
-
-                                                                 ],
-                                                      "url":  "{{baseUrl}}/rooms/api/rooms/reports/consumption?roomNumber={{roomNumber}}\u0026roomType=EJECUTIVA\u0026assignmentType=MINIBAR\u0026startDate={{startDate}}\u0026endDate={{endDate}}"
-                                                  }
-                                  },
-                                  {
-                                      "name":  "Reporte distribucion habitaciones",
-                                      "request":  {
-                                                      "method":  "GET",
-                                                      "header":  [
-
-                                                                 ],
-                                                      "url":  "{{baseUrl}}/rooms/api/rooms/reports/distribution?roomNumber={{roomNumber}}\u0026roomType=EJECUTIVA\u0026assignmentType=MINIBAR\u0026deliveredBy=Housekeeping\u0026startDate={{startDate}}\u0026endDate={{endDate}}"
-                                                  }
-                                  },
-                                  {
-                                      "name":  "Exportar consumo XLSX",
-                                      "request":  {
-                                                      "method":  "GET",
-                                                      "header":  [
-
-                                                                 ],
-                                                      "url":  "{{baseUrl}}/rooms/api/rooms/reports/consumption/export?format=xlsx\u0026roomNumber={{roomNumber}}\u0026startDate={{startDate}}\u0026endDate={{endDate}}"
-                                                  }
-                                  },
-                                  {
-                                      "name":  "Exportar consumo CSV",
-                                      "request":  {
-                                                      "method":  "GET",
-                                                      "header":  [
-
-                                                                 ],
-                                                      "url":  "{{baseUrl}}/rooms/api/rooms/reports/consumption/export?format=csv\u0026roomNumber={{roomNumber}}\u0026startDate={{startDate}}\u0026endDate={{endDate}}"
-                                                  }
-                                  },
-                                  {
-                                      "name":  "Exportar consumo PDF",
-                                      "request":  {
-                                                      "method":  "GET",
-                                                      "header":  [
-
-                                                                 ],
-                                                      "url":  "{{baseUrl}}/rooms/api/rooms/reports/consumption/export?format=pdf\u0026roomNumber={{roomNumber}}\u0026startDate={{startDate}}\u0026endDate={{endDate}}"
-                                                  }
-                                  },
-                                  {
-                                      "name":  "Exportar distribucion XLSX",
-                                      "request":  {
-                                                      "method":  "GET",
-                                                      "header":  [
-
-                                                                 ],
-                                                      "url":  "{{baseUrl}}/rooms/api/rooms/reports/distribution/export?format=xlsx\u0026roomNumber={{roomNumber}}\u0026startDate={{startDate}}\u0026endDate={{endDate}}"
-                                                  }
-                                  },
-                                  {
-                                      "name":  "Exportar distribucion CSV",
-                                      "request":  {
-                                                      "method":  "GET",
-                                                      "header":  [
-
-                                                                 ],
-                                                      "url":  "{{baseUrl}}/rooms/api/rooms/reports/distribution/export?format=csv\u0026roomNumber={{roomNumber}}\u0026startDate={{startDate}}\u0026endDate={{endDate}}"
-                                                  }
-                                  },
-                                  {
-                                      "name":  "Exportar distribucion PDF",
-                                      "request":  {
-                                                      "method":  "GET",
-                                                      "header":  [
-
-                                                                 ],
-                                                      "url":  "{{baseUrl}}/rooms/api/rooms/reports/distribution/export?format=pdf\u0026roomNumber={{roomNumber}}\u0026startDate={{startDate}}\u0026endDate={{endDate}}"
-                                                  }
-                                  },
-                                  {
-                                      "name":  "Auditoria habitaciones",
-                                      "request":  {
-                                                      "method":  "GET",
-                                                      "header":  [
-
-                                                                 ],
-                                                      "url":  "{{baseUrl}}/rooms/api/rooms/audit?action=ASSIGN_SUPPLY\u0026username={{username}}\u0026startDate={{startDate}}\u0026endDate={{endDate}}"
-                                                  }
-                                  }
-                              ]
-                 },
-                 {
-                     "name":  "Health",
-                     "item":  [
-                                  {
-                                      "name":  "Gateway health",
-                                      "request":  {
-                                                      "auth":  {
-                                                                   "type":  "noauth"
-                                                               },
-                                                      "method":  "GET",
-                                                      "header":  [
-
-                                                                 ],
-                                                      "url":  "{{baseUrl}}/actuator/health"
-                                                  }
-                                  },
-                                  {
-                                      "name":  "Inventory health directo",
-                                      "request":  {
-                                                      "auth":  {
-                                                                   "type":  "noauth"
-                                                               },
-                                                      "method":  "GET",
-                                                      "header":  [
-
-                                                                 ],
-                                                      "url":  "{{inventoryUrl}}/actuator/health"
-                                                  }
-                                  },
-                                  {
-                                      "name":  "Rooms health directo",
-                                      "request":  {
-                                                      "auth":  {
-                                                                   "type":  "noauth"
-                                                               },
-                                                      "method":  "GET",
-                                                      "header":  [
-
-                                                                 ],
-                                                      "url":  "{{roomsUrl}}/actuator/health"
-                                                  }
-                                  }
-                              ]
-                 }
-             ]
+{
+    "info": {
+        "name": "Hotel Inventory Microservices",
+        "_postman_id": "c5c8ca34-b34a-4441-b91f-5d8881111111",
+        "description": "Colección única de QA — 102 requests vía API Gateway ({{baseUrl}} = http://localhost:8080).\n\nORDEN RECOMENDADO:\n1) Auth → Login admin (guarda token)\n2) Inventory - Catalogos (opcional)\n3) Fase 1 Ubicaciones → Obtener BODEGA_PRINCIPAL (guarda bodegaLocationId)\n4) Insumos y Stock → Listar insumos\n5) Fase 1 Stock / Documentos / Fase 2 según flujo a probar\n6) Rooms → Listar habitaciones (roomNumber)\n\nINCLUYE:\n• Auth, catálogos, insumos, movimientos, alertas, reportes\n• Fase 1: ubicaciones, stock por ubicación, documentos (OC/recepción/transferencia/ajuste), salida a habitación con targetLocationType\n• Fase 2: PAR habitaciones, reposición automática, conteos físicos (init/record/complete/approve/apply)\n• Habitaciones, asignaciones, reportes rooms, health directo\n\nVariables clave: token, runId, itemId, bodegaLocationId, habLocationId, documentId, documentLineId, roomParId, roomNumber, parScope.",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "auth": {
+        "type": "bearer",
+        "bearer": [
+            {
+                "key": "token",
+                "value": "{{token}}",
+                "type": "string"
+            }
+        ]
+    },
+    "event": [
+        {
+            "listen": "prerequest",
+            "script": {
+                "type": "text/javascript",
+                "exec": [
+                    "if (!pm.collectionVariables.get('runId')) {",
+                    "  pm.collectionVariables.set('runId', Date.now().toString());",
+                    "}",
+                    "pm.request.headers.upsert({ key: 'Accept', value: 'application/json' });"
+                ]
+            }
+        },
+        {
+            "listen": "test",
+            "script": {
+                "type": "text/javascript",
+                "exec": [
+                    "pm.test('Status code is not 5xx', function () {",
+                    "  pm.expect(pm.response.code).to.be.below(500);",
+                    "});",
+                    "pm.test('Response time is reasonable', function () {",
+                    "  pm.expect(pm.response.responseTime).to.be.below(5000);",
+                    "});"
+                ]
+            }
+        }
+    ],
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:8080"
+        },
+        {
+            "key": "inventoryUrl",
+            "value": "http://localhost:8081"
+        },
+        {
+            "key": "roomsUrl",
+            "value": "http://localhost:8082"
+        },
+        {
+            "key": "token",
+            "value": ""
+        },
+        {
+            "key": "username",
+            "value": "admin"
+        },
+        {
+            "key": "itemId",
+            "value": "1"
+        },
+        {
+            "key": "movementId",
+            "value": "1"
+        },
+        {
+            "key": "roomId",
+            "value": "1"
+        },
+        {
+            "key": "roomNumber",
+            "value": "101"
+        },
+        {
+            "key": "categoryId",
+            "value": "1"
+        },
+        {
+            "key": "unitId",
+            "value": "1"
+        },
+        {
+            "key": "providerId",
+            "value": "1"
+        },
+        {
+            "key": "areaId",
+            "value": "1"
+        },
+        {
+            "key": "userId",
+            "value": "1"
+        },
+        {
+            "key": "category",
+            "value": "MINIBAR"
+        },
+        {
+            "key": "startDate",
+            "value": "2026-04-01"
+        },
+        {
+            "key": "endDate",
+            "value": "2026-04-30"
+        },
+        {
+            "key": "operationalResponsible",
+            "value": "Almacen"
+        },
+        {
+            "key": "runId",
+            "value": ""
+        },
+        {
+            "key": "createdMovementId",
+            "value": ""
+        },
+        {
+            "key": "roles",
+            "value": ""
+        },
+        {
+            "key": "almacenToken",
+            "value": ""
+        },
+        {
+            "key": "recepcionToken",
+            "value": ""
+        },
+        {
+            "key": "servicioToken",
+            "value": ""
+        },
+        {
+            "key": "assignmentItemId",
+            "value": "1"
+        },
+        {
+            "key": "kitAseoItemId",
+            "value": "2"
+        },
+        {
+            "key": "minibarItemId",
+            "value": "1"
+        },
+        {
+            "key": "locationId",
+            "value": "1"
+        },
+        {
+            "key": "bodegaLocationId",
+            "value": "1"
+        },
+        {
+            "key": "habLocationId",
+            "value": ""
+        },
+        {
+            "key": "documentId",
+            "value": ""
+        },
+        {
+            "key": "documentLineId",
+            "value": ""
+        },
+        {
+            "key": "roomParId",
+            "value": ""
+        },
+        {
+            "key": "parScope",
+            "value": "HABITACION"
+        }
+    ],
+    "item": [
+        {
+            "name": "Auth",
+            "item": [
+                {
+                    "name": "Login admin",
+                    "request": {
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"Admin123\"\n}"
+                        },
+                        "url": "{{baseUrl}}/auth/login"
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('Login exitoso', function () { pm.response.to.have.status(200); });",
+                                    "const json = pm.response.json();",
+                                    "pm.collectionVariables.set('runId', Date.now().toString());",
+                                    "pm.collectionVariables.set('token', json.token);",
+                                    "pm.collectionVariables.set('username', json.username);",
+                                    "pm.collectionVariables.set('roles', (json.roles || []).join(','));",
+                                    "pm.test('Token admin activo guardado', function () { pm.expect(pm.collectionVariables.get('token')).to.not.be.empty; });"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Login almacenista",
+                    "request": {
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"username\": \"almacen\",\n  \"password\": \"Almacen123\"\n}"
+                        },
+                        "url": "{{baseUrl}}/auth/login"
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('Login exitoso', function () { pm.response.to.have.status(200); });",
+                                    "const json = pm.response.json();",
+                                    "pm.collectionVariables.set('almacenToken', json.token);",
+                                    "pm.test('Token alterno guardado', function () { pm.expect(pm.collectionVariables.get('almacenToken')).to.not.be.empty; });"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Login recepcion",
+                    "request": {
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"username\": \"recepcion\",\n  \"password\": \"Recepcion123\"\n}"
+                        },
+                        "url": "{{baseUrl}}/auth/login"
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('Login exitoso', function () { pm.response.to.have.status(200); });",
+                                    "const json = pm.response.json();",
+                                    "pm.collectionVariables.set('recepcionToken', json.token);",
+                                    "pm.test('Token alterno guardado', function () { pm.expect(pm.collectionVariables.get('recepcionToken')).to.not.be.empty; });"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Login servicio",
+                    "request": {
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"username\": \"servicio\",\n  \"password\": \"Servicio123\"\n}"
+                        },
+                        "url": "{{baseUrl}}/auth/login"
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('Login exitoso', function () { pm.response.to.have.status(200); });",
+                                    "const json = pm.response.json();",
+                                    "pm.collectionVariables.set('servicioToken', json.token);",
+                                    "pm.test('Token alterno guardado', function () { pm.expect(pm.collectionVariables.get('servicioToken')).to.not.be.empty; });"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Listar usuarios",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{baseUrl}}/auth/users"
+                    }
+                },
+                {
+                    "name": "Crear usuario",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"username\": \"postman_user_{{runId}}\",\n  \"password\": \"Postman123\",\n  \"roles\": [\n    \"RECEPCION\"\n  ],\n  \"active\": true\n}"
+                        },
+                        "url": "{{baseUrl}}/auth/users"
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                                    "  const json = pm.response.json();",
+                                    "  if (json.id !== undefined) pm.collectionVariables.set('userId', json.id);",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Actualizar usuario",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"username\": \"postman_user_{{runId}}\",\n  \"password\": \"Postman123\",\n  \"roles\": [\n    \"RECEPCION\",\n    \"SERVICIO\"\n  ],\n  \"active\": true\n}"
+                        },
+                        "url": "{{baseUrl}}/auth/users/{{userId}}"
+                    }
+                },
+                {
+                    "name": "Auditoria gateway",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{baseUrl}}/auth/audit?action=LOGIN_SUCCESS&username={{username}}&startDate={{startDate}}&endDate={{endDate}}"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Inventory - Catalogos",
+            "item": [
+                {
+                    "name": "Listar categorias",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{baseUrl}}/inventory/api/inventory/catalogs/categories"
+                    }
+                },
+                {
+                    "name": "Crear categoria",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"code\": \"POSTMAN_CAT_{{runId}}\",\n  \"name\": \"Categoria Postman {{runId}}\",\n  \"abbreviation\": \"PMC\",\n  \"active\": true\n}"
+                        },
+                        "url": "{{baseUrl}}/inventory/api/inventory/catalogs/categories"
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                                    "  const json = pm.response.json();",
+                                    "  if (json.id !== undefined) pm.collectionVariables.set('categoryId', json.id);",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Actualizar categoria",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"code\": \"POSTMAN_CAT_{{runId}}\",\n  \"name\": \"Categoria Postman {{runId}} Actualizada\",\n  \"abbreviation\": \"PMC\",\n  \"active\": true\n}"
+                        },
+                        "url": "{{baseUrl}}/inventory/api/inventory/catalogs/categories/{{categoryId}}"
+                    }
+                },
+                {
+                    "name": "Listar unidades",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{baseUrl}}/inventory/api/inventory/catalogs/units"
+                    }
+                },
+                {
+                    "name": "Crear unidad",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"code\": \"POSTMAN_UND_{{runId}}\",\n  \"name\": \"Unidad Postman {{runId}}\",\n  \"abbreviation\": \"U{{runId}}\",\n  \"active\": true\n}"
+                        },
+                        "url": "{{baseUrl}}/inventory/api/inventory/catalogs/units"
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                                    "  const json = pm.response.json();",
+                                    "  if (json.id !== undefined) pm.collectionVariables.set('unitId', json.id);",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Actualizar unidad",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"code\": \"POSTMAN_UND_{{runId}}\",\n  \"name\": \"Unidad Postman {{runId}} Actualizada\",\n  \"abbreviation\": \"U{{runId}}\",\n  \"active\": true\n}"
+                        },
+                        "url": "{{baseUrl}}/inventory/api/inventory/catalogs/units/{{unitId}}"
+                    }
+                },
+                {
+                    "name": "Listar proveedores",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{baseUrl}}/inventory/api/inventory/catalogs/providers"
+                    }
+                },
+                {
+                    "name": "Crear proveedor",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"code\": \"POSTMAN_PROV_{{runId}}\",\n  \"name\": \"Proveedor Postman {{runId}} SAS\",\n  \"documentNumber\": \"{{runId}}\",\n  \"phone\": \"3001234567\",\n  \"email\": \"proveedor.postman@example.com\",\n  \"active\": true\n}"
+                        },
+                        "url": "{{baseUrl}}/inventory/api/inventory/catalogs/providers"
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                                    "  const json = pm.response.json();",
+                                    "  if (json.id !== undefined) pm.collectionVariables.set('providerId', json.id);",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Actualizar proveedor",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"code\": \"POSTMAN_PROV_{{runId}}\",\n  \"name\": \"Proveedor Postman {{runId}} Actualizado SAS\",\n  \"documentNumber\": \"{{runId}}\",\n  \"phone\": \"3001234567\",\n  \"email\": \"proveedor.postman@example.com\",\n  \"active\": true\n}"
+                        },
+                        "url": "{{baseUrl}}/inventory/api/inventory/catalogs/providers/{{providerId}}"
+                    }
+                },
+                {
+                    "name": "Listar areas",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{baseUrl}}/inventory/api/inventory/catalogs/areas"
+                    }
+                },
+                {
+                    "name": "Crear area",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"code\": \"POSTMAN_AREA_{{runId}}\",\n  \"name\": \"Area Postman {{runId}}\",\n  \"abbreviation\": \"PAR\",\n  \"active\": true\n}"
+                        },
+                        "url": "{{baseUrl}}/inventory/api/inventory/catalogs/areas"
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                                    "  const json = pm.response.json();",
+                                    "  if (json.id !== undefined) pm.collectionVariables.set('areaId', json.id);",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Actualizar area",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"code\": \"POSTMAN_AREA_{{runId}}\",\n  \"name\": \"Area Postman {{runId}} Actualizada\",\n  \"abbreviation\": \"PAR\",\n  \"active\": true\n}"
+                        },
+                        "url": "{{baseUrl}}/inventory/api/inventory/catalogs/areas/{{areaId}}"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Inventory - Fase 1 Ubicaciones",
+            "item": [
+                {
+                    "name": "Listar ubicaciones",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{baseUrl}}/inventory/api/inventory/locations?activeOnly=false"
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('Lista ubicaciones OK', () => pm.response.to.have.status(200));",
+                                    "if (pm.response.code === 200) {",
+                                    "  const list = pm.response.json();",
+                                    "  if (!Array.isArray(list)) return;",
+                                    "  const bodega = list.find(l => l.code === 'BODEGA_PRINCIPAL');",
+                                    "  const hab = list.find(l => l.code === 'HAB_{{roomNumber}}');",
+                                    "  if (bodega && bodega.id) {",
+                                    "    pm.collectionVariables.set('bodegaLocationId', bodega.id);",
+                                    "    pm.collectionVariables.set('locationId', bodega.id);",
+                                    "  }",
+                                    "  if (hab && hab.id) pm.collectionVariables.set('habLocationId', hab.id);",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Listar ubicaciones por tipo HABITACION",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{baseUrl}}/inventory/api/inventory/locations?type=HABITACION&activeOnly=true"
+                    }
+                },
+                {
+                    "name": "Obtener ubicacion por id",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{baseUrl}}/inventory/api/inventory/locations/{{locationId}}"
+                    }
+                },
+                {
+                    "name": "Obtener ubicacion por codigo BODEGA",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{baseUrl}}/inventory/api/inventory/locations/code/BODEGA_PRINCIPAL"
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "if (pm.response.code === 200) {",
+                                    "  const loc = pm.response.json();",
+                                    "  if (loc.id !== undefined) {",
+                                    "    pm.collectionVariables.set('locationId', loc.id);",
+                                    "    pm.collectionVariables.set('bodegaLocationId', loc.id);",
+                                    "  }",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Obtener ubicacion habitacion por codigo",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{baseUrl}}/inventory/api/inventory/locations/code/HAB_{{roomNumber}}"
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "if (pm.response.code === 200) {",
+                                    "  const loc = pm.response.json();",
+                                    "  if (loc.id) pm.collectionVariables.set('habLocationId', loc.id);",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Crear ubicacion (prueba)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{baseUrl}}/inventory/api/inventory/locations",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"code\": \"POSTMAN_LOC_{{runId}}\",\n  \"name\": \"Ubicacion prueba Postman {{runId}}\",\n  \"type\": \"OTRO\",\n  \"parentLocationId\": null,\n  \"roomNumber\": null,\n  \"description\": \"Creada desde Postman Fase 1\",\n  \"active\": true\n}"
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                                    "  const json = pm.response.json();",
+                                    "  if (json.id !== undefined) pm.collectionVariables.set('locationId', json.id);",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Actualizar ubicacion",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{baseUrl}}/inventory/api/inventory/locations/{{locationId}}",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"code\": \"POSTMAN_LOC_{{runId}}\",\n  \"name\": \"Ubicacion prueba Postman {{runId}} actualizada\",\n  \"type\": \"OTRO\",\n  \"parentLocationId\": null,\n  \"roomNumber\": null,\n  \"description\": \"Actualizada desde Postman\",\n  \"active\": true\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "Desactivar ubicacion",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [],
+                        "url": "{{baseUrl}}/inventory/api/inventory/locations/{{locationId}}/deactivate",
+                        "description": "Solo rol ADMIN."
+                    }
+                }
+            ],
+            "description": "Fase 1: CRUD de ubicaciones físicas (bodega, pisos, habitaciones, minibares)."
+        },
+        {
+            "name": "Inventory - Fase 1 Stock por ubicacion",
+            "item": [
+                {
+                    "name": "Desglose stock por insumo",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{baseUrl}}/inventory/api/inventory/stock/items/{{itemId}}",
+                        "description": "Muestra cantidades del insumo en cada ubicación."
+                    }
+                },
+                {
+                    "name": "Stock en ubicacion (bodega)",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{baseUrl}}/inventory/api/inventory/stock/locations/{{bodegaLocationId}}"
+                    }
+                },
+                {
+                    "name": "Stock en habitacion",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{baseUrl}}/inventory/api/inventory/stock/locations/{{habLocationId}}"
+                    }
+                },
+                {
+                    "name": "Transferir stock entre ubicaciones",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{baseUrl}}/inventory/api/inventory/stock/transfers",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"itemId\": {{itemId}},\n  \"fromLocationId\": {{bodegaLocationId}},\n  \"toLocationId\": {{habLocationId}},\n  \"quantity\": 1,\n  \"operationalResponsible\": \"{{operationalResponsible}}\",\n  \"referenceText\": \"Transferencia Postman Fase 1\"\n}"
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('Transferencia creada', () => pm.expect([200,201]).to.include(pm.response.code));",
+                                    "if (pm.response.code === 201) {",
+                                    "  const json = pm.response.json();",
+                                    "  if (json.id) pm.collectionVariables.set('movementId', json.id);",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ],
+            "description": "Fase 1: consultas y transferencias de stock por ubicación."
+        },
+        {
+            "name": "Inventory - Fase 1 Documentos",
+            "item": [
+                {
+                    "name": "Listar documentos",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{baseUrl}}/inventory/api/inventory/documents"
+                    }
+                },
+                {
+                    "name": "Listar documentos ORDEN_COMPRA borrador",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{baseUrl}}/inventory/api/inventory/documents?type=ORDEN_COMPRA&status=BORRADOR"
+                    }
+                },
+                {
+                    "name": "Obtener documento por id",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{baseUrl}}/inventory/api/inventory/documents/{{documentId}}"
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                                    "  const json = pm.response.json();",
+                                    "  if (Array.isArray(json.lines) && json.lines.length > 0) {",
+                                    "    pm.collectionVariables.set('documentLineId', json.lines[0].id);",
+                                    "  }",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Crear orden de compra",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{baseUrl}}/inventory/api/inventory/documents",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"type\": \"ORDEN_COMPRA\",\n  \"providerName\": \"Distribuciones Hoteleras SAS\",\n  \"fromLocationId\": null,\n  \"toLocationId\": {{bodegaLocationId}},\n  \"notes\": \"OC de prueba Postman Fase 1\",\n  \"lines\": [\n    {\n      \"itemId\": {{itemId}},\n      \"quantityExpected\": 10,\n      \"unitCost\": 1500.00,\n      \"notes\": \"Linea demo\"\n    }\n  ]\n}"
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                                    "  const json = pm.response.json();",
+                                    "  if (json.id !== undefined) pm.collectionVariables.set('documentId', json.id);",
+                                    "}",
+                                    "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                                    "  const json = pm.response.json();",
+                                    "  if (Array.isArray(json.lines) && json.lines.length > 0) {",
+                                    "    pm.collectionVariables.set('documentLineId', json.lines[0].id);",
+                                    "  }",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Aprobar orden de compra",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": "{{baseUrl}}/inventory/api/inventory/documents/{{documentId}}/approve",
+                        "description": "Solo ADMIN. Ejecutar después de crear OC."
+                    }
+                },
+                {
+                    "name": "Recibir orden de compra",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{baseUrl}}/inventory/api/inventory/documents/{{documentId}}/receive",
+                        "description": "OC debe estar en estado APROBADO.",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"toLocationId\": {{bodegaLocationId}},\n  \"notes\": \"Recepcion Postman\",\n  \"lines\": [\n    {\n      \"lineId\": {{documentLineId}},\n      \"quantityActual\": 10,\n      \"unitCost\": 1500.00\n    }\n  ]\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "Crear documento TRANSFERENCIA",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{baseUrl}}/inventory/api/inventory/documents",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"type\": \"TRANSFERENCIA\",\n  \"providerName\": null,\n  \"fromLocationId\": {{bodegaLocationId}},\n  \"toLocationId\": {{habLocationId}},\n  \"notes\": \"Transferencia multi-item Postman\",\n  \"lines\": [\n    {\n      \"itemId\": {{itemId}},\n      \"quantityExpected\": 1,\n      \"unitCost\": null,\n      \"notes\": null\n    }\n  ]\n}"
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                                    "  const json = pm.response.json();",
+                                    "  if (json.id !== undefined) pm.collectionVariables.set('documentId', json.id);",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Ejecutar documento TRANSFERENCIA/AJUSTE",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": "{{baseUrl}}/inventory/api/inventory/documents/{{documentId}}/execute",
+                        "description": "Documento en BORRADOR tipo TRANSFERENCIA o AJUSTE."
+                    }
+                },
+                {
+                    "name": "Crear documento AJUSTE",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{baseUrl}}/inventory/api/inventory/documents",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"type\": \"AJUSTE\",\n  \"providerName\": null,\n  \"fromLocationId\": null,\n  \"toLocationId\": {{bodegaLocationId}},\n  \"notes\": \"Ajuste inventario Postman\",\n  \"lines\": [\n    {\n      \"itemId\": {{itemId}},\n      \"quantityExpected\": 1,\n      \"unitCost\": null,\n      \"notes\": \"Entrada por ajuste\"\n    }\n  ]\n}"
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                                    "  const json = pm.response.json();",
+                                    "  if (json.id !== undefined) pm.collectionVariables.set('documentId', json.id);",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Cancelar documento",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{baseUrl}}/inventory/api/inventory/documents/{{documentId}}/cancel",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"reason\": \"Cancelado desde Postman\"}"
+                        }
+                    }
+                }
+            ],
+            "description": "Fase 1: órdenes de compra, recepciones, transferencias y ajustes multi-ítem."
+        },
+        {
+            "name": "Inventory - Insumos y Stock",
+            "item": [
+                {
+                    "name": "Listar insumos",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{baseUrl}}/inventory/api/inventory/items"
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('Lista de insumos OK', function () { pm.response.to.have.status(200); });",
+                                    "const items = pm.response.json();",
+                                    "if (Array.isArray(items) && items.length > 0 && !pm.collectionVariables.get('itemId')) { pm.collectionVariables.set('itemId', items[0].id); }",
+                                    "if (Array.isArray(items)) {",
+                                    "  const minibar = items.find(item => item.active === true && item.category === 'MINIBAR' && item.stock > 2);",
+                                    "  const aseo = items.find(item => item.active === true && item.category === 'ASEO' && item.stock > 2);",
+                                    "  if (minibar) pm.collectionVariables.set('minibarItemId', minibar.id);",
+                                    "  if (aseo) pm.collectionVariables.set('kitAseoItemId', aseo.id);",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Listar insumos por categoria",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{baseUrl}}/inventory/api/inventory/items?category={{category}}"
+                    }
+                },
+                {
+                    "name": "Crear insumo",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"name\": \"Jugo Postman {{runId}} 250ml\",\n  \"description\": \"Producto para pruebas desde Postman\",\n  \"category\": \"MINIBAR\",\n  \"unit\": \"UND\",\n  \"providerName\": \"Distribuciones Hoteleras SAS\",\n  \"stock\": 20,\n  \"minStock\": 5,\n  \"maxStock\": 80\n}"
+                        },
+                        "url": "{{baseUrl}}/inventory/api/inventory/items"
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                                    "  const json = pm.response.json();",
+                                    "  if (json.id !== undefined) pm.collectionVariables.set('itemId', json.id);",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Obtener insumo por id",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{baseUrl}}/inventory/api/inventory/items/{{itemId}}"
+                    }
+                },
+                {
+                    "name": "Actualizar insumo",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"code\": \"POSTMAN-ITEM-{{runId}}\",\n  \"name\": \"Jugo Postman {{runId}} 250ml Actualizado\",\n  \"description\": \"Producto actualizado desde Postman\",\n  \"category\": \"MINIBAR\",\n  \"unit\": \"UND\",\n  \"providerName\": \"Distribuciones Hoteleras SAS\",\n  \"minStock\": 6,\n  \"maxStock\": 90,\n  \"active\": true\n}"
+                        },
+                        "url": "{{baseUrl}}/inventory/api/inventory/items/{{itemId}}"
+                    }
+                },
+                {
+                    "name": "Registrar entrada de stock",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"quantity\": 15,\n  \"providerName\": \"Distribuciones Hoteleras SAS\",\n  \"referenceText\": \"Compra proveedor desde Postman\"\n}"
+                        },
+                        "url": "{{baseUrl}}/inventory/api/inventory/items/{{itemId}}/entries"
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('Entrada registrada', function () { pm.response.to.have.status(200); });",
+                                    "const json = pm.response.json();",
+                                    "if (json.id !== undefined) pm.collectionVariables.set('itemId', json.id);"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Registrar salida interna",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"itemId\": {{itemId}},\n  \"quantity\": 2,\n  \"roomNumber\": null,\n  \"areaName\": \"LIMPIEZA\",\n  \"origin\": \"CONSUMO_INTERNO\",\n  \"operationalResponsible\": \"{{operationalResponsible}}\",\n  \"referenceText\": \"Salida directa desde Postman\"\n}"
+                        },
+                        "url": "{{baseUrl}}/inventory/api/inventory/internal/items/decrease"
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('Salida interna registrada', function () { pm.response.to.have.status(200); });",
+                                    "const json = pm.response.json();",
+                                    "if (json.movementId !== undefined) pm.collectionVariables.set('createdMovementId', json.movementId);",
+                                    "if (json.itemId !== undefined) pm.collectionVariables.set('itemId', json.itemId);"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Registrar salida a habitacion (con ubicacion)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{baseUrl}}/inventory/api/inventory/internal/items/decrease",
+                        "description": "Fase 1: salida desde bodega hacia ubicación HAB_XXX según targetLocationType.",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"itemId\": {{itemId}},\n  \"quantity\": 1,\n  \"roomNumber\": \"{{roomNumber}}\",\n  \"areaName\": null,\n  \"origin\": \"HABITACION\",\n  \"targetLocationType\": \"HABITACION\",\n  \"operationalResponsible\": \"{{operationalResponsible}}\",\n  \"referenceText\": \"Reposicion habitacion Postman Fase 1\"\n}"
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('Salida a habitacion OK', () => pm.response.to.have.status(200));",
+                                    "const json = pm.response.json();",
+                                    "if (json.movementId) pm.collectionVariables.set('createdMovementId', json.movementId);"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Registrar devolucion de stock",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"quantity\": 1,\n  \"roomNumber\": \"{{roomNumber}}\",\n  \"areaName\": null,\n  \"operationalResponsible\": \"{{operationalResponsible}}\",\n  \"referenceText\": \"Devolucion desde Postman\",\n  \"sourceMovementId\": null\n}"
+                        },
+                        "url": "{{baseUrl}}/inventory/api/inventory/items/{{itemId}}/returns"
+                    }
+                },
+                {
+                    "name": "Listar movimientos",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{baseUrl}}/inventory/api/inventory/movements"
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('Lista de movimientos OK', function () { pm.response.to.have.status(200); });",
+                                    "const movements = pm.response.json();",
+                                    "if (Array.isArray(movements) && movements.length > 0) { pm.collectionVariables.set('movementId', movements[0].id); }",
+                                    "const created = pm.collectionVariables.get('createdMovementId');",
+                                    "if (created) { pm.collectionVariables.set('movementId', created); }"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Listar movimientos filtrados",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{baseUrl}}/inventory/api/inventory/movements?type=SALIDA&origin=HABITACION&roomNumber={{roomNumber}}&operationalResponsible={{operationalResponsible}}&startDate={{startDate}}&endDate={{endDate}}"
+                    }
+                },
+                {
+                    "name": "Ver stock bajo",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{baseUrl}}/inventory/api/inventory/items/low-stock"
+                    }
+                },
+                {
+                    "name": "Ver alertas de stock bajo",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{baseUrl}}/inventory/api/inventory/alerts/low-stock?openOnly=true"
+                    }
+                },
+                {
+                    "name": "Anular movimiento",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"reason\": \"Anulacion de prueba desde Postman\"\n}"
+                        },
+                        "url": "{{baseUrl}}/inventory/api/inventory/movements/{{movementId}}/void"
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('Anulacion procesada o rechazada por regla de negocio', function () { pm.expect([200, 400, 404]).to.include(pm.response.code); });"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Inactivar insumo",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [],
+                        "url": "{{baseUrl}}/inventory/api/inventory/items/{{itemId}}/deactivate"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Inventory - Fase 2 PAR habitaciones",
+            "item": [
+                {
+                    "name": "Listar plantillas PAR",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{baseUrl}}/inventory/api/inventory/room-pars?activeOnly=false"
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('Lista PAR OK', () => pm.response.to.have.status(200));",
+                                    "const list = pm.response.json();",
+                                    "if (Array.isArray(list) && list.length > 0) pm.collectionVariables.set('roomParId', list[0].id);"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Obtener PAR por id",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{baseUrl}}/inventory/api/inventory/room-pars/{{roomParId}}"
+                    }
+                },
+                {
+                    "name": "Comparar habitacion vs PAR",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{baseUrl}}/inventory/api/inventory/room-pars/compare?roomNumber={{roomNumber}}&scope={{parScope}}",
+                        "description": "Requiere PAR activo para el tipo de habitación y rooms-service disponible."
+                    }
+                },
+                {
+                    "name": "Comparar por tipo habitacion (sin stock real)",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{baseUrl}}/inventory/api/inventory/room-pars/compare-by-type?roomType=ESTANDAR&scope=HABITACION"
+                    }
+                },
+                {
+                    "name": "Crear plantilla PAR",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{baseUrl}}/inventory/api/inventory/room-pars",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"roomType\": \"EJECUTIVA\",\n  \"scope\": \"HABITACION\",\n  \"name\": \"PAR ejecutiva Postman {{runId}}\",\n  \"active\": true,\n  \"lines\": [\n    {\n      \"itemId\": {{itemId}},\n      \"targetQuantity\": 2,\n      \"mandatory\": true,\n      \"notes\": \"Linea demo\"\n    }\n  ]\n}"
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                                    "  const json = pm.response.json();",
+                                    "  if (json.id !== undefined) pm.collectionVariables.set('roomParId', json.id);",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Actualizar plantilla PAR",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{baseUrl}}/inventory/api/inventory/room-pars/{{roomParId}}",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"name\": \"PAR ejecutiva Postman {{runId}} actualizado\",\n  \"active\": true,\n  \"lines\": [\n    {\n      \"itemId\": {{itemId}},\n      \"targetQuantity\": 3,\n      \"mandatory\": true,\n      \"notes\": \"Actualizado\"\n    }\n  ]\n}"
+                        }
+                    }
+                }
+            ],
+            "description": "Fase 2: plantillas PAR y comparación esperado vs real."
+        },
+        {
+            "name": "Inventory - Fase 2 Reposicion",
+            "item": [
+                {
+                    "name": "Sugerencias por habitacion",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{baseUrl}}/inventory/api/inventory/replenishment/suggestions?roomNumber={{roomNumber}}&scope=HABITACION"
+                    }
+                },
+                {
+                    "name": "Sugerencias por ambito (todas habitaciones)",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{baseUrl}}/inventory/api/inventory/replenishment/suggestions?scope=HABITACION",
+                        "description": "Puede tardar: recorre habitaciones con PAR."
+                    }
+                },
+                {
+                    "name": "Sugerencias filtradas por tipo ESTANDAR",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{baseUrl}}/inventory/api/inventory/replenishment/suggestions?scope=HABITACION&roomType=ESTANDAR"
+                    }
+                }
+            ],
+            "description": "Fase 2: sugerencias de reposición según faltantes PAR y stock en bodega."
+        },
+        {
+            "name": "Inventory - Fase 2 Conteos fisicos",
+            "item": [
+                {
+                    "name": "Iniciar conteo fisico",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{baseUrl}}/inventory/api/inventory/documents/counts/init",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"locationId\": {{bodegaLocationId}},\n  \"notes\": \"Conteo Postman Fase 2\"\n}"
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                                    "  const json = pm.response.json();",
+                                    "  if (json.id !== undefined) pm.collectionVariables.set('documentId', json.id);",
+                                    "}",
+                                    "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                                    "  const json = pm.response.json();",
+                                    "  if (Array.isArray(json.lines) && json.lines.length > 0) {",
+                                    "    pm.collectionVariables.set('documentLineId', json.lines[0].id);",
+                                    "  }",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Registrar cantidades contadas",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{baseUrl}}/inventory/api/inventory/documents/{{documentId}}/record-count",
+                        "description": "Poner quantityActual distinto a expected para probar diferencias.",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"lines\": [\n    {\n      \"lineId\": {{documentLineId}},\n      \"quantityActual\": 0\n    }\n  ],\n  \"notes\": \"Conteo fisico registrado\"\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "Cerrar conteo",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": "{{baseUrl}}/inventory/api/inventory/documents/{{documentId}}/complete-count",
+                        "description": "Sin diferencias → EJECUTADO. Con diferencias → PENDIENTE_APROBACION."
+                    }
+                },
+                {
+                    "name": "Aprobar diferencias de conteo",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": "{{baseUrl}}/inventory/api/inventory/documents/{{documentId}}/approve-variance",
+                        "description": "Solo ADMIN. Documento en PENDIENTE_APROBACION."
+                    }
+                },
+                {
+                    "name": "Aplicar diferencias al inventario",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": "{{baseUrl}}/inventory/api/inventory/documents/{{documentId}}/apply-variance",
+                        "description": "Documento en APROBADO."
+                    }
+                }
+            ],
+            "description": "Fase 2: flujo completo de conteo físico y aprobación de diferencias."
+        },
+        {
+            "name": "Inventory - Reportes y Auditoria",
+            "item": [
+                {
+                    "name": "Reporte de inventario",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{baseUrl}}/inventory/api/inventory/reports/inventory?startDate={{startDate}}&endDate={{endDate}}"
+                    }
+                },
+                {
+                    "name": "Reporte top usados",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{baseUrl}}/inventory/api/inventory/reports/top-used?startDate={{startDate}}&endDate={{endDate}}"
+                    }
+                },
+                {
+                    "name": "Exportar inventario XLSX",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{baseUrl}}/inventory/api/inventory/reports/inventory/export?format=xlsx&startDate={{startDate}}&endDate={{endDate}}"
+                    }
+                },
+                {
+                    "name": "Exportar inventario CSV",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{baseUrl}}/inventory/api/inventory/reports/inventory/export?format=csv&startDate={{startDate}}&endDate={{endDate}}"
+                    }
+                },
+                {
+                    "name": "Exportar inventario PDF",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{baseUrl}}/inventory/api/inventory/reports/inventory/export?format=pdf&startDate={{startDate}}&endDate={{endDate}}"
+                    }
+                },
+                {
+                    "name": "Exportar top usados XLSX",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{baseUrl}}/inventory/api/inventory/reports/top-used/export?format=xlsx&startDate={{startDate}}&endDate={{endDate}}"
+                    }
+                },
+                {
+                    "name": "Exportar top usados CSV",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{baseUrl}}/inventory/api/inventory/reports/top-used/export?format=csv&startDate={{startDate}}&endDate={{endDate}}"
+                    }
+                },
+                {
+                    "name": "Exportar top usados PDF",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{baseUrl}}/inventory/api/inventory/reports/top-used/export?format=pdf&startDate={{startDate}}&endDate={{endDate}}"
+                    }
+                },
+                {
+                    "name": "Auditoria inventario",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{baseUrl}}/inventory/api/inventory/audit?action=QUERY_ITEMS&username={{username}}&startDate={{startDate}}&endDate={{endDate}}"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Rooms - Habitaciones y Asignaciones",
+            "item": [
+                {
+                    "name": "Listar habitaciones",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{baseUrl}}/rooms/api/rooms"
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('Lista de habitaciones OK', function () { pm.response.to.have.status(200); });",
+                                    "const rooms = pm.response.json();",
+                                    "if (Array.isArray(rooms) && rooms.length > 0) {",
+                                    "  pm.collectionVariables.set('roomId', rooms[0].id);",
+                                    "  pm.collectionVariables.set('roomNumber', rooms[0].number);",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Crear habitacion (opcional, puede fallar si ya existen 45)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"number\": \"405\",\n  \"type\": \"EJECUTIVA\",\n  \"status\": \"DISPONIBLE\",\n  \"capacity\": 2,\n  \"floor\": 4,\n  \"observations\": \"Habitacion de prueba desde Postman\"\n}"
+                        },
+                        "url": "{{baseUrl}}/rooms/api/rooms"
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('Habitacion creada o limite de 45 aplicado', function () { pm.expect([200, 400, 409]).to.include(pm.response.code); });",
+                                    "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                                    "  const json = pm.response.json();",
+                                    "  if (json.id !== undefined) pm.collectionVariables.set('roomId', json.id);",
+                                    "  if (json.number !== undefined) pm.collectionVariables.set('roomNumber', json.number);",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Obtener habitacion por id",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{baseUrl}}/rooms/api/rooms/{{roomId}}"
+                    }
+                },
+                {
+                    "name": "Obtener habitacion por numero",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{baseUrl}}/rooms/api/rooms/number/{{roomNumber}}"
+                    }
+                },
+                {
+                    "name": "Actualizar estado de habitacion",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"status\": \"OCUPADA\"\n}"
+                        },
+                        "url": "{{baseUrl}}/rooms/api/rooms/{{roomId}}/status"
+                    }
+                },
+                {
+                    "name": "Asignar insumo a habitacion",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"itemId\": {{kitAseoItemId}},\n  \"quantity\": 2,\n  \"deliveredBy\": \"Ana Maria\",\n  \"guestName\": \"Carlos Perez\",\n  \"assignmentType\": \"KIT_ASEO\"\n}"
+                        },
+                        "url": "{{baseUrl}}/rooms/api/rooms/{{roomId}}/supplies/assign"
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('Asignacion creada', function () { pm.response.to.have.status(200); });",
+                                    "const json = pm.response.json();",
+                                    "if (json.roomId !== undefined) pm.collectionVariables.set('roomId', json.roomId);"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Reponer minibar",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"itemId\": {{minibarItemId}},\n  \"quantity\": 1,\n  \"deliveredBy\": \"Housekeeping\",\n  \"guestName\": \"Carlos Perez\",\n  \"assignmentType\": \"MINIBAR\"\n}"
+                        },
+                        "url": "{{baseUrl}}/rooms/api/rooms/{{roomId}}/supplies/assign"
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('Reposicion creada', function () { pm.response.to.have.status(200); });"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Ver asignaciones de una habitacion",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{baseUrl}}/rooms/api/rooms/{{roomId}}/supplies"
+                    }
+                },
+                {
+                    "name": "Ver todas las asignaciones",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{baseUrl}}/rooms/api/rooms/supplies"
+                    }
+                },
+                {
+                    "name": "Ver asignaciones filtradas",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{baseUrl}}/rooms/api/rooms/supplies?roomNumber={{roomNumber}}&assignmentType=MINIBAR&startDate={{startDate}}&endDate={{endDate}}"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Rooms - Reportes y Auditoria",
+            "item": [
+                {
+                    "name": "Reporte consumo habitaciones",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{baseUrl}}/rooms/api/rooms/reports/consumption?roomNumber={{roomNumber}}&roomType=EJECUTIVA&assignmentType=MINIBAR&startDate={{startDate}}&endDate={{endDate}}"
+                    }
+                },
+                {
+                    "name": "Reporte distribucion habitaciones",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{baseUrl}}/rooms/api/rooms/reports/distribution?roomNumber={{roomNumber}}&roomType=EJECUTIVA&assignmentType=MINIBAR&deliveredBy=Housekeeping&startDate={{startDate}}&endDate={{endDate}}"
+                    }
+                },
+                {
+                    "name": "Exportar consumo XLSX",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{baseUrl}}/rooms/api/rooms/reports/consumption/export?format=xlsx&roomNumber={{roomNumber}}&startDate={{startDate}}&endDate={{endDate}}"
+                    }
+                },
+                {
+                    "name": "Exportar consumo CSV",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{baseUrl}}/rooms/api/rooms/reports/consumption/export?format=csv&roomNumber={{roomNumber}}&startDate={{startDate}}&endDate={{endDate}}"
+                    }
+                },
+                {
+                    "name": "Exportar consumo PDF",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{baseUrl}}/rooms/api/rooms/reports/consumption/export?format=pdf&roomNumber={{roomNumber}}&startDate={{startDate}}&endDate={{endDate}}"
+                    }
+                },
+                {
+                    "name": "Exportar distribucion XLSX",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{baseUrl}}/rooms/api/rooms/reports/distribution/export?format=xlsx&roomNumber={{roomNumber}}&startDate={{startDate}}&endDate={{endDate}}"
+                    }
+                },
+                {
+                    "name": "Exportar distribucion CSV",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{baseUrl}}/rooms/api/rooms/reports/distribution/export?format=csv&roomNumber={{roomNumber}}&startDate={{startDate}}&endDate={{endDate}}"
+                    }
+                },
+                {
+                    "name": "Exportar distribucion PDF",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{baseUrl}}/rooms/api/rooms/reports/distribution/export?format=pdf&roomNumber={{roomNumber}}&startDate={{startDate}}&endDate={{endDate}}"
+                    }
+                },
+                {
+                    "name": "Auditoria habitaciones",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{baseUrl}}/rooms/api/rooms/audit?action=ASSIGN_SUPPLY&username={{username}}&startDate={{startDate}}&endDate={{endDate}}"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Health",
+            "item": [
+                {
+                    "name": "Gateway health",
+                    "request": {
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{baseUrl}}/actuator/health"
+                    }
+                },
+                {
+                    "name": "Inventory health directo",
+                    "request": {
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{inventoryUrl}}/actuator/health"
+                    }
+                },
+                {
+                    "name": "Rooms health directo",
+                    "request": {
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{roomsUrl}}/actuator/health"
+                    }
+                }
+            ]
+        }
+    ]
 }

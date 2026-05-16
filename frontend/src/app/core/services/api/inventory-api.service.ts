@@ -4,20 +4,38 @@ import { environment } from '@env/environment';
 import {
   type CatalogEntity,
   type CatalogRequest,
+  type CreateDocumentRequest,
+  type CreateRoomParRequest,
+  type CreateLocationRequest,
   type CreateSupplyItemRequest,
   type DateRangeFilters,
+  type DocumentFilters,
   type InternalStockDecreaseRequest,
+  type InventoryDocument,
   type InventoryMovement,
   type InventorySummaryReport,
+  type ItemStockBreakdown,
+  type Location,
+  type LocationFilters,
   type LowStockAlert,
   type MovementFilters,
   type Provider,
+  type InitCountRequest,
+  type ReceiveDocumentRequest,
+  type RecordCountRequest,
+  type ReplenishmentSuggestion,
+  type RoomPar,
+  type RoomParComparisonView,
+  type StockByLocationView,
   type StockChangeResponse,
   type StockEntryRequest,
   type StockReturnRequest,
   type SupplyItem,
   type TopUsedItemReport,
+  type TransferRequest,
   type UnitOfMeasure,
+  type UpdateLocationRequest,
+  type UpdateRoomParRequest,
   type UpdateSupplyItemRequest,
   type VoidMovementRequest
 } from '@models/inventory.model';
@@ -168,5 +186,123 @@ export class InventoryApiService {
 
   updateArea(id: number, payload: CatalogRequest): Observable<CatalogEntity> {
     return this.http.put<CatalogEntity>(`${this.baseUrl}/catalogs/areas/${id}`, payload);
+  }
+
+  getLocations(filters: LocationFilters = {}): Observable<Location[]> {
+    return this.http.get<Location[]>(`${this.baseUrl}/locations`, {
+      params: buildHttpParams(filters)
+    });
+  }
+
+  getLocation(id: number): Observable<Location> {
+    return this.http.get<Location>(`${this.baseUrl}/locations/${id}`);
+  }
+
+  createLocation(payload: CreateLocationRequest): Observable<Location> {
+    return this.http.post<Location>(`${this.baseUrl}/locations`, payload);
+  }
+
+  updateLocation(id: number, payload: UpdateLocationRequest): Observable<Location> {
+    return this.http.put<Location>(`${this.baseUrl}/locations/${id}`, payload);
+  }
+
+  deactivateLocation(id: number): Observable<Location> {
+    return this.http.patch<Location>(`${this.baseUrl}/locations/${id}/deactivate`, {});
+  }
+
+  getStockByItem(itemId: number): Observable<ItemStockBreakdown> {
+    return this.http.get<ItemStockBreakdown>(`${this.baseUrl}/stock/items/${itemId}`);
+  }
+
+  getStockByLocation(locationId: number): Observable<StockByLocationView[]> {
+    return this.http.get<StockByLocationView[]>(`${this.baseUrl}/stock/locations/${locationId}`);
+  }
+
+  transferStock(payload: TransferRequest): Observable<InventoryMovement> {
+    return this.http.post<InventoryMovement>(`${this.baseUrl}/stock/transfers`, payload);
+  }
+
+  getDocuments(filters: DocumentFilters = {}): Observable<InventoryDocument[]> {
+    return this.http.get<InventoryDocument[]>(`${this.baseUrl}/documents`, {
+      params: buildHttpParams(filters)
+    });
+  }
+
+  getDocument(id: number): Observable<InventoryDocument> {
+    return this.http.get<InventoryDocument>(`${this.baseUrl}/documents/${id}`);
+  }
+
+  createDocument(payload: CreateDocumentRequest): Observable<InventoryDocument> {
+    return this.http.post<InventoryDocument>(`${this.baseUrl}/documents`, payload);
+  }
+
+  approveDocument(id: number): Observable<InventoryDocument> {
+    return this.http.post<InventoryDocument>(`${this.baseUrl}/documents/${id}/approve`, {});
+  }
+
+  receiveDocument(id: number, payload: ReceiveDocumentRequest): Observable<InventoryDocument> {
+    return this.http.post<InventoryDocument>(`${this.baseUrl}/documents/${id}/receive`, payload);
+  }
+
+  executeDocument(id: number): Observable<InventoryDocument> {
+    return this.http.post<InventoryDocument>(`${this.baseUrl}/documents/${id}/execute`, {});
+  }
+
+  cancelDocument(id: number, reason: string): Observable<InventoryDocument> {
+    return this.http.post<InventoryDocument>(`${this.baseUrl}/documents/${id}/cancel`, { reason });
+  }
+
+  initCount(payload: InitCountRequest): Observable<InventoryDocument> {
+    return this.http.post<InventoryDocument>(`${this.baseUrl}/documents/counts/init`, payload);
+  }
+
+  recordCount(id: number, payload: RecordCountRequest): Observable<InventoryDocument> {
+    return this.http.post<InventoryDocument>(`${this.baseUrl}/documents/${id}/record-count`, payload);
+  }
+
+  completeCount(id: number): Observable<InventoryDocument> {
+    return this.http.post<InventoryDocument>(`${this.baseUrl}/documents/${id}/complete-count`, {});
+  }
+
+  approveVariance(id: number): Observable<InventoryDocument> {
+    return this.http.post<InventoryDocument>(`${this.baseUrl}/documents/${id}/approve-variance`, {});
+  }
+
+  applyVariance(id: number): Observable<InventoryDocument> {
+    return this.http.post<InventoryDocument>(`${this.baseUrl}/documents/${id}/apply-variance`, {});
+  }
+
+  getRoomPars(activeOnly = true): Observable<RoomPar[]> {
+    return this.http.get<RoomPar[]>(`${this.baseUrl}/room-pars`, {
+      params: buildHttpParams({ activeOnly })
+    });
+  }
+
+  getRoomPar(id: number): Observable<RoomPar> {
+    return this.http.get<RoomPar>(`${this.baseUrl}/room-pars/${id}`);
+  }
+
+  createRoomPar(payload: CreateRoomParRequest): Observable<RoomPar> {
+    return this.http.post<RoomPar>(`${this.baseUrl}/room-pars`, payload);
+  }
+
+  updateRoomPar(id: number, payload: UpdateRoomParRequest): Observable<RoomPar> {
+    return this.http.put<RoomPar>(`${this.baseUrl}/room-pars/${id}`, payload);
+  }
+
+  compareRoomPar(roomNumber: string, scope: string): Observable<RoomParComparisonView> {
+    return this.http.get<RoomParComparisonView>(`${this.baseUrl}/room-pars/compare`, {
+      params: buildHttpParams({ roomNumber, scope })
+    });
+  }
+
+  getReplenishmentSuggestions(params: {
+    roomNumber?: string | null;
+    scope?: string | null;
+    roomType?: string | null;
+  }): Observable<ReplenishmentSuggestion[]> {
+    return this.http.get<ReplenishmentSuggestion[]>(`${this.baseUrl}/replenishment/suggestions`, {
+      params: buildHttpParams(params)
+    });
   }
 }

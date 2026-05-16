@@ -274,6 +274,27 @@
         </div>
       </section>
 
+      <section class="inv-detail-section inv-detail-stock-locations">
+        <h4 class="inv-detail-section__title">Stock por ubicación</h4>
+        @if (stockBreakdownLoading()) {
+          <p class="inv-detail-section__text">Cargando desglose...</p>
+        } @else if (stockBreakdown(); as breakdown) {
+          @if (!breakdown.byLocation.length) {
+            <p class="inv-detail-section__text">Sin saldo distribuido por ubicación.</p>
+          } @else {
+            <ul class="inv-stock-location-list">
+              @for (row of breakdown.byLocation; track row.locationId) {
+                <li>
+                  <strong>{{ row.locationName }}</strong>
+                  <span>{{ row.locationCode }} · {{ locationTypeLabel(row.locationType) }}</span>
+                  <em>{{ row.quantity }} uds</em>
+                </li>
+              }
+            </ul>
+          }
+        }
+      </section>
+
       <section class="inv-detail-info-list">
         <article class="inv-detail-info-row">
           <div class="inv-detail-info-row__label">
@@ -323,6 +344,11 @@
                 <button type="button" class="inv-quick-action" (click)="openDecreaseDialog(item)">
                   <i class="pi pi-upload" aria-hidden="true"></i>
                   <span>Salida</span>
+                </button>
+
+                <button type="button" class="inv-quick-action" (click)="openTransferDialog(item)">
+                  <i class="pi pi-arrow-right-arrow-left" aria-hidden="true"></i>
+                  <span>Transferir</span>
                 </button>
               }
 
@@ -1074,6 +1100,59 @@
             ></button>
 
             <button pButton type="submit" label="Registrar" [loading]="saving()"></button>
+          </div>
+        </form>
+      }
+
+      @case ('transfer') {
+        <form [formGroup]="transferForm" class="inventory-dialog-form" (ngSubmit)="submitTransfer()">
+          @if (dialogSubmitError(); as error) {
+            <article class="validation-banner validation-banner--danger">
+              <strong>Transferencia</strong>
+              <p>{{ error }}</p>
+            </article>
+          }
+          @if (selectedItem(); as current) {
+            <div class="inventory-dialog-spotlight">
+              <strong>{{ current.name }}</strong>
+              <small>{{ current.code }} · Stock total {{ current.stock }}</small>
+            </div>
+          }
+          <div class="form-grid pp-form-grid-2">
+            <label class="field">
+              <span>Desde</span>
+              <select class="field-control" formControlName="fromLocationId">
+                <option value="">Seleccionar</option>
+                @for (loc of locations(); track loc.id) {
+                  <option [value]="loc.id">{{ loc.code }} — {{ loc.name }}</option>
+                }
+              </select>
+            </label>
+            <label class="field">
+              <span>Hacia</span>
+              <select class="field-control" formControlName="toLocationId">
+                <option value="">Seleccionar</option>
+                @for (loc of locations(); track loc.id) {
+                  <option [value]="loc.id">{{ loc.code }} — {{ loc.name }}</option>
+                }
+              </select>
+            </label>
+            <label class="field">
+              <span>Cantidad</span>
+              <input pInputText type="number" min="0.001" step="0.001" formControlName="quantity" />
+            </label>
+            <label class="field">
+              <span>Responsable</span>
+              <input pInputText class="field-control" formControlName="operationalResponsible" />
+            </label>
+          </div>
+          <label class="field">
+            <span>Referencia</span>
+            <textarea class="field-control field-control--textarea" rows="2" formControlName="referenceText"></textarea>
+          </label>
+          <div class="dialog-footer">
+            <button pButton type="button" label="Cancelar" severity="secondary" variant="text" (click)="dialogVisible = false"></button>
+            <button pButton type="submit" label="Transferir" [loading]="saving()"></button>
           </div>
         </form>
       }

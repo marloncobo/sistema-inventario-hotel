@@ -124,6 +124,70 @@ export const routes: Routes = [
         }
       },
       {
+        path: 'ubicaciones',
+        canActivate: [roleGuard],
+        loadComponent: () =>
+          import('@features/locations/pages/locations-page/locations-page.component').then(
+            (m) => m.LocationsPageComponent
+          ),
+        data: {
+          title: 'Ubicaciones',
+          breadcrumb: 'Ubicaciones',
+          roles: rolesForShellRoute('ubicaciones'),
+          summary: 'Ubicaciones físicas donde vive el inventario (bodega, pisos, habitaciones, minibar).',
+          endpoint: 'GET/POST/PUT/PATCH /inventory/api/inventory/locations',
+          note: 'Servicio puede consultar; admin y almacén gestionan.'
+        }
+      },
+      {
+        path: 'documentos',
+        canActivate: [roleGuard],
+        loadComponent: () =>
+          import('@features/documents/pages/documents-page/documents-page.component').then(
+            (m) => m.DocumentsPageComponent
+          ),
+        data: {
+          title: 'Documentos',
+          breadcrumb: 'Documentos',
+          roles: rolesForShellRoute('documentos'),
+          summary: 'Documentos multi-ítem: compras, recepciones, transferencias y ajustes.',
+          endpoint: 'GET/POST /inventory/api/inventory/documents · approve · receive · execute · cancel',
+          note: 'Flujo completo de operaciones empresariales de inventario.'
+        }
+      },
+      {
+        path: 'par-habitaciones',
+        canActivate: [roleGuard],
+        loadComponent: () =>
+          import('@features/par/pages/par-page/par-page.component').then((m) => m.ParPageComponent),
+        data: { title: 'PAR habitaciones', breadcrumb: 'PAR', roles: rolesForShellRoute('par-habitaciones') }
+      },
+      {
+        path: 'reposicion',
+        canActivate: [roleGuard],
+        loadComponent: () =>
+          import('@features/replenishment/pages/replenishment-page/replenishment-page.component').then(
+            (m) => m.ReplenishmentPageComponent
+          ),
+        data: { title: 'Reposición', breadcrumb: 'Reposición', roles: rolesForShellRoute('reposicion') }
+      },
+      {
+        path: 'conteos',
+        canActivate: [roleGuard],
+        loadComponent: () =>
+          import('@features/counts/pages/counts-page/counts-page.component').then((m) => m.CountsPageComponent),
+        data: { title: 'Conteos', breadcrumb: 'Conteos', roles: rolesForShellRoute('conteos') }
+      },
+      {
+        path: 'diferencias',
+        canActivate: [roleGuard],
+        loadComponent: () =>
+          import('@features/variances/pages/variances-page/variances-page.component').then(
+            (m) => m.VariancesPageComponent
+          ),
+        data: { title: 'Diferencias', breadcrumb: 'Diferencias', roles: rolesForShellRoute('diferencias') }
+      },
+      {
         path: 'alertas',
         canActivate: [roleGuard],
         loadComponent: () =>

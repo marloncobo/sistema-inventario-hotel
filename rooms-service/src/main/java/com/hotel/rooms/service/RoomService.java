@@ -126,7 +126,7 @@ public class RoomService {
         try {
             stockResponse = inventoryClient.decreaseStock(new InternalStockDecreaseRequest(
                     request.itemId(), request.quantity(), room.getNumber(), null, "HABITACION",
-                    request.deliveredBy(), referenceText(room, assignmentType)
+                    assignmentType, request.deliveredBy(), referenceText(room, assignmentType)
             ));
         } catch (RestClientResponseException ex) {
             throw new BusinessException("No fue posible descontar inventario: " + responseMessage(ex));

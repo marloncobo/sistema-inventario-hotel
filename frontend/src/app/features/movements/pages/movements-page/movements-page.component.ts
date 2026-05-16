@@ -277,6 +277,21 @@ export class MovementsPageComponent implements OnInit {
     return movement.roomNumber || movement.areaName || 'Sin ubicacion';
   }
 
+  protected movementRouteLabel(movement: InventoryMovement): string {
+    const from = movement.fromLocationCode || movement.fromLocationName;
+    const to = movement.toLocationCode || movement.toLocationName;
+    if (from && to) {
+      return `${from} → ${to}`;
+    }
+    if (from) {
+      return `Salió: ${from}`;
+    }
+    if (to) {
+      return `Llegó: ${to}`;
+    }
+    return this.locationLabel(movement);
+  }
+
   protected statusSeverity(movement: InventoryMovement): 'info' | 'danger' {
     return this.canVoid(movement) ? 'info' : 'danger';
   }

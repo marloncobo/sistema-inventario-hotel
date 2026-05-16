@@ -37,6 +37,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/inventory/items/*/returns").hasAnyRole("ADMIN", "ALMACENISTA", "SERVICIO")
                         .requestMatchers(HttpMethod.POST, "/api/inventory/internal/items/decrease").hasAnyRole("ADMIN", "ALMACENISTA", "SERVICIO")
                         .requestMatchers(HttpMethod.GET, "/api/inventory/items", "/api/inventory/items/*", "/api/inventory/items/low-stock").hasAnyRole("ADMIN", "ALMACENISTA", "SERVICIO")
+                        .requestMatchers(HttpMethod.GET, "/api/inventory/locations/**", "/api/inventory/stock/**",
+                                "/api/inventory/room-pars/compare", "/api/inventory/room-pars/compare-by-type",
+                                "/api/inventory/replenishment/suggestions").hasAnyRole("ADMIN", "ALMACENISTA", "SERVICIO")
+                        .requestMatchers(HttpMethod.GET, "/api/inventory/room-pars/**").hasAnyRole("ADMIN", "ALMACENISTA", "SERVICIO")
                         .requestMatchers(HttpMethod.GET, "/api/inventory/movements").hasAnyRole("ADMIN", "ALMACENISTA")
                         .requestMatchers("/api/inventory/**").hasAnyRole("ADMIN", "ALMACENISTA")
                         .anyRequest().authenticated()

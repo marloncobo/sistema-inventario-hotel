@@ -1,0 +1,58 @@
+<div class="cnt-page">
+  <app-page-header title="Conteo físico" subtitle="Toma de inventario por ubicación: sistema vs conteo real." />
+
+  @if (!activeCount()) {
+    <section class="surface-card cnt-panel">
+      <h3>Iniciar conteo</h3>
+      <form [formGroup]="initForm" class="cnt-form" (ngSubmit)="startCount()">
+        <label class="field">
+          <span>Ubicación a contar</span>
+          <select class="field-control" formControlName="locationId">
+            <option value="">Seleccionar</option>
+            @for (loc of locations(); track loc.id) {
+              <option [value]="loc.id">{{ loc.code }} — {{ loc.name }}</option>
+            }
+          </select>
+        </label>
+        <label class="field">
+          <span>Notas</span>
+          <input class="field-control" formControlName="notes" />
+        </label>
+        <button pButton type="submit" label="Crear conteo" icon="pi pi-plus" [loading]="loading()"></button>
+      </form>
+    </section>
+  } @else {
+    <section class="surface-card cnt-panel">
+      <h3>{{ activeCount()!.code }} — registrar cantidades reales</h3>
+      <p-table [value]="countLines()">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Insumo</th>
+            <th>Sistema</th>
+            <th>Conteo real</th>
+            <th>Diferencia</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-line let-i="rowIndex">
+          <tr>
+            <td>{{ line.itemName }}</td>
+            <td>{{ line.systemQty }}</td>
+            <td>
+              <input
+                type="number"
+                min="0"
+                class="field-control"
+                [value]="line.actual"
+                (change)="updateActual(i, $any($event.target).value)"
+              />
+            </td>
+            <td>{{ line.actual - line.systemQty }}</td>
+          </tr>
+        </ng-template>
+      </p-table>
+      <div class="cnt-actions">
+        <button pButton type="button" label="Cerrar conteo" icon="pi pi-check" (click)="saveAndClose()" [loading]="loading()"></button>
+      </div>
+    </section>
+  }
+</div>

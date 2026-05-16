@@ -62,8 +62,143 @@ export interface InventoryMovement {
   sourceMovementId: number | null;
   correctionReason: string | null;
   correctionMovementId: number | null;
+  fromLocationId: number | null;
+  fromLocationCode: string | null;
+  fromLocationName: string | null;
+  toLocationId: number | null;
+  toLocationCode: string | null;
+  toLocationName: string | null;
+  documentId: number | null;
+  documentCode: string | null;
+  unitCost: number | null;
+  legacy: boolean | null;
   status: string;
   createdAt: string;
+}
+
+export interface Location {
+  id: number;
+  code: string;
+  name: string;
+  type: string;
+  parentId: number | null;
+  parentCode: string | null;
+  roomNumber: string | null;
+  description: string | null;
+  active: boolean;
+  createdAt: string;
+}
+
+export interface CreateLocationRequest {
+  code: string;
+  name: string;
+  type: string;
+  parentLocationId: number | null;
+  roomNumber: string | null;
+  description: string | null;
+  active: boolean | null;
+}
+
+export interface UpdateLocationRequest {
+  code: string;
+  name: string;
+  type: string;
+  parentLocationId: number | null;
+  roomNumber: string | null;
+  description: string | null;
+  active: boolean | null;
+}
+
+export interface StockByLocationView {
+  itemId: number;
+  itemCode: string;
+  itemName: string;
+  locationId: number;
+  locationCode: string;
+  locationName: string;
+  locationType: string;
+  quantity: number;
+  minStock: number | null;
+}
+
+export interface ItemStockBreakdown {
+  itemId: number;
+  itemCode: string;
+  itemName: string;
+  total: number;
+  totalRounded: number;
+  byLocation: StockByLocationView[];
+}
+
+export interface TransferRequest {
+  itemId: number;
+  fromLocationId: number;
+  toLocationId: number;
+  quantity: number;
+  operationalResponsible: string | null;
+  referenceText: string | null;
+}
+
+export interface InventoryDocumentLine {
+  id: number;
+  documentId: number;
+  itemId: number;
+  itemCode: string;
+  itemName: string;
+  quantityExpected: number;
+  quantityActual: number | null;
+  unitCost: number | null;
+  notes: string | null;
+  lineNumber: number;
+}
+
+export interface InventoryDocument {
+  id: number;
+  code: string;
+  type: string;
+  status: string;
+  providerId: number | null;
+  providerName: string | null;
+  fromLocationId: number | null;
+  fromLocationCode: string | null;
+  fromLocationName: string | null;
+  toLocationId: number | null;
+  toLocationCode: string | null;
+  toLocationName: string | null;
+  responsible: string;
+  approver: string | null;
+  notes: string | null;
+  createdAt: string;
+  completedAt: string | null;
+  lines: InventoryDocumentLine[];
+}
+
+export interface CreateDocumentRequest {
+  type: string;
+  providerName: string | null;
+  fromLocationId: number | null;
+  toLocationId: number | null;
+  notes: string | null;
+  lines: CreateDocumentLineRequest[];
+}
+
+export interface CreateDocumentLineRequest {
+  itemId: number;
+  quantityExpected: number;
+  unitCost: number | null;
+  notes: string | null;
+}
+
+export interface ReceiveDocumentRequest {
+  toLocationId: number | null;
+  notes: string | null;
+  lines: ReceiveDocumentLineRequest[];
+}
+
+export interface ReceiveDocumentLineRequest {
+  lineId: number;
+  quantityActual: number;
+  unitCost: number | null;
 }
 
 export interface CreateSupplyItemRequest {
@@ -110,6 +245,7 @@ export interface InternalStockDecreaseRequest {
   roomNumber: string | null;
   areaName: string | null;
   origin: string;
+  targetLocationType?: string | null;
   operationalResponsible: string | null;
   referenceText: string | null;
 }
@@ -168,4 +304,108 @@ export interface MovementFilters {
 export interface DateRangeFilters {
   startDate?: string | null;
   endDate?: string | null;
+}
+
+export interface LocationFilters {
+  type?: string | null;
+  activeOnly?: boolean | null;
+}
+
+export interface DocumentFilters {
+  type?: string | null;
+  status?: string | null;
+}
+
+export interface RoomPar {
+  id: number;
+  roomType: string;
+  scope: string;
+  name: string;
+  active: boolean;
+  createdAt: string;
+  lines: RoomParLine[];
+}
+
+export interface RoomParLine {
+  id: number;
+  itemId: number;
+  itemCode: string;
+  itemName: string;
+  targetQuantity: number;
+  mandatory: boolean;
+  notes: string | null;
+}
+
+export interface CreateRoomParRequest {
+  roomType: string;
+  scope: string;
+  name: string;
+  active: boolean | null;
+  lines: RoomParLineRequest[];
+}
+
+export interface UpdateRoomParRequest {
+  name: string;
+  active: boolean | null;
+  lines: RoomParLineRequest[];
+}
+
+export interface RoomParLineRequest {
+  itemId: number;
+  targetQuantity: number;
+  mandatory: boolean | null;
+  notes: string | null;
+}
+
+export interface RoomParComparisonLine {
+  itemId: number;
+  itemCode: string;
+  itemName: string;
+  targetQuantity: number;
+  actualQuantity: number;
+  gapQuantity: number;
+  status: string;
+  mandatory: boolean;
+}
+
+export interface RoomParComparisonView {
+  roomNumber: string | null;
+  roomType: string;
+  scope: string;
+  locationId: number | null;
+  locationCode: string | null;
+  locationName: string | null;
+  overallStatus: string;
+  lines: RoomParComparisonLine[];
+}
+
+export interface ReplenishmentSuggestion {
+  roomNumber: string;
+  roomType: string;
+  scope: string;
+  locationId: number;
+  locationCode: string;
+  itemId: number;
+  itemCode: string;
+  itemName: string;
+  targetQuantity: number;
+  actualQuantity: number;
+  suggestedQuantity: number;
+  availableAtBodega: number;
+  priority: string;
+}
+
+export interface InitCountRequest {
+  locationId: number;
+  notes: string | null;
+}
+
+export interface RecordCountRequest {
+  lines: RecordCountLine[];
+  notes: string | null;
+}
+
+export interface RecordCountLine {
+  lineId: number;
+  quantityActual: number;
 }

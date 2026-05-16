@@ -13,6 +13,8 @@ public record InternalStockDecreaseRequest(
         String roomNumber,
         String areaName,
         @NotBlank String origin,
+        /** HABITACION o MINIBAR: destino físico cuando origin=HABITACION. */
+        String targetLocationType,
         @Size(max = 120)
         String operationalResponsible,
         @Size(max = 500)

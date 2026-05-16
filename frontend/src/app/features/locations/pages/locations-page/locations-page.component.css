@@ -1,0 +1,78 @@
+.locations-page {
+  max-width: 1480px;
+  margin: 0 auto;
+  padding-bottom: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.locations-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.locations-summary-card {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 1rem;
+  align-items: center;
+}
+
+.locations-summary-card__icon {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: rgba(216, 170, 92, 0.12);
+  color: #c8922d;
+}
+
+.locations-panel {
+  padding: 1.25rem;
+  border-radius: 1.5rem;
+}
+
+.locations-toolbar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.locations-status[data-active='true'] {
+  color: #1f7a4f;
+  font-weight: 700;
+}
+
+.locations-status[data-active='false'] {
+  color: #9a6b4f;
+}
+
+.locations-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.locations-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.locations-form__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.field--checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}

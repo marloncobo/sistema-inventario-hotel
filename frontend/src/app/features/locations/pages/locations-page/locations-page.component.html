@@ -1,0 +1,211 @@
+<div class="locations-page">
+  <app-page-header
+    eyebrow="Inventario"
+    title="Ubicaciones"
+    subtitle="Bodegas, pisos, habitaciones, minibares y demás puntos físicos donde vive el stock."
+  >
+    @if (canManage()) {
+      <div header-actions class="locations-header-actions">
+        <button
+          pButton
+          type="button"
+          icon="pi pi-plus"
+          label="Nueva ubicación"
+          (click)="openCreate()"
+        ></button>
+        <button
+          pButton
+          type="button"
+          icon="pi pi-refresh"
+          label="Actualizar"
+          severity="secondary"
+          variant="outlined"
+          [loading]="loading()"
+          (click)="loadLocations()"
+        ></button>
+      </div>
+    }
+  </app-page-header>
+
+  <section class="summary-grid locations-summary admin-kpi-row">
+    <article class="summary-card locations-summary-card">
+      <div class="locations-summary-card__icon"><i class="pi pi-map-marker"></i></div>
+      <div>
+        <span>Total ubicaciones</span>
+        <strong>{{ locations().length }}</strong>
+      </div>
+    </article>
+    <article class="summary-card locations-summary-card">
+      <div class="locations-summary-card__icon"><i class="pi pi-check-circle"></i></div>
+      <div>
+        <span>Activas</span>
+        <strong>{{ activeCount() }}</strong>
+      </div>
+    </article>
+    <article class="summary-card locations-summary-card">
+      <div class="locations-summary-card__icon"><i class="pi pi-filter"></i></div>
+      <div>
+        <span>Visibles</span>
+        <strong>{{ filteredLocations().length }}</strong>
+      </div>
+    </article>
+  </section>
+
+  <section class="surface-card locations-panel">
+    <div class="locations-toolbar">
+      <label class="field">
+        <span>Tipo</span>
+        <select class="field-control" [value]="typeFilter()" (change)="typeFilter.set($any($event.target).value)">
+          <option value="">Todos</option>
+          @for (type of locationTypes; track type) {
+            <option [value]="type">{{ typeLabel(type) }}</option>
+          }
+        </select>
+      </label>
+      <label class="field">
+        <span>Estado</span>
+        <select
+          class="field-control"
+          [value]="activeFilter()"
+          (change)="activeFilter.set($any($event.target).value)"
+        >
+          <option value="all">Todos</option>
+          <option value="active">Activos</option>
+          <option value="inactive">Inactivos</option>
+        </select>
+      </label>
+    </div>
+
+    <p-table
+      [value]="filteredLocations()"
+      [loading]="loading()"
+      [paginator]="true"
+      [rows]="12"
+      responsiveLayout="scroll"
+      styleClass="locations-table"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Código</th>
+          <th>Nombre</th>
+          <th>Tipo</th>
+          <th>Habitación</th>
+          <th>Padre</th>
+          <th>Estado</th>
+          @if (canManage()) {
+            <th class="text-right">Acciones</th>
+          }
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-location>
+        <tr>
+          <td><strong>{{ location.code }}</strong></td>
+          <td>{{ location.name }}</td>
+          <td>{{ typeLabel(location.type) }}</td>
+          <td>{{ location.roomNumber || '—' }}</td>
+          <td>{{ location.parentCode || '—' }}</td>
+          <td>
+            <span class="locations-status" [attr.data-active]="location.active">
+              {{ location.active ? 'Activa' : 'Inactiva' }}
+            </span>
+          </td>
+          @if (canManage()) {
+            <td class="text-right locations-actions">
+              <button
+                pButton
+                type="button"
+                icon="pi pi-pencil"
+                label="Editar"
+                size="small"
+                severity="secondary"
+                variant="outlined"
+                (click)="openEdit(location)"
+              ></button>
+              @if (location.active) {
+                <button
+                  pButton
+                  type="button"
+                  icon="pi pi-ban"
+                  label="Desactivar"
+                  size="small"
+                  severity="danger"
+                  variant="text"
+                  (click)="deactivate(location)"
+                ></button>
+              }
+            </td>
+          }
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td [attr.colspan]="canManage() ? 7 : 6">No hay ubicaciones con los filtros actuales.</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </section>
+</div>
+
+<p-dialog
+  [visible]="dialogVisible()"
+  [modal]="true"
+  [draggable]="false"
+  [style]="{ width: 'min(36rem, 96vw)' }"
+  [header]="editingId() === null ? 'Nueva ubicación' : 'Editar ubicación'"
+  (visibleChange)="dialogVisible.set($event)"
+>
+  <form [formGroup]="locationForm" class="locations-form" (ngSubmit)="submit()">
+    @if (submitError()) {
+      <p class="validation-banner validation-banner--danger">{{ submitError() }}</p>
+    }
+
+    <label class="field">
+      <span>Código</span>
+      <input pInputText class="field-control" formControlName="code" />
+    </label>
+
+    <label class="field">
+      <span>Nombre</span>
+      <input pInputText class="field-control" formControlName="name" />
+    </label>
+
+    <label class="field">
+      <span>Tipo</span>
+      <select class="field-control" formControlName="type">
+        @for (type of locationTypes; track type) {
+          <option [value]="type">{{ typeLabel(type) }}</option>
+        }
+      </select>
+    </label>
+
+    <label class="field">
+      <span>Ubicación padre</span>
+      <select class="field-control" formControlName="parentLocationId">
+        <option value="">Sin padre</option>
+        @for (parent of parentLocations(); track parent.id) {
+          <option [value]="parent.id">{{ parent.code }} — {{ parent.name }}</option>
+        }
+      </select>
+    </label>
+
+    <label class="field">
+      <span>Nº habitación (opcional)</span>
+      <input pInputText class="field-control" formControlName="roomNumber" maxlength="10" />
+    </label>
+
+    <label class="field">
+      <span>Descripción</span>
+      <textarea class="field-control field-control--textarea" formControlName="description" rows="2"></textarea>
+    </label>
+
+    <label class="field field--checkbox">
+      <input type="checkbox" formControlName="active" />
+      <span>Ubicación activa</span>
+    </label>
+
+    <div class="locations-form__actions">
+      <button pButton type="button" label="Cancelar" severity="secondary" variant="text" (click)="dialogVisible.set(false)"></button>
+      <button pButton type="submit" label="Guardar" [loading]="saving()"></button>
+    </div>
+  </form>
+</p-dialog>

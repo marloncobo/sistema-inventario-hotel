@@ -49,6 +49,48 @@ export const APP_NAV_CATEGORIES: NavigationCategory[] = [
             icon: 'pi pi-warehouse',
             description: 'Insumos, stock bajo en lectura y operaciones permitidas (entradas solo admin/almacén; devoluciones y salidas según rol).',
             roles: rolesForShellRoute('inventario')
+          },
+          {
+            label: 'Ubicaciones',
+            route: '/ubicaciones',
+            icon: 'pi pi-map-marker',
+            description: 'Bodegas, pisos, habitaciones, minibares y demás ubicaciones físicas del inventario.',
+            roles: rolesForShellRoute('ubicaciones')
+          },
+          {
+            label: 'Documentos',
+            route: '/documentos',
+            icon: 'pi pi-file-edit',
+            description: 'Órdenes de compra, recepciones, transferencias y ajustes multi-ítem.',
+            roles: rolesForShellRoute('documentos')
+          },
+          {
+            label: 'PAR habitaciones',
+            route: '/par-habitaciones',
+            icon: 'pi pi-list-check',
+            description: 'Plantillas PAR y comparación esperado vs real por habitación.',
+            roles: rolesForShellRoute('par-habitaciones')
+          },
+          {
+            label: 'Reposición',
+            route: '/reposicion',
+            icon: 'pi pi-truck',
+            description: 'Sugerencias automáticas según faltantes PAR y stock en bodega.',
+            roles: rolesForShellRoute('reposicion')
+          },
+          {
+            label: 'Conteos físicos',
+            route: '/conteos',
+            icon: 'pi pi-calculator',
+            description: 'Toma de inventario físico por ubicación.',
+            roles: rolesForShellRoute('conteos')
+          },
+          {
+            label: 'Diferencias',
+            route: '/diferencias',
+            icon: 'pi pi-exclamation-circle',
+            description: 'Aprobar y aplicar diferencias de conteos físicos.',
+            roles: rolesForShellRoute('diferencias')
           }
         ]
       },

@@ -48,6 +48,12 @@ public class SecurityConfig {
                         .pathMatchers(HttpMethod.POST, "/inventory/api/inventory/items/*/returns").hasAnyRole("ADMIN", "ALMACENISTA", "SERVICIO")
                         .pathMatchers(HttpMethod.POST, "/inventory/api/inventory/internal/items/decrease").hasAnyRole("ADMIN", "ALMACENISTA", "SERVICIO")
                         .pathMatchers(HttpMethod.GET, "/inventory/api/inventory/items", "/inventory/api/inventory/items/*", "/inventory/api/inventory/items/low-stock").hasAnyRole("ADMIN", "ALMACENISTA", "SERVICIO")
+                        .pathMatchers(HttpMethod.GET,
+                                "/inventory/api/inventory/locations/**",
+                                "/inventory/api/inventory/stock/**",
+                                "/inventory/api/inventory/room-pars/**",
+                                "/inventory/api/inventory/replenishment/**")
+                                .hasAnyRole("ADMIN", "ALMACENISTA", "SERVICIO")
                         .pathMatchers(HttpMethod.GET, "/inventory/api/inventory/movements").hasAnyRole("ADMIN", "ALMACENISTA")
                         .pathMatchers(HttpMethod.POST, "/rooms/api/rooms").hasRole("ADMIN")
                         .pathMatchers(HttpMethod.PATCH, "/rooms/api/rooms/*/status").hasAnyRole("ADMIN", "RECEPCION")

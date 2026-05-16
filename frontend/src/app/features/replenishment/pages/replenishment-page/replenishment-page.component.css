@@ -1,0 +1,6 @@
+.rep-page { max-width: 1200px; margin: 0 auto; padding-bottom: 2rem; display: flex; flex-direction: column; gap: 1.25rem; }
+.rep-panel { padding: 1.25rem; border-radius: 1.25rem; }
+.rep-filters { display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end; }
+.rep-priority--high { color: #c0392b; font-weight: 700; }
+.rep-priority--med { color: #d68910; }
+.rep-priority--none { color: #95a5a6; }

@@ -272,6 +272,7 @@
               <th>Fecha y hora</th>
               <th>Item</th>
               <th>Tipo</th>
+              <th>Origen → Destino</th>
               <th>Habitacion</th>
               <th>Area</th>
               <th>Responsable</th>
@@ -297,6 +298,14 @@
                 >
                   {{ movementTypeLabel(movement) }}
                 </span>
+              </td>
+              <td>
+                <div class="movement-entity">
+                  <strong>{{ movementRouteLabel(movement) }}</strong>
+                  @if (movement.documentCode) {
+                    <span>Doc. {{ movement.documentCode }}</span>
+                  }
+                </div>
               </td>
               <td><span class="movement-text">{{ roomLabel(movement) }}</span></td>
               <td><span class="movement-text">{{ areaLabel(movement) }}</span></td>

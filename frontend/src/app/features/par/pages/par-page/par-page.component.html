@@ -1,0 +1,213 @@
+﻿<div class="par-page">
+  <app-page-header
+    title="PAR habitaciones"
+    subtitle="Define qué debe tener cada tipo de habitación y compáralo con el stock real."
+  >
+    <div header-actions>
+      @if (canManage()) {
+        <button pButton type="button" icon="pi pi-plus" label="Nuevo PAR" (click)="openCreate()"></button>
+      }
+      <button pButton type="button" icon="pi pi-refresh" label="Actualizar" variant="outlined" (click)="loadPars()"></button>
+    </div>
+  </app-page-header>
+
+  <section class="surface-card par-panel">
+    <h3>Consultar habitación</h3>
+    <form [formGroup]="compareForm" class="par-compare-form" (ngSubmit)="compare()">
+      <label class="field">
+        <span>Habitación</span>
+        <input class="field-control" formControlName="roomNumber" maxlength="3" />
+      </label>
+      <label class="field">
+        <span>Ámbito</span>
+        <select class="field-control" formControlName="scope">
+          @for (s of scopes; track s) {
+            <option [value]="s">{{ label(s) }}</option>
+          }
+        </select>
+      </label>
+      <button pButton type="submit" label="Comparar" icon="pi pi-search" [loading]="loading()"></button>
+    </form>
+  </section>
+
+  @if (comparison(); as cmp) {
+    <section class="surface-card par-panel">
+      <header class="par-result-head">
+        <div>
+          <strong>Habitación {{ cmp.roomNumber }}</strong>
+          <span>{{ label(cmp.roomType) }} · {{ label(cmp.scope) }} · {{ cmp.locationCode }}</span>
+        </div>
+        <span class="par-overall" [class]="statusClass(cmp.overallStatus)">{{ cmp.overallStatus }}</span>
+      </header>
+      <p-table [value]="cmp.lines" responsiveLayout="scroll">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Insumo</th>
+            <th>Debe tener</th>
+            <th>Tiene</th>
+            <th>Falta/Sobra</th>
+            <th>Estado</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-line>
+          <tr>
+            <td>{{ line.itemName }} <small>({{ line.itemCode }})</small></td>
+            <td>{{ line.targetQuantity }}</td>
+            <td>{{ line.actualQuantity }}</td>
+            <td>{{ line.gapQuantity }}</td>
+            <td><span [class]="statusClass(line.status)">{{ line.status }}</span></td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </section>
+  }
+
+  <section class="surface-card par-panel">
+    <h3>Plantillas PAR configuradas</h3>
+    <p-table [value]="pars()" responsiveLayout="scroll">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Nombre</th>
+          <th>Tipo habitación</th>
+          <th>Ámbito</th>
+          <th>Líneas</th>
+          <th>Estado</th>
+          @if (canManage()) {
+            <th class="text-right">Acciones</th>
+          }
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-par>
+        <tr>
+          <td>{{ par.name }}</td>
+          <td>{{ label(par.roomType) }}</td>
+          <td>{{ label(par.scope) }}</td>
+          <td>{{ par.lines?.length || 0 }}</td>
+          <td>
+            <span class="par-active" [attr.data-active]="par.active">
+              {{ par.active ? 'Activo' : 'Inactivo' }}
+            </span>
+          </td>
+          @if (canManage()) {
+            <td class="text-right par-actions">
+              <button
+                pButton
+                type="button"
+                icon="pi pi-pencil"
+                label="Editar"
+                size="small"
+                severity="secondary"
+                variant="outlined"
+                (click)="openEdit(par)"
+              ></button>
+            </td>
+          }
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td [attr.colspan]="canManage() ? 6 : 5">
+            No hay PAR configurados.@if (canManage()) { Usa «Nuevo PAR» para crear una plantilla. }
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+    @if (!canManage()) {
+      <p class="par-hint">Solo lectura: contacta almacén para editar plantillas PAR.</p>
+    }
+  </section>
+</div>
+
+<p-dialog
+  [visible]="dialogVisible()"
+  [modal]="true"
+  [draggable]="false"
+  [style]="{ width: 'min(42rem, 96vw)' }"
+  [header]="editingId() === null ? 'Nueva plantilla PAR' : 'Editar plantilla PAR'"
+  (visibleChange)="dialogVisible.set($event)"
+>
+  <form [formGroup]="parForm" class="par-form" (ngSubmit)="submitPar()">
+    @if (submitError()) {
+      <p class="validation-banner validation-banner--danger">{{ submitError() }}</p>
+    }
+
+    <div class="par-form__grid">
+      <label class="field">
+        <span>Tipo habitación</span>
+        <select class="field-control" formControlName="roomType">
+          @for (t of roomTypes; track t) {
+            <option [value]="t">{{ label(t) }}</option>
+          }
+        </select>
+      </label>
+      <label class="field">
+        <span>Ámbito</span>
+        <select class="field-control" formControlName="scope">
+          @for (s of scopes; track s) {
+            <option [value]="s">{{ label(s) }}</option>
+          }
+        </select>
+      </label>
+    </div>
+
+    <label class="field">
+      <span>Nombre de la plantilla</span>
+      <input pInputText class="field-control" formControlName="name" maxlength="120" />
+    </label>
+
+    <label class="field field--checkbox">
+      <input type="checkbox" formControlName="active" />
+      <span>PAR activo</span>
+    </label>
+
+    <div class="par-lines-head">
+      <h4>Líneas del PAR</h4>
+      <button pButton type="button" icon="pi pi-plus" label="Agregar línea" size="small" variant="outlined" (click)="addLine()"></button>
+    </div>
+
+    <div class="par-lines" formArrayName="lines">
+      @for (line of lineControls.controls; track $index) {
+        <div class="par-line-row" [formGroupName]="$index">
+          <label class="field">
+            <span>Insumo</span>
+            <select class="field-control" formControlName="itemId">
+              <option value="">Seleccione…</option>
+              @for (item of items(); track item.id) {
+                <option [value]="item.id">{{ item.code }} — {{ item.name }}</option>
+              }
+            </select>
+          </label>
+          <label class="field par-line-row__qty">
+            <span>Cantidad</span>
+            <input class="field-control" type="number" min="0" formControlName="targetQuantity" />
+          </label>
+          <label class="field field--checkbox par-line-row__mandatory">
+            <input type="checkbox" formControlName="mandatory" />
+            <span>Obligatorio</span>
+          </label>
+          <label class="field par-line-row__notes">
+            <span>Notas</span>
+            <input class="field-control" formControlName="notes" maxlength="300" />
+          </label>
+          @if (lineControls.length > 1) {
+            <button
+              pButton
+              type="button"
+              icon="pi pi-trash"
+              severity="danger"
+              variant="text"
+              class="par-line-row__remove"
+              (click)="removeLine($index)"
+              aria-label="Quitar línea"
+            ></button>
+          }
+        </div>
+      }
+    </div>
+
+    <div class="par-form__actions">
+      <button pButton type="button" label="Cancelar" severity="secondary" variant="text" (click)="dialogVisible.set(false)"></button>
+      <button pButton type="submit" label="Guardar" [loading]="saving()"></button>
+    </div>
+  </form>
+</p-dialog>

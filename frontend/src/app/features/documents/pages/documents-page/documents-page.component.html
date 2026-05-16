@@ -1,0 +1,257 @@
+<div class="documents-page">
+  <app-page-header
+    eyebrow="Inventario"
+    title="Documentos"
+    subtitle="Órdenes de compra, recepciones, transferencias y ajustes multi-ítem."
+  >
+    <div header-actions class="documents-header-actions">
+      <button pButton type="button" icon="pi pi-plus" label="Nuevo documento" (click)="openCreate()"></button>
+      <button
+        pButton
+        type="button"
+        icon="pi pi-refresh"
+        label="Actualizar"
+        severity="secondary"
+        variant="outlined"
+        [loading]="loading()"
+        (click)="loadDocuments()"
+      ></button>
+    </div>
+  </app-page-header>
+
+  <section class="surface-card documents-panel">
+    <div class="documents-toolbar">
+      <label class="field">
+        <span>Tipo</span>
+        <select class="field-control" [value]="typeFilter()" (change)="typeFilter.set($any($event.target).value)">
+          <option value="">Todos</option>
+          @for (type of documentTypes; track type) {
+            <option [value]="type">{{ label(type) }}</option>
+          }
+        </select>
+      </label>
+      <label class="field">
+        <span>Estado</span>
+        <select class="field-control" [value]="statusFilter()" (change)="statusFilter.set($any($event.target).value)">
+          <option value="">Todos</option>
+          @for (status of documentStatuses; track status) {
+            <option [value]="status">{{ label(status) }}</option>
+          }
+        </select>
+      </label>
+    </div>
+
+    <p-table
+      [value]="filteredDocuments()"
+      [loading]="loading()"
+      [paginator]="true"
+      [rows]="10"
+      responsiveLayout="scroll"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Código</th>
+          <th>Tipo</th>
+          <th>Estado</th>
+          <th>Origen → Destino</th>
+          <th>Líneas</th>
+          <th>Responsable</th>
+          <th class="text-right">Acciones</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-doc>
+        <tr>
+          <td><strong>{{ doc.code }}</strong></td>
+          <td>{{ label(doc.type) }}</td>
+          <td><span class="documents-status">{{ label(doc.status) }}</span></td>
+          <td>
+            {{ doc.fromLocationCode || '—' }}
+            →
+            {{ doc.toLocationCode || '—' }}
+          </td>
+          <td>{{ doc.lines?.length || 0 }}</td>
+          <td>{{ doc.responsible }}</td>
+          <td class="text-right documents-actions">
+            <button pButton type="button" icon="pi pi-eye" size="small" variant="text" (click)="openDetail(doc)"></button>
+            @if (canApprove(doc)) {
+              <button pButton type="button" icon="pi pi-check" label="Aprobar" size="small" (click)="approve(doc)"></button>
+            }
+            @if (canReceive(doc)) {
+              <button pButton type="button" icon="pi pi-download" label="Recibir" size="small" severity="success" (click)="openReceive(doc)"></button>
+            }
+            @if (canExecute(doc)) {
+              <button pButton type="button" icon="pi pi-play" label="Ejecutar" size="small" (click)="execute(doc)"></button>
+            }
+            @if (canApproveVariance(doc)) {
+              <button pButton type="button" icon="pi pi-check" label="Aprobar dif." size="small" (click)="approveVariance(doc)"></button>
+            }
+            @if (canApplyVariance(doc)) {
+              <button pButton type="button" icon="pi pi-check-circle" label="Aplicar" size="small" severity="success" (click)="applyVariance(doc)"></button>
+            }
+            @if (canCancel(doc)) {
+              <button pButton type="button" icon="pi pi-times" size="small" severity="danger" variant="text" (click)="cancel(doc)"></button>
+            }
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </section>
+</div>
+
+<p-dialog
+  [visible]="createDialogVisible()"
+  [modal]="true"
+  [style]="{ width: 'min(44rem, 96vw)' }"
+  header="Nuevo documento"
+  (visibleChange)="createDialogVisible.set($event)"
+>
+  <form [formGroup]="createForm" class="documents-form" (ngSubmit)="submitCreate()">
+    @if (submitError()) {
+      <p class="validation-banner validation-banner--danger">{{ submitError() }}</p>
+    }
+
+    <label class="field">
+      <span>Tipo</span>
+      <select class="field-control" formControlName="type">
+        @for (type of documentTypes; track type) {
+          <option [value]="type">{{ label(type) }}</option>
+        }
+      </select>
+    </label>
+
+    <label class="field">
+      <span>Proveedor (OC / recepción)</span>
+      <input pInputText class="field-control" formControlName="providerName" list="provider-list" />
+      <datalist id="provider-list">
+        @for (name of providers(); track name) {
+          <option [value]="name"></option>
+        }
+      </datalist>
+    </label>
+
+    <div class="documents-form__grid">
+      <label class="field">
+        <span>Ubicación origen</span>
+        <select class="field-control" formControlName="fromLocationId">
+          <option value="">—</option>
+          @for (loc of locations(); track loc.id) {
+            <option [value]="loc.id">{{ loc.code }}</option>
+          }
+        </select>
+      </label>
+      <label class="field">
+        <span>Ubicación destino</span>
+        <select class="field-control" formControlName="toLocationId">
+          <option value="">—</option>
+          @for (loc of locations(); track loc.id) {
+            <option [value]="loc.id">{{ loc.code }}</option>
+          }
+        </select>
+      </label>
+    </div>
+
+    <label class="field">
+      <span>Notas</span>
+      <textarea class="field-control field-control--textarea" formControlName="notes" rows="2"></textarea>
+    </label>
+
+    <div class="documents-lines" formArrayName="lines">
+      <div class="documents-lines__head">
+        <strong>Líneas</strong>
+        <button pButton type="button" icon="pi pi-plus" label="Agregar" size="small" variant="outlined" (click)="addLine()"></button>
+      </div>
+      @for (line of lines.controls; track $index; let i = $index) {
+        <div [formGroupName]="i" class="documents-line">
+          <select class="field-control" formControlName="itemId">
+            <option value="">Insumo</option>
+            @for (item of items(); track item.id) {
+              <option [value]="item.id">{{ item.code }} — {{ item.name }}</option>
+            }
+          </select>
+          <input class="field-control" type="number" min="1" formControlName="quantityExpected" placeholder="Cant." />
+          <input class="field-control" type="number" min="0" step="0.01" formControlName="unitCost" placeholder="Costo" />
+          @if (lines.length > 1) {
+            <button pButton type="button" icon="pi pi-trash" severity="danger" variant="text" (click)="removeLine(i)"></button>
+          }
+        </div>
+      }
+    </div>
+
+    <div class="documents-form__actions">
+      <button pButton type="button" label="Cancelar" severity="secondary" variant="text" (click)="createDialogVisible.set(false)"></button>
+      <button pButton type="submit" label="Crear borrador" [loading]="saving()"></button>
+    </div>
+  </form>
+</p-dialog>
+
+<p-dialog
+  [visible]="detailDialogVisible()"
+  [modal]="true"
+  [style]="{ width: 'min(40rem, 96vw)' }"
+  header="Detalle documento"
+  (visibleChange)="detailDialogVisible.set($event)"
+>
+  @if (selectedDocument(); as doc) {
+    <div class="documents-detail">
+      <p><strong>{{ doc.code }}</strong> — {{ label(doc.type) }} / {{ label(doc.status) }}</p>
+      <p>Origen: {{ doc.fromLocationName || '—' }} → Destino: {{ doc.toLocationName || '—' }}</p>
+      @if (doc.providerName) {
+        <p>Proveedor: {{ doc.providerName }}</p>
+      }
+      <table class="documents-detail-table">
+        <thead>
+          <tr>
+            <th>Insumo</th>
+            <th>Esperado</th>
+            <th>Recibido</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (line of doc.lines; track line.id) {
+            <tr>
+              <td>{{ line.itemName }}</td>
+              <td>{{ line.quantityExpected }}</td>
+              <td>{{ line.quantityActual ?? '—' }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</p-dialog>
+
+<p-dialog
+  [visible]="receiveDialogVisible()"
+  [modal]="true"
+  [style]="{ width: 'min(40rem, 96vw)' }"
+  header="Registrar recepción"
+  (visibleChange)="receiveDialogVisible.set($event)"
+>
+  <form [formGroup]="receiveForm" class="documents-form" (ngSubmit)="submitReceive()">
+    <label class="field">
+      <span>Ubicación destino</span>
+      <select class="field-control" formControlName="toLocationId">
+        @for (loc of locations(); track loc.id) {
+          <option [value]="loc.id">{{ loc.code }} — {{ loc.name }}</option>
+        }
+      </select>
+    </label>
+    <label class="field">
+      <span>Notas</span>
+      <textarea class="field-control field-control--textarea" formControlName="notes" rows="2"></textarea>
+    </label>
+    <div formArrayName="lines" class="documents-lines">
+      @for (line of receiveLines.controls; track $index; let i = $index) {
+        <div [formGroupName]="i" class="documents-line documents-line--receive">
+          <span>Línea {{ i + 1 }}</span>
+          <input class="field-control" type="number" min="0" formControlName="quantityActual" placeholder="Recibido" />
+          <input class="field-control" type="number" min="0" step="0.01" formControlName="unitCost" placeholder="Costo unit." />
+        </div>
+      }
+    </div>
+    <div class="documents-form__actions">
+      <button pButton type="button" label="Cancelar" severity="secondary" variant="text" (click)="receiveDialogVisible.set(false)"></button>
+      <button pButton type="submit" label="Confirmar recepción" [loading]="saving()"></button>
+    </div>
+  </form>
+</p-dialog>

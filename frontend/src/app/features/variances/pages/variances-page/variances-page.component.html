@@ -1,0 +1,66 @@
+<div class="var-page">
+  <app-page-header
+    title="Diferencias de inventario"
+    subtitle="Aprueba y aplica ajustes de conteos físicos con variación."
+  >
+    <div header-actions>
+      <button pButton type="button" icon="pi pi-refresh" label="Actualizar" variant="outlined" (click)="load()" [loading]="loading()"></button>
+    </div>
+  </app-page-header>
+
+  <section class="surface-card var-panel">
+    <h3>Pendientes de aprobación</h3>
+    <p-table [value]="pending()" [loading]="loading()">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Documento</th>
+          <th>Ubicación</th>
+          <th>Resumen</th>
+          <th>Acciones</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-doc>
+        <tr>
+          <td><strong>{{ doc.code }}</strong></td>
+          <td>{{ doc.toLocationCode }}</td>
+          <td><small>{{ varianceSummary(doc) }}</small></td>
+          <td>
+            @if (isAdmin()) {
+              <button pButton type="button" label="Aprobar" size="small" (click)="approve(doc)"></button>
+            } @else {
+              <span>Solo administrador</span>
+            }
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr><td colspan="4">No hay conteos pendientes de aprobación.</td></tr>
+      </ng-template>
+    </p-table>
+  </section>
+
+  <section class="surface-card var-panel">
+    <h3>Aprobados — listos para aplicar</h3>
+    <p-table [value]="approved()">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Documento</th>
+          <th>Ubicación</th>
+          <th>Acción</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-doc>
+        <tr>
+          <td>{{ doc.code }}</td>
+          <td>{{ doc.toLocationCode }}</td>
+          <td>
+            <button pButton type="button" label="Aplicar al inventario" size="small" severity="success" (click)="apply(doc)"></button>
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr><td colspan="3">No hay conteos aprobados pendientes de aplicar.</td></tr>
+      </ng-template>
+    </p-table>
+  </section>
+</div>

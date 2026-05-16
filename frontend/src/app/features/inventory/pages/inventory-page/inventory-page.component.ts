@@ -19,10 +19,13 @@ import type {
   CatalogEntity,
   CreateSupplyItemRequest,
   InventoryMovement,
+  ItemStockBreakdown,
+  Location,
   Provider,
   StockEntryRequest,
   StockReturnRequest,
   SupplyItem,
+  TransferRequest,
   UnitOfMeasure,
   UpdateSupplyItemRequest
 } from '@models/inventory.model';
@@ -33,7 +36,7 @@ import { notBlankValidator } from '@shared/utils/app-validators.util';
 import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
 import { isHttp403 } from '@shared/utils/http-error.util';
 
-type InventoryDialog = 'item' | 'entry' | 'return' | 'decrease';
+type InventoryDialog = 'item' | 'entry' | 'return' | 'decrease' | 'transfer';
 
 type ItemFormStep = 1 | 2 | 3;
 
@@ -84,6 +87,9 @@ export class InventoryPageComponent implements OnInit {
   protected readonly serviceUsers = signal<AppUser[]>([]);
   protected readonly returnSourceMovements = signal<ReturnSourceMovementOption[]>([]);
   protected readonly selectedReturnSourceMovementId = signal(0);
+  protected readonly locations = signal<Location[]>([]);
+  protected readonly stockBreakdown = signal<ItemStockBreakdown | null>(null);
+  protected readonly stockBreakdownLoading = signal(false);
   protected readonly loading = signal(false);
   protected readonly detailLoading = signal(false);
   protected readonly saving = signal(false);
@@ -138,6 +144,14 @@ export class InventoryPageComponent implements OnInit {
     roomNumber: this.fb.control('', [Validators.pattern(/^\d{3}$/)]),
     areaName: this.fb.control('', [Validators.maxLength(120)]),
     origin: this.fb.nonNullable.control('CONSUMO_INTERNO', [Validators.required, notBlankValidator]),
+    operationalResponsible: this.fb.control('', [Validators.maxLength(120)]),
+    referenceText: this.fb.control('', [Validators.maxLength(500)])
+  });
+
+  protected readonly transferForm = this.fb.group({
+    fromLocationId: this.fb.nonNullable.control('', [Validators.required]),
+    toLocationId: this.fb.nonNullable.control('', [Validators.required]),
+    quantity: this.fb.nonNullable.control(1, [Validators.required, Validators.min(0.001)]),
     operationalResponsible: this.fb.control('', [Validators.maxLength(120)]),
     referenceText: this.fb.control('', [Validators.maxLength(500)])
   });
@@ -385,6 +399,8 @@ export class InventoryPageComponent implements OnInit {
         return 'Registrar devolucion';
       case 'decrease':
         return 'Salida interna';
+      case 'transfer':
+        return 'Transferir entre ubicaciones';
       default:
         return this.editingItemId() === null ? 'Crear insumo' : 'Editar insumo';
     }
@@ -568,6 +584,8 @@ export class InventoryPageComponent implements OnInit {
 
   protected selectItem(id: number): void {
     this.detailLoading.set(true);
+    this.stockBreakdownLoading.set(true);
+    this.stockBreakdown.set(null);
 
     this.inventoryApi
       .getItem(id)
@@ -579,6 +597,19 @@ export class InventoryPageComponent implements OnInit {
         },
         error: () => {
           this.detailLoading.set(false);
+        }
+      });
+
+    this.inventoryApi
+      .getStockByItem(id)
+      .pipe(take(1))
+      .subscribe({
+        next: (breakdown) => {
+          this.stockBreakdown.set(breakdown);
+          this.stockBreakdownLoading.set(false);
+        },
+        error: () => {
+          this.stockBreakdownLoading.set(false);
         }
       });
   }
@@ -647,6 +678,70 @@ export class InventoryPageComponent implements OnInit {
       referenceText: ''
     });
     this.dialogVisible = true;
+  }
+
+  protected openTransferDialog(item: SupplyItem): void {
+    this.dialogSubmitError.set(null);
+    this.activeDialog.set('transfer');
+    this.operationItemId.set(item.id);
+    const bodega = this.locations().find((l) => l.code === 'BODEGA_PRINCIPAL');
+    this.transferForm.reset({
+      fromLocationId: bodega ? String(bodega.id) : '',
+      toLocationId: '',
+      quantity: 1,
+      operationalResponsible: '',
+      referenceText: ''
+    });
+    this.dialogVisible = true;
+  }
+
+  protected submitTransfer(): void {
+    this.dialogSubmitError.set(null);
+    if (this.transferForm.invalid || this.operationItemId() === null) {
+      this.transferForm.markAllAsTouched();
+      return;
+    }
+    const raw = this.transferForm.getRawValue();
+    if (raw.fromLocationId === raw.toLocationId) {
+      this.dialogSubmitError.set('La ubicación origen y destino deben ser distintas.');
+      return;
+    }
+    const payload: TransferRequest = {
+      itemId: this.operationItemId()!,
+      fromLocationId: Number(raw.fromLocationId),
+      toLocationId: Number(raw.toLocationId),
+      quantity: Number(raw.quantity),
+      operationalResponsible: raw.operationalResponsible?.trim() || null,
+      referenceText: raw.referenceText?.trim() || null
+    };
+    this.saving.set(true);
+    this.inventoryApi
+      .transferStock(payload)
+      .pipe(take(1))
+      .subscribe({
+        next: () => {
+          this.saving.set(false);
+          this.dialogVisible = false;
+          this.notificationService.success('Inventario', 'Transferencia registrada.');
+          this.loadItems();
+          const itemId = this.operationItemId();
+          if (itemId) {
+            this.selectItem(itemId);
+          }
+        },
+        error: (error) => {
+          this.saving.set(false);
+          if (isHttp403(error)) return;
+          this.dialogSubmitError.set(extractApiErrorMessage(error.error));
+        }
+      });
+  }
+
+  protected locationTypeLabel(type: string): string {
+    return type
+      .toLowerCase()
+      .replace(/_/g, ' ')
+      .replace(/\b\w/g, (l) => l.toUpperCase());
   }
 
   protected deactivate(item: SupplyItem): void {
@@ -1107,6 +1202,16 @@ export class InventoryPageComponent implements OnInit {
   }
 
   private loadReferenceData(): void {
+    if (this.canManageItems()) {
+      this.inventoryApi
+        .getLocations({ activeOnly: true })
+        .pipe(take(1))
+        .subscribe({
+          next: (locations) => this.locations.set(locations),
+          error: () => this.locations.set([])
+        });
+    }
+
     if (this.isAdmin()) {
       forkJoin({
         categories: this.inventoryApi

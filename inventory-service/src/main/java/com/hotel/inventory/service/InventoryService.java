@@ -16,19 +16,21 @@ import com.hotel.inventory.exception.NotFoundException;
 import com.hotel.inventory.model.Area;
 import com.hotel.inventory.model.Category;
 import com.hotel.inventory.model.InventoryMovement;
+import com.hotel.inventory.model.Location;
 import com.hotel.inventory.model.LowStockAlert;
 import com.hotel.inventory.model.Provider;
 import com.hotel.inventory.model.SupplyItem;
 import com.hotel.inventory.model.UnitOfMeasure;
 import com.hotel.inventory.repository.InventoryMovementRepository;
 import com.hotel.inventory.repository.SupplyItemRepository;
+import com.hotel.inventory.util.QuantitySupport;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClientException;
 
-import java.time.LocalDateTime;
-import java.time.LocalDate;
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Locale;
 import java.util.regex.Matcher;
@@ -47,16 +49,21 @@ public class InventoryService {
     private final AuditService auditService;
     private final LowStockAlertService lowStockAlertService;
     private final RoomClient roomClient;
+    private final StockLocationService stockLocationService;
+    private final LocationService locationService;
 
     public InventoryService(SupplyItemRepository supplyItemRepository, InventoryMovementRepository movementRepository,
                             CatalogService catalogService, AuditService auditService,
-                            LowStockAlertService lowStockAlertService, RoomClient roomClient) {
+                            LowStockAlertService lowStockAlertService, RoomClient roomClient,
+                            StockLocationService stockLocationService, LocationService locationService) {
         this.supplyItemRepository = supplyItemRepository;
         this.movementRepository = movementRepository;
         this.catalogService = catalogService;
         this.auditService = auditService;
         this.lowStockAlertService = lowStockAlertService;
         this.roomClient = roomClient;
+        this.stockLocationService = stockLocationService;
+        this.locationService = locationService;
     }
 
     @Transactional
@@ -66,15 +73,25 @@ public class InventoryService {
         CatalogSelection catalogs = validateCatalogs(request.category(), request.unit(), request.providerName());
         validateStockBounds(request.stock(), request.minStock(), request.maxStock());
 
+        int initialStock = request.stock() == null ? 0 : request.stock();
         SupplyItem item = new SupplyItem(
                 generatedCode, request.name(), request.description(), catalogs.category(),
-                catalogs.unit(), catalogs.provider(), request.stock(), request.minStock(),
+                catalogs.unit(), catalogs.provider(), 0, request.minStock(),
                 request.maxStock(), true
         );
         SupplyItem saved = supplyItemRepository.save(item);
-        if (saved.getStock() > 0) {
-            movementRepository.save(buildMovement(saved, "ENTRADA", "NO_APLICA", saved.getStock(), 0,
-                    saved.getStock(), null, null, saved.getProviderEntity(), username, "Carga inicial"));
+        if (initialStock > 0) {
+            BigDecimal qty = QuantitySupport.toQuantity(initialStock);
+            Location bodega = locationService.requireDefaultWarehouse();
+            stockLocationService.incrementAt(saved.getId(), bodega.getId(), qty);
+            saved = getItem(saved.getId());
+            InventoryMovement movement = buildMovement(saved, "ENTRADA", "NO_APLICA",
+                    QuantitySupport.toCachedTotal(qty), 0, saved.getStock(),
+                    null, null, saved.getProviderEntity(), username, "Carga inicial");
+            movement.setToLocation(bodega);
+            movement.setOperationalResponsible(username);
+            movement.setLegacy(false);
+            movementRepository.save(movement);
         }
         auditService.record("CREATE", "SupplyItem", saved.getId(), username, saved.getCode());
         lowStockAlertService.evaluate(saved);
@@ -132,18 +149,21 @@ public class InventoryService {
         SupplyItem item = getItem(itemId);
         ensureActive(item);
         Provider provider = catalogService.ensureActiveProvider(request.providerName());
+        BigDecimal qty = QuantitySupport.toQuantity(request.quantity());
         int stockBefore = item.getStock();
-        int stockAfter = stockBefore + request.quantity();
-        validateStockBounds(stockAfter, item.getMinStock(), item.getMaxStock());
+        Location bodega = locationService.requireDefaultWarehouse();
+        stockLocationService.incrementAt(itemId, bodega.getId(), qty);
+        SupplyItem saved = getItem(itemId);
+        validateStockBounds(saved.getStock(), saved.getMinStock(), saved.getMaxStock());
 
-        item.setStock(stockAfter);
-        InventoryMovement movement = buildMovement(item, "ENTRADA", "NO_APLICA", request.quantity(), stockBefore,
-                stockAfter, null, null, provider, username, request.referenceText());
+        InventoryMovement movement = buildMovement(saved, "ENTRADA", "NO_APLICA",
+                QuantitySupport.toCachedTotal(qty), stockBefore, saved.getStock(),
+                null, null, provider, username, request.referenceText());
+        movement.setToLocation(bodega);
         movement.setOperationalResponsible(username);
+        movement.setLegacy(false);
         movementRepository.save(movement);
-        SupplyItem saved = supplyItemRepository.save(item);
-        auditService.record("STOCK_ENTRY", "SupplyItem", saved.getId(), username, "Cantidad " + request.quantity());
-        lowStockAlertService.evaluate(saved);
+        auditService.record("STOCK_ENTRY", "SupplyItem", saved.getId(), username, "Cantidad " + qty);
         return saved;
     }
 
@@ -151,9 +171,8 @@ public class InventoryService {
     public StockChangeResponse decreaseStock(InternalStockDecreaseRequest request, String username, boolean roomsServiceFlow) {
         SupplyItem item = getItem(request.itemId());
         ensureActive(item);
-        if (item.getStock() < request.quantity()) {
-            throw new BusinessException("Stock insuficiente para el insumo " + item.getName());
-        }
+        BigDecimal qty = QuantitySupport.toQuantity(request.quantity());
+        QuantitySupport.validatePositive(item, qty);
 
         String origin = normalize(request.origin());
         validateExitOrigin(origin, request.roomNumber(), request.areaName(), request.referenceText());
@@ -165,17 +184,36 @@ public class InventoryService {
         if ("CONSUMO_INTERNO".equals(origin)) {
             area = catalogService.ensureActiveArea(request.areaName());
         }
-        int stockBefore = item.getStock();
-        int stockAfter = stockBefore - request.quantity();
 
-        item.setStock(stockAfter);
-        InventoryMovement movement = buildMovement(item, "SALIDA", origin, request.quantity(), stockBefore, stockAfter,
-                request.roomNumber(), area, null, username, request.referenceText());
+        Location fromLocation = locationService.requireDefaultWarehouse();
+        if (stockLocationService.quantityAt(item.getId(), fromLocation.getId()).compareTo(qty) < 0) {
+            throw new BusinessException("Stock insuficiente en " + fromLocation.getCode()
+                    + " para el insumo " + item.getName());
+        }
+
+        int stockBefore = item.getStock();
+        Location toLocation = null;
+        if ("HABITACION".equals(origin) && request.roomNumber() != null) {
+            toLocation = locationService.resolveRoomLocation(request.roomNumber(), request.targetLocationType());
+            if (toLocation == null) {
+                throw new BusinessException("No existe ubicación para la habitación " + request.roomNumber());
+            }
+        }
+
+        stockLocationService.decrementAt(item.getId(), fromLocation.getId(), qty);
+        if (toLocation != null) {
+            stockLocationService.incrementAt(item.getId(), toLocation.getId(), qty);
+        }
+        SupplyItem saved = getItem(item.getId());
+
+        InventoryMovement movement = buildMovement(saved, "SALIDA", origin, QuantitySupport.toCachedTotal(qty),
+                stockBefore, saved.getStock(), request.roomNumber(), area, null, username, request.referenceText());
+        movement.setFromLocation(fromLocation);
+        movement.setToLocation(toLocation);
         movement.setOperationalResponsible(defaultOperationalResponsible(request.operationalResponsible(), username));
+        movement.setLegacy(false);
         movementRepository.save(movement);
-        SupplyItem saved = supplyItemRepository.save(item);
-        auditService.record("STOCK_EXIT", "SupplyItem", item.getId(), username, origin + " cantidad " + request.quantity());
-        lowStockAlertService.evaluate(saved);
+        auditService.record("STOCK_EXIT", "SupplyItem", item.getId(), username, origin + " cantidad " + qty);
         return new StockChangeResponse(saved.getId(), saved.getName(), saved.getStock(), "Stock descontado correctamente");
     }
 
@@ -184,19 +222,31 @@ public class InventoryService {
         SupplyItem item = getItem(itemId);
         ensureActive(item);
         InventoryMovement source = validateReturnSource(itemId, request);
+        BigDecimal qty = QuantitySupport.toQuantity(request.quantity());
+        QuantitySupport.validatePositive(item, qty);
         int stockBefore = item.getStock();
-        int stockAfter = stockBefore + request.quantity();
-        validateStockBounds(stockAfter, item.getMinStock(), item.getMaxStock());
 
-        item.setStock(stockAfter);
-        InventoryMovement movement = buildMovement(item, "DEVOLUCION", source == null ? "NO_APLICA" : source.getOrigin(), request.quantity(), stockBefore,
-                stockAfter, request.roomNumber(), source == null ? null : source.getAreaEntity(), null, username, request.referenceText());
+        Location bodega = locationService.requireDefaultWarehouse();
+        if (source != null && source.getToLocationEntity() != null) {
+            stockLocationService.decrementAt(item.getId(), source.getToLocationEntity().getId(), qty);
+        }
+        stockLocationService.incrementAt(item.getId(), bodega.getId(), qty);
+        SupplyItem saved = getItem(itemId);
+        validateStockBounds(saved.getStock(), saved.getMinStock(), saved.getMaxStock());
+
+        InventoryMovement movement = buildMovement(saved, "DEVOLUCION",
+                source == null ? "NO_APLICA" : source.getOrigin(), QuantitySupport.toCachedTotal(qty),
+                stockBefore, saved.getStock(), request.roomNumber(),
+                source == null ? null : source.getAreaEntity(), null, username, request.referenceText());
+        movement.setToLocation(bodega);
+        if (source != null) {
+            movement.setFromLocation(source.getToLocationEntity());
+        }
         movement.setSourceMovement(source);
         movement.setOperationalResponsible(defaultOperationalResponsible(request.operationalResponsible(), username));
+        movement.setLegacy(false);
         movementRepository.save(movement);
-        SupplyItem saved = supplyItemRepository.save(item);
         auditService.record("STOCK_RETURN", "SupplyItem", item.getId(), username, "Origen movimiento " + request.sourceMovementId());
-        lowStockAlertService.evaluate(saved);
         return new StockChangeResponse(saved.getId(), saved.getName(), saved.getStock(), "Stock devuelto correctamente");
     }
 
@@ -230,27 +280,50 @@ public class InventoryService {
         if (!"VALIDO".equals(movement.getStatus())) {
             throw new BusinessException("El movimiento ya fue corregido o anulado");
         }
-        if (!List.of("ENTRADA", "SALIDA", "DEVOLUCION").contains(movement.getMovementType())) {
+        if (!List.of("ENTRADA", "SALIDA", "DEVOLUCION", "TRANSFERENCIA").contains(movement.getMovementType())) {
             throw new BusinessException("Este tipo de movimiento no se puede anular");
         }
 
         SupplyItem item = getItem(movement.getItemId());
         int stockBefore = item.getStock();
-        int delta = switch (movement.getMovementType()) {
-            case "ENTRADA", "DEVOLUCION" -> -movement.getQuantity();
-            case "SALIDA" -> movement.getQuantity();
-            default -> 0;
-        };
-        int stockAfter = stockBefore + delta;
-        validateStockBounds(stockAfter, item.getMinStock(), item.getMaxStock());
+        BigDecimal originalQty = QuantitySupport.toQuantity(movement.getQuantity());
 
-        item.setStock(stockAfter);
-        SupplyItem savedItem = supplyItemRepository.save(item);
-        InventoryMovement correction = buildMovement(savedItem, "AJUSTE", "CORRECCION", Math.abs(delta), stockBefore,
+        if ("TRANSFERENCIA".equals(movement.getMovementType())) {
+            if (movement.getFromLocationEntity() == null || movement.getToLocationEntity() == null) {
+                throw new BusinessException("La transferencia no tiene ubicaciones para revertir");
+            }
+            stockLocationService.transfer(
+                    movement.getItemId(),
+                    movement.getToLocationEntity().getId(),
+                    movement.getFromLocationEntity().getId(),
+                    originalQty,
+                    null,
+                    username,
+                    username,
+                    "Reversa anulación movimiento " + id
+            );
+        } else {
+            if (movement.getToLocationEntity() != null) {
+                stockLocationService.decrementAt(item.getId(), movement.getToLocationEntity().getId(), originalQty);
+            }
+            if (movement.getFromLocationEntity() != null) {
+                stockLocationService.incrementAt(item.getId(), movement.getFromLocationEntity().getId(), originalQty);
+            }
+        }
+
+        SupplyItem savedItem = getItem(item.getId());
+        int stockAfter = savedItem.getStock();
+        int delta = Math.abs(stockAfter - stockBefore);
+        validateStockBounds(stockAfter, savedItem.getMinStock(), savedItem.getMaxStock());
+
+        InventoryMovement correction = buildMovement(savedItem, "AJUSTE", "CORRECCION", delta, stockBefore,
                 stockAfter, movement.getRoomNumber(), movement.getAreaEntity(), movement.getProviderEntity(), username,
                 "Anula movimiento " + id + ": " + request.reason());
+        correction.setFromLocation(movement.getToLocationEntity());
+        correction.setToLocation(movement.getFromLocationEntity());
         correction.setSourceMovement(movement);
         correction.setOperationalResponsible(username);
+        correction.setLegacy(false);
         InventoryMovement savedCorrection = movementRepository.save(correction);
 
         movement.setStatus("ANULADO");
@@ -258,7 +331,6 @@ public class InventoryService {
         movement.setCorrectionMovement(savedCorrection);
         movementRepository.save(movement);
         auditService.record("VOID_MOVEMENT", "InventoryMovement", id, username, request.reason());
-        lowStockAlertService.evaluate(savedItem);
         return movement;
     }
 

@@ -6,8 +6,10 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface SupplyItemRepository extends JpaRepository<SupplyItem, Long> {
+    Optional<SupplyItem> findByCodeIgnoreCase(String code);
     boolean existsByCodeIgnoreCase(String code);
     boolean existsByNameIgnoreCase(String name);
     boolean existsByCodeIgnoreCaseAndIdNot(String code, Long id);

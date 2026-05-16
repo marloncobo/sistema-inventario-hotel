@@ -1,0 +1,54 @@
+<div class="rep-page">
+  <app-page-header
+    title="Reposición sugerida"
+    subtitle="Faltantes según PAR y disponibilidad en bodega principal."
+  />
+
+  <section class="surface-card rep-panel">
+    <form [formGroup]="filterForm" class="rep-filters" (ngSubmit)="load()">
+      <label class="field">
+        <span>Habitación (opcional)</span>
+        <input class="field-control" formControlName="roomNumber" maxlength="3" placeholder="Todas si vacío" />
+      </label>
+      <label class="field">
+        <span>Ámbito</span>
+        <select class="field-control" formControlName="scope">
+          @for (s of scopes; track s) {
+            <option [value]="s">{{ s }}</option>
+          }
+        </select>
+      </label>
+      <button pButton type="submit" label="Buscar faltantes" icon="pi pi-search" [loading]="loading()"></button>
+    </form>
+  </section>
+
+  <section class="surface-card rep-panel">
+    <p-table [value]="suggestions()" [loading]="loading()" [paginator]="true" [rows]="15">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Habitación</th>
+          <th>Ubicación</th>
+          <th>Insumo</th>
+          <th>Debe / Tiene</th>
+          <th>Sugerido</th>
+          <th>Bodega</th>
+          <th>Prioridad</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-row>
+        <tr>
+          <td>{{ row.roomNumber }}</td>
+          <td>{{ row.locationCode }}</td>
+          <td>{{ row.itemName }}</td>
+          <td>{{ row.targetQuantity }} / {{ row.actualQuantity }}</td>
+          <td><strong>{{ row.suggestedQuantity }}</strong></td>
+          <td>{{ row.availableAtBodega }}</td>
+          <td><span [class]="priorityClass(row.priority)">{{ row.priority }}</span></td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr><td colspan="7">No hay reposiciones sugeridas con los filtros actuales.</td></tr>
+      </ng-template>
+    </p-table>
+  </section>
+</div>
