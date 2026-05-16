@@ -7,6 +7,7 @@ ENV MAVEN_OPTS="-Dhttps.protocols=TLSv1.2,TLSv1.3 -Dmaven.wagon.http.retryHandle
 COPY docker/maven/settings.xml /root/.m2/settings.xml
 
 COPY pom.xml .
+COPY ai-service/pom.xml ai-service/pom.xml
 COPY inventory-service/pom.xml inventory-service/pom.xml
 COPY rooms-service/pom.xml rooms-service/pom.xml
 COPY gateway-service/pom.xml gateway-service/pom.xml
