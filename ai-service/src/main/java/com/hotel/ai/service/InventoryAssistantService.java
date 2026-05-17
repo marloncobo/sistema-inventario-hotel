@@ -95,7 +95,7 @@ public class InventoryAssistantService {
         InventorySnapshot fullSnapshot = loadContext(request.getInventoryContext());
 
         // 2. Filtrar contexto según rol del usuario
-        RoleBasedContextFilter.InventoryContextSnapshot filteredContext =
+        RoleBasedContextFilter.FilteredContextSnapshot filteredContext =
                 filterContextByRole(fullSnapshot, roleContext.role());
 
         // 3. Construir prompt adaptado al rol

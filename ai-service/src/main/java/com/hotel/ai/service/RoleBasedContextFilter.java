@@ -151,12 +151,13 @@ public class RoleBasedContextFilter {
     }
 
     private boolean isServiceTopUsedProduct(TopUsedItemDto item) {
-        if (item == null || item.getCategory() == null) {
+        if (item == null || item.getItemName() == null) {
             return false;
         }
-        String category = item.getCategory().toUpperCase();
-        return category.contains("ASEO") || category.contains("LIMPIEZA") ||
-               category.contains("MINIBAR");
+        String itemName = item.getItemName().toUpperCase();
+        return itemName.contains("ASEO") || itemName.contains("LIMPIEZA") ||
+               itemName.contains("MINIBAR") || itemName.contains("TOALLA") ||
+               itemName.contains("JABON") || itemName.contains("PAPEL");
     }
 
     private boolean isServiceMovement(InventoryMovementDto movement) {

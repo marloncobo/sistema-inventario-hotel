@@ -71,11 +71,9 @@ export class AssistantPageComponent implements AfterViewChecked, OnInit {
   });
 
   ngOnInit(): void {
-    this.authService.getCurrentUser().pipe(take(1)).subscribe((user) => {
-      const role = user?.roles?.[0]?.toUpperCase() || 'RECEPCION';
-      this.userRole.set(role);
-      this.suggestedQuestions.set(getSuggestionsForRole(role));
-    });
+    const role = this.authService.primaryRole()?.toUpperCase() || 'RECEPCION';
+    this.userRole.set(role);
+    this.suggestedQuestions.set(getSuggestionsForRole(role));
   }
 
   ngAfterViewChecked(): void {
