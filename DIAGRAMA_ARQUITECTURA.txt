@@ -1,0 +1,354 @@
+╔════════════════════════════════════════════════════════════════════════════════╗
+║                    ARQUITECTURA - SISTEMA RBAC PARA CHATBOT                     ║
+╚════════════════════════════════════════════════════════════════════════════════╝
+
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│ FRONTEND (ANGULAR)                                                              │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                 │
+│  ┌──────────────────────────────────────────────────────────────────────────┐  │
+│  │ AssistantPageComponent                                                   │  │
+│  ├──────────────────────────────────────────────────────────────────────────┤  │
+│  │                                                                          │  │
+│  │ ngOnInit():                                                              │  │
+│  │  ├─ AuthService.getCurrentUser() → obtiene usuario + role               │  │
+│  │  ├─ userRole.set(role)                                                  │  │
+│  │  └─ suggestedQuestions.set(getSuggestionsForRole(role))                 │  │
+│  │                                                                          │  │
+│  │ askQuestion(question):                                                   │  │
+│  │  └─ POST /api/ai/inventory-assistant                                    │  │
+│  │     (NO envía rol, se obtiene del servidor)                             │  │
+│  │                                                                          │  │
+│  │ Rendered:                                                                │  │
+│  │  ├─ Badge: {{ userRole() }} - {{ roleDescription() }}                   │  │
+│  │  │   Color dinámico: {{ roleColor() }}                                  │  │
+│  │  ├─ Sugerencias: {{ suggestedQuestions() }} (8 por rol)                 │  │
+│  │  └─ Respuestas: "Analizando datos de {{ userRole() }}…"               │  │
+│  │                                                                          │  │
+│  └──────────────────────────────────────────────────────────────────────────┘  │
+│                                                                                 │
+│  ┌──────────────────────────────────────────────────────────────────────────┐  │
+│  │ role-based-suggestions.ts                                               │  │
+│  ├──────────────────────────────────────────────────────────────────────────┤  │
+│  │                                                                          │  │
+│  │ export interface QuestionSuggestion {                                    │  │
+│  │   text: string;      // "¿Qué reabastecer?"                            │  │
+│  │   icon: string;      // "pi-shopping-cart"                             │  │
+│  │   category: string;  // "Reabastecimiento"                             │  │
+│  │ }                                                                       │  │
+│  │                                                                          │  │
+│  │ ADMIN_SUGGESTIONS:       8 sugerencias (estrategia, usuarios, etc.)     │  │
+│  │ ALMACENISTA_SUGGESTIONS: 8 sugerencias (bodega, reabastecimiento)       │  │
+│  │ SERVICIO_SUGGESTIONS:    8 sugerencias (habitaciones, aseo)             │  │
+│  │ RECEPCION_SUGGESTIONS:   8 sugerencias (ocupancy, PAR)                  │  │
+│  │                                                                          │  │
+│  │ getSuggestionsForRole(role) → QuestionSuggestion[]                      │  │
+│  │ ROLE_COLORS: colores por rol                                            │  │
+│  │ ROLE_DESCRIPTIONS: descripciones por rol                                │  │
+│  │                                                                          │  │
+│  └──────────────────────────────────────────────────────────────────────────┘  │
+│                                                                                 │
+└─────────────────────────────────────────────────────────────────────────────────┘
+                                      │
+                                      │ HTTP POST
+                                      │ /api/ai/inventory-assistant
+                                      │ {"question": "¿Qué reabastecer?"}
+                                      │
+                                      ▼
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│ BACKEND (SPRING BOOT)                                                           │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                 │
+│  ┌──────────────────────────────────────────────────────────────────────────┐  │
+│  │ AiController                                                             │  │
+│  ├──────────────────────────────────────────────────────────────────────────┤  │
+│  │                                                                          │  │
+│  │ @PostMapping("/inventory-assistant")                                     │  │
+│  │ @PreAuthorize("isAuthenticated()")                                       │  │
+│  │ public InventoryAssistantResponse inventoryAssistant(                   │  │
+│  │   @RequestBody InventoryAssistantRequest request) {                     │  │
+│  │                                                                          │  │
+│  │   // 1. Extraer rol del usuario                                         │  │
+│  │   RoleContextInfo roleContext = extractRoleContext()                    │  │
+│  │                                                                          │  │
+│  │   // 2. Validar autenticación                                            │  │
+│  │   if (!roleContext.isAuthenticated())                                    │  │
+│  │     throw new IllegalStateException("No autenticado")                    │  │
+│  │                                                                          │  │
+│  │   // 3. Validar acceso al chatbot                                        │  │
+│  │   if (!roleContext.hasAccessToChatbot())                                 │  │
+│  │     throw new IllegalStateException("Rol sin acceso")                    │  │
+│  │                                                                          │  │
+│  │   // 4. Pasar a servicio                                                │  │
+│  │   return inventoryAssistantService                                       │  │
+│  │     .answerInventoryQuestion(request, roleContext)                      │  │
+│  │ }                                                                        │  │
+│  │                                                                          │  │
+│  │ private RoleContextInfo extractRoleContext() {                          │  │
+│  │   Authentication auth = SecurityContextHolder.getContext()              │  │
+│  │                         .getAuthentication()                            │  │
+│  │   String username = auth.getName()   // "admin"                        │  │
+│  │   String userRole = auth.getAuthorities()                              │  │
+│  │     .stream()                                                            │  │
+│  │     .filter(a -> a.startsWith("ROLE_"))                                │  │
+│  │     .map(a -> a.substring(5))       // "ROLE_ADMIN" → "ADMIN"         │  │
+│  │     .findFirst()                                                         │  │
+│  │     .orElse("RECEPCION")                                                │  │
+│  │                                                                          │  │
+│  │   return new RoleContextInfo(null, username, userRole, ...)            │  │
+│  │ }                                                                        │  │
+│  │                                                                          │  │
+│  └──────────────────────────────────────────────────────────────────────────┘  │
+│                                                                                 │
+│  ┌──────────────────────────────────────────────────────────────────────────┐  │
+│  │ InventoryAssistantService                                               │  │
+│  ├──────────────────────────────────────────────────────────────────────────┤  │
+│  │                                                                          │  │
+│  │ public InventoryAssistantResponse answerInventoryQuestion(             │  │
+│  │   InventoryAssistantRequest request,                                   │  │
+│  │   RoleContextInfo roleContext) {                                        │  │
+│  │                                                                          │  │
+│  │   // 1. Cargar contexto COMPLETO                                        │  │
+│  │   InventorySnapshot fullSnapshot = loadContext()                       │  │
+│  │   // → items (142), lowStock (15), users (24), rooms (80),             │  │
+│  │   //   movements, alerts, providers, etc.                              │  │
+│  │                                                                          │  │
+│  │   // 2. FILTRAR contexto según rol                                     │  │
+│  │   FilteredContextSnapshot filtered =                                   │  │
+│  │     filterContextByRole(fullSnapshot, roleContext.role())              │  │
+│  │                                                                          │  │
+│  │   // 3. Obtener instrucciones adaptadas                                │  │
+│  │   String instructions =                                                 │  │
+│  │     promptBuilder.getAiInstructionsForRole(role)                       │  │
+│  │   // → "Eres asistente de bodega. Tienes acceso a: items,            │  │
+│  │   //    lowStock, alerts. NO tienes: habitaciones, usuarios..."        │  │
+│  │                                                                          │  │
+│  │   // 4. Construir prompt con contexto filtrado                         │  │
+│  │   String prompt = buildPromptWithFilteredContext(                      │  │
+│  │     question, filtered)                                                 │  │
+│  │                                                                          │  │
+│  │   // 5. Llamar a Gemini                                                │  │
+│  │   String answer = geminiClient                                          │  │
+│  │     .generateInventoryAnswer(instructions, prompt)                     │  │
+│  │                                                                          │  │
+│  │   // 6. Retornar respuesta                                             │  │
+│  │   return new InventoryAssistantResponse(answer, contextSource)         │  │
+│  │ }                                                                        │  │
+│  │                                                                          │  │
+│  └──────────────────────────────────────────────────────────────────────────┘  │
+│                                                                                 │
+│  ┌──────────────────────────────────────────────────────────────────────────┐  │
+│  │ RoleBasedContextFilter                                                  │  │
+│  ├──────────────────────────────────────────────────────────────────────────┤  │
+│  │                                                                          │  │
+│  │ public FilteredContextSnapshot filterContextByRole(                    │  │
+│  │   ContextSnapshot fullContext,                                          │  │
+│  │   String userRole) {                                                    │  │
+│  │                                                                          │  │
+│  │   return switch(userRole.toUpperCase()) {                              │  │
+│  │     case "ADMIN" -> filterForAdmin(fullContext);        // TODO        │  │
+│  │     case "ALMACENISTA" -> filterForAlmacenista(ctx);    // Bodega      │  │
+│  │     case "SERVICIO" -> filterForServicio(ctx);          // Cuartos     │  │
+│  │     case "RECEPCION" -> filterForRecepcion(ctx);        // Habitaciones│  │
+│  │   }                                                                     │  │
+│  │ }                                                                        │  │
+│  │                                                                          │  │
+│  │ private FilteredContextSnapshot filterForAlmacenista(...) {            │  │
+│  │   return new FilteredContextSnapshot(                                  │  │
+│  │     context.items(),              // ✓ TODO                            │  │
+│  │     context.lowStockItems(),      // ✓ TODO                            │  │
+│  │     context.recentMovements(),    // ✓ TODO                            │  │
+│  │     context.topUsedItems(),       // ✓ TODO                            │  │
+│  │     context.inventoryReport(),    // ✓ TODO                            │  │
+│  │     context.alerts(),             // ✓ TODO                            │  │
+│  │     context.providers(),          // ✓ TODO                            │  │
+│  │     context.categories(),         // ✓ TODO                            │  │
+│  │     context.areas(),              // ✓ TODO                            │  │
+│  │     List.of(),                    // ✗ VACÍO (rooms)                   │  │
+│  │     List.of(),                    // ✗ VACÍO (roomConsumption)         │  │
+│  │     List.of(),                    // ✗ VACÍO (roomDistribution)        │  │
+│  │     List.of()                     // ✗ VACÍO (users)                   │  │
+│  │   )                                                                     │  │
+│  │ }                                                                        │  │
+│  │                                                                          │  │
+│  └──────────────────────────────────────────────────────────────────────────┘  │
+│                                                                                 │
+│  ┌──────────────────────────────────────────────────────────────────────────┐  │
+│  │ RoleBasedPromptBuilder                                                  │  │
+│  ├──────────────────────────────────────────────────────────────────────────┤  │
+│  │                                                                          │  │
+│  │ public String getAiInstructionsForRole(String role) {                  │  │
+│  │   return switch(role.toUpperCase()) {                                  │  │
+│  │     case "ADMIN" -> getAdminInstructions();                            │  │
+│  │     case "ALMACENISTA" -> getAlmacenistaInstructions();                │  │
+│  │     case "SERVICIO" -> getServicioInstructions();                      │  │
+│  │     case "RECEPCION" -> getRecepcionInstructions();                    │  │
+│  │   }                                                                     │  │
+│  │ }                                                                        │  │
+│  │                                                                          │  │
+│  │ private String getAlmacenistaInstructions() {                          │  │
+│  │   return """                                                            │  │
+│  │     Eres un asistente inteligente de bodega para un hotel.             │  │
+│  │     Tu usuario es un ALMACENISTA responsable de operaciones de         │  │
+│  │     almacén.                                                            │  │
+│  │                                                                          │  │
+│  │     ACCESO: ✓ Inventario bodega ✓ Stock ✓ Movimientos ✓ Alertas      │  │
+│  │     NO TIENES: ✗ Habitaciones ✗ Usuarios ✗ Datos administrativos      │  │
+│  │                                                                          │  │
+│  │     Responde en español claro y operativo. Usa solo el                 │  │
+│  │     contexto entregado. Enfócate en: reabastecimiento, stock,         │  │
+│  │     alertas, movimientos, consumo (30 días).                           │  │
+│  │     """;                                                                │  │
+│  │ }                                                                        │  │
+│  │                                                                          │  │
+│  └──────────────────────────────────────────────────────────────────────────┘  │
+│                                                                                 │
+│  ┌──────────────────────────────────────────────────────────────────────────┐  │
+│  │ RoleContextInfo (DTO)                                                   │  │
+│  ├──────────────────────────────────────────────────────────────────────────┤  │
+│  │                                                                          │  │
+│  │ public record RoleContextInfo(                                          │  │
+│  │   Long userId,                     // Null (no usado)                  │  │
+│  │   String username,                 // "admin"                          │  │
+│  │   String role,                     // "ADMIN"                          │  │
+│  │   Set<String> permissions,         // ["ROLE_ADMIN"]                  │  │
+│  │   boolean isAuthenticated          // true                             │  │
+│  │ ) {                                                                    │  │
+│  │   public boolean hasAccessToChatbot() {                                │  │
+│  │     return isAuthenticated && (                                        │  │
+│  │       "ADMIN".equals(role) ||                                          │  │
+│  │       "ALMACENISTA".equals(role) ||                                    │  │
+│  │       "SERVICIO".equals(role) ||                                       │  │
+│  │       "RECEPCION".equals(role)                                         │  │
+│  │     );                                                                  │  │
+│  │   }                                                                    │  │
+│  │ }                                                                        │  │
+│  │                                                                          │  │
+│  └──────────────────────────────────────────────────────────────────────────┘  │
+│                                                                                 │
+└─────────────────────────────────────────────────────────────────────────────────┘
+                                      │
+                                      │ Prompt a Gemini:
+                                      │ ┌─────────────────────────────────────┐
+                                      │ │ "Eres asistente de bodega.         │
+                                      │ │ Acceso: items, stock, alertas      │
+                                      │ │ NO acceso: habitaciones, usuarios   │
+                                      │ │                                    │
+                                      │ │ Pregunta: ¿Qué reabastecer?       │
+                                      │ │                                    │
+                                      │ │ Contexto: {                        │
+                                      │ │   items: [...],                    │
+                                      │ │   lowStockItems: [...],            │
+                                      │ │   alerts: [...],                   │
+                                      │ │   rooms: [],      ← VACÍO          │
+                                      │ │   users: []       ← VACÍO          │
+                                      │ │ }"                                 │
+                                      │ └─────────────────────────────────────┘
+                                      │
+                                      ▼
+                              ┌───────────────────┐
+                              │  Gemini API       │
+                              │  (Google)         │
+                              └────────┬──────────┘
+                                      │
+                                      │ Respuesta:
+                                      │ "Debes reabastecer (ordenado):
+                                      │  1. Jabón (crítico)
+                                      │  2. Papel (crítico)
+                                      │  [...]"
+                                      │
+                                      ▼
+                                      │ HTTP 200
+                                      │ {
+                                      │   "answer": "Debes reabastecer...",
+                                      │   "contextSource": "inventory-service"
+                                      │ }
+                                      │
+                                      ▼
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│ FRONTEND - RESPUESTA RENDERIZADA                                                │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                 │
+│  Usuario: Almacenista                                                           │
+│                                                                                 │
+│  [Badge verde: ALMACENISTA - Gestión de bodega]                                │
+│                                                                                 │
+│  Pregunta (Usuario):                                                            │
+│  ┌──────────────────────────────────────────────────────────────────┐          │
+│  │ Tú (ALMACENISTA)  14:32                                         │          │
+│  │ ¿Qué productos necesito reabastecer?                            │          │
+│  └──────────────────────────────────────────────────────────────────┘          │
+│                                                                                 │
+│  Respuesta (IA):                                                                │
+│  ┌──────────────────────────────────────────────────────────────────┐          │
+│  │ Asistente Lunara  inventory-service        [Repetir]            │          │
+│  │                                                                  │          │
+│  │ Debes reabastecer los siguientes productos (ordenados por       │          │
+│  │ urgencia):                                                      │          │
+│  │                                                                  │          │
+│  │ CRÍTICOS (Reabastecer HOY):                                     │          │
+│  │ 1. Jabón líquido (código JL-001)                                │          │
+│  │    - Stock actual: 5 unidades                                   │          │
+│  │    - Stock mínimo: 20 unidades                                  │          │
+│  │    - Consumo diario: 1.5 unidades                               │          │
+│  │    - Días de cobertura: 3.3 días                                │          │
+│  │    - Recomendación: Comprar 100 unidades                        │          │
+│  │                                                                  │          │
+│  │ 2. Papel higiénico (código PH-002)                              │          │
+│  │    - Stock actual: 15 unidades                                  │          │
+│  │    - Stock mínimo: 30 unidades                                  │          │
+│  │    - Recomendación: Comprar 150 unidades                        │          │
+│  │                                                                  │          │
+│  │ [...]                                                            │          │
+│  │                                                                  │          │
+│  └──────────────────────────────────────────────────────────────────┘          │
+│                                                                                 │
+│  [Panel Lateral]                                                                │
+│  Tu Rol: ALMACENISTA                                                            │
+│  Gestión de bodega e inventario                                                 │
+│  ✓ Gestión de bodega                                                            │
+│  ✓ Alertas de stock                                                             │
+│  ✓ Reabastecimiento                                                             │
+│  ✓ Movimientos                                                                  │
+│                                                                                 │
+│  [Atajos de preguntas]                                                          │
+│  🛒 ¿Qué reabastecer?                                                           │
+│  ⚠️  ¿Stock crítico?                                                            │
+│  📈 ¿Consumo últimos 30 días?                                                   │
+│  [...]                                                                          │
+│                                                                                 │
+└─────────────────────────────────────────────────────────────────────────────────┘
+
+╔════════════════════════════════════════════════════════════════════════════════╗
+║                              FLUJO RESUMIDO                                    ║
+╠════════════════════════════════════════════════════════════════════════════════╣
+║                                                                                ║
+║ Usuario ALMACENISTA                                                            ║
+║         │                                                                      ║
+║         ├─→ Frontend carga rol y sugerencias (ALMACENISTA)                    ║
+║         │                                                                      ║
+║         ├─→ Hace pregunta: "¿Qué reabastecer?"                               ║
+║         │                                                                      ║
+║         ├─→ AiController.inventoryAssistant()                                ║
+║         │   ├─ Extrae rol: "ALMACENISTA"                                     ║
+║         │   ├─ Valida autenticación ✓                                        ║
+║         │   └─ Pasa a servicio                                               ║
+║         │                                                                      ║
+║         ├─→ InventoryAssistantService.answerInventoryQuestion()              ║
+║         │   ├─ Carga contexto completo (142 items)                           ║
+║         │   ├─ RoleBasedContextFilter.filterForAlmacenista()                 ║
+║         │   │  └─ items ✓, alerts ✓, rooms ❌, users ❌                      ║
+║         │   ├─ RoleBasedPromptBuilder.getAlmacenistaInstructions()          ║
+║         │   │  └─ "Eres de bodega, acceso a: items, stock, alertas"        ║
+║         │   └─ Construye prompt filtrado                                     ║
+║         │                                                                      ║
+║         ├─→ Gemini API                                                         ║
+║         │   └─ Recibe prompt con contexto de bodega                          ║
+║         │      (NO habitaciones, NO usuarios)                                 ║
+║         │                                                                      ║
+║         └─→ Respuesta aparece                                                  ║
+║             "Debes reabastecer: Jabón (crítico), Papel (crítico)..."        ║
+║                                                                                ║
+║ ← SIN DATOS NO PERMITIDOS (habitaciones, usuarios, etc.)                      ║
+║                                                                                ║
+╚════════════════════════════════════════════════════════════════════════════════╝

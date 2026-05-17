@@ -13,6 +13,7 @@ import com.hotel.ai.dto.InventoryItemDto;
 import com.hotel.ai.dto.InventoryMovementDto;
 import com.hotel.ai.dto.InventorySummaryDto;
 import com.hotel.ai.dto.LowStockAlertDto;
+import com.hotel.ai.dto.RoleContextInfo;
 import com.hotel.ai.dto.RoomConsumptionDto;
 import com.hotel.ai.dto.RoomDistributionDto;
 import com.hotel.ai.dto.RoomDto;
@@ -32,8 +33,13 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 
+/**
+ * Servicio de asistente de inventario con soporte para control de acceso basado en roles (RBAC).
+ * Filtra contexto y adapta prompts según el rol del usuario.
+ */
 @Service
 public class InventoryAssistantService {
+    // Instrucción por defecto (antigua - se reemplaza con instrucciones por rol)
     private static final String AI_INSTRUCTIONS = """
             Eres un asistente de inventario para un hotel.
             Responde siempre en espanol claro y accionable.
@@ -55,24 +61,138 @@ public class InventoryAssistantService {
     private final GatewayClient gatewayClient;
     private final GeminiClient geminiClient;
     private final ObjectMapper objectMapper;
+    private final RoleBasedContextFilter contextFilter;
+    private final RoleBasedPromptBuilder promptBuilder;
 
     public InventoryAssistantService(InventoryClient inventoryClient,
                                      RoomsClient roomsClient,
                                      GatewayClient gatewayClient,
                                      GeminiClient geminiClient,
-                                     ObjectMapper objectMapper) {
+                                     ObjectMapper objectMapper,
+                                     RoleBasedContextFilter contextFilter,
+                                     RoleBasedPromptBuilder promptBuilder) {
         this.inventoryClient = inventoryClient;
         this.roomsClient = roomsClient;
         this.gatewayClient = gatewayClient;
         this.geminiClient = geminiClient;
         this.objectMapper = objectMapper;
+        this.contextFilter = contextFilter;
+        this.promptBuilder = promptBuilder;
     }
 
+    /**
+     * Responde una pregunta de inventario adaptando el contexto y prompt según el rol del usuario.
+     *
+     * @param request solicitud con la pregunta del usuario
+     * @param roleContext contexto de rol del usuario autenticado
+     * @return respuesta del asistente adaptada al rol
+     */
+    public InventoryAssistantResponse answerInventoryQuestion(
+            InventoryAssistantRequest request,
+            RoleContextInfo roleContext) {
+
+        // 1. Cargar contexto completo
+        InventorySnapshot fullSnapshot = loadContext(request.getInventoryContext());
+
+        // 2. Filtrar contexto según rol del usuario
+        RoleBasedContextFilter.InventoryContextSnapshot filteredContext =
+                filterContextByRole(fullSnapshot, roleContext.role());
+
+        // 3. Construir prompt adaptado al rol
+        String aiInstructions = promptBuilder.getAiInstructionsForRole(roleContext.role());
+        String prompt = buildPromptWithFilteredContext(request.getQuestion(), filteredContext);
+
+        // 4. Obtener respuesta de Gemini
+        String answer = geminiClient.generateInventoryAnswer(aiInstructions, prompt);
+
+        // 5. Retornar respuesta con metadata
+        return new InventoryAssistantResponse(answer, fullSnapshot.contextSource());
+    }
+
+    /**
+     * Versión antigua del método (mantiene compatibilidad hacia atrás)
+     */
     public InventoryAssistantResponse answerInventoryQuestion(InventoryAssistantRequest request) {
         InventorySnapshot snapshot = loadContext(request.getInventoryContext());
         String prompt = buildPrompt(request.getQuestion(), snapshot);
         String answer = geminiClient.generateInventoryAnswer(AI_INSTRUCTIONS, prompt);
         return new InventoryAssistantResponse(answer, snapshot.contextSource());
+    }
+
+    /**
+     * Filtra el contexto de inventario según el rol del usuario.
+     */
+    private RoleBasedContextFilter.FilteredContextSnapshot filterContextByRole(
+            InventorySnapshot fullSnapshot,
+            String userRole) {
+
+        RoleBasedContextFilter.ContextSnapshot snapshot =
+                new RoleBasedContextFilter.ContextSnapshot(
+                        fullSnapshot.items(),
+                        fullSnapshot.lowStockItems(),
+                        fullSnapshot.recentMovements(),
+                        fullSnapshot.topUsedItems(),
+                        fullSnapshot.inventoryReport(),
+                        fullSnapshot.alerts(),
+                        fullSnapshot.providers(),
+                        fullSnapshot.categories(),
+                        fullSnapshot.areas(),
+                        fullSnapshot.rooms(),
+                        fullSnapshot.roomConsumption(),
+                        fullSnapshot.roomDistribution(),
+                        fullSnapshot.users()
+                );
+
+        return contextFilter.filterContextByRole(snapshot, userRole);
+    }
+
+    /**
+     * Construye el prompt a partir del contexto filtrado por rol.
+     */
+    private String buildPromptWithFilteredContext(
+            String question,
+            RoleBasedContextFilter.FilteredContextSnapshot filteredContext) {
+
+        // Convertir el snapshot filtrado a un snapshot completo con datos vacíos donde corresponda
+        InventorySnapshot snapshot = new InventorySnapshot(
+                filteredContext.items(),
+                filteredContext.lowStockItems(),
+                filteredContext.recentMovements(),
+                filteredContext.topUsedItems(),
+                filteredContext.inventoryReport(),
+                filteredContext.alerts(),
+                filteredContext.providers(),
+                filteredContext.categories(),
+                filteredContext.areas(),
+                filteredContext.rooms(),
+                filteredContext.roomConsumption(),
+                filteredContext.roomDistribution(),
+                filteredContext.users(),
+                contextSourceForFilteredContext(filteredContext)
+        );
+
+        // Usar el método existente buildPrompt
+        return buildPrompt(question, snapshot);
+    }
+
+    /**
+     * Determina la fuente del contexto para un snapshot filtrado.
+     */
+    private String contextSourceForFilteredContext(
+            RoleBasedContextFilter.FilteredContextSnapshot context) {
+        LinkedHashSet<String> sources = new LinkedHashSet<>();
+        if (hasAny(context.items(), context.lowStockItems(), context.recentMovements(),
+                   context.topUsedItems(), context.inventoryReport(), context.alerts(),
+                   context.providers(), context.categories(), context.areas())) {
+            sources.add("inventory-service");
+        }
+        if (hasAny(context.rooms(), context.roomConsumption(), context.roomDistribution())) {
+            sources.add("rooms-service");
+        }
+        if (hasAny(context.users())) {
+            sources.add("gateway-service");
+        }
+        return sources.isEmpty() ? "no-context" : String.join(", ", sources);
     }
 
     private InventorySnapshot loadContext(InventoryContextDto requestContext) {

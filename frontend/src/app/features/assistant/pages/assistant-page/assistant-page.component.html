@@ -1,9 +1,13 @@
 <div class="assistant-page app-page pp-root">
   <header class="assistant-page-head">
     <div class="assistant-page-head__copy">
+      <div class="assistant-page-head__role-badge" [style.backgroundColor]="roleColor()">
+        <span class="assistant-page-head__role-label">{{ userRole() }}</span>
+        <span class="assistant-page-head__role-desc">{{ roleDescription() }}</span>
+      </div>
       <h1 class="assistant-page-head__title pp-hero-title">Asistente IA</h1>
       <p class="assistant-page-head__desc pp-hero-lede">
-        Consultas sobre inventario, alertas y prioridades de compra.
+        Consultas inteligentes adaptadas a tu rol de {{ userRole() }}.
       </p>
     </div>
 
@@ -40,20 +44,21 @@
                 <i class="pi pi-sparkles"></i>
               </span>
               <div>
-                <h2 class="assistant-empty__title">¿Qué necesitas saber del inventario?</h2>
+                <h2 class="assistant-empty__title">¿Qué necesitas saber?</h2>
                 <p class="assistant-empty__text">
-                  El asistente analiza stock, alertas y consumo. Elige una consulta o escribe la tuya.
+                  Estás conectado como <strong>{{ userRole() }}</strong>. El asistente te mostrará opciones según tu rol. Elige una consulta o escribe la tuya.
                 </p>
               </div>
             </div>
 
             <div class="assistant-prompt-grid">
-              @for (suggestion of starterPrompts(); track trackByQuestion($index, suggestion); let i = $index) {
-                <button type="button" class="assistant-prompt-card" (click)="useSuggestion(suggestion)">
+              @for (suggestion of starterPrompts(); track trackByQuestion($index, suggestion)) {
+                <button type="button" class="assistant-prompt-card" (click)="useSuggestion(suggestion.text)">
                   <span class="assistant-prompt-card__icon" aria-hidden="true">
-                    <i class="pi" [ngClass]="promptIcon(i)"></i>
+                    <i class="pi" [ngClass]="suggestion.icon"></i>
                   </span>
-                  <span class="assistant-prompt-card__text">{{ suggestion }}</span>
+                  <span class="assistant-prompt-card__category">{{ suggestion.category }}</span>
+                  <span class="assistant-prompt-card__text">{{ suggestion.text }}</span>
                   <i class="pi pi-arrow-right assistant-prompt-card__arrow" aria-hidden="true"></i>
                 </button>
               }
@@ -69,7 +74,7 @@
                   </span>
                   <div class="assistant-msg__body">
                     <header class="assistant-msg__meta">
-                      <span class="assistant-msg__name">Tú</span>
+                      <span class="assistant-msg__name">Tú ({{ userRole() }})</span>
                       <time>{{ formatAskedAt(entry.askedAt) }}</time>
                     </header>
                     <p>{{ entry.question }}</p>
@@ -104,12 +109,12 @@
                         <span class="assistant-typing" aria-hidden="true">
                           <span></span><span></span><span></span>
                         </span>
-                        <span>Analizando inventario…</span>
+                        <span>Analizando datos de {{ userRole() }}…</span>
                       </div>
                     } @else if (entry.status === 'error') {
                       <p class="assistant-msg__error" role="alert">
                         <i class="pi pi-exclamation-circle"></i>
-                        {{ entry.errorMessage || 'No fue posible completar la consulta.' }}
+                        {{ entry.errorMessage || 'No fue posible completar la consulta. Verifica que tu rol tiene acceso.' }}
                       </p>
                     } @else {
                       <div class="assistant-msg__answer">
@@ -145,7 +150,7 @@
             [ngModel]="question()"
             (ngModelChange)="updateQuestion($event)"
             (keydown)="onComposerKeydown($event)"
-            placeholder="Escribe tu pregunta sobre inventario…"
+            placeholder="Escribe tu pregunta…"
             [disabled]="loading()"
           ></textarea>
           <button
@@ -175,36 +180,128 @@
         </div>
 
         <ul class="assistant-rail__list">
-          @for (suggestion of railQuickPrompts(); track trackByQuestion($index, suggestion); let i = $index) {
+          @for (suggestion of railQuickPrompts(); track trackByQuestion($index, suggestion)) {
           <li>
-            <button type="button" class="assistant-rail__item" (click)="useSuggestion(suggestion)">
+            <button type="button" class="assistant-rail__item" (click)="useSuggestion(suggestion.text)">
               <span class="assistant-rail__item-icon" aria-hidden="true">
-                <i class="pi" [ngClass]="promptIcon(i)"></i>
+                <i class="pi" [ngClass]="suggestion.icon"></i>
               </span>
-              <span>{{ suggestion }}</span>
+              <span>{{ suggestion.text }}</span>
             </button>
           </li>
           }
         </ul>
       } @else {
         <div class="assistant-rail__head">
-          <span class="pp-section-label">Contexto</span>
-          <h3 class="assistant-rail__title">Qué puede hacer</h3>
+          <span class="pp-section-label">Tu Rol</span>
+          <h3 class="assistant-rail__title">{{ userRole() }}</h3>
         </div>
 
-        <ul class="assistant-rail__capabilities">
-          <li><i class="pi pi-chart-line"></i> Resúmenes y prioridades de compra</li>
-          <li><i class="pi pi-bell"></i> Alertas de stock bajo</li>
-          <li><i class="pi pi-box"></i> Riesgo de agotamiento</li>
-          <li><i class="pi pi-list-check"></i> Recomendaciones del día</li>
-        </ul>
+        <div class="assistant-rail__role-info">
+          <p class="assistant-rail__role-desc">{{ roleDescription() }}</p>
+          <ul class="assistant-rail__role-features">
+            @switch(userRole()) {
+              @case('ADMIN') {
+                <li><i class="pi pi-check" style="color: var(--green-500)"></i> Acceso completo al sistema</li>
+                <li><i class="pi pi-check" style="color: var(--green-500)"></i> Reportes ejecutivos</li>
+                <li><i class="pi pi-check" style="color: var(--green-500)"></i> Gestión de usuarios</li>
+                <li><i class="pi pi-check" style="color: var(--green-500)"></i> Visión estratégica</li>
+              }
+              @case('ALMACENISTA') {
+                <li><i class="pi pi-check" style="color: var(--green-500)"></i> Gestión de bodega</li>
+                <li><i class="pi pi-check" style="color: var(--green-500)"></i> Alertas de stock</li>
+                <li><i class="pi pi-check" style="color: var(--green-500)"></i> Reabastecimiento</li>
+                <li><i class="pi pi-check" style="color: var(--green-500)"></i> Movimientos</li>
+              }
+              @case('SERVICIO') {
+                <li><i class="pi pi-check" style="color: var(--green-500)"></i> Productos por habitación</li>
+                <li><i class="pi pi-check" style="color: var(--green-500)"></i> Consumo por tipo de cuarto</li>
+                <li><i class="pi pi-check" style="color: var(--green-500)"></i> Tus movimientos</li>
+                <li><i class="pi pi-check" style="color: var(--green-500)"></i> Distribución de aseo</li>
+              }
+              @case('RECEPCION') {
+                <li><i class="pi pi-check" style="color: var(--green-500)"></i> Estado de habitaciones</li>
+                <li><i class="pi pi-check" style="color: var(--green-500)"></i> PAR (Qué debe tener)</li>
+                <li><i class="pi pi-check" style="color: var(--green-500)"></i> Ocupancy</li>
+                <li><i class="pi pi-check" style="color: var(--green-500)"></i> Información de huéspedes</li>
+              }
+            }
+          </ul>
+        </div>
       }
 
       <div class="assistant-rail__note">
         <i class="pi pi-info-circle"></i>
-        <p>Respuestas basadas en el estado actual del inventario en tiempo real.</p>
+        <p>Las respuestas están adaptadas a tu rol. Solo verás datos que te corresponden.</p>
       </div>
     </aside>
     </div>
   </section>
 </div>
+
+<style>
+  .assistant-page-head__role-badge {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    color: white;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    font-size: 0.875rem;
+  }
+
+  .assistant-page-head__role-label {
+    font-weight: 700;
+    font-size: 1rem;
+  }
+
+  .assistant-page-head__role-desc {
+    font-size: 0.75rem;
+    opacity: 0.9;
+  }
+
+  .assistant-prompt-card__category {
+    display: block;
+    font-size: 0.75rem;
+    opacity: 0.6;
+    margin-bottom: 0.25rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .assistant-rail__role-info {
+    padding: 1rem;
+    background: rgba(0, 0, 0, 0.02);
+    border-radius: 0.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .assistant-rail__role-desc {
+    margin: 0 0 0.75rem 0;
+    font-size: 0.875rem;
+    color: var(--text-color-secondary);
+  }
+
+  .assistant-rail__role-features {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+  }
+
+  .assistant-rail__role-features li {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem 0;
+  }
+
+  .assistant-rail__role-features i {
+    font-size: 0.75rem;
+  }
+</style>

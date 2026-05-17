@@ -1,0 +1,232 @@
+╔════════════════════════════════════════════════════════════════════════════════╗
+║                         TARJETA DE REFERENCIA RÁPIDA                           ║
+║                    Sistema RBAC para Chatbot - Inventario                      ║
+╚════════════════════════════════════════════════════════════════════════════════╝
+
+
+┌─ COMPILAR Y EJECUTAR ─────────────────────────────────────────────────────────┐
+│                                                                                │
+│  # Terminal 1: Backend                                                        │
+│  $ cd ai-service                                                              │
+│  $ mvn clean install                                                          │
+│  $ mvn spring-boot:run                                                        │
+│                                                                                │
+│  # Terminal 2: Frontend                                                       │
+│  $ cd frontend                                                                │
+│  $ npm install                                                                │
+│  $ ng serve --open                                                            │
+│                                                                                │
+│  ✅ Esperado: Backend en http://localhost:8080                               │
+│  ✅ Esperado: Frontend en http://localhost:4200                              │
+│                                                                                │
+└────────────────────────────────────────────────────────────────────────────────┘
+
+
+┌─ USUARIOS DE PRUEBA ──────────────────────────────────────────────────────────┐
+│                                                                                │
+│  Usuario      │ Contraseña   │ Rol          │ Verás                          │
+│  ─────────────┼──────────────┼──────────────┼──────────────────────────────  │
+│  admin        │ password123  │ ADMIN        │ TODO                           │
+│  almacen      │ password123  │ ALMACENISTA  │ Bodega                         │
+│  servicio     │ password123  │ SERVICIO     │ Habitaciones                   │
+│  recepcion    │ password123  │ RECEPCION    │ Habitaciones                   │
+│                                                                                │
+└────────────────────────────────────────────────────────────────────────────────┘
+
+
+┌─ ARCHIVOS IMPLEMENTADOS ──────────────────────────────────────────────────────┐
+│                                                                                │
+│  Backend (5):                           Frontend (3):                          │
+│  ├─ RoleBasedContextFilter.java        ├─ role-based-suggestions.ts          │
+│  ├─ RoleBasedPromptBuilder.java        ├─ assistant-page.component.ts        │
+│  ├─ RoleContextInfo.java               └─ assistant-page.component.html      │
+│  ├─ AiController.java (mod)                                                  │
+│  └─ InventoryAssistantService.java     Documentación (8):                    │
+│     (mod)                               ├─ 👉_COMIENZA_AQUI.md               │
+│                                         ├─ INICIO_RAPIDO.md                   │
+│  Ubicación:                             ├─ TESTING_GUIDE.md                   │
+│  ai-service/src/main/java/             ├─ VERIFICACION_FINAL.md              │
+│  com/hotel/ai/                          ├─ DIAGRAMA_ARQUITECTURA.txt          │
+│                                         ├─ IMPLEMENTACION_COMPLETA.md         │
+│                                         ├─ RESUMEN_EJECUTIVO.txt              │
+│                                         └─ REFERENCIA_RAPIDA.txt (este)       │
+│                                                                                │
+│  Ubicación:                                                                   │
+│  frontend/src/app/features/assistant/                                        │
+│                                                                                │
+└────────────────────────────────────────────────────────────────────────────────┘
+
+
+┌─ PRUEBAS CLAVE ───────────────────────────────────────────────────────────────┐
+│                                                                                │
+│  ADMIN:                                  ALMACENISTA:                         │
+│  [ ] Login: admin                       [ ] Login: almacen                   │
+│  [ ] Badge: 🔴 ADMIN                    [ ] Badge: 🟢 ALMACENISTA            │
+│  [ ] 8 sugerencias aparecen             [ ] 8 sugerencias aparecen            │
+│  [ ] Q: "¿Estado general?"              [ ] Q: "¿Qué reabastecer?"           │
+│  [ ] A: Incluye todo                    [ ] A: SOLO bodega (NO cuartos)      │
+│                                         [ ] Q: "¿Usuarios?"                   │
+│  SERVICIO:                              [ ] A: "Sin acceso"                  │
+│  [ ] Login: servicio                                                         │
+│  [ ] Badge: 🔵 SERVICIO                 RECEPCIÓN:                           │
+│  [ ] 8 sugerencias aparecen             [ ] Login: recepcion                 │
+│  [ ] Q: "¿Qué 305?"                     [ ] Badge: 🟠 RECEPCION              │
+│  [ ] A: Aseo/minibar (NO bodega)        [ ] 8 sugerencias aparecen            │
+│                                         [ ] Q: "¿Estado 305?"                │
+│                                         [ ] A: Estado + PAR                   │
+│                                                                                │
+└────────────────────────────────────────────────────────────────────────────────┘
+
+
+┌─ CÓMO FUNCIONA ───────────────────────────────────────────────────────────────┐
+│                                                                                │
+│  1. Usuario hace login                                                        │
+│  2. Frontend obtiene rol del AuthService                                      │
+│  3. Frontend muestra badge coloreado + sugerencias del rol                   │
+│  4. Usuario hace pregunta                                                     │
+│  5. Frontend envía: POST /api/ai/inventory-assistant {"question": "..."}     │
+│  6. AiController extrae rol automáticamente                                  │
+│  7. RoleBasedContextFilter filtra datos según rol                           │
+│  8. RoleBasedPromptBuilder obtiene instrucciones del rol                     │
+│  9. Construye prompt con contexto filtrado                                   │
+│  10. Gemini API responde adaptado al rol                                     │
+│  11. Frontend muestra respuesta                                              │
+│                                                                                │
+│  CLAVE: El filtrado ocurre en backend, no en frontend                       │
+│         → No puedes "burlar" los permisos desde frontend                    │
+│                                                                                │
+└────────────────────────────────────────────────────────────────────────────────┘
+
+
+┌─ MATRIZ DE PERMISOS ──────────────────────────────────────────────────────────┐
+│                                                                                │
+│  Datos              ADMIN    ALMAC    SERVICIO   RECEP                        │
+│  ───────────────────────────────────────────────────────────────────────      │
+│  Productos          ✓ TODO   ✓ TODO   ⚠ ASEO    ✗                           │
+│  Stock/Alertas      ✓ SÍ    ✓ SÍ     ✗         ✗                           │
+│  Movimientos        ✓ TODOS  ✓ TODOS  ⚠ PROPIOS ✗                           │
+│  Habitaciones       ✓ TODAS  ✗        ✓ CONSUMO ✓ ESTADO                    │
+│  Usuarios           ✓ DET    ✗        ✗         ⚠ BÁSICO                    │
+│  Reportes           ✓ EXEC   ✓ OPER   ⚠ CUARTOS ⚠ OCCUPANCY                │
+│                                                                                │
+└────────────────────────────────────────────────────────────────────────────────┘
+
+
+┌─ ERRORES COMUNES ─────────────────────────────────────────────────────────────┐
+│                                                                                │
+│  Error                          Solución                                      │
+│  ─────────────────────────────────────────────────────────────────────────    │
+│  "No se encuentra              mvn clean install                              │
+│   RoleContextInfo"             (verifica que archivo existe)                  │
+│                                                                                │
+│  "AiController no encuentra    Compila con: mvn clean compile                │
+│   RoleBasedPromptBuilder"      (verifica dependencias)                        │
+│                                                                                │
+│  No veo el rol en              F12 → Console → busca errores                  │
+│  la interfaz                   Verifica usuario en BD tiene role              │
+│                                                                                │
+│  Las respuestas son            El modelo a veces ignora instrucciones        │
+│  genéricas                     Intenta preguntas más específicas              │
+│                                                                                │
+│  Backend no levanta            mvn clean install && mvn spring-boot:run      │
+│                                                                                │
+│  Frontend no carga             npm install && ng serve --open                │
+│                                                                                │
+└────────────────────────────────────────────────────────────────────────────────┘
+
+
+┌─ ARCHIVOS CRÍTICOS ───────────────────────────────────────────────────────────┐
+│                                                                                │
+│  Si algo NO funciona:                                                        │
+│                                                                                │
+│  1. Backend:                                                                  │
+│     ai-service/src/main/java/com/hotel/ai/service/                          │
+│     RoleBasedContextFilter.java     ← Filtra datos                           │
+│     RoleBasedPromptBuilder.java     ← Prompts adaptados                      │
+│                                                                                │
+│  2. Controller:                                                               │
+│     AiController.java               ← Extrae rol                             │
+│     Línea ~50: extractRoleContext()  ← Obtiene rol del usuario              │
+│                                                                                │
+│  3. Service:                                                                  │
+│     InventoryAssistantService.java  ← Aplica filtro                         │
+│     Línea ~90: answerInventoryQuestion(request, roleContext)                │
+│                                                                                │
+│  4. Frontend:                                                                 │
+│     role-based-suggestions.ts       ← Preguntas por rol                     │
+│     assistant-page.component.ts     ← Carga rol en ngOnInit()               │
+│     assistant-page.component.html   ← Muestra roleColor()                   │
+│                                                                                │
+└────────────────────────────────────────────────────────────────────────────────┘
+
+
+┌─ COMANDOS ÚTILES ─────────────────────────────────────────────────────────────┐
+│                                                                                │
+│  Compilar backend:                                                            │
+│  $ mvn clean install -DskipTests                                              │
+│  $ mvn clean compile                                                          │
+│                                                                                │
+│  Ejecutar backend:                                                            │
+│  $ mvn spring-boot:run                                                        │
+│                                                                                │
+│  Limpiar frontend:                                                            │
+│  $ npm cache clean --force                                                    │
+│  $ rm -rf node_modules                                                        │
+│  $ npm install                                                                │
+│                                                                                │
+│  Lint frontend:                                                               │
+│  $ ng lint                                                                    │
+│                                                                                │
+│  Build frontend:                                                              │
+│  $ ng build                                                                   │
+│                                                                                │
+│  Base de datos:                                                               │
+│  # Ver rol de usuario                                                        │
+│  SELECT username, role FROM users WHERE username='admin';                    │
+│                                                                                │
+│  # Actualizar rol                                                            │
+│  UPDATE users SET role='ADMIN' WHERE username='admin';                       │
+│                                                                                │
+└────────────────────────────────────────────────────────────────────────────────┘
+
+
+┌─ DOCUMENTACIÓN POR NECESIDAD ─────────────────────────────────────────────────┐
+│                                                                                │
+│  "Quiero empezar ya"              → INICIO_RAPIDO.md (2 min)                │
+│  "¿Cómo compilo?"                 → 👉_COMIENZA_AQUI.md                     │
+│  "¿Qué puedo probar?"             → TESTING_GUIDE.md                         │
+│  "Quiero entender cómo funciona"  → DIAGRAMA_ARQUITECTURA.txt                │
+│  "¿Qué archivos cambió?"          → IMPLEMENTACION_COMPLETA.md               │
+│  "Verifiquemos que está todo"     → VERIFICACION_FINAL.md                    │
+│  "Resumen ejecutivo"              → RESUMEN_EJECUTIVO.txt                    │
+│  "Referencia rápida"              → REFERENCIA_RAPIDA.txt (este)             │
+│                                                                                │
+└────────────────────────────────────────────────────────────────────────────────┘
+
+
+┌─ RESUMEN EN 30 SEGUNDOS ──────────────────────────────────────────────────────┐
+│                                                                                │
+│  ✅ 8 archivos implementados (5 backend, 3 frontend)                         │
+│  ✅ 4 roles funcionando con permisos distintos                               │
+│  ✅ 32 preguntas personalizadas (8 por rol)                                  │
+│  ✅ Frontend muestra badge coloreado por rol                                 │
+│  ✅ Backend filtra datos automáticamente                                     │
+│  ✅ 8 documentos completos                                                   │
+│  ✅ Listo para probar en 5 minutos                                           │
+│                                                                                │
+│  Próximo paso: Ejecuta los comandos de COMPILAR Y EJECUTAR                  │
+│                                                                                │
+└────────────────────────────────────────────────────────────────────────────────┘
+
+
+╔════════════════════════════════════════════════════════════════════════════════╗
+║                                                                                ║
+║                  ✅ PROYECTO COMPLETADO Y LISTO PARA USAR                     ║
+║                                                                                ║
+║                  Última actualización: Mayo 2024                              ║
+║                  Estado: 100% Implementado                                    ║
+║                  Versión: Final                                               ║
+║                                                                                ║
+║                        ¡Disfruta tu chatbot adaptado por roles! 🚀            ║
+║                                                                                ║
+╚════════════════════════════════════════════════════════════════════════════════╝

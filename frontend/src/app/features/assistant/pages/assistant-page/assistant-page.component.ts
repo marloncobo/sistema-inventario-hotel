@@ -6,15 +6,22 @@ import {
   ViewChild,
   computed,
   inject,
-  signal
+  signal,
+  OnInit
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { take } from 'rxjs';
 import { ButtonModule } from 'primeng/button';
 import { AssistantApiService } from '@core/services/api/assistant-api.service';
+import { AuthService } from '@core/services/auth.service';
 import { extractApiErrorMessage } from '@models/api-error.model';
 import type { InventoryAssistantHistoryEntry } from '@models/assistant.model';
-import { INVENTORY_ASSISTANT_SUGGESTIONS } from '../../data/inventory-assistant-suggestions';
+import {
+  getSuggestionsForRole,
+  ROLE_DESCRIPTIONS,
+  ROLE_COLORS,
+  QuestionSuggestion
+} from '../../data/role-based-suggestions';
 
 @Component({
   selector: 'app-assistant-page',
@@ -26,8 +33,9 @@ import { INVENTORY_ASSISTANT_SUGGESTIONS } from '../../data/inventory-assistant-
     '../../../../shared/styles/premium-panels.css'
   ]
 })
-export class AssistantPageComponent implements AfterViewChecked {
+export class AssistantPageComponent implements AfterViewChecked, OnInit {
   private readonly assistantApi = inject(AssistantApiService);
+  private readonly authService = inject(AuthService);
 
   @ViewChild('chatThread') private chatThreadRef?: ElementRef<HTMLElement>;
 
@@ -35,7 +43,8 @@ export class AssistantPageComponent implements AfterViewChecked {
   protected readonly loading = signal(false);
   protected readonly submitError = signal<string | null>(null);
   protected readonly history = signal<InventoryAssistantHistoryEntry[]>([]);
-  protected readonly suggestedQuestions = signal(INVENTORY_ASSISTANT_SUGGESTIONS);
+  protected readonly userRole = signal<string | null>(null);
+  protected readonly suggestedQuestions = signal<QuestionSuggestion[]>([]);
 
   private shouldScrollToBottom = false;
 
@@ -45,27 +54,28 @@ export class AssistantPageComponent implements AfterViewChecked {
   );
   protected readonly hasHistory = computed(() => this.history().length > 0);
 
-  /** Sugerencias iniciales solo en el panel central (sin duplicar en el rail). */
   protected readonly starterPrompts = computed(() => this.suggestedQuestions());
 
-  /** Atajos en el rail únicamente cuando ya hay mensajes en el chat. */
   protected readonly railQuickPrompts = computed(() =>
     this.hasHistory() ? this.suggestedQuestions() : []
   );
 
-  private readonly promptIconClasses = [
-    'pi-chart-bar',
-    'pi-shopping-cart',
-    'pi-exclamation-triangle',
-    'pi-clock',
-    'pi-list-check',
-    'pi-bell',
-    'pi-box',
-    'pi-sync'
-  ] as const;
+  protected readonly roleDescription = computed(() => {
+    const role = this.userRole();
+    return role ? ROLE_DESCRIPTIONS[role] || 'Usuario' : 'Usuario';
+  });
 
-  protected promptIcon(index: number): string {
-    return this.promptIconClasses[index % this.promptIconClasses.length];
+  protected readonly roleColor = computed(() => {
+    const role = this.userRole();
+    return role ? ROLE_COLORS[role] || '#95A5A6' : '#95A5A6';
+  });
+
+  ngOnInit(): void {
+    this.authService.getCurrentUser().pipe(take(1)).subscribe((user) => {
+      const role = user?.roles?.[0]?.toUpperCase() || 'RECEPCION';
+      this.userRole.set(role);
+      this.suggestedQuestions.set(getSuggestionsForRole(role));
+    });
   }
 
   ngAfterViewChecked(): void {
@@ -188,8 +198,8 @@ export class AssistantPageComponent implements AfterViewChecked {
     return entry.id;
   }
 
-  protected trackByQuestion(_: number, question: string): string {
-    return question;
+  protected trackByQuestion(_: number, question: QuestionSuggestion): string {
+    return question.text;
   }
 
   protected formatAskedAt(value: string): string {
