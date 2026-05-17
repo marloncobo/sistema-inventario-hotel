@@ -1,4 +1,4 @@
-<div class="assignments-page pp-root">
+<div class="assignments-page app-page pp-root">
   <header class="assignments-hero pp-surface">
     <div class="assignments-hero__top">
       <div class="assignments-hero__copy">
@@ -82,7 +82,7 @@
                 <span>Movimiento</span>
                 <select class="catalog-select" formControlName="assignmentType">
                   <option value="">Todos</option>
-                  @for (type of assignmentFlows; track type.value) {
+                  @for (type of assignmentTypeOptions; track type.value) {
                     <option [value]="type.value">{{ type.label }}</option>
                   }
                 </select>
@@ -320,7 +320,7 @@
           <span>Item</span>
           <select class="field-control" formControlName="itemId">
             <option [ngValue]="0">Selecciona un item</option>
-            @for (item of items(); track item.id) {
+            @for (item of selectableItems(); track item.id) {
               <option [ngValue]="item.id">{{ itemLabel(item) }}</option>
             }
           </select>
@@ -367,8 +367,12 @@
       <div class="form-grid pp-form-grid-2">
         <label class="field">
           <span>Movimiento del insumo</span>
-          <select class="field-control" formControlName="assignmentType">
-            @for (type of assignmentFlows; track type.value) {
+          <select
+            class="field-control"
+            formControlName="assignmentType"
+            (change)="onAssignmentTypeChange()"
+          >
+            @for (type of assignmentTypeOptions; track type.value) {
               <option [value]="type.value">{{ type.label }}</option>
             }
           </select>

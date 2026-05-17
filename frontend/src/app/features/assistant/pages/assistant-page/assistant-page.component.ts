@@ -1,37 +1,35 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, signal } from '@angular/core';
+import {
+  AfterViewChecked,
+  Component,
+  ElementRef,
+  ViewChild,
+  computed,
+  inject,
+  signal
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { take } from 'rxjs';
 import { ButtonModule } from 'primeng/button';
-import { ProgressSpinnerModule } from 'primeng/progressspinner';
-import { TagModule } from 'primeng/tag';
 import { AssistantApiService } from '@core/services/api/assistant-api.service';
 import { extractApiErrorMessage } from '@models/api-error.model';
 import type { InventoryAssistantHistoryEntry } from '@models/assistant.model';
-import { EmptyStateComponent } from '@shared/components/empty-state/empty-state.component';
-import { PageHeaderComponent } from '@shared/components/page-header/page-header.component';
 import { INVENTORY_ASSISTANT_SUGGESTIONS } from '../../data/inventory-assistant-suggestions';
 
 @Component({
   selector: 'app-assistant-page',
   standalone: true,
-  imports: [
-    CommonModule,
-    FormsModule,
-    ButtonModule,
-    ProgressSpinnerModule,
-    TagModule,
-    EmptyStateComponent,
-    PageHeaderComponent
-  ],
+  imports: [CommonModule, FormsModule, ButtonModule],
   templateUrl: './assistant-page.component.html',
   styleUrls: [
     './assistant-page.component.css',
     '../../../../shared/styles/premium-panels.css'
   ]
 })
-export class AssistantPageComponent {
+export class AssistantPageComponent implements AfterViewChecked {
   private readonly assistantApi = inject(AssistantApiService);
+
+  @ViewChild('chatThread') private chatThreadRef?: ElementRef<HTMLElement>;
 
   protected readonly question = signal('');
   protected readonly loading = signal(false);
@@ -39,17 +37,58 @@ export class AssistantPageComponent {
   protected readonly history = signal<InventoryAssistantHistoryEntry[]>([]);
   protected readonly suggestedQuestions = signal(INVENTORY_ASSISTANT_SUGGESTIONS);
 
+  private shouldScrollToBottom = false;
+
   protected readonly trimmedQuestion = computed(() => this.question().trim());
   protected readonly canSubmit = computed(
     () => this.trimmedQuestion().length > 0 && !this.loading()
   );
   protected readonly hasHistory = computed(() => this.history().length > 0);
 
+  /** Sugerencias iniciales solo en el panel central (sin duplicar en el rail). */
+  protected readonly starterPrompts = computed(() => this.suggestedQuestions());
+
+  /** Atajos en el rail únicamente cuando ya hay mensajes en el chat. */
+  protected readonly railQuickPrompts = computed(() =>
+    this.hasHistory() ? this.suggestedQuestions() : []
+  );
+
+  private readonly promptIconClasses = [
+    'pi-chart-bar',
+    'pi-shopping-cart',
+    'pi-exclamation-triangle',
+    'pi-clock',
+    'pi-list-check',
+    'pi-bell',
+    'pi-box',
+    'pi-sync'
+  ] as const;
+
+  protected promptIcon(index: number): string {
+    return this.promptIconClasses[index % this.promptIconClasses.length];
+  }
+
+  ngAfterViewChecked(): void {
+    if (!this.shouldScrollToBottom) {
+      return;
+    }
+    this.scrollToBottom();
+    this.shouldScrollToBottom = false;
+  }
+
   protected updateQuestion(value: string): void {
     this.question.set(value);
     if (this.submitError()) {
       this.submitError.set(null);
     }
+  }
+
+  protected onComposerKeydown(event: KeyboardEvent): void {
+    if (event.key !== 'Enter' || event.shiftKey || event.isComposing) {
+      return;
+    }
+    event.preventDefault();
+    this.askQuestion();
   }
 
   protected askQuestion(questionOverride?: string): void {
@@ -73,7 +112,8 @@ export class AssistantPageComponent {
       errorMessage: null
     };
 
-    this.history.update((entries) => [optimisticEntry, ...entries]);
+    this.history.update((entries) => [...entries, optimisticEntry]);
+    this.shouldScrollToBottom = true;
 
     this.assistantApi
       .askInventoryAssistant(nextQuestion)
@@ -93,6 +133,7 @@ export class AssistantPageComponent {
             )
           );
           this.loading.set(false);
+          this.shouldScrollToBottom = true;
         },
         error: (error) => {
           const message = extractApiErrorMessage(error?.error);
@@ -110,6 +151,7 @@ export class AssistantPageComponent {
             )
           );
           this.loading.set(false);
+          this.shouldScrollToBottom = true;
         }
       });
   }
@@ -121,6 +163,25 @@ export class AssistantPageComponent {
 
   protected resendQuestion(question: string): void {
     this.askQuestion(question);
+  }
+
+  protected clearHistory(): void {
+    if (this.loading()) {
+      return;
+    }
+    this.history.set([]);
+    this.submitError.set(null);
+  }
+
+  protected answerParagraphs(answer: string): string[] {
+    const normalized = answer.trim();
+    if (!normalized) {
+      return [];
+    }
+    return normalized
+      .split(/\n{2,}|\n/)
+      .map((paragraph) => paragraph.trim())
+      .filter(Boolean);
   }
 
   protected trackByHistoryId(_: number, entry: InventoryAssistantHistoryEntry): string {
@@ -136,6 +197,14 @@ export class AssistantPageComponent {
       dateStyle: 'medium',
       timeStyle: 'short'
     });
+  }
+
+  private scrollToBottom(): void {
+    const element = this.chatThreadRef?.nativeElement;
+    if (!element) {
+      return;
+    }
+    element.scrollTop = element.scrollHeight;
   }
 
   private buildHistoryId(): string {

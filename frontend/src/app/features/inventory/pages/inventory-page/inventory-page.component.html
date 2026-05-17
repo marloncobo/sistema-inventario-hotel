@@ -1,4 +1,4 @@
-<div class="inventory-page pp-root">
+<div class="inventory-page app-page pp-root">
   <header class="inv-page-head">
     <div class="inv-page-head__copy">
       <h1 class="inv-page-head__title pp-hero-title">Inventario</h1>
@@ -1049,7 +1049,7 @@
 
             <div class="form-grid pp-form-grid-2">
               <label class="field">
-                <span>Area</span>
+                <span>Área (obligatorio)</span>
                 <select class="field-control" formControlName="areaName">
                   <option value="">Seleccionar</option>
                   @for (area of areaOptions(); track area) {
@@ -1123,7 +1123,7 @@
               <span>Desde</span>
               <select class="field-control" formControlName="fromLocationId">
                 <option value="">Seleccionar</option>
-                @for (loc of locations(); track loc.id) {
+                @for (loc of activeLocations(); track loc.id) {
                   <option [value]="loc.id">{{ loc.code }} — {{ loc.name }}</option>
                 }
               </select>
@@ -1132,7 +1132,7 @@
               <span>Hacia</span>
               <select class="field-control" formControlName="toLocationId">
                 <option value="">Seleccionar</option>
-                @for (loc of locations(); track loc.id) {
+                @for (loc of activeLocations(); track loc.id) {
                   <option [value]="loc.id">{{ loc.code }} — {{ loc.name }}</option>
                 }
               </select>

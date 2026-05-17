@@ -3,13 +3,7 @@
 }
 
 .room-lookup-page {
-  max-width: 1700px;
-  margin: 0 auto;
-  padding: 3rem 4rem 6rem;
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-  background: #ffffff;
+  width: 100%;
 }
 
 .room-lookup-page .room-lookup-hero {

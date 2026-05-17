@@ -1,10 +1,5 @@
 .locations-page {
-  max-width: 1480px;
-  margin: 0 auto;
-  padding-bottom: 2rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
+  width: 100%;
 }
 
 .locations-header-actions {

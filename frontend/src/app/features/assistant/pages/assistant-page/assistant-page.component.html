@@ -1,184 +1,210 @@
-<div class="assistant-page pp-root">
-  <app-page-header
-    title="Asistente IA"
-    subtitle="Consulta el estado del inventario, prioridades de compra y riesgos operativos usando el contexto actual del sistema."
-  />
-
-  <section class="assistant-hero pp-surface">
-    <div class="assistant-hero__copy">
-      <span class="pp-eyebrow">Análisis asistido</span>
-      <h2 class="pp-hero-title">Pregunta en lenguaje natural y obtén una respuesta accionable</h2>
-      <p class="pp-hero-lede">
-        El asistente revisa la información disponible del inventario para ayudarte a detectar alertas,
-        reabastecimientos urgentes y decisiones operativas del día.
+<div class="assistant-page app-page pp-root">
+  <header class="assistant-page-head">
+    <div class="assistant-page-head__copy">
+      <h1 class="assistant-page-head__title pp-hero-title">Asistente IA</h1>
+      <p class="assistant-page-head__desc pp-hero-lede">
+        Consultas sobre inventario, alertas y prioridades de compra.
       </p>
     </div>
 
-    <div class="pp-hero-summary">
-      <span class="pp-section-label">Modo actual</span>
-      <strong class="pp-hero-summary__value">v1</strong>
-      <p class="pp-hero-summary__meta">
-        Pregunta-respuesta simple con historial local en pantalla.
-      </p>
-    </div>
-  </section>
-
-  <section class="assistant-workbench">
-    <article class="assistant-composer pp-surface-solid">
-      <div class="pp-section-head assistant-composer__head">
-        <div class="pp-section-head__copy">
-          <span class="pp-section-label">Consulta</span>
-          <h3 class="pp-section-head__title">Escribe tu pregunta</h3>
-          <p class="pp-section-head__desc">
-            Sé específico si quieres un ranking, una prioridad o un resumen ejecutivo.
-          </p>
-        </div>
-
-        <div class="pp-inline-stats">
-          <span class="pp-inline-stat">
-            <i class="pi pi-comment"></i>
-            {{ history().length }} consultas
-          </span>
-          <span class="pp-inline-stat">
-            <i class="pi pi-bolt"></i>
-            Contexto en vivo
-          </span>
-        </div>
-      </div>
-
-      <label class="assistant-composer__field" for="assistant-question">
-        <span>Pregunta para la IA</span>
-        <textarea
-          id="assistant-question"
-          class="assistant-composer__textarea"
-          rows="5"
-          [ngModel]="question()"
-          (ngModelChange)="updateQuestion($event)"
-          placeholder="Ejemplo: ¿Qué productos debo reabastecer primero y por qué?"
-        ></textarea>
-      </label>
-
-      @if (submitError()) {
-        <div class="assistant-composer__error" role="alert">
-          <i class="pi pi-exclamation-triangle"></i>
-          <span>{{ submitError() }}</span>
-        </div>
-      }
-
-      <div class="assistant-composer__actions">
+    @if (hasHistory()) {
+      <div class="assistant-page-head__actions">
         <button
           pButton
           type="button"
-          label="Preguntar"
-          icon="pi pi-send"
-          [loading]="loading()"
-          [disabled]="!canSubmit()"
-          (click)="askQuestion()"
+          severity="secondary"
+          variant="outlined"
+          icon="pi pi-trash"
+          label="Limpiar chat"
+          (click)="clearHistory()"
+          [disabled]="loading()"
         ></button>
-
-        <span class="assistant-composer__hint">
-          {{ trimmedQuestion().length }} caracteres listos para enviar
-        </span>
-      </div>
-    </article>
-
-    <aside class="assistant-suggestions pp-surface-solid">
-      <div class="pp-section-head__copy">
-        <span class="pp-section-label">Inicio rápido</span>
-        <h3 class="pp-section-head__title">Preguntas sugeridas</h3>
-        <p class="pp-section-head__desc">
-          Usa una de estas consultas como punto de partida y ajústala si necesitas más detalle.
-        </p>
-      </div>
-
-      <div class="assistant-suggestions__list">
-        @for (suggestion of suggestedQuestions(); track trackByQuestion($index, suggestion)) {
-          <button
-            type="button"
-            class="assistant-suggestions__item"
-            (click)="useSuggestion(suggestion)"
-          >
-            <i class="pi pi-sparkles"></i>
-            <span>{{ suggestion }}</span>
-          </button>
-        }
-      </div>
-    </aside>
-  </section>
-
-  <section class="assistant-history pp-surface-solid">
-    <div class="pp-section-head">
-      <div class="pp-section-head__copy">
-        <span class="pp-section-label">Historial local</span>
-        <h3 class="pp-section-head__title">Consultas de esta sesión</h3>
-        <p class="pp-section-head__desc">
-          El historial vive solo en esta pantalla mientras mantengas la sesión abierta.
-        </p>
-      </div>
-    </div>
-
-    @if (!hasHistory()) {
-      <app-empty-state
-        icon="pi pi-comments"
-        title="Todavía no has hecho preguntas"
-        message="Prueba con una de las sugerencias o escribe una consulta sobre stock, alertas, consumo o compras prioritarias."
-      />
-    } @else {
-      <div class="assistant-history__list">
-        @for (entry of history(); track trackByHistoryId($index, entry)) {
-          <article class="assistant-history-card" [attr.data-status]="entry.status">
-            <div class="assistant-history-card__question">
-              <div class="assistant-history-card__meta">
-                <span class="pp-chip-neutral">
-                  <i class="pi pi-user"></i>
-                  Tu consulta
-                </span>
-                <span class="pp-chip-muted">{{ formatAskedAt(entry.askedAt) }}</span>
-              </div>
-              <p>{{ entry.question }}</p>
-            </div>
-
-            <div class="assistant-history-card__answer">
-              <div class="assistant-history-card__answer-head">
-                <div class="assistant-history-card__meta">
-                  <span class="pp-chip-neutral">
-                    <i class="pi pi-microchip-ai"></i>
-                    Respuesta IA
-                  </span>
-                  @if (entry.contextSource) {
-                    <p-tag [value]="entry.contextSource!" severity="contrast" />
-                  }
-                </div>
-
-                <button
-                  pButton
-                  type="button"
-                  size="small"
-                  severity="secondary"
-                  icon="pi pi-refresh"
-                  label="Repetir"
-                  (click)="resendQuestion(entry.question)"
-                  [disabled]="loading()"
-                ></button>
-              </div>
-
-              @if (entry.status === 'loading') {
-                <div class="assistant-history-card__loading">
-                  <p-progress-spinner strokeWidth="4" animationDuration=".7s" />
-                  <span>Analizando el inventario actual...</span>
-                </div>
-              } @else if (entry.status === 'error') {
-                <div class="assistant-history-card__error" role="alert">
-                  <i class="pi pi-times-circle"></i>
-                  <span>{{ entry.errorMessage || 'No fue posible completar la consulta.' }}</span>
-                </div>
-              } @else {
-                <p class="assistant-history-card__text">{{ entry.answer }}</p>
-              }
-            </div>
-          </article>
-        }
       </div>
     }
+  </header>
+
+  <section class="assistant-workbench">
+    <div class="assistant-shell">
+    <section class="assistant-panel pp-surface-solid" aria-label="Conversación">
+      <div
+        class="assistant-thread"
+        #chatThread
+        tabindex="0"
+        aria-live="polite"
+        aria-relevant="additions"
+      >
+        @if (!hasHistory()) {
+          <div class="assistant-empty">
+            <div class="assistant-empty__hero">
+              <span class="assistant-empty__icon" aria-hidden="true">
+                <i class="pi pi-sparkles"></i>
+              </span>
+              <div>
+                <h2 class="assistant-empty__title">¿Qué necesitas saber del inventario?</h2>
+                <p class="assistant-empty__text">
+                  El asistente analiza stock, alertas y consumo. Elige una consulta o escribe la tuya.
+                </p>
+              </div>
+            </div>
+
+            <div class="assistant-prompt-grid">
+              @for (suggestion of starterPrompts(); track trackByQuestion($index, suggestion); let i = $index) {
+                <button type="button" class="assistant-prompt-card" (click)="useSuggestion(suggestion)">
+                  <span class="assistant-prompt-card__icon" aria-hidden="true">
+                    <i class="pi" [ngClass]="promptIcon(i)"></i>
+                  </span>
+                  <span class="assistant-prompt-card__text">{{ suggestion }}</span>
+                  <i class="pi pi-arrow-right assistant-prompt-card__arrow" aria-hidden="true"></i>
+                </button>
+              }
+            </div>
+          </div>
+        } @else {
+          <div class="assistant-messages">
+            @for (entry of history(); track trackByHistoryId($index, entry)) {
+              <article class="assistant-turn" [attr.data-status]="entry.status">
+                <div class="assistant-msg assistant-msg--user">
+                  <span class="assistant-msg__avatar assistant-msg__avatar--user" aria-hidden="true">
+                    <i class="pi pi-user"></i>
+                  </span>
+                  <div class="assistant-msg__body">
+                    <header class="assistant-msg__meta">
+                      <span class="assistant-msg__name">Tú</span>
+                      <time>{{ formatAskedAt(entry.askedAt) }}</time>
+                    </header>
+                    <p>{{ entry.question }}</p>
+                  </div>
+                </div>
+
+                <div class="assistant-msg assistant-msg--ai">
+                  <span class="assistant-msg__avatar assistant-msg__avatar--ai" aria-hidden="true">
+                    <i class="pi pi-sparkles"></i>
+                  </span>
+                  <div class="assistant-msg__body">
+                    <header class="assistant-msg__meta">
+                      <span class="assistant-msg__name">Asistente Lunara</span>
+                      @if (entry.contextSource) {
+                        <span class="assistant-msg__tag">{{ entry.contextSource }}</span>
+                      }
+                      @if (entry.status === 'success') {
+                        <button
+                          type="button"
+                          class="assistant-msg__retry"
+                          (click)="resendQuestion(entry.question)"
+                          [disabled]="loading()"
+                          aria-label="Repetir consulta"
+                        >
+                          <i class="pi pi-refresh"></i>
+                        </button>
+                      }
+                    </header>
+
+                    @if (entry.status === 'loading') {
+                      <div class="assistant-msg__loading">
+                        <span class="assistant-typing" aria-hidden="true">
+                          <span></span><span></span><span></span>
+                        </span>
+                        <span>Analizando inventario…</span>
+                      </div>
+                    } @else if (entry.status === 'error') {
+                      <p class="assistant-msg__error" role="alert">
+                        <i class="pi pi-exclamation-circle"></i>
+                        {{ entry.errorMessage || 'No fue posible completar la consulta.' }}
+                      </p>
+                    } @else {
+                      <div class="assistant-msg__answer">
+                        @for (paragraph of answerParagraphs(entry.answer); track $index) {
+                          <p>{{ paragraph }}</p>
+                        }
+                      </div>
+                    }
+                  </div>
+                </div>
+              </article>
+            }
+          </div>
+        }
+      </div>
+
+      <footer class="assistant-footer">
+        @if (submitError()) {
+          <p class="assistant-footer__error" role="alert">
+            <i class="pi pi-exclamation-triangle"></i>
+            {{ submitError() }}
+          </p>
+        }
+
+        <div class="assistant-input">
+          <span class="assistant-input__prefix" aria-hidden="true">
+            <i class="pi pi-comment"></i>
+          </span>
+          <textarea
+            id="assistant-question"
+            class="assistant-input__field"
+            rows="2"
+            [ngModel]="question()"
+            (ngModelChange)="updateQuestion($event)"
+            (keydown)="onComposerKeydown($event)"
+            placeholder="Escribe tu pregunta sobre inventario…"
+            [disabled]="loading()"
+          ></textarea>
+          <button
+            pButton
+            type="button"
+            class="assistant-input__send"
+            icon="pi pi-send"
+            [rounded]="true"
+            [loading]="loading()"
+            [disabled]="!canSubmit()"
+            (click)="askQuestion()"
+            aria-label="Enviar"
+          ></button>
+        </div>
+        <p class="assistant-footer__hint">
+          <i class="pi pi-keyboard"></i>
+          Enter envía · Mayús+Enter nueva línea
+        </p>
+      </footer>
+    </section>
+
+    <aside class="assistant-rail pp-surface-solid" aria-label="Panel lateral">
+      @if (hasHistory()) {
+        <div class="assistant-rail__head">
+          <span class="pp-section-label">Atajos</span>
+          <h3 class="assistant-rail__title">Nueva consulta</h3>
+        </div>
+
+        <ul class="assistant-rail__list">
+          @for (suggestion of railQuickPrompts(); track trackByQuestion($index, suggestion); let i = $index) {
+          <li>
+            <button type="button" class="assistant-rail__item" (click)="useSuggestion(suggestion)">
+              <span class="assistant-rail__item-icon" aria-hidden="true">
+                <i class="pi" [ngClass]="promptIcon(i)"></i>
+              </span>
+              <span>{{ suggestion }}</span>
+            </button>
+          </li>
+          }
+        </ul>
+      } @else {
+        <div class="assistant-rail__head">
+          <span class="pp-section-label">Contexto</span>
+          <h3 class="assistant-rail__title">Qué puede hacer</h3>
+        </div>
+
+        <ul class="assistant-rail__capabilities">
+          <li><i class="pi pi-chart-line"></i> Resúmenes y prioridades de compra</li>
+          <li><i class="pi pi-bell"></i> Alertas de stock bajo</li>
+          <li><i class="pi pi-box"></i> Riesgo de agotamiento</li>
+          <li><i class="pi pi-list-check"></i> Recomendaciones del día</li>
+        </ul>
+      }
+
+      <div class="assistant-rail__note">
+        <i class="pi pi-info-circle"></i>
+        <p>Respuestas basadas en el estado actual del inventario en tiempo real.</p>
+      </div>
+    </aside>
+    </div>
   </section>
 </div>

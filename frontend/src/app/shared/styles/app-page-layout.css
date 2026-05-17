@@ -1,0 +1,53 @@
+/**
+ * Sangría y espaciado estándar (igual que .inventory-page).
+ * Añadir clase `app-page` al contenedor raíz de cada vista del shell.
+ */
+.app-page,
+.inventory-page,
+.assistant-page {
+  max-width: 1700px;
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 3rem 4rem 6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  background: #ffffff;
+  box-sizing: border-box;
+}
+
+@media (max-width: 1200px) {
+  .app-page,
+  .inventory-page,
+  .assistant-page {
+    padding: 2rem 2rem 3.5rem;
+  }
+}
+
+@media (max-width: 960px) {
+  .app-page,
+  .inventory-page,
+  .assistant-page {
+    padding: 2rem 1.5rem 4rem;
+    gap: 1.5rem;
+  }
+}
+
+@media (max-width: 900px) {
+  .app-page,
+  .inventory-page,
+  .assistant-page {
+    min-height: auto;
+    padding: 1.2rem 0.9rem 5.75rem;
+    gap: 1.25rem;
+  }
+}
+
+@media (max-width: 720px) {
+  .app-page,
+  .inventory-page,
+  .assistant-page {
+    padding: 1.5rem 1rem 3rem;
+    gap: 1.25rem;
+  }
+}

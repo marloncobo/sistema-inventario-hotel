@@ -143,7 +143,7 @@ export class InventoryPageComponent implements OnInit {
   protected readonly decreaseForm = this.fb.group({
     quantity: this.fb.nonNullable.control(1, [Validators.required, Validators.min(1)]),
     roomNumber: this.fb.control('', [Validators.pattern(/^\d{3}$/)]),
-    areaName: this.fb.control('', [Validators.maxLength(120)]),
+    areaName: this.fb.nonNullable.control('', [Validators.required, Validators.maxLength(120)]),
     origin: this.fb.nonNullable.control('CONSUMO_INTERNO', [Validators.required, notBlankValidator]),
     operationalResponsible: this.fb.control('', [Validators.maxLength(120)]),
     referenceText: this.fb.control('', [Validators.maxLength(500)])
@@ -297,8 +297,12 @@ export class InventoryPageComponent implements OnInit {
   }
 
   protected canReturnStock(): boolean {
-    return this.authService.hasAnyRole(['ADMIN', 'ALMACENISTA', 'SERVICIO']);
+    return this.authService.hasAnyRole(['ADMIN', 'ALMACENISTA']);
   }
+
+  protected readonly activeLocations = computed(() =>
+    this.locations().filter((location) => location.active)
+  );
 
   protected isLowStock(item: SupplyItem): boolean {
     return item.stock <= item.minStock;
@@ -682,6 +686,13 @@ export class InventoryPageComponent implements OnInit {
   }
 
   protected openTransferDialog(item: SupplyItem): void {
+    if (!item.active) {
+      this.notificationService.error(
+        'Inventario',
+        'No se puede transferir un insumo inactivo. Reactívalo o elige otro.'
+      );
+      return;
+    }
     this.dialogSubmitError.set(null);
     this.activeDialog.set('transfer');
     this.operationItemId.set(item.id);
@@ -1011,6 +1022,14 @@ export class InventoryPageComponent implements OnInit {
     }
 
     const origin = this.decreaseForm.controls.origin.getRawValue().trim().toUpperCase();
+    const areaName = this.decreaseForm.controls.areaName.getRawValue().trim();
+    if (origin === 'CONSUMO_INTERNO' && !areaName) {
+      this.decreaseForm.controls.areaName.setErrors({ required: true });
+      this.decreaseForm.controls.areaName.markAsTouched();
+      this.dialogSubmitError.set('El consumo interno requiere indicar el área de destino.');
+      return;
+    }
+
     if (origin === 'HABITACION') {
       this.decreaseForm.controls.origin.setErrors({
         server: 'Debes usar el modulo de asignaciones para habitaciones.'
@@ -1255,11 +1274,17 @@ export class InventoryPageComponent implements OnInit {
   }
 
   private loadReturnSourceMovements(itemId: number): void {
+    if (!this.canReturnStock()) {
+      this.returnSourceMovements.set([]);
+      this.selectedReturnSourceMovementId.set(0);
+      return;
+    }
+
     this.returnSourceMovements.set([]);
     this.selectedReturnSourceMovementId.set(0);
 
     this.inventoryApi
-      .getMovements({})
+      .getMovements({ type: 'SALIDA' })
       .pipe(take(1))
       .subscribe({
         next: (movements) => {

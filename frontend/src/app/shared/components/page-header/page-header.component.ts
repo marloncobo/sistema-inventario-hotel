@@ -23,19 +23,24 @@ import { Component, input } from '@angular/core';
       flex-wrap: wrap;
       gap: 1.5rem;
       justify-content: space-between;
-      align-items: flex-end;
-      padding-bottom: 2rem;
-      margin-bottom: 2.5rem;
-      border-bottom: 1px solid var(--app-border);
+      align-items: center;
+      padding-bottom: 0;
+      margin-bottom: 0;
+      border-bottom: none;
     }
 
     .page-header__title {
       margin: 0;
+      font-family: var(--app-font-serif, 'Playfair Display', serif);
+      font-size: 2.75rem;
+      font-weight: 700;
+      line-height: 1;
       color: var(--app-brown);
+      letter-spacing: -0.02em;
     }
 
     .page-header__subtitle {
-      margin: 0.75rem 0 0;
+      margin: 0.55rem 0 0;
       max-width: 42rem;
       color: #6b5a4a;
       font-size: 1.05rem;
@@ -49,17 +54,24 @@ import { Component, input } from '@angular/core';
       flex-wrap: wrap;
     }
 
-    @media (max-width: 768px) {
+    @media (max-width: 960px) {
       .page-header {
         flex-direction: column;
-        align-items: flex-start;
-        padding-bottom: 1.5rem;
-        margin-bottom: 2rem;
+        align-items: stretch;
       }
-      
+
+      .page-header__actions {
+        justify-content: flex-start;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .page-header__title {
+        font-size: 2.1rem;
+      }
+
       .page-header__actions {
         width: 100%;
-        margin-top: 1rem;
       }
     }
   `

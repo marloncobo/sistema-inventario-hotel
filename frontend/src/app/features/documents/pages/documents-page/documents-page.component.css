@@ -1,7 +1,5 @@
 .documents-page {
-  max-width: 1480px;
-  margin: 0 auto;
-  padding-bottom: 2rem;
+  width: 100%;
   display: flex;
   flex-direction: column;
   gap: 1.5rem;

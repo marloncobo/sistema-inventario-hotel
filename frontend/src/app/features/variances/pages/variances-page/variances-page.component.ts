@@ -6,6 +6,8 @@ import { TableModule } from 'primeng/table';
 import { AuthService } from '@core/services/auth.service';
 import { InventoryApiService } from '@core/services/api/inventory-api.service';
 import { NotificationService } from '@core/services/ui/notification.service';
+import { extractApiErrorMessage } from '@models/api-error.model';
+import { isHttp403 } from '@shared/utils/http-error.util';
 import type { InventoryDocument } from '@models/inventory.model';
 import { PageHeaderComponent } from '@shared/components/page-header/page-header.component';
 
@@ -44,7 +46,12 @@ export class VariancesPageComponent implements OnInit {
           this.approved.set(docs.filter((d) => d.status === 'APROBADO'));
           this.loading.set(false);
         },
-        error: () => this.loading.set(false)
+        error: (error) => {
+          this.loading.set(false);
+          if (!isHttp403(error)) {
+            this.notify.error('Diferencias', extractApiErrorMessage(error.error));
+          }
+        }
       });
   }
 
@@ -56,6 +63,11 @@ export class VariancesPageComponent implements OnInit {
         next: () => {
           this.notify.success('Diferencias', 'Conteo aprobado.');
           this.load();
+        },
+        error: (error) => {
+          if (!isHttp403(error)) {
+            this.notify.error('Diferencias', extractApiErrorMessage(error.error));
+          }
         }
       });
   }
@@ -68,6 +80,11 @@ export class VariancesPageComponent implements OnInit {
         next: () => {
           this.notify.success('Diferencias', 'Ajustes aplicados al inventario.');
           this.load();
+        },
+        error: (error) => {
+          if (!isHttp403(error)) {
+            this.notify.error('Diferencias', extractApiErrorMessage(error.error));
+          }
         }
       });
   }

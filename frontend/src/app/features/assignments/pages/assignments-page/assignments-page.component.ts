@@ -8,11 +8,16 @@ import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
 import { TableModule } from 'primeng/table';
+import { ASSIGNMENT_TYPE_UI_OPTIONS } from '@core/constants/domain-options';
 import { AuthService } from '@core/services/auth.service';
 import { InventoryApiService } from '@core/services/api/inventory-api.service';
 import { RoomsApiService } from '@core/services/api/rooms-api.service';
 import { UsersApiService } from '@core/services/api/users-api.service';
 import { NotificationService } from '@core/services/ui/notification.service';
+import {
+  itemsForAssignmentType,
+  validateAssignmentItemCategory
+} from '@shared/utils/assignment-rules.util';
 import { extractApiErrorMessage, extractApiFieldErrors } from '@models/api-error.model';
 import type { AppUser } from '@models/app-user.model';
 import type { SupplyItem } from '@models/inventory.model';
@@ -21,11 +26,6 @@ import { MinNumberDirective } from '@shared/directives/min-number.directive';
 import { notBlankValidator } from '@shared/utils/app-validators.util';
 import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
 import { isHttp403 } from '@shared/utils/http-error.util';
-const ASSIGNMENT_FLOW_OPTIONS = [
-  { label: 'Salida', value: 'SERVICIO_HABITACION' },
-  { label: 'Entrada', value: 'HABITACION' }
-] as const;
-
 @Component({
   selector: 'app-assignments-page',
   standalone: true,
@@ -54,7 +54,7 @@ export class AssignmentsPageComponent implements OnInit {
   private readonly notificationService = inject(NotificationService);
   private readonly fb = inject(FormBuilder);
 
-  protected readonly assignmentFlows = ASSIGNMENT_FLOW_OPTIONS;
+  protected readonly assignmentTypeOptions = ASSIGNMENT_TYPE_UI_OPTIONS;
   protected readonly rooms = signal<Room[]>([]);
   protected readonly items = signal<SupplyItem[]>([]);
   protected readonly serviceUsers = signal<AppUser[]>([]);
@@ -138,6 +138,11 @@ export class AssignmentsPageComponent implements OnInit {
     const start = (this.currentPage() - 1) * this.pageSize;
     return this.assignments().slice(start, start + this.pageSize);
   });
+
+  protected readonly selectableItems = computed(() => {
+    const type = this.assignmentForm.controls.assignmentType.getRawValue();
+    return itemsForAssignmentType(this.items(), type);
+  });
   protected readonly visiblePages = computed(() => {
     const totalPages = this.totalPages();
     const currentPage = this.currentPage();
@@ -192,7 +197,7 @@ export class AssignmentsPageComponent implements OnInit {
   }
 
   protected canLoadOverview(): boolean {
-    return this.authService.hasAnyRole(['ADMIN', 'ALMACENISTA', 'RECEPCION']);
+    return this.authService.hasAnyRole(['ADMIN', 'ALMACENISTA', 'RECEPCION', 'SERVICIO']);
   }
 
   protected loadBaseData(): void {
@@ -203,11 +208,15 @@ export class AssignmentsPageComponent implements OnInit {
       ? this.roomsApi.getAllAssignments({}).pipe(catchError(() => of([] as RoomSupplyAssignment[])))
       : of([] as RoomSupplyAssignment[]);
 
+    const users$ = this.authService.hasRole('ADMIN')
+      ? this.usersApi.getUsers().pipe(catchError(() => of([] as AppUser[])))
+      : of([] as AppUser[]);
+
     forkJoin({
       rooms: this.roomsApi.getRooms().pipe(catchError(() => of([] as Room[]))),
       items: this.inventoryApi.getItems().pipe(catchError(() => of([] as SupplyItem[]))),
       assignments: assignments$,
-      users: this.usersApi.getUsers().pipe(catchError(() => of([] as AppUser[])))
+      users: users$
     })
       .pipe(take(1))
       .subscribe({
@@ -288,6 +297,17 @@ export class AssignmentsPageComponent implements OnInit {
       });
   }
 
+  protected onAssignmentTypeChange(): void {
+    const itemId = this.assignmentForm.controls.itemId.getRawValue();
+    if (itemId <= 0) {
+      return;
+    }
+    const item = this.items().find((entry) => entry.id === itemId);
+    if (!item || !this.selectableItems().some((entry) => entry.id === itemId)) {
+      this.assignmentForm.controls.itemId.setValue(0);
+    }
+  }
+
   protected submitAssignment(): void {
     this.submitError.set(null);
 
@@ -296,8 +316,20 @@ export class AssignmentsPageComponent implements OnInit {
       return;
     }
 
-    this.saving.set(true);
     const raw = this.assignmentForm.getRawValue();
+    const item = this.items().find((entry) => entry.id === raw.itemId);
+    if (!item) {
+      this.submitError.set('Selecciona un insumo válido.');
+      return;
+    }
+
+    const categoryError = validateAssignmentItemCategory(raw.assignmentType, item);
+    if (categoryError) {
+      this.submitError.set(categoryError);
+      return;
+    }
+
+    this.saving.set(true);
     const payload: AssignSupplyRequest = {
       itemId: raw.itemId,
       quantity: raw.quantity,
@@ -355,11 +387,8 @@ export class AssignmentsPageComponent implements OnInit {
   }
 
   protected flowLabel(value: string | null | undefined): string {
-    if (value === 'HABITACION') {
-      return 'Entrada';
-    }
-
-    return 'Salida';
+    const match = ASSIGNMENT_TYPE_UI_OPTIONS.find((option) => option.value === value);
+    return match?.label ?? value ?? '—';
   }
 
   protected clearOverviewFilters(): void {

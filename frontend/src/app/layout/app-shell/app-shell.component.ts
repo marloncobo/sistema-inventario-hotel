@@ -122,69 +122,63 @@ import { SidebarComponent } from '../sidebar/sidebar.component';
 
     .shell__assistant-fab {
       position: fixed;
-      right: 1.5rem;
-      bottom: 1.5rem;
+      right: 1.25rem;
+      bottom: 1.25rem;
       z-index: 70;
       display: inline-flex;
       align-items: center;
-      gap: 0.85rem;
-      min-height: 4rem;
-      padding: 0.7rem 1rem 0.7rem 0.75rem;
-      border: 1px solid rgba(184, 137, 42, 0.22);
+      gap: 0.65rem;
+      min-height: auto;
+      padding: 0.5rem 0.85rem 0.5rem 0.5rem;
+      border: 1px solid rgba(200, 146, 45, 0.22);
       border-radius: 999px;
-      background:
-        radial-gradient(circle at top left, rgba(255, 244, 217, 0.95), transparent 52%),
-        linear-gradient(145deg, rgba(255, 255, 255, 0.98), rgba(250, 241, 224, 0.96));
+      background: #fff;
       color: #5b3d11;
-      box-shadow: 0 18px 42px rgba(72, 51, 26, 0.14);
+      box-shadow: 0 8px 28px rgba(61, 43, 31, 0.1);
       cursor: pointer;
       transition:
-        transform 0.2s ease,
         box-shadow 0.2s ease,
         border-color 0.2s ease;
     }
 
     .shell__assistant-fab:hover {
-      transform: translateY(-2px);
-      border-color: rgba(184, 137, 42, 0.34);
-      box-shadow: 0 24px 48px rgba(72, 51, 26, 0.18);
+      transform: translateY(-1px);
+      border-color: rgba(200, 146, 45, 0.38);
+      box-shadow: 0 12px 32px rgba(61, 43, 31, 0.12);
     }
 
     .shell__assistant-fab:focus-visible {
       outline: none;
-      box-shadow:
-        0 0 0 4px rgba(200, 146, 45, 0.18),
-        0 20px 46px rgba(72, 51, 26, 0.16);
+      box-shadow: 0 0 0 3px rgba(200, 146, 45, 0.18);
     }
 
     .shell__assistant-fab-icon {
-      width: 2.6rem;
-      height: 2.6rem;
+      width: 2.35rem;
+      height: 2.35rem;
       display: grid;
       place-items: center;
       border-radius: 50%;
-      background: linear-gradient(180deg, rgba(202, 154, 59, 0.95), rgba(164, 114, 24, 0.98));
+      background: linear-gradient(145deg, #c8922d, #9a6a18);
       color: #fffdf8;
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.32);
-      font-size: 1.1rem;
+      font-size: 0.95rem;
       flex: 0 0 auto;
     }
 
     .shell__assistant-fab-copy {
       display: grid;
       text-align: left;
-      line-height: 1.1;
+      line-height: 1.15;
     }
 
     .shell__assistant-fab-copy strong {
-      font-size: 0.92rem;
-      font-weight: 800;
+      font-size: 0.8125rem;
+      font-weight: 700;
       color: #5b3d11;
     }
 
     .shell__assistant-fab-copy small {
-      margin-top: 0.2rem;
-      font-size: 0.72rem;
+      margin-top: 0.08rem;
+      font-size: 0.6875rem;
       color: #8b6d3a;
     }
 

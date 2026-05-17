@@ -5,8 +5,7 @@
   --dashboard-border: rgba(172, 147, 107, 0.18);
   --dashboard-surface: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(252, 248, 241, 0.94));
   --dashboard-shadow: 0 24px 60px rgba(124, 98, 56, 0.08);
-  max-width: 1360px;
-  margin: 0 auto;
+  width: 100%;
   display: flex;
   flex-direction: column;
   gap: 3rem;

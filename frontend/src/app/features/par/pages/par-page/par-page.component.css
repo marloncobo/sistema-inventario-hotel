@@ -1,4 +1,4 @@
-.par-page { max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 1.25rem; padding-bottom: 2rem; }
+.par-page { width: 100%; display: flex; flex-direction: column; gap: 1.25rem; }
 .par-panel { padding: 1.25rem; border-radius: 1.25rem; }
 .par-compare-form { display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end; }
 .par-result-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; gap: 1rem; }

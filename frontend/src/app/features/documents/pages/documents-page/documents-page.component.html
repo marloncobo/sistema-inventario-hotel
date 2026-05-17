@@ -1,11 +1,13 @@
-<div class="documents-page">
+<div class="documents-page app-page pp-root">
   <app-page-header
     eyebrow="Inventario"
     title="Documentos"
     subtitle="Órdenes de compra, recepciones, transferencias y ajustes multi-ítem."
   >
     <div header-actions class="documents-header-actions">
-      <button pButton type="button" icon="pi pi-plus" label="Nuevo documento" (click)="openCreate()"></button>
+      @if (canManage()) {
+        <button pButton type="button" icon="pi pi-plus" label="Nuevo documento" (click)="openCreate()"></button>
+      }
       <button
         pButton
         type="button"
@@ -23,7 +25,11 @@
     <div class="documents-toolbar">
       <label class="field">
         <span>Tipo</span>
-        <select class="field-control" [value]="typeFilter()" (change)="typeFilter.set($any($event.target).value)">
+        <select
+          class="field-control"
+          [value]="typeFilter()"
+          (change)="typeFilter.set($any($event.target).value); onFiltersChange()"
+        >
           <option value="">Todos</option>
           @for (type of documentTypes; track type) {
             <option [value]="type">{{ label(type) }}</option>
@@ -32,7 +38,11 @@
       </label>
       <label class="field">
         <span>Estado</span>
-        <select class="field-control" [value]="statusFilter()" (change)="statusFilter.set($any($event.target).value)">
+        <select
+          class="field-control"
+          [value]="statusFilter()"
+          (change)="statusFilter.set($any($event.target).value); onFiltersChange()"
+        >
           <option value="">Todos</option>
           @for (status of documentStatuses; track status) {
             <option [value]="status">{{ label(status) }}</option>
@@ -42,7 +52,7 @@
     </div>
 
     <p-table
-      [value]="filteredDocuments()"
+      [value]="documents()"
       [loading]="loading()"
       [paginator]="true"
       [rows]="10"
@@ -113,7 +123,7 @@
     <label class="field">
       <span>Tipo</span>
       <select class="field-control" formControlName="type">
-        @for (type of documentTypes; track type) {
+        @for (type of documentCreateTypes; track type) {
           <option [value]="type">{{ label(type) }}</option>
         }
       </select>

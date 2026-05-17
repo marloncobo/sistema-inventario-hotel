@@ -22,7 +22,7 @@ export const SHELL_ROUTE_ROLES = {
   habitaciones: ['ADMIN', 'RECEPCION', 'SERVICIO'],
   /** GET /rooms/number/{n}: mismo alcance que el gateway (todos los roles activos). */
   'habitaciones/consulta': ['ADMIN', 'RECEPCION', 'SERVICIO'],
-  asignaciones: ['ADMIN', 'SERVICIO'],
+  asignaciones: ['ADMIN', 'ALMACENISTA', 'SERVICIO'],
   reportes: ['ADMIN', 'RECEPCION']
 } as const satisfies Record<string, readonly AppRole[]>;
 

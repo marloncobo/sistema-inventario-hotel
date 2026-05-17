@@ -3,9 +3,7 @@
 }
 
 .rooms-page-container {
-  max-width: 1600px;
-  margin: 0 auto;
-  padding: 2.5rem 2.75rem 4.5rem;
+  width: 100%;
   display: grid;
   gap: 1.6rem;
 }

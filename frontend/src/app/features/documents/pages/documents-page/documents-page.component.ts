@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormArray, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { take } from 'rxjs';
 import { ButtonModule } from 'primeng/button';
@@ -9,9 +9,11 @@ import { TableModule } from 'primeng/table';
 import { AuthService } from '@core/services/auth.service';
 import { InventoryApiService } from '@core/services/api/inventory-api.service';
 import {
+  DOCUMENT_CREATE_TYPE_OPTIONS,
   DOCUMENT_STATUS_OPTIONS,
   DOCUMENT_TYPE_OPTIONS
 } from '@core/constants/domain-options';
+import { validateCreateDocument } from '@shared/utils/document-rules.util';
 import { NotificationService } from '@core/services/ui/notification.service';
 import { extractApiErrorMessage } from '@models/api-error.model';
 import type {
@@ -46,6 +48,7 @@ export class DocumentsPageComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
 
   protected readonly documentTypes = DOCUMENT_TYPE_OPTIONS;
+  protected readonly documentCreateTypes = DOCUMENT_CREATE_TYPE_OPTIONS;
   protected readonly documentStatuses = DOCUMENT_STATUS_OPTIONS;
   protected readonly documents = signal<InventoryDocument[]>([]);
   protected readonly items = signal<SupplyItem[]>([]);
@@ -76,16 +79,6 @@ export class DocumentsPageComponent implements OnInit {
     lines: this.fb.array<ReturnType<typeof this.createReceiveLineGroup>>([])
   });
 
-  protected readonly filteredDocuments = computed(() => {
-    const type = this.typeFilter().trim().toUpperCase();
-    const status = this.statusFilter().trim().toUpperCase();
-    return this.documents().filter((doc) => {
-      if (type && doc.type !== type) return false;
-      if (status && doc.status !== status) return false;
-      return true;
-    });
-  });
-
   ngOnInit(): void {
     this.loadDocuments();
     this.loadReferenceData();
@@ -103,10 +96,23 @@ export class DocumentsPageComponent implements OnInit {
     return this.authService.hasRole('ADMIN');
   }
 
+  protected canManage(): boolean {
+    return this.authService.hasAnyRole(['ADMIN', 'ALMACENISTA']);
+  }
+
+  protected onFiltersChange(): void {
+    this.loadDocuments();
+  }
+
   protected loadDocuments(): void {
     this.loading.set(true);
+    const type = this.typeFilter().trim();
+    const status = this.statusFilter().trim();
     this.inventoryApi
-      .getDocuments()
+      .getDocuments({
+        type: type || null,
+        status: status || null
+      })
       .pipe(take(1))
       .subscribe({
         next: (docs) => {
@@ -135,6 +141,9 @@ export class DocumentsPageComponent implements OnInit {
   }
 
   protected openCreate(): void {
+    if (!this.canManage()) {
+      return;
+    }
     this.submitError.set(null);
     this.createForm.reset({
       type: 'ORDEN_COMPRA',
@@ -178,6 +187,12 @@ export class DocumentsPageComponent implements OnInit {
         notes: line.notes.trim() || null
       }))
     };
+
+    const validationError = validateCreateDocument(payload);
+    if (validationError) {
+      this.submitError.set(validationError);
+      return;
+    }
 
     this.saving.set(true);
     this.inventoryApi
