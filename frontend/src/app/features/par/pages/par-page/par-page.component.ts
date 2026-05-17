@@ -76,13 +76,15 @@ export class ParPageComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    this.loadPars();
-    this.api
-      .getItems()
-      .pipe(take(1))
-      .subscribe((list) =>
-        this.items.set(list.filter((i) => i.active).map((i) => ({ id: i.id, code: i.code, name: i.name })))
-      );
+    if (this.canManage()) {
+      this.loadPars();
+      this.api
+        .getItems()
+        .pipe(take(1))
+        .subscribe((list) =>
+          this.items.set(list.filter((i) => i.active).map((i) => ({ id: i.id, code: i.code, name: i.name })))
+        );
+    }
   }
 
   protected get lineControls(): FormArray {

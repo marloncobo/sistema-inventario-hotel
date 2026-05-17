@@ -140,6 +140,11 @@ public class InventoryController {
     ) {
         validateDateRange(startDate, endDate);
         auditService.record("QUERY_MOVEMENTS", "InventoryMovement", null, username(authentication), "Consulta de movimientos");
+        if (isServiceOnly(authentication)) {
+            type = normalizeServiceMovementType(type);
+            return inventoryService.listMovementsForServiceUser(
+                    username(authentication), type, origin, roomNumber, areaName, startDate, endDate);
+        }
         return inventoryService.listMovements(type, origin, roomNumber, responsible, operationalResponsible, areaName, startDate, endDate);
     }
 
@@ -233,6 +238,23 @@ public class InventoryController {
         }
         List<String> expected = java.util.Arrays.stream(roles).map(role -> "ROLE_" + role).toList();
         return authentication.getAuthorities().stream().anyMatch(authority -> expected.contains(authority.getAuthority()));
+    }
+
+    private boolean isServiceOnly(Authentication authentication) {
+        return hasAnyRole(authentication, "SERVICIO")
+                && !hasAnyRole(authentication, "ADMIN", "ALMACENISTA");
+    }
+
+    private String normalizeServiceMovementType(String type) {
+        if (type == null || type.isBlank()) {
+            return "SALIDA";
+        }
+        String normalized = type.trim().toUpperCase();
+        if (!java.util.Set.of("SALIDA", "DEVOLUCION").contains(normalized)) {
+            throw new org.springframework.security.access.AccessDeniedException(
+                    "Servicio solo puede consultar salidas y devoluciones propias");
+        }
+        return normalized;
     }
 
     private ResponseEntity<byte[]> download(String filename, MediaType mediaType, byte[] body) {

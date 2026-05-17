@@ -107,13 +107,16 @@ export class DashboardPageComponent implements OnInit {
     this.authService.hasAnyRole(['ADMIN', 'ALMACENISTA'])
   );
   protected readonly canViewRooms = computed(() =>
-    this.authService.hasAnyRole(['ADMIN', 'ALMACENISTA', 'RECEPCION'])
+    this.authService.hasAnyRole(['ADMIN', 'RECEPCION', 'SERVICIO'])
+  );
+  protected readonly canViewPar = computed(() =>
+    this.authService.hasAnyRole(['ADMIN', 'ALMACENISTA', 'RECEPCION', 'SERVICIO'])
   );
   protected readonly canViewMovements = computed(() =>
     this.authService.hasAnyRole(['ADMIN', 'ALMACENISTA'])
   );
   protected readonly canViewAssignments = computed(() =>
-    this.authService.hasAnyRole(['ADMIN', 'ALMACENISTA', 'RECEPCION'])
+    this.authService.hasAnyRole(['ADMIN', 'SERVICIO'])
   );
 
   protected readonly visibleItemsCount = computed(() => this.snapshot().items.length);

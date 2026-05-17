@@ -3,26 +3,33 @@ import type { AppRole } from '@models/role.model';
 /**
  * Única fuente de roles por vista del shell (misma lista que `data.roles` en `roleGuard`).
  * El sidebar debe usar estos mismos valores para no mostrar rutas no autorizadas.
+ *
+ * Modelo operativo hotel:
+ * - ADMIN: configuración, aprobaciones y reportes globales.
+ * - ALMACENISTA: bodega (documentos, conteos, transferencias); no entrega en habitación.
+ * - SERVICIO: habitación (asignaciones, devoluciones, PAR lectura); sin bodega operativa.
+ * - RECEPCION: habitaciones, PAR comparado y reportes; sin inventario operativo.
  */
 export const SHELL_ROUTE_ROLES = {
   dashboard: ['ADMIN', 'ALMACENISTA', 'RECEPCION', 'SERVICIO'],
-  'asistente-ia': ['ADMIN', 'ALMACENISTA', 'SERVICIO'],
+  'asistente-ia': ['ADMIN', 'ALMACENISTA', 'RECEPCION', 'SERVICIO'],
   usuarios: ['ADMIN'],
   auditoria: ['ADMIN'],
   catalogos: ['ADMIN', 'ALMACENISTA'],
+  /** Consulta de insumos y devoluciones (servicio); operaciones de bodega admin/almacén. */
   inventario: ['ADMIN', 'ALMACENISTA', 'SERVICIO'],
   movimientos: ['ADMIN', 'ALMACENISTA'],
   ubicaciones: ['ADMIN', 'ALMACENISTA', 'SERVICIO'],
   documentos: ['ADMIN', 'ALMACENISTA'],
-  'par-habitaciones': ['ADMIN', 'ALMACENISTA', 'SERVICIO'],
+  'par-habitaciones': ['ADMIN', 'ALMACENISTA', 'SERVICIO', 'RECEPCION'],
   reposicion: ['ADMIN', 'ALMACENISTA', 'SERVICIO'],
   conteos: ['ADMIN', 'ALMACENISTA'],
   diferencias: ['ADMIN'],
   alertas: ['ADMIN', 'ALMACENISTA'],
   habitaciones: ['ADMIN', 'RECEPCION', 'SERVICIO'],
-  /** GET /rooms/number/{n}: mismo alcance que el gateway (todos los roles activos). */
-  'habitaciones/consulta': ['ADMIN', 'RECEPCION', 'SERVICIO'],
-  asignaciones: ['ADMIN', 'ALMACENISTA', 'SERVICIO'],
+  'habitaciones/consulta': ['ADMIN', 'ALMACENISTA', 'RECEPCION', 'SERVICIO'],
+  /** Entrega física en habitación: housekeeping y administración. */
+  asignaciones: ['ADMIN', 'SERVICIO'],
   reportes: ['ADMIN', 'RECEPCION']
 } as const satisfies Record<string, readonly AppRole[]>;
 

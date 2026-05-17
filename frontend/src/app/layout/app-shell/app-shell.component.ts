@@ -279,7 +279,7 @@ export class AppShellComponent {
   protected readonly showAssistantFab = computed(() => {
     this.navigationEnd();
     return (
-      this.authService.hasAnyRole(['ADMIN', 'ALMACENISTA', 'SERVICIO']) &&
+      this.authService.hasAnyRole(['ADMIN', 'ALMACENISTA', 'RECEPCION', 'SERVICIO']) &&
       !this.router.url.startsWith('/asistente-ia')
     );
   });

@@ -293,11 +293,18 @@ export class InventoryPageComponent implements OnInit {
   }
 
   protected canRegisterDecrease(): boolean {
-    return this.authService.hasAnyRole(['ADMIN', 'ALMACENISTA', 'SERVICIO']);
+    return this.authService.hasAnyRole(['ADMIN', 'ALMACENISTA']);
   }
 
   protected canReturnStock(): boolean {
-    return this.authService.hasAnyRole(['ADMIN', 'ALMACENISTA']);
+    return this.authService.hasAnyRole(['ADMIN', 'ALMACENISTA', 'SERVICIO']);
+  }
+
+  protected isServiceOnly(): boolean {
+    return (
+      this.authService.hasRole('SERVICIO') &&
+      !this.authService.hasAnyRole(['ADMIN', 'ALMACENISTA'])
+    );
   }
 
   protected readonly activeLocations = computed(() =>

@@ -2,7 +2,7 @@
     "info": {
         "name": "Hotel Inventory Microservices",
         "_postman_id": "c5c8ca34-b34a-4441-b91f-5d8881111111",
-        "description": "Colección única de QA — 102 requests vía API Gateway ({{baseUrl}} = http://localhost:8080).\n\nORDEN RECOMENDADO:\n1) Auth → Login admin (guarda token)\n2) Inventory - Catalogos (opcional)\n3) Fase 1 Ubicaciones → Obtener BODEGA_PRINCIPAL (guarda bodegaLocationId)\n4) Insumos y Stock → Listar insumos\n5) Fase 1 Stock / Documentos / Fase 2 según flujo a probar\n6) Rooms → Listar habitaciones (roomNumber)\n\nINCLUYE:\n• Auth, catálogos, insumos, movimientos, alertas, reportes\n• Fase 1: ubicaciones, stock por ubicación, documentos (OC/recepción/transferencia/ajuste), salida a habitación con targetLocationType\n• Fase 2: PAR habitaciones, reposición automática, conteos físicos (init/record/complete/approve/apply)\n• Habitaciones, asignaciones, reportes rooms, health directo\n\nVariables clave: token, runId, itemId, bodegaLocationId, habLocationId, documentId, documentLineId, roomParId, roomNumber, parScope.",
+        "description": "Colección única de QA — 102 requests vía API Gateway ({{baseUrl}} = http://localhost:8080).\n\nORDEN RECOMENDADO:\n1) Auth → Login admin (guarda token)\n2) Inventory - Catalogos (opcional)\n3) Fase 1 Ubicaciones → Obtener BODEGA_PRINCIPAL (guarda bodegaLocationId)\n4) Insumos y Stock → Listar insumos\n5) Fase 1 Stock / Documentos / Fase 2 según flujo a probar\n6) Rooms → Listar habitaciones (roomNumber)\n\nINCLUYE:\n• Auth, catálogos, insumos, movimientos, alertas, reportes\n• Fase 1: ubicaciones, stock por ubicación, documentos (OC/recepción/transferencia/ajuste), salida a habitación con targetLocationType\n• Fase 2: PAR habitaciones, reposición automática, conteos físicos (init/record/complete/approve/apply)\n• Habitaciones, asignaciones, reportes rooms, health directo\n\nVariables clave: token, runId, itemId, bodegaLocationId, habLocationId, documentId, documentLineId, roomParId, roomNumber, parScope.\nROLES (modelo hotel real — gateway + microservicios):\n\nCredenciales demo:\n• admin / Admin123 → ADMIN\n• almacen / Almacen123 → ALMACENISTA\n• recepcion / Recepcion123 → RECEPCION\n• servicio / Servicio123 → SERVICIO\n\nTokens alternos: almacenToken, recepcionToken, servicioToken (carpeta Auth > Login).\n\nADMIN — Todo: usuarios, catálogos, bodega, aprobar OC/diferencias, habitaciones, reportes export.\n\nALMACENISTA — Bodega: documentos, conteos, transferencias, entradas/salidas internas, alertas, movimientos completos, PAR (editar). NO asignaciones en habitación (403 en POST .../supplies/assign).\n\nSERVICIO — Habitación: asignaciones KIT_ASEO/MINIBAR, devoluciones, movimientos propios (GET movements acotado), consulta insumos/PAR/reposición. NO salida interna bodega sin header rooms (403 en decrease directo).\n\nRECEPCION — Mostrador: habitaciones (estado), consulta por número, PAR compare (solo lectura), reportes habitaciones, asistente IA. NO inventario operativo ni asignaciones (403).\n\nPrueba rápida por rol: cambia Authorization Bearer a {{almacenToken}} o {{servicioToken}} y repite el request; compara 200 vs 403.\n",
         "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
     },
     "auth": {
@@ -426,7 +426,8 @@
                         "url": "{{baseUrl}}/auth/audit?action=LOGIN_SUCCESS&username={{username}}&startDate={{startDate}}&endDate={{endDate}}"
                     }
                 }
-            ]
+            ],
+            "description": "Autenticación y tokens por rol. Ejecuta Login admin para {{token}}; logins alternos guardan almacenToken, recepcionToken, servicioToken.\nROLES (modelo hotel real — gateway + microservicios):\n\nCredenciales demo:\n• admin / Admin123 → ADMIN\n• almacen / Almacen123 → ALMACENISTA\n• recepcion / Recepcion123 → RECEPCION\n• servicio / Servicio123 → SERVICIO\n\nTokens alternos: almacenToken, recepcionToken, servicioToken (carpeta Auth > Login).\n\nADMIN — Todo: usuarios, catálogos, bodega, aprobar OC/diferencias, habitaciones, reportes export.\n\nALMACENISTA — Bodega: documentos, conteos, transferencias, entradas/salidas internas, alertas, movimientos completos, PAR (editar). NO asignaciones en habitación (403 en POST .../supplies/assign).\n\nSERVICIO — Habitación: asignaciones KIT_ASEO/MINIBAR, devoluciones, movimientos propios (GET movements acotado), consulta insumos/PAR/reposición. NO salida interna bodega sin header rooms (403 en decrease directo).\n\nRECEPCION — Mostrador: habitaciones (estado), consulta por número, PAR compare (solo lectura), reportes habitaciones, asistente IA. NO inventario operativo ni asignaciones (403).\n\nPrueba rápida por rol: cambia Authorization Bearer a {{almacenToken}} o {{servicioToken}} y repite el request; compara 200 vs 403."
         },
         {
             "name": "Inventory - Catalogos",
@@ -1072,7 +1073,7 @@
                     }
                 }
             ],
-            "description": "Fase 1: órdenes de compra, recepciones, transferencias y ajustes multi-ítem."
+            "description": "Fase 1: órdenes de compra, recepciones, transferencias y ajustes multi-ítem.\n\nSolo ADMIN y ALMACENISTA. Aprobar OC: solo ADMIN."
         },
         {
             "name": "Inventory - Insumos y Stock",
@@ -1182,7 +1183,8 @@
                             "mode": "raw",
                             "raw": "{\n  \"quantity\": 15,\n  \"providerName\": \"Distribuciones Hoteleras SAS\",\n  \"referenceText\": \"Compra proveedor desde Postman\"\n}"
                         },
-                        "url": "{{baseUrl}}/inventory/api/inventory/items/{{itemId}}/entries"
+                        "url": "{{baseUrl}}/inventory/api/inventory/items/{{itemId}}/entries",
+                        "description": "ROLES: 200 → ADMIN, ALMACENISTA (vía catch-all inventory). 403 → SERVICIO, RECEPCION."
                     },
                     "event": [
                         {
@@ -1212,7 +1214,8 @@
                             "mode": "raw",
                             "raw": "{\n  \"itemId\": {{itemId}},\n  \"quantity\": 2,\n  \"roomNumber\": null,\n  \"areaName\": \"LIMPIEZA\",\n  \"origin\": \"CONSUMO_INTERNO\",\n  \"operationalResponsible\": \"{{operationalResponsible}}\",\n  \"referenceText\": \"Salida directa desde Postman\"\n}"
                         },
-                        "url": "{{baseUrl}}/inventory/api/inventory/internal/items/decrease"
+                        "url": "{{baseUrl}}/inventory/api/inventory/internal/items/decrease",
+                        "description": "ROLES: 200 → ADMIN, ALMACENISTA. 403 → SERVICIO, RECEPCION.\nConsumo interno de bodega (areaName obligatorio). No usar para entrega en habitación."
                     },
                     "event": [
                         {
@@ -1245,7 +1248,7 @@
                             }
                         ],
                         "url": "{{baseUrl}}/inventory/api/inventory/internal/items/decrease",
-                        "description": "Fase 1 — salida bodega → HAB_XXX (targetLocationType HABITACION o MINIBAR).\n\n⚠️ En producción NO se llama directo a inventory: usar Rooms → Asignar insumo a habitacion (o Reponer minibar).\n\nEste request es para QA: incluye header X-Rooms-Service-Flow=true.\n\nroomNumber debe ser texto de 3 dígitos, ej. \"101\" (variable {{roomNumber}}).",
+                        "description": "Fase 1 — salida bodega → HAB_XXX (targetLocationType HABITACION o MINIBAR).\n\n⚠️ En producción NO se llama directo a inventory: usar Rooms → Asignar insumo a habitacion (o Reponer minibar).\n\nEste request es para QA: incluye header X-Rooms-Service-Flow=true.\n\nroomNumber debe ser texto de 3 dígitos, ej. \"101\" (variable {{roomNumber}}).\n\nROLES con X-Rooms-Service-Flow: 200 → ADMIN, ALMACENISTA (QA directo). En producción el flujo real es Rooms → Asignar (ADMIN/SERVICIO).",
                         "body": {
                             "mode": "raw",
                             "raw": "{\n  \"itemId\": {{itemId}},\n  \"quantity\": 1,\n  \"roomNumber\": \"{{roomNumber}}\",\n  \"areaName\": null,\n  \"origin\": \"HABITACION\",\n  \"targetLocationType\": \"HABITACION\",\n  \"operationalResponsible\": \"{{operationalResponsible}}\",\n  \"referenceText\": \"Reposicion habitacion Postman Fase 1\"\n}"
@@ -1279,7 +1282,7 @@
                             "mode": "raw",
                             "raw": "{\n  \"quantity\": 1,\n  \"roomNumber\": \"{{roomNumber}}\",\n  \"areaName\": null,\n  \"operationalResponsible\": \"{{operationalResponsible}}\",\n  \"referenceText\": \"Devolucion desde Postman\",\n  \"sourceMovementId\": {{sourceMovementId}}\n}"
                         },
-                        "description": "ORDEN obligatorio:\n1) Registrar salida interna (o salida habitacion / asignar insumo) — guarda createdMovementId\n   O: Listar movimientos — guarda movementId de una SALIDA del mismo itemId\n2) Este request — devuelve parte de esa salida\n\nsourceMovementId NO puede ser null. roomNumber/area deben coincidir con la salida origen.",
+                        "description": "ORDEN obligatorio:\n1) Registrar salida interna (o salida habitacion / asignar insumo) — guarda createdMovementId\n   O: Listar movimientos — guarda movementId de una SALIDA del mismo itemId\n2) Este request — devuelve parte de esa salida\n\nsourceMovementId NO puede ser null. roomNumber/area deben coincidir con la salida origen.\n\nROLES: 200 → ADMIN, ALMACENISTA, SERVICIO. 403 → RECEPCION.\nSERVICIO: ejecutar antes Listar movimientos con token servicio (solo ve sus SALIDAs).",
                         "url": "{{baseUrl}}/inventory/api/inventory/items/{{itemId}}/returns"
                     },
                     "event": [
@@ -1312,7 +1315,8 @@
                     "request": {
                         "method": "GET",
                         "header": [],
-                        "url": "{{baseUrl}}/inventory/api/inventory/movements"
+                        "url": "{{baseUrl}}/inventory/api/inventory/movements",
+                        "description": "ROLES: historial completo → ADMIN, ALMACENISTA.\nSERVICIO: 200 pero solo movimientos propios (SALIDA/DEVOLUCION). RECEPCION: 403."
                     },
                     "event": [
                         {
@@ -1341,7 +1345,8 @@
                     "request": {
                         "method": "GET",
                         "header": [],
-                        "url": "{{baseUrl}}/inventory/api/inventory/movements?type=SALIDA&origin=HABITACION&roomNumber={{roomNumber}}&operationalResponsible={{operationalResponsible}}&startDate={{startDate}}&endDate={{endDate}}"
+                        "url": "{{baseUrl}}/inventory/api/inventory/movements?type=SALIDA&origin=HABITACION&roomNumber={{roomNumber}}&operationalResponsible={{operationalResponsible}}&startDate={{startDate}}&endDate={{endDate}}",
+                        "description": "Mismos permisos que Listar movimientos. SERVICIO ignora filtros de otro usuario."
                     }
                 },
                 {
@@ -1406,7 +1411,8 @@
                     "request": {
                         "method": "GET",
                         "header": [],
-                        "url": "{{baseUrl}}/inventory/api/inventory/room-pars?activeOnly=false"
+                        "url": "{{baseUrl}}/inventory/api/inventory/room-pars?activeOnly=false",
+                        "description": "ROLES: 200 → ADMIN, ALMACENISTA, SERVICIO. 403 → RECEPCION (usar solo Comparar habitacion vs PAR)."
                     },
                     "event": [
                         {
@@ -1436,7 +1442,7 @@
                         "method": "GET",
                         "header": [],
                         "url": "{{baseUrl}}/inventory/api/inventory/room-pars/compare?roomNumber={{roomNumber}}&scope={{parScope}}",
-                        "description": "Requiere PAR activo para el tipo de habitación y rooms-service disponible."
+                        "description": "Requiere PAR activo para el tipo de habitación y rooms-service disponible.\n\nROLES: 200 → ADMIN, ALMACENISTA, SERVICIO, RECEPCION (consulta recepción).\nRECEPCION no puede listar/editar plantillas PAR (GET room-pars sin /compare → 403)."
                     }
                 },
                 {
@@ -1461,7 +1467,8 @@
                         "body": {
                             "mode": "raw",
                             "raw": "{\n  \"roomType\": \"EJECUTIVA\",\n  \"scope\": \"HABITACION\",\n  \"name\": \"PAR ejecutiva Postman {{runId}}\",\n  \"active\": true,\n  \"lines\": [\n    {\n      \"itemId\": {{itemId}},\n      \"targetQuantity\": 2,\n      \"mandatory\": true,\n      \"notes\": \"Linea demo\"\n    }\n  ]\n}"
-                        }
+                        },
+                        "description": "ROLES: 200 → ADMIN, ALMACENISTA. 403 → SERVICIO, RECEPCION."
                     },
                     "event": [
                         {
@@ -1496,7 +1503,7 @@
                     }
                 }
             ],
-            "description": "Fase 2: plantillas PAR y comparación esperado vs real."
+            "description": "Fase 2: PAR. Comparar: todos los roles operativos (incl. RECEPCION). Crear/editar plantillas: ADMIN y ALMACENISTA."
         },
         {
             "name": "Inventory - Fase 2 Reposicion",
@@ -1615,7 +1622,7 @@
                     }
                 }
             ],
-            "description": "Fase 2: flujo completo de conteo físico y aprobación de diferencias."
+            "description": "Fase 2: flujo completo de conteo físico y aprobación de diferencias.\n\nConteos: ADMIN + ALMACENISTA. Aprobar diferencias: solo ADMIN."
         },
         {
             "name": "Inventory - Reportes y Auditoria",
@@ -1692,7 +1699,8 @@
                         "url": "{{baseUrl}}/inventory/api/inventory/audit?action=QUERY_ITEMS&username={{username}}&startDate={{startDate}}&endDate={{endDate}}"
                     }
                 }
-            ]
+            ],
+            "description": "Reportes inventario y export: solo ADMIN."
         },
         {
             "name": "Rooms - Habitaciones y Asignaciones",
@@ -1735,7 +1743,8 @@
                             "mode": "raw",
                             "raw": "{\n  \"number\": \"405\",\n  \"type\": \"EJECUTIVA\",\n  \"status\": \"DISPONIBLE\",\n  \"capacity\": 2,\n  \"floor\": 4,\n  \"observations\": \"Habitacion de prueba desde Postman\"\n}"
                         },
-                        "url": "{{baseUrl}}/rooms/api/rooms"
+                        "url": "{{baseUrl}}/rooms/api/rooms",
+                        "description": "ROLES: solo ADMIN (200). Otros roles: 403."
                     },
                     "event": [
                         {
@@ -1784,7 +1793,8 @@
                             "mode": "raw",
                             "raw": "{\n  \"status\": \"OCUPADA\"\n}"
                         },
-                        "url": "{{baseUrl}}/rooms/api/rooms/{{roomId}}/status"
+                        "url": "{{baseUrl}}/rooms/api/rooms/{{roomId}}/status",
+                        "description": "ROLES: 200 → ADMIN, RECEPCION. 403 → ALMACENISTA, SERVICIO."
                     }
                 },
                 {
@@ -1801,7 +1811,7 @@
                             "mode": "raw",
                             "raw": "{\n  \"itemId\": {{kitAseoItemId}},\n  \"quantity\": 1,\n  \"deliveredBy\": \"{{operationalResponsible}}\",\n  \"guestName\": \"Huesped demo\",\n  \"assignmentType\": \"KIT_ASEO\"\n}"
                         },
-                        "description": "Flujo REAL Fase 1 — entregar kit de aseo a habitación.\n\nORDEN: Login admin → Listar habitaciones (roomId) → Listar insumos (guarda kitAseoItemId = shampoo ASE-001).\n\nRegla: assignmentType KIT_ASEO solo admite insumos categoría ASEO o AMENIDADES (no MINIBAR/LENCERIA).\nPara agua/minibar usar request Reponer minibar (assignmentType MINIBAR + minibarItemId).",
+                        "description": "Flujo REAL Fase 1 — entregar kit de aseo a habitación.\n\nORDEN: Login admin → Listar habitaciones (roomId) → Listar insumos (guarda kitAseoItemId = shampoo ASE-001).\n\nRegla: assignmentType KIT_ASEO solo admite insumos categoría ASEO o AMENIDADES (no MINIBAR/LENCERIA).\nPara agua/minibar usar request Reponer minibar (assignmentType MINIBAR + minibarItemId).\n\nROLES: 200 → ADMIN, SERVICIO. 403 → ALMACENISTA, RECEPCION.\nFlujo real housekeeping. Almacén repone vía Documentos > Transferencia a ubicación piso.",
                         "url": "{{baseUrl}}/rooms/api/rooms/{{roomId}}/supplies/assign"
                     },
                     "event": [
@@ -1845,7 +1855,7 @@
                             "mode": "raw",
                             "raw": "{\n  \"itemId\": {{minibarItemId}},\n  \"quantity\": 1,\n  \"deliveredBy\": \"Housekeeping\",\n  \"guestName\": \"Carlos Perez\",\n  \"assignmentType\": \"MINIBAR\"\n}"
                         },
-                        "description": "assignmentType MINIBAR → solo insumos categoría MINIBAR (ej. agua MIN-001). Ejecutar Listar insumos antes (minibarItemId).",
+                        "description": "assignmentType MINIBAR → solo insumos categoría MINIBAR (ej. agua MIN-001). Ejecutar Listar insumos antes (minibarItemId).\n\nROLES: 200 → ADMIN, SERVICIO. 403 → ALMACENISTA, RECEPCION.",
                         "url": "{{baseUrl}}/rooms/api/rooms/{{roomId}}/supplies/assign"
                     },
                     "event": [
@@ -1895,7 +1905,8 @@
                         "url": "{{baseUrl}}/rooms/api/rooms/supplies?roomNumber={{roomNumber}}&assignmentType=MINIBAR&startDate={{startDate}}&endDate={{endDate}}"
                     }
                 }
-            ]
+            ],
+            "description": "Consulta habitaciones: todos los roles operativos. Asignar insumo: solo ADMIN y SERVICIO. Estado: ADMIN y RECEPCION."
         },
         {
             "name": "Rooms - Reportes y Auditoria",
@@ -1972,7 +1983,8 @@
                         "url": "{{baseUrl}}/rooms/api/rooms/audit?action=ASSIGN_SUPPLY&username={{username}}&startDate={{startDate}}&endDate={{endDate}}"
                     }
                 }
-            ]
+            ],
+            "description": "Reportes habitaciones: ADMIN y RECEPCION. Export: solo ADMIN."
         },
         {
             "name": "Health",

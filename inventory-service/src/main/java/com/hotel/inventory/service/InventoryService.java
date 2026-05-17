@@ -265,6 +265,21 @@ public class InventoryService {
         );
     }
 
+    public List<InventoryMovement> listMovementsForServiceUser(String username, String type, String origin,
+                                                               String roomNumber, String areaName,
+                                                               LocalDate startDate, LocalDate endDate) {
+        String userPattern = "%" + username.trim().toLowerCase() + "%";
+        return movementRepository.searchForUser(
+                userPattern,
+                blankToWildcardLower(type),
+                blankToWildcardLower(origin),
+                blankToWildcardLower(roomNumber),
+                blankToWildcardLower(areaName),
+                startDate == null ? MIN_DATE : startDate.atStartOfDay(),
+                endDate == null ? MAX_DATE : endDate.plusDays(1).atStartOfDay().minusNanos(1)
+        );
+    }
+
     public List<SupplyItem> lowStockItems() {
         return supplyItemRepository.findLowStockItems();
     }

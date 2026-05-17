@@ -2,7 +2,13 @@
   <header class="inv-page-head">
     <div class="inv-page-head__copy">
       <h1 class="inv-page-head__title pp-hero-title">Inventario</h1>
-      <p class="inv-page-head__desc pp-hero-lede">Control de existencias e insumos del hotel.</p>
+      <p class="inv-page-head__desc pp-hero-lede">
+        @if (isServiceOnly()) {
+          Consulta de insumos y devoluciones desde habitacion.
+        } @else {
+          Control de existencias e insumos del hotel.
+        }
+      </p>
     </div>
 
     @if (canManageItems()) {

@@ -34,6 +34,29 @@ public interface InventoryMovementRepository extends JpaRepository<InventoryMove
     );
 
     @Query("""
+            select movement
+            from InventoryMovement movement
+            left join movement.area area
+            where (lower(movement.responsible) like :userPattern
+                or coalesce(lower(movement.operationalResponsible), '') like :userPattern)
+              and lower(movement.movementType) like :type
+              and lower(movement.origin) like :origin
+              and coalesce(lower(movement.roomNumber), '') like :roomNumber
+              and coalesce(lower(area.name), '') like :areaName
+              and movement.createdAt between :startDate and :endDate
+            order by movement.createdAt desc
+            """)
+    List<InventoryMovement> searchForUser(
+            @Param("userPattern") String userPattern,
+            @Param("type") String type,
+            @Param("origin") String origin,
+            @Param("roomNumber") String roomNumber,
+            @Param("areaName") String areaName,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate
+    );
+
+    @Query("""
             select coalesce(sum(movement.quantity), 0)
             from InventoryMovement movement
             where movement.sourceMovement.id = :sourceMovementId

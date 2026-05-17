@@ -7,7 +7,9 @@
       @if (canManage()) {
         <button pButton type="button" icon="pi pi-plus" label="Nuevo PAR" (click)="openCreate()"></button>
       }
-      <button pButton type="button" icon="pi pi-refresh" label="Actualizar" variant="outlined" (click)="loadPars()"></button>
+      @if (canManage()) {
+        <button pButton type="button" icon="pi pi-refresh" label="Actualizar" variant="outlined" (click)="loadPars()"></button>
+      }
     </div>
   </app-page-header>
 
@@ -62,6 +64,7 @@
     </section>
   }
 
+  @if (canManage()) {
   <section class="surface-card par-panel">
     <h3>Plantillas PAR configuradas</h3>
     <p-table [value]="pars()" responsiveLayout="scroll">
@@ -112,10 +115,8 @@
         </tr>
       </ng-template>
     </p-table>
-    @if (!canManage()) {
-      <p class="par-hint">Solo lectura: contacta almacén para editar plantillas PAR.</p>
-    }
   </section>
+  }
 </div>
 
 <p-dialog

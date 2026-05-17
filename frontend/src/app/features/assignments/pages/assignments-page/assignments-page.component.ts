@@ -189,7 +189,7 @@ export class AssignmentsPageComponent implements OnInit {
   }
 
   protected canCreateMovement(): boolean {
-    return this.authService.hasAnyRole(['ADMIN', 'ALMACENISTA', 'SERVICIO']);
+    return this.authService.hasAnyRole(['ADMIN', 'SERVICIO']);
   }
 
   protected canBrowseRooms(): boolean {

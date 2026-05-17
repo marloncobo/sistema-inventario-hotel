@@ -52,7 +52,7 @@ export const routes: Routes = [
           roles: rolesForShellRoute('asistente-ia'),
           summary: 'Consultas guiadas por IA sobre inventario, alertas, consumo y compras prioritarias.',
           endpoint: 'POST /ai/api/ai/inventory-assistant',
-          note: 'Disponible para administracion, almacen y servicio con contexto actual del inventario.'
+          note: 'Disponible para todos los roles operativos; recepcion consulta habitaciones y PAR sin operar bodega.'
         }
       },
       {
@@ -267,7 +267,7 @@ export const routes: Routes = [
           summary: 'Entrega de insumos a habitaciones e historial de asignaciones.',
           endpoint:
             'POST /rooms/api/rooms/{roomId}/supplies/assign · GET /rooms/api/rooms/{roomId}/supplies · GET /rooms/api/rooms/supplies',
-          note: 'RECEPCION no puede registrar asignaciones por permisos del backend.'
+          note: 'Solo ADMIN y SERVICIO registran entregas en habitacion; almacen repone via transferencias a ubicacion de piso.'
         }
       },
       {

@@ -47,7 +47,7 @@ export const APP_NAV_CATEGORIES: NavigationCategory[] = [
             label: 'Inventario',
             route: '/inventario',
             icon: 'pi pi-warehouse',
-            description: 'Insumos, stock bajo en lectura y operaciones permitidas (entradas solo admin/almacén; devoluciones y salidas según rol).',
+            description: 'Bodega: entradas y salidas (admin/almacén). Servicio: consulta y devoluciones desde habitación.',
             roles: rolesForShellRoute('inventario')
           },
           {
@@ -68,7 +68,7 @@ export const APP_NAV_CATEGORIES: NavigationCategory[] = [
             label: 'PAR habitaciones',
             route: '/par-habitaciones',
             icon: 'pi pi-list-check',
-            description: 'Plantillas PAR y comparación esperado vs real por habitación.',
+            description: 'Comparar habitación vs PAR (todos los roles operativos); editar plantillas solo admin y almacén.',
             roles: rolesForShellRoute('par-habitaciones')
           },
           {
@@ -115,7 +115,7 @@ export const APP_NAV_CATEGORIES: NavigationCategory[] = [
             label: 'Asignaciones',
             route: '/asignaciones',
             icon: 'pi pi-calendar-plus',
-            description: 'Registrar entregas a habitaciones (no disponible para recepción por API).',
+            description: 'Entrega física en habitación (servicio y administración; bodega usa transferencias).',
             roles: rolesForShellRoute('asignaciones')
           }
         ]

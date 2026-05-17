@@ -35,13 +35,14 @@ public class SecurityConfig {
                         .requestMatchers("/api/inventory/catalogs/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PATCH, "/api/inventory/items/*/deactivate").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/inventory/items/*/returns").hasAnyRole("ADMIN", "ALMACENISTA", "SERVICIO")
-                        .requestMatchers(HttpMethod.POST, "/api/inventory/internal/items/decrease").hasAnyRole("ADMIN", "ALMACENISTA", "SERVICIO")
+                        .requestMatchers(HttpMethod.POST, "/api/inventory/internal/items/decrease").hasAnyRole("ADMIN", "ALMACENISTA")
                         .requestMatchers(HttpMethod.GET, "/api/inventory/items", "/api/inventory/items/*", "/api/inventory/items/low-stock").hasAnyRole("ADMIN", "ALMACENISTA", "SERVICIO")
+                        .requestMatchers(HttpMethod.GET, "/api/inventory/room-pars/compare", "/api/inventory/room-pars/compare-by-type")
+                                .hasAnyRole("ADMIN", "ALMACENISTA", "SERVICIO", "RECEPCION")
                         .requestMatchers(HttpMethod.GET, "/api/inventory/locations/**", "/api/inventory/stock/**",
-                                "/api/inventory/room-pars/compare", "/api/inventory/room-pars/compare-by-type",
                                 "/api/inventory/replenishment/suggestions").hasAnyRole("ADMIN", "ALMACENISTA", "SERVICIO")
                         .requestMatchers(HttpMethod.GET, "/api/inventory/room-pars/**").hasAnyRole("ADMIN", "ALMACENISTA", "SERVICIO")
-                        .requestMatchers(HttpMethod.GET, "/api/inventory/movements").hasAnyRole("ADMIN", "ALMACENISTA")
+                        .requestMatchers(HttpMethod.GET, "/api/inventory/movements").hasAnyRole("ADMIN", "ALMACENISTA", "SERVICIO")
                         .requestMatchers("/api/inventory/**").hasAnyRole("ADMIN", "ALMACENISTA")
                         .anyRequest().authenticated()
                 )
