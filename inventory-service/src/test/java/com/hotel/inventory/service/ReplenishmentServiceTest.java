@@ -60,8 +60,8 @@ class ReplenishmentServiceTest {
                 replenishmentService.suggestions("101", RoomPar.Scope.HABITACION, null);
 
         assertThat(suggestions).hasSize(1);
-        assertThat(suggestions.getFirst().suggestedQuantity()).isEqualTo(2);
-        assertThat(suggestions.getFirst().priority()).isEqualTo("ALTA");
+        assertThat(suggestions.get(0).suggestedQuantity()).isEqualTo(2);
+        assertThat(suggestions.get(0).priority()).isEqualTo("ALTA");
         verify(locationRepository, never()).findByTypeAndActiveTrue(any());
     }
 
@@ -86,7 +86,7 @@ class ReplenishmentServiceTest {
                 replenishmentService.suggestions(null, RoomPar.Scope.HABITACION, "ESTANDAR");
 
         assertThat(suggestions).hasSize(1);
-        assertThat(suggestions.getFirst().roomNumber()).isEqualTo("101");
+        assertThat(suggestions.get(0).roomNumber()).isEqualTo("101");
         verify(roomParService, never()).compareRoom(eq("102"), any());
     }
 

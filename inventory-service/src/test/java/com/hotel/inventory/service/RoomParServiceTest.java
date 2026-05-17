@@ -130,7 +130,7 @@ class RoomParServiceTest {
         assertThat(updated.getName()).isEqualTo("PAR actualizado");
         assertThat(updated.getActive()).isFalse();
         assertThat(updated.getLines()).hasSize(1);
-        assertThat(updated.getLines().getFirst().getTargetQuantity()).isEqualTo(4);
+        assertThat(updated.getLines().get(0).getTargetQuantity()).isEqualTo(4);
         verify(auditService).record("UPDATE", "RoomPar", 3L, "almacen", "PAR actualizado");
     }
 
@@ -154,8 +154,8 @@ class RoomParServiceTest {
         assertThat(view.roomNumber()).isEqualTo("101");
         assertThat(view.overallStatus()).isEqualTo("FALTA");
         assertThat(view.lines()).hasSize(1);
-        assertThat(view.lines().getFirst().gapQuantity()).isEqualTo(1);
-        assertThat(view.lines().getFirst().status()).isEqualTo("FALTA");
+        assertThat(view.lines().get(0).gapQuantity()).isEqualTo(1);
+        assertThat(view.lines().get(0).status()).isEqualTo("FALTA");
     }
 
     @Test

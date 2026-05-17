@@ -37,11 +37,6 @@ public class AiController {
             throw new IllegalStateException("Usuario no autenticado");
         }
 
-        if (!roleContext.hasAccessToChatbot()) {
-            throw new IllegalStateException(
-                    "Tu rol (" + roleContext.role() + ") no tiene acceso al asistente IA");
-        }
-
         return inventoryAssistantService.answerInventoryQuestion(request, roleContext);
     }
 

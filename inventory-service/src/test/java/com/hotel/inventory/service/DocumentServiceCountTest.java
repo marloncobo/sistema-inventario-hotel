@@ -78,7 +78,7 @@ class DocumentServiceCountTest {
         assertThat(doc.getType()).isEqualTo(InventoryDocument.Type.CONTEO);
         assertThat(doc.getStatus()).isEqualTo(InventoryDocument.Status.BORRADOR);
         assertThat(doc.getLines()).hasSize(1);
-        assertThat(doc.getLines().getFirst().getQuantityExpected()).isEqualTo(5);
+        assertThat(doc.getLines().get(0).getQuantityExpected()).isEqualTo(5);
         verify(auditService).record("INIT_COUNT", "InventoryDocument", 100L, "admin", "BODEGA_PRINCIPAL");
     }
 
@@ -96,7 +96,7 @@ class DocumentServiceCountTest {
     @Test
     void completeCountWithoutVarianceExecutesImmediately() {
         InventoryDocument doc = countDocument(100L, InventoryDocument.Status.BORRADOR);
-        InventoryDocumentLine line = doc.getLines().getFirst();
+        InventoryDocumentLine line = doc.getLines().get(0);
         line.setQuantityActual(5);
 
         when(documentRepo.findByIdWithLines(100L)).thenReturn(Optional.of(doc));
@@ -113,7 +113,7 @@ class DocumentServiceCountTest {
     @Test
     void completeCountWithVarianceRequiresApproval() {
         InventoryDocument doc = countDocument(100L, InventoryDocument.Status.BORRADOR);
-        doc.getLines().getFirst().setQuantityActual(3);
+        doc.getLines().get(0).setQuantityActual(3);
 
         when(documentRepo.findByIdWithLines(100L)).thenReturn(Optional.of(doc));
         when(documentRepo.save(any(InventoryDocument.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -139,7 +139,7 @@ class DocumentServiceCountTest {
     @Test
     void applyVarianceAdjustsStockAndMarksExecuted() {
         InventoryDocument doc = countDocument(100L, InventoryDocument.Status.APROBADO);
-        doc.getLines().getFirst().setQuantityActual(7);
+        doc.getLines().get(0).setQuantityActual(7);
 
         SupplyItem item = item(10L, "ASE-001");
         item.setStock(20);
@@ -158,7 +158,7 @@ class DocumentServiceCountTest {
     @Test
     void recordCountUpdatesLineQuantities() {
         InventoryDocument doc = countDocument(100L, InventoryDocument.Status.BORRADOR);
-        InventoryDocumentLine line = doc.getLines().getFirst();
+        InventoryDocumentLine line = doc.getLines().get(0);
 
         when(documentRepo.findByIdWithLines(100L)).thenReturn(Optional.of(doc));
         when(documentRepo.save(any(InventoryDocument.class))).thenAnswer(invocation -> invocation.getArgument(0));
