@@ -1,7 +1,11 @@
 ﻿<div class="par-page app-page pp-root">
   <app-page-header
     title="PAR habitaciones"
-    subtitle="Define qué debe tener cada tipo de habitación y compáralo con el stock real."
+    [subtitle]="
+      canCompareOnly()
+        ? 'Consulta qué debería tener la habitación y qué falta o sobra (solo lectura).'
+        : 'Define qué debe tener cada tipo de habitación y compáralo con el stock real.'
+    "
   >
     <div header-actions>
       @if (canManage()) {

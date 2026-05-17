@@ -1229,20 +1229,22 @@ export class InventoryPageComponent implements OnInit {
   }
 
   private loadReferenceData(): void {
+    const aux = { auxiliary: true as const };
+
     if (this.canManageItems()) {
       this.inventoryApi
-        .getLocations({ activeOnly: true })
+        .getLocations({ activeOnly: true }, aux)
         .pipe(take(1), emptyArrayOnError())
         .subscribe((locations) => this.locations.set(locations));
     }
 
     if (this.isAdmin()) {
       forkJoin({
-        categories: this.inventoryApi.getCategories().pipe(emptyArrayOnError()),
-        units: this.inventoryApi.getUnits().pipe(emptyArrayOnError()),
-        providers: this.inventoryApi.getProviders().pipe(emptyArrayOnError()),
-        areas: this.inventoryApi.getAreas().pipe(emptyArrayOnError()),
-        rooms: this.roomsApi.getRooms().pipe(emptyArrayOnError()),
+        categories: this.inventoryApi.getCategories(aux).pipe(emptyArrayOnError()),
+        units: this.inventoryApi.getUnits(aux).pipe(emptyArrayOnError()),
+        providers: this.inventoryApi.getProviders(aux).pipe(emptyArrayOnError()),
+        areas: this.inventoryApi.getAreas(aux).pipe(emptyArrayOnError()),
+        rooms: this.roomsApi.getRooms(aux).pipe(emptyArrayOnError()),
         users: this.usersApi.getUsers().pipe(emptyArrayOnError())
       })
         .pipe(take(1))
@@ -1261,9 +1263,9 @@ export class InventoryPageComponent implements OnInit {
 
     if (this.canManageItems()) {
       forkJoin({
-        providers: this.inventoryApi.getProviders().pipe(emptyArrayOnError()),
-        areas: this.inventoryApi.getAreas().pipe(emptyArrayOnError()),
-        rooms: this.roomsApi.getRooms().pipe(emptyArrayOnError())
+        providers: this.inventoryApi.getProviders(aux).pipe(emptyArrayOnError()),
+        areas: this.inventoryApi.getAreas(aux).pipe(emptyArrayOnError()),
+        rooms: this.roomsApi.getRooms(aux).pipe(emptyArrayOnError())
       })
         .pipe(take(1))
         .subscribe((result) => {
@@ -1275,7 +1277,7 @@ export class InventoryPageComponent implements OnInit {
     }
 
     this.roomsApi
-      .getRooms()
+      .getRooms(aux)
       .pipe(take(1), emptyArrayOnError())
       .subscribe((rooms) => this.rooms.set(rooms));
   }

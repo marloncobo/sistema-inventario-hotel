@@ -4,6 +4,7 @@ import { Component, computed, inject } from '@angular/core';
 import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ToastModule } from 'primeng/toast';
+import { rolesForShellRoute } from '@core/constants/role-nav-access';
 import { AuthService } from '@core/services/auth.service';
 import { LayoutService } from '@core/services/layout.service';
 import { filter, startWith } from 'rxjs';
@@ -279,7 +280,7 @@ export class AppShellComponent {
   protected readonly showAssistantFab = computed(() => {
     this.navigationEnd();
     return (
-      this.authService.hasAnyRole(['ADMIN', 'ALMACENISTA', 'RECEPCION', 'SERVICIO']) &&
+      this.authService.hasAnyRole(rolesForShellRoute('asistente-ia')) &&
       !this.router.url.startsWith('/asistente-ia')
     );
   });

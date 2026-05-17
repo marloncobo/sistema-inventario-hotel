@@ -3,11 +3,11 @@ import {
   rolesForShellRoute,
   SIDEBAR_CATALOGOS_ADMIN_ROLES,
   SIDEBAR_PROVEEDORES_NAV_ROLES
-} from './shell-route-roles';
+} from './role-nav-access';
 
 /**
- * Menú lateral: cada ítem usa `rolesForShellRoute` (misma regla que `roleGuard` en `app.routes.ts`).
- * El sidebar filtra con `hasAnyRole`; las categorías/grupos vacíos se omiten.
+ * Menú lateral: cada ítem usa `rolesForShellRoute` (misma regla que `roleGuard`).
+ * No añadir roles a mano: actualizar `role-nav-access.ts`.
  */
 export const APP_NAV_CATEGORIES: NavigationCategory[] = [
   {
@@ -16,7 +16,7 @@ export const APP_NAV_CATEGORIES: NavigationCategory[] = [
     shortLabel: 'Inicio',
     icon: 'pi pi-chart-bar',
     eyebrow: 'Visión general',
-    description: 'Tablero común; el contenido depende de lo que tu rol puede consultar en el backend.',
+    description: 'Tablero según tu rol.',
     groups: [
       {
         title: 'Inicio',
@@ -38,7 +38,7 @@ export const APP_NAV_CATEGORIES: NavigationCategory[] = [
     shortLabel: 'Ops',
     icon: 'pi pi-box',
     eyebrow: 'Día a día',
-    description: 'Inventario, habitaciones y asignaciones según rol.',
+    description: 'Inventario y habitaciones según rol.',
     groups: [
       {
         title: 'Inventario',
@@ -47,35 +47,35 @@ export const APP_NAV_CATEGORIES: NavigationCategory[] = [
             label: 'Inventario',
             route: '/inventario',
             icon: 'pi pi-warehouse',
-            description: 'Bodega: entradas y salidas (admin/almacén). Servicio: consulta y devoluciones desde habitación.',
+            description: 'Bodega (admin/almacén) o consulta y devoluciones (servicio).',
             roles: rolesForShellRoute('inventario')
           },
           {
             label: 'Ubicaciones',
             route: '/ubicaciones',
             icon: 'pi pi-map-marker',
-            description: 'Bodegas, pisos, habitaciones, minibares y demás ubicaciones físicas del inventario.',
+            description: 'Ubicaciones físicas del inventario.',
             roles: rolesForShellRoute('ubicaciones')
           },
           {
             label: 'Documentos',
             route: '/documentos',
             icon: 'pi pi-file-edit',
-            description: 'Órdenes de compra, recepciones, transferencias y ajustes multi-ítem.',
+            description: 'Órdenes de compra, recepciones, transferencias y ajustes.',
             roles: rolesForShellRoute('documentos')
           },
           {
             label: 'PAR habitaciones',
             route: '/par-habitaciones',
             icon: 'pi pi-list-check',
-            description: 'Comparar habitación vs PAR (todos los roles operativos); editar plantillas solo admin y almacén.',
+            description: 'Plantillas PAR y comparación (bodega y servicio).',
             roles: rolesForShellRoute('par-habitaciones')
           },
           {
             label: 'Reposición',
             route: '/reposicion',
             icon: 'pi pi-truck',
-            description: 'Sugerencias automáticas según faltantes PAR y stock en bodega.',
+            description: 'Sugerencias según faltantes PAR y stock en bodega.',
             roles: rolesForShellRoute('reposicion')
           },
           {
@@ -89,7 +89,7 @@ export const APP_NAV_CATEGORIES: NavigationCategory[] = [
             label: 'Diferencias',
             route: '/diferencias',
             icon: 'pi pi-exclamation-circle',
-            description: 'Aprobar y aplicar diferencias de conteos físicos.',
+            description: 'Aprobar y aplicar diferencias de conteos.',
             roles: rolesForShellRoute('diferencias')
           }
         ]
@@ -101,21 +101,21 @@ export const APP_NAV_CATEGORIES: NavigationCategory[] = [
             label: 'Habitaciones',
             route: '/habitaciones',
             icon: 'pi pi-home',
-            description: 'Listado y detalle; creación solo administrador; cambio de estado administrador y recepción.',
+            description: 'Listado, detalle y cambio de estado (recepción).',
             roles: rolesForShellRoute('habitaciones')
           },
           {
             label: 'Consulta por número',
             route: '/habitaciones/consulta',
             icon: 'pi pi-search',
-            description: 'Validación rápida por número (tres dígitos); misma API que el listado detallado.',
+            description: 'Buscar habitación; recepción incluye comparación PAR aquí.',
             roles: rolesForShellRoute('habitaciones/consulta')
           },
           {
             label: 'Asignaciones',
             route: '/asignaciones',
             icon: 'pi pi-calendar-plus',
-            description: 'Entrega física en habitación (servicio y administración; bodega usa transferencias).',
+            description: 'Entrega en habitación (servicio y administración).',
             roles: rolesForShellRoute('asignaciones')
           }
         ]
@@ -128,7 +128,7 @@ export const APP_NAV_CATEGORIES: NavigationCategory[] = [
     shortLabel: 'Control',
     icon: 'pi pi-shield',
     eyebrow: 'Inventario',
-    description: 'Movimientos, alertas y auditoría restringidos por rol.',
+    description: 'Movimientos, alertas y auditoría.',
     groups: [
       {
         title: 'Monitoreo',
@@ -137,22 +137,29 @@ export const APP_NAV_CATEGORIES: NavigationCategory[] = [
             label: 'Movimientos',
             route: '/movimientos',
             icon: 'pi pi-history',
-            description: 'Historial completo de movimientos de inventario.',
+            description: 'Historial de movimientos de inventario.',
             roles: rolesForShellRoute('movimientos')
           },
           {
             label: 'Alertas',
             route: '/alertas',
             icon: 'pi pi-bell',
-            description: 'Alertas y stock bajo del inventario.',
+            description: 'Alertas y stock bajo.',
             roles: rolesForShellRoute('alertas')
           },
           {
             label: 'Auditoría',
             route: '/auditoria',
             icon: 'pi pi-lock',
-            description: 'Bitácoras de autenticación, inventario y habitaciones.',
+            description: 'Bitácoras del sistema.',
             roles: rolesForShellRoute('auditoria')
+          },
+          {
+            label: 'Asistente IA',
+            route: '/asistente-ia',
+            icon: 'pi pi-sparkles',
+            description: 'Consultas guiadas según tu rol.',
+            roles: rolesForShellRoute('asistente-ia')
           }
         ]
       }
@@ -164,7 +171,7 @@ export const APP_NAV_CATEGORIES: NavigationCategory[] = [
     shortLabel: 'Datos',
     icon: 'pi pi-sliders-h',
     eyebrow: 'Reportes',
-    description: 'Reportes de habitaciones para recepción; administrador incluye inventario y exportación.',
+    description: 'Reportes de habitaciones e inventario.',
     groups: [
       {
         title: 'Reportes',
@@ -173,7 +180,7 @@ export const APP_NAV_CATEGORIES: NavigationCategory[] = [
             label: 'Reportes',
             route: '/reportes',
             icon: 'pi pi-file-pdf',
-            description: 'Recepción: consumo y distribución por habitaciones. Exportación solo administrador.',
+            description: 'Consumo y distribución por habitaciones.',
             roles: rolesForShellRoute('reportes')
           }
         ]
@@ -186,7 +193,7 @@ export const APP_NAV_CATEGORIES: NavigationCategory[] = [
     shortLabel: 'Admin',
     icon: 'pi pi-cog',
     eyebrow: 'Configuración',
-    description: 'Usuarios y catálogos maestros; proveedores para almacenista.',
+    description: 'Usuarios y catálogos.',
     groups: [
       {
         title: 'Sistema',
@@ -214,7 +221,7 @@ export const APP_NAV_CATEGORIES: NavigationCategory[] = [
             label: 'Proveedores',
             route: '/catalogos',
             icon: 'pi pi-truck',
-            description: 'Directorio de proveedores (misma pantalla de catálogos, sección proveedores).',
+            description: 'Directorio de proveedores.',
             roles: SIDEBAR_PROVEEDORES_NAV_ROLES
           }
         ]

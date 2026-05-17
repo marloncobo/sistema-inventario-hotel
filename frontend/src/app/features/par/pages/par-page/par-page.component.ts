@@ -95,9 +95,16 @@ export class ParPageComponent implements OnInit {
     return this.auth.hasAnyRole(['ADMIN', 'ALMACENISTA']);
   }
 
+  protected canCompareOnly(): boolean {
+    return this.auth.hasRole('RECEPCION');
+  }
+
   protected loadPars(): void {
+    if (!this.canManage()) {
+      return;
+    }
     this.api
-      .getRoomPars(false)
+      .getRoomPars(false, { auxiliary: true })
       .pipe(take(1))
       .subscribe({
         next: (list) => this.pars.set(list),

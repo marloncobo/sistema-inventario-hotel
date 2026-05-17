@@ -1,5 +1,6 @@
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpContext, HttpResponse } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
+import { auxiliaryHttpContext } from '@shared/utils/safe-api.util';
 import { environment } from '@env/environment';
 import {
   type CatalogEntity,
@@ -140,8 +141,8 @@ export class InventoryApiService {
     });
   }
 
-  getCategories(): Observable<CatalogEntity[]> {
-    return this.http.get<CatalogEntity[]>(`${this.baseUrl}/catalogs/categories`);
+  getCategories(options?: { auxiliary?: boolean }): Observable<CatalogEntity[]> {
+    return this.http.get<CatalogEntity[]>(`${this.baseUrl}/catalogs/categories`, this.httpOptions(options));
   }
 
   createCategory(payload: CatalogRequest): Observable<CatalogEntity> {
@@ -152,8 +153,8 @@ export class InventoryApiService {
     return this.http.put<CatalogEntity>(`${this.baseUrl}/catalogs/categories/${id}`, payload);
   }
 
-  getUnits(): Observable<UnitOfMeasure[]> {
-    return this.http.get<UnitOfMeasure[]>(`${this.baseUrl}/catalogs/units`);
+  getUnits(options?: { auxiliary?: boolean }): Observable<UnitOfMeasure[]> {
+    return this.http.get<UnitOfMeasure[]>(`${this.baseUrl}/catalogs/units`, this.httpOptions(options));
   }
 
   createUnit(payload: CatalogRequest): Observable<UnitOfMeasure> {
@@ -164,8 +165,8 @@ export class InventoryApiService {
     return this.http.put<UnitOfMeasure>(`${this.baseUrl}/catalogs/units/${id}`, payload);
   }
 
-  getProviders(): Observable<Provider[]> {
-    return this.http.get<Provider[]>(`${this.baseUrl}/catalogs/providers`);
+  getProviders(options?: { auxiliary?: boolean }): Observable<Provider[]> {
+    return this.http.get<Provider[]>(`${this.baseUrl}/catalogs/providers`, this.httpOptions(options));
   }
 
   createProvider(payload: CatalogRequest): Observable<Provider> {
@@ -176,8 +177,8 @@ export class InventoryApiService {
     return this.http.put<Provider>(`${this.baseUrl}/catalogs/providers/${id}`, payload);
   }
 
-  getAreas(): Observable<CatalogEntity[]> {
-    return this.http.get<CatalogEntity[]>(`${this.baseUrl}/catalogs/areas`);
+  getAreas(options?: { auxiliary?: boolean }): Observable<CatalogEntity[]> {
+    return this.http.get<CatalogEntity[]>(`${this.baseUrl}/catalogs/areas`, this.httpOptions(options));
   }
 
   createArea(payload: CatalogRequest): Observable<CatalogEntity> {
@@ -188,10 +189,15 @@ export class InventoryApiService {
     return this.http.put<CatalogEntity>(`${this.baseUrl}/catalogs/areas/${id}`, payload);
   }
 
-  getLocations(filters: LocationFilters = {}): Observable<Location[]> {
+  getLocations(filters: LocationFilters = {}, options?: { auxiliary?: boolean }): Observable<Location[]> {
     return this.http.get<Location[]>(`${this.baseUrl}/locations`, {
-      params: buildHttpParams(filters)
+      params: buildHttpParams(filters),
+      ...this.httpOptions(options)
     });
+  }
+
+  private httpOptions(options?: { auxiliary?: boolean }): { context?: HttpContext } {
+    return options?.auxiliary ? { context: auxiliaryHttpContext() } : {};
   }
 
   getLocation(id: number): Observable<Location> {
@@ -272,9 +278,10 @@ export class InventoryApiService {
     return this.http.post<InventoryDocument>(`${this.baseUrl}/documents/${id}/apply-variance`, {});
   }
 
-  getRoomPars(activeOnly = true): Observable<RoomPar[]> {
+  getRoomPars(activeOnly = true, options?: { auxiliary?: boolean }): Observable<RoomPar[]> {
     return this.http.get<RoomPar[]>(`${this.baseUrl}/room-pars`, {
-      params: buildHttpParams({ activeOnly })
+      params: buildHttpParams({ activeOnly }),
+      ...this.httpOptions(options)
     });
   }
 

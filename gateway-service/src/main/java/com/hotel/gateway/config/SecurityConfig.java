@@ -46,7 +46,10 @@ public class SecurityConfig {
                         .pathMatchers(HttpMethod.GET, "/inventory/api/inventory/catalogs/**")
                                 .hasAnyRole("ADMIN", "ALMACENISTA")
                         .pathMatchers("/inventory/api/inventory/catalogs/providers/**").hasAnyRole("ADMIN", "ALMACENISTA")
-                        .pathMatchers("/inventory/api/inventory/catalogs/**").hasRole("ADMIN")
+                        .pathMatchers(HttpMethod.POST, "/inventory/api/inventory/catalogs/**").hasRole("ADMIN")
+                        .pathMatchers(HttpMethod.PUT, "/inventory/api/inventory/catalogs/**").hasRole("ADMIN")
+                        .pathMatchers(HttpMethod.PATCH, "/inventory/api/inventory/catalogs/**").hasRole("ADMIN")
+                        .pathMatchers(HttpMethod.DELETE, "/inventory/api/inventory/catalogs/**").hasRole("ADMIN")
                         .pathMatchers(HttpMethod.PATCH, "/inventory/api/inventory/items/*/deactivate").hasRole("ADMIN")
                         .pathMatchers(HttpMethod.POST, "/inventory/api/inventory/items/*/returns").hasAnyRole("ADMIN", "ALMACENISTA", "SERVICIO")
                         .pathMatchers(HttpMethod.POST, "/inventory/api/inventory/internal/items/decrease").hasAnyRole("ADMIN", "ALMACENISTA")
@@ -55,10 +58,13 @@ public class SecurityConfig {
                                 "/inventory/api/inventory/room-pars/compare",
                                 "/inventory/api/inventory/room-pars/compare-by-type")
                                 .hasAnyRole("ADMIN", "ALMACENISTA", "SERVICIO", "RECEPCION")
+                        .pathMatchers(HttpMethod.GET, "/inventory/api/inventory/room-pars")
+                                .hasAnyRole("ADMIN", "ALMACENISTA", "SERVICIO")
+                        .pathMatchers(HttpMethod.GET, "/inventory/api/inventory/room-pars/{id:[0-9]+}")
+                                .hasAnyRole("ADMIN", "ALMACENISTA", "SERVICIO")
                         .pathMatchers(HttpMethod.GET,
                                 "/inventory/api/inventory/locations/**",
                                 "/inventory/api/inventory/stock/**",
-                                "/inventory/api/inventory/room-pars/**",
                                 "/inventory/api/inventory/replenishment/**")
                                 .hasAnyRole("ADMIN", "ALMACENISTA", "SERVICIO")
                         .pathMatchers(HttpMethod.GET, "/inventory/api/inventory/movements").hasAnyRole("ADMIN", "ALMACENISTA", "SERVICIO")

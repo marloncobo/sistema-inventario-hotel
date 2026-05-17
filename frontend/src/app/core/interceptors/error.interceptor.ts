@@ -1,6 +1,7 @@
 import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
+import { SILENT_HTTP_ERROR } from '@core/http/silent-http.context';
 import { AuthService } from '@core/services/auth.service';
 import { NotificationService } from '@core/services/ui/notification.service';
 import { UiStateService } from '@core/services/ui/ui-state.service';
@@ -8,6 +9,8 @@ import { extractApiErrorMessage } from '@models/api-error.model';
 import { catchError, throwError } from 'rxjs';
 
 const DEFAULT_FORBIDDEN_MESSAGE = 'No fue posible completar la operación.';
+let lastForbiddenToastAt = 0;
+const FORBIDDEN_TOAST_COOLDOWN_MS = 2500;
 
 export const errorInterceptor: HttpInterceptorFn = (request, next) => {
   const authService = inject(AuthService);
@@ -56,14 +59,18 @@ export const errorInterceptor: HttpInterceptorFn = (request, next) => {
         if (shouldNotify) {
           notificationService.error('Error del servidor', message);
         }
-      } else if (!isLoginRequest && !hasFieldErrors) {
+      } else if (!isLoginRequest && !hasFieldErrors && !request.context.get(SILENT_HTTP_ERROR)) {
         if (error.status === 403) {
-          notificationService.error(
-            'Sin permiso',
-            message === DEFAULT_FORBIDDEN_MESSAGE
-              ? 'Tu rol no puede ejecutar esta acción. Prueba con admin o almacenista.'
-              : message
-          );
+          const now = Date.now();
+          if (now - lastForbiddenToastAt >= FORBIDDEN_TOAST_COOLDOWN_MS) {
+            lastForbiddenToastAt = now;
+            notificationService.error(
+              'Sin permiso',
+              message === DEFAULT_FORBIDDEN_MESSAGE
+                ? 'Tu rol no tiene permiso para esta operación. Si crees que es un error, cierra sesión y vuelve a entrar.'
+                : message
+            );
+          }
         } else {
           notificationService.error('Operación no completada', message);
         }

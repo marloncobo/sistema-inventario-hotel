@@ -4,8 +4,11 @@
       <div class="room-lookup-hero__copy">
         <h1 class="pp-hero-title">Consulta por número</h1>
         <p class="pp-hero-lede">
-          Escribe tres dígitos y pulsa Consultar. Si tienes acceso a Asignaciones, usa el identificador interno del
-          resultado al registrar una entrega.
+          @if (canShowParCompare()) {
+            Consulta la habitación y compara contra el PAR (solo lectura).
+          } @else {
+            Escribe tres dígitos y pulsa Consultar. Usa el identificador interno del resultado en asignaciones.
+          }
         </p>
       </div>
     </div>
@@ -98,17 +101,80 @@
           </div>
         </div>
 
-        <div class="room-lookup-actions">
-          <a
-            pButton
-            [routerLink]="['/asignaciones']"
-            [queryParams]="{ roomId: room.id }"
-            label="Ir a asignaciones"
-            icon="pi pi-arrow-right"
-            class="btn-gold-add room-lookup-cta"
-          ></a>
-        </div>
+        @if (canGoToAssignments()) {
+          <div class="room-lookup-actions">
+            <a
+              pButton
+              [routerLink]="['/asignaciones']"
+              [queryParams]="{ roomId: room.id }"
+              label="Ir a asignaciones"
+              icon="pi pi-arrow-right"
+              class="btn-gold-add room-lookup-cta"
+            ></a>
+          </div>
+        }
+
+        @if (canShowParCompare()) {
+          <div class="room-lookup-par-block">
+            <div class="pp-section-head">
+              <div class="pp-section-head__copy">
+                <span class="pp-eyebrow">PAR</span>
+                <h2 class="pp-section-head__title">Comparación en habitación</h2>
+                <p class="pp-section-head__desc">Qué debería tener vs. lo que hay en stock.</p>
+              </div>
+            </div>
+
+            <form [formGroup]="parForm" class="room-lookup-par-form" (ngSubmit)="comparePar()">
+              <label class="field">
+                <span>Ámbito</span>
+                <select class="field-control" formControlName="scope">
+                  @for (s of scopes; track s) {
+                    <option [value]="s">{{ labelScope(s) }}</option>
+                  }
+                </select>
+              </label>
+              <button
+                pButton
+                type="submit"
+                label="Actualizar PAR"
+                icon="pi pi-refresh"
+                variant="outlined"
+                [loading]="parLoading()"
+              ></button>
+            </form>
+
+            @if (parError(); as err) {
+              <article class="validation-banner validation-banner--danger room-lookup-api-banner">
+                <strong>{{ err }}</strong>
+              </article>
+            }
+
+            @if (comparison(); as cmp) {
+              <p-table [value]="cmp.lines" responsiveLayout="scroll">
+                <ng-template pTemplate="header">
+                  <tr>
+                    <th>Insumo</th>
+                    <th>Debe</th>
+                    <th>Tiene</th>
+                    <th>Diferencia</th>
+                    <th>Estado</th>
+                  </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-line>
+                  <tr>
+                    <td>{{ line.itemName }}</td>
+                    <td>{{ line.targetQuantity }}</td>
+                    <td>{{ line.actualQuantity }}</td>
+                    <td>{{ line.gapQuantity }}</td>
+                    <td><span [class]="statusClass(line.status)">{{ line.status }}</span></td>
+                  </tr>
+                </ng-template>
+              </p-table>
+            }
+          </div>
+        }
       </div>
     }
   </section>
 </div>
+

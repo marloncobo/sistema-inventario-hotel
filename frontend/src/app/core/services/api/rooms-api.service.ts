@@ -1,5 +1,6 @@
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpContext, HttpResponse } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
+import { auxiliaryHttpContext } from '@shared/utils/safe-api.util';
 import { environment } from '@env/environment';
 import {
   type AssignSupplyRequest,
@@ -22,8 +23,12 @@ export class RoomsApiService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = `${environment.apiBaseUrl}/rooms/api/rooms`;
 
-  getRooms(): Observable<Room[]> {
-    return this.http.get<Room[]>(this.baseUrl);
+  getRooms(options?: { auxiliary?: boolean }): Observable<Room[]> {
+    return this.http.get<Room[]>(this.baseUrl, this.httpOptions(options));
+  }
+
+  private httpOptions(options?: { auxiliary?: boolean }): { context?: HttpContext } {
+    return options?.auxiliary ? { context: auxiliaryHttpContext() } : {};
   }
 
   getRoom(id: number): Observable<Room> {
