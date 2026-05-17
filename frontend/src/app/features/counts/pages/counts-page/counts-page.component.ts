@@ -6,7 +6,9 @@ import { ButtonModule } from 'primeng/button';
 import { TableModule } from 'primeng/table';
 import { InventoryApiService } from '@core/services/api/inventory-api.service';
 import { NotificationService } from '@core/services/ui/notification.service';
+import { extractApiErrorMessage } from '@models/api-error.model';
 import type { InventoryDocument, Location } from '@models/inventory.model';
+import { isHttp403 } from '@shared/utils/http-error.util';
 import { PageHeaderComponent } from '@shared/components/page-header/page-header.component';
 
 @Component({
@@ -32,7 +34,18 @@ export class CountsPageComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    this.api.getLocations({ activeOnly: true }).pipe(take(1)).subscribe((l) => this.locations.set(l));
+    this.api
+      .getLocations({ activeOnly: true })
+      .pipe(take(1))
+      .subscribe({
+        next: (l) => this.locations.set(l),
+        error: (error) => {
+          this.locations.set([]);
+          if (!isHttp403(error)) {
+            this.notify.error('Conteos', extractApiErrorMessage(error.error));
+          }
+        }
+      });
   }
 
   protected startCount(): void {
@@ -59,7 +72,12 @@ export class CountsPageComponent implements OnInit {
           this.loading.set(false);
           this.notify.success('Conteo', 'Documento ' + doc.code + ' creado.');
         },
-        error: () => this.loading.set(false)
+        error: (error) => {
+          this.loading.set(false);
+          if (!isHttp403(error)) {
+            this.notify.error('Conteo', extractApiErrorMessage(error.error));
+          }
+        }
       });
   }
 
@@ -96,10 +114,20 @@ export class CountsPageComponent implements OnInit {
                     : 'Conteo aplicado sin diferencias.';
                 this.notify.success('Conteo', msg);
               },
-              error: () => this.loading.set(false)
+              error: (error) => {
+                this.loading.set(false);
+                if (!isHttp403(error)) {
+                  this.notify.error('Conteo', extractApiErrorMessage(error.error));
+                }
+              }
             });
         },
-        error: () => this.loading.set(false)
+        error: (error) => {
+          this.loading.set(false);
+          if (!isHttp403(error)) {
+            this.notify.error('Conteo', extractApiErrorMessage(error.error));
+          }
+        }
       });
   }
 }

@@ -19,6 +19,21 @@ public class InventoryMovement {
     private SupplyItem item;
     @Column(nullable = false)
     private String movementType;
+
+    /** Columnas legacy (esquema anterior); se sincronizan en {@link #synchronizeLegacyColumns()}. */
+    @Column(name = "type", length = 20)
+    @JsonIgnore
+    private String legacyType;
+    @Column(name = "warehouse_id")
+    @JsonIgnore
+    private Long legacyWarehouseId;
+    @Column(name = "warehouse_name", length = 80)
+    @JsonIgnore
+    private String legacyWarehouseName;
+    @Column(name = "responsible_user", length = 60)
+    @JsonIgnore
+    private String legacyResponsibleUser;
+
     @Column(nullable = false)
     private String origin;
     @Column(nullable = false)
@@ -77,6 +92,25 @@ public class InventoryMovement {
     private LocalDateTime createdAt;
 
     public InventoryMovement() {}
+
+    @PrePersist
+    @PreUpdate
+    void synchronizeLegacyColumns() {
+        if (movementType != null) {
+            legacyType = movementType.length() > 20 ? movementType.substring(0, 20) : movementType;
+        }
+        if (responsible != null) {
+            legacyResponsibleUser = responsible.length() > 60 ? responsible.substring(0, 60) : responsible;
+        }
+        Location warehouse = fromLocation != null ? fromLocation : toLocation;
+        if (warehouse != null) {
+            legacyWarehouseId = warehouse.getId();
+            String code = warehouse.getCode();
+            if (code != null) {
+                legacyWarehouseName = code.length() > 80 ? code.substring(0, 80) : code;
+            }
+        }
+    }
 
     public InventoryMovement(SupplyItem item, String movementType, Integer quantity, String roomNumber, String referenceText, LocalDateTime createdAt) {
         this(item, movementType, "NO_APLICA", quantity, 0, quantity, roomNumber, null, null, "sistema", referenceText, "VALIDO", createdAt);

@@ -67,14 +67,30 @@ function sanitizeApiErrorMessage(message: string): string {
   }
 
   const lowerCased = normalized.toLowerCase();
+
+  // Mensajes de negocio del backend (español): mostrarlos tal cual.
+  if (
+    /[áéíóúñ]/i.test(normalized) ||
+    lowerCased.startsWith('no hay ') ||
+    lowerCased.startsWith('no existe') ||
+    lowerCased.startsWith('no fue posible validar') ||
+    lowerCased.startsWith('el insumo') ||
+    lowerCased.startsWith('la habitación') ||
+    lowerCased.startsWith('stock insuficiente') ||
+    lowerCased.startsWith('ya existe')
+  ) {
+    return normalized;
+  }
+
   const includesTechnicalPath =
+    lowerCased.includes('/api/') ||
     lowerCased.includes('/auth/') ||
     lowerCased.includes('/inventory/') ||
     lowerCased.includes('/rooms/');
   const looksTechnical = TECHNICAL_ERROR_HINTS.some((hint) => lowerCased.includes(hint));
 
   if (looksTechnical || includesTechnicalPath) {
-    return 'No fue posible completar la operación en este momento.';
+    return DEFAULT_API_ERROR_MESSAGE;
   }
 
   return normalized;
