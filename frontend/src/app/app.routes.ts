@@ -40,6 +40,22 @@ export const routes: Routes = [
         }
       },
       {
+        path: 'asistente-ia',
+        canActivate: [roleGuard],
+        loadComponent: () =>
+          import('@features/assistant/pages/assistant-page/assistant-page.component').then(
+            (m) => m.AssistantPageComponent
+          ),
+        data: {
+          title: 'Asistente IA',
+          breadcrumb: 'Asistente IA',
+          roles: rolesForShellRoute('asistente-ia'),
+          summary: 'Consultas guiadas por IA sobre inventario, alertas, consumo y compras prioritarias.',
+          endpoint: 'POST /ai/api/ai/inventory-assistant',
+          note: 'Disponible para administracion, almacen y servicio con contexto actual del inventario.'
+        }
+      },
+      {
         path: 'usuarios',
         canActivate: [roleGuard],
         loadComponent: () =>

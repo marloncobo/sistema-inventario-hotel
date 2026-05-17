@@ -6,6 +6,7 @@ import type { AppRole } from '@models/role.model';
  */
 export const SHELL_ROUTE_ROLES = {
   dashboard: ['ADMIN', 'ALMACENISTA', 'RECEPCION', 'SERVICIO'],
+  'asistente-ia': ['ADMIN', 'ALMACENISTA', 'SERVICIO'],
   usuarios: ['ADMIN'],
   auditoria: ['ADMIN'],
   catalogos: ['ADMIN', 'ALMACENISTA'],

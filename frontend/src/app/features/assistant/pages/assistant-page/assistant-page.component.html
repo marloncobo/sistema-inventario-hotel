@@ -1,0 +1,184 @@
+<div class="assistant-page pp-root">
+  <app-page-header
+    title="Asistente IA"
+    subtitle="Consulta el estado del inventario, prioridades de compra y riesgos operativos usando el contexto actual del sistema."
+  />
+
+  <section class="assistant-hero pp-surface">
+    <div class="assistant-hero__copy">
+      <span class="pp-eyebrow">Análisis asistido</span>
+      <h2 class="pp-hero-title">Pregunta en lenguaje natural y obtén una respuesta accionable</h2>
+      <p class="pp-hero-lede">
+        El asistente revisa la información disponible del inventario para ayudarte a detectar alertas,
+        reabastecimientos urgentes y decisiones operativas del día.
+      </p>
+    </div>
+
+    <div class="pp-hero-summary">
+      <span class="pp-section-label">Modo actual</span>
+      <strong class="pp-hero-summary__value">v1</strong>
+      <p class="pp-hero-summary__meta">
+        Pregunta-respuesta simple con historial local en pantalla.
+      </p>
+    </div>
+  </section>
+
+  <section class="assistant-workbench">
+    <article class="assistant-composer pp-surface-solid">
+      <div class="pp-section-head assistant-composer__head">
+        <div class="pp-section-head__copy">
+          <span class="pp-section-label">Consulta</span>
+          <h3 class="pp-section-head__title">Escribe tu pregunta</h3>
+          <p class="pp-section-head__desc">
+            Sé específico si quieres un ranking, una prioridad o un resumen ejecutivo.
+          </p>
+        </div>
+
+        <div class="pp-inline-stats">
+          <span class="pp-inline-stat">
+            <i class="pi pi-comment"></i>
+            {{ history().length }} consultas
+          </span>
+          <span class="pp-inline-stat">
+            <i class="pi pi-bolt"></i>
+            Contexto en vivo
+          </span>
+        </div>
+      </div>
+
+      <label class="assistant-composer__field" for="assistant-question">
+        <span>Pregunta para la IA</span>
+        <textarea
+          id="assistant-question"
+          class="assistant-composer__textarea"
+          rows="5"
+          [ngModel]="question()"
+          (ngModelChange)="updateQuestion($event)"
+          placeholder="Ejemplo: ¿Qué productos debo reabastecer primero y por qué?"
+        ></textarea>
+      </label>
+
+      @if (submitError()) {
+        <div class="assistant-composer__error" role="alert">
+          <i class="pi pi-exclamation-triangle"></i>
+          <span>{{ submitError() }}</span>
+        </div>
+      }
+
+      <div class="assistant-composer__actions">
+        <button
+          pButton
+          type="button"
+          label="Preguntar"
+          icon="pi pi-send"
+          [loading]="loading()"
+          [disabled]="!canSubmit()"
+          (click)="askQuestion()"
+        ></button>
+
+        <span class="assistant-composer__hint">
+          {{ trimmedQuestion().length }} caracteres listos para enviar
+        </span>
+      </div>
+    </article>
+
+    <aside class="assistant-suggestions pp-surface-solid">
+      <div class="pp-section-head__copy">
+        <span class="pp-section-label">Inicio rápido</span>
+        <h3 class="pp-section-head__title">Preguntas sugeridas</h3>
+        <p class="pp-section-head__desc">
+          Usa una de estas consultas como punto de partida y ajústala si necesitas más detalle.
+        </p>
+      </div>
+
+      <div class="assistant-suggestions__list">
+        @for (suggestion of suggestedQuestions(); track trackByQuestion($index, suggestion)) {
+          <button
+            type="button"
+            class="assistant-suggestions__item"
+            (click)="useSuggestion(suggestion)"
+          >
+            <i class="pi pi-sparkles"></i>
+            <span>{{ suggestion }}</span>
+          </button>
+        }
+      </div>
+    </aside>
+  </section>
+
+  <section class="assistant-history pp-surface-solid">
+    <div class="pp-section-head">
+      <div class="pp-section-head__copy">
+        <span class="pp-section-label">Historial local</span>
+        <h3 class="pp-section-head__title">Consultas de esta sesión</h3>
+        <p class="pp-section-head__desc">
+          El historial vive solo en esta pantalla mientras mantengas la sesión abierta.
+        </p>
+      </div>
+    </div>
+
+    @if (!hasHistory()) {
+      <app-empty-state
+        icon="pi pi-comments"
+        title="Todavía no has hecho preguntas"
+        message="Prueba con una de las sugerencias o escribe una consulta sobre stock, alertas, consumo o compras prioritarias."
+      />
+    } @else {
+      <div class="assistant-history__list">
+        @for (entry of history(); track trackByHistoryId($index, entry)) {
+          <article class="assistant-history-card" [attr.data-status]="entry.status">
+            <div class="assistant-history-card__question">
+              <div class="assistant-history-card__meta">
+                <span class="pp-chip-neutral">
+                  <i class="pi pi-user"></i>
+                  Tu consulta
+                </span>
+                <span class="pp-chip-muted">{{ formatAskedAt(entry.askedAt) }}</span>
+              </div>
+              <p>{{ entry.question }}</p>
+            </div>
+
+            <div class="assistant-history-card__answer">
+              <div class="assistant-history-card__answer-head">
+                <div class="assistant-history-card__meta">
+                  <span class="pp-chip-neutral">
+                    <i class="pi pi-microchip-ai"></i>
+                    Respuesta IA
+                  </span>
+                  @if (entry.contextSource) {
+                    <p-tag [value]="entry.contextSource!" severity="contrast" />
+                  }
+                </div>
+
+                <button
+                  pButton
+                  type="button"
+                  size="small"
+                  severity="secondary"
+                  icon="pi pi-refresh"
+                  label="Repetir"
+                  (click)="resendQuestion(entry.question)"
+                  [disabled]="loading()"
+                ></button>
+              </div>
+
+              @if (entry.status === 'loading') {
+                <div class="assistant-history-card__loading">
+                  <p-progress-spinner strokeWidth="4" animationDuration=".7s" />
+                  <span>Analizando el inventario actual...</span>
+                </div>
+              } @else if (entry.status === 'error') {
+                <div class="assistant-history-card__error" role="alert">
+                  <i class="pi pi-times-circle"></i>
+                  <span>{{ entry.errorMessage || 'No fue posible completar la consulta.' }}</span>
+                </div>
+              } @else {
+                <p class="assistant-history-card__text">{{ entry.answer }}</p>
+              }
+            </div>
+          </article>
+        }
+      </div>
+    }
+  </section>
+</div>
