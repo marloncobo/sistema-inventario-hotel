@@ -125,6 +125,10 @@
             "value": ""
         },
         {
+            "key": "sourceMovementId",
+            "value": ""
+        },
+        {
             "key": "roles",
             "value": ""
         },
@@ -344,19 +348,41 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n  \"username\": \"postman_user_{{runId}}\",\n  \"password\": \"Postman123\",\n  \"roles\": [\n    \"RECEPCION\"\n  ],\n  \"active\": true\n}"
+                            "raw": "{\n  \"username\": \"postman_user_{{runId}}\",\n  \"email\": \"postman_user_{{runId}}@hotel.local\",\n  \"password\": \"Postman123\",\n  \"roles\": [\n    \"RECEPCION\"\n  ],\n  \"active\": true\n}"
                         },
+                        "description": "ORDEN: 1) Login admin  2) Crear usuario.\n\nCampos obligatorios del body:\n- username (único)\n- email (formato válido, único)\n- password (mín. 8, 1 mayúscula, 1 número)\n- roles: ADMIN | ALMACENISTA | RECEPCION | SERVICIO\n- active (opcional, default true)\n\nSolo rol ADMIN. Usa Authorization Bearer {{token}} de la colección.",
                         "url": "{{baseUrl}}/auth/users"
                     },
                     "event": [
+                        {
+                            "listen": "prerequest",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "if (!pm.collectionVariables.get('runId')) {",
+                                    "  pm.collectionVariables.set('runId', Date.now().toString());",
+                                    "}",
+                                    "if (!pm.collectionVariables.get('token')) {",
+                                    "  console.warn('Ejecuta primero Auth > Login admin para obtener token.');",
+                                    "}"
+                                ]
+                            }
+                        },
                         {
                             "listen": "test",
                             "script": {
                                 "type": "text/javascript",
                                 "exec": [
-                                    "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                                    "pm.test('Usuario creado (200)', () => pm.response.to.have.status(200));",
+                                    "if (pm.response.code === 200) {",
                                     "  const json = pm.response.json();",
-                                    "  if (json.id !== undefined) pm.collectionVariables.set('userId', json.id);",
+                                    "  pm.collectionVariables.set('userId', json.id);",
+                                    "  pm.test('Respuesta incluye email', () => pm.expect(json.email).to.include('@'));",
+                                    "}",
+                                    "if (pm.response.code === 400) {",
+                                    "  const body = pm.response.json();",
+                                    "  const msg = body.error || body.message || JSON.stringify(body);",
+                                    "  pm.test('Detalle error 400: ' + msg, () => { throw new Error(msg); });",
                                     "}"
                                 ]
                             }
@@ -375,10 +401,22 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n  \"username\": \"postman_user_{{runId}}\",\n  \"password\": \"Postman123\",\n  \"roles\": [\n    \"RECEPCION\",\n    \"SERVICIO\"\n  ],\n  \"active\": true\n}"
+                            "raw": "{\n  \"username\": \"postman_user_{{runId}}\",\n  \"email\": \"postman_user_{{runId}}@hotel.local\",\n  \"password\": \"\",\n  \"roles\": [\n    \"RECEPCION\",\n    \"SERVICIO\"\n  ],\n  \"active\": true\n}"
                         },
+                        "description": "Ejecutar después de Crear usuario (usa userId). email obligatorio. password vacío = no cambiar contraseña.",
                         "url": "{{baseUrl}}/auth/users/{{userId}}"
-                    }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('Usuario actualizado', () => pm.response.to.have.status(200));"
+                                ]
+                            }
+                        }
+                    ]
                 },
                 {
                     "name": "Auditoria gateway",
@@ -1199,10 +1237,15 @@
                             {
                                 "key": "Content-Type",
                                 "value": "application/json"
+                            },
+                            {
+                                "key": "X-Rooms-Service-Flow",
+                                "value": "true",
+                                "description": "Simula llamada interna desde rooms-service (obligatorio para origin HABITACION)."
                             }
                         ],
                         "url": "{{baseUrl}}/inventory/api/inventory/internal/items/decrease",
-                        "description": "Fase 1: salida desde bodega hacia ubicación HAB_XXX según targetLocationType.",
+                        "description": "Fase 1 — salida bodega → HAB_XXX (targetLocationType HABITACION o MINIBAR).\n\n⚠️ En producción NO se llama directo a inventory: usar Rooms → Asignar insumo a habitacion (o Reponer minibar).\n\nEste request es para QA: incluye header X-Rooms-Service-Flow=true.\n\nroomNumber debe ser texto de 3 dígitos, ej. \"101\" (variable {{roomNumber}}).",
                         "body": {
                             "mode": "raw",
                             "raw": "{\n  \"itemId\": {{itemId}},\n  \"quantity\": 1,\n  \"roomNumber\": \"{{roomNumber}}\",\n  \"areaName\": null,\n  \"origin\": \"HABITACION\",\n  \"targetLocationType\": \"HABITACION\",\n  \"operationalResponsible\": \"{{operationalResponsible}}\",\n  \"referenceText\": \"Reposicion habitacion Postman Fase 1\"\n}"
@@ -1234,10 +1277,35 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n  \"quantity\": 1,\n  \"roomNumber\": \"{{roomNumber}}\",\n  \"areaName\": null,\n  \"operationalResponsible\": \"{{operationalResponsible}}\",\n  \"referenceText\": \"Devolucion desde Postman\",\n  \"sourceMovementId\": null\n}"
+                            "raw": "{\n  \"quantity\": 1,\n  \"roomNumber\": \"{{roomNumber}}\",\n  \"areaName\": null,\n  \"operationalResponsible\": \"{{operationalResponsible}}\",\n  \"referenceText\": \"Devolucion desde Postman\",\n  \"sourceMovementId\": {{sourceMovementId}}\n}"
                         },
+                        "description": "ORDEN obligatorio:\n1) Registrar salida interna (o salida habitacion / asignar insumo) — guarda createdMovementId\n   O: Listar movimientos — guarda movementId de una SALIDA del mismo itemId\n2) Este request — devuelve parte de esa salida\n\nsourceMovementId NO puede ser null. roomNumber/area deben coincidir con la salida origen.",
                         "url": "{{baseUrl}}/inventory/api/inventory/items/{{itemId}}/returns"
-                    }
+                    },
+                    "event": [
+                        {
+                            "listen": "prerequest",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "const src = pm.collectionVariables.get('createdMovementId') || pm.collectionVariables.get('movementId');",
+                                    "if (!src) {",
+                                    "  throw new Error('Falta sourceMovementId: ejecuta antes Registrar salida interna o Listar movimientos.');",
+                                    "}",
+                                    "pm.collectionVariables.set('sourceMovementId', src);"
+                                ]
+                            }
+                        },
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('Devolucion registrada', () => pm.response.to.have.status(200));"
+                                ]
+                            }
+                        }
+                    ]
                 },
                 {
                     "name": "Listar movimientos",
@@ -1256,7 +1324,13 @@
                                     "const movements = pm.response.json();",
                                     "if (Array.isArray(movements) && movements.length > 0) { pm.collectionVariables.set('movementId', movements[0].id); }",
                                     "const created = pm.collectionVariables.get('createdMovementId');",
-                                    "if (created) { pm.collectionVariables.set('movementId', created); }"
+                                    "if (created) { pm.collectionVariables.set('movementId', created); }",
+                                    "const itemId = Number(pm.collectionVariables.get('itemId'));",
+                                    "const salida = Array.isArray(movements) ? movements.find(m => m.itemId === itemId && m.movementType === 'SALIDA' && m.status === 'VALIDO') : null;",
+                                    "if (salida && salida.id) {",
+                                    "  pm.collectionVariables.set('movementId', salida.id);",
+                                    "  pm.collectionVariables.set('sourceMovementId', salida.id);",
+                                    "}"
                                 ]
                             }
                         }
@@ -1725,11 +1799,24 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n  \"itemId\": {{kitAseoItemId}},\n  \"quantity\": 2,\n  \"deliveredBy\": \"Ana Maria\",\n  \"guestName\": \"Carlos Perez\",\n  \"assignmentType\": \"KIT_ASEO\"\n}"
+                            "raw": "{\n  \"itemId\": {{kitAseoItemId}},\n  \"quantity\": 1,\n  \"deliveredBy\": \"{{operationalResponsible}}\",\n  \"guestName\": \"Huesped demo\",\n  \"assignmentType\": \"KIT_ASEO\"\n}"
                         },
+                        "description": "Flujo REAL Fase 1 — entregar kit de aseo a habitación.\n\nORDEN: Login admin → Listar habitaciones (roomId) → Listar insumos (guarda kitAseoItemId = shampoo ASE-001).\n\nRegla: assignmentType KIT_ASEO solo admite insumos categoría ASEO o AMENIDADES (no MINIBAR/LENCERIA).\nPara agua/minibar usar request Reponer minibar (assignmentType MINIBAR + minibarItemId).",
                         "url": "{{baseUrl}}/rooms/api/rooms/{{roomId}}/supplies/assign"
                     },
                     "event": [
+                        {
+                            "listen": "prerequest",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "const kitId = pm.collectionVariables.get('kitAseoItemId');",
+                                    "if (!kitId) {",
+                                    "  throw new Error('Ejecuta Listar insumos primero (necesita kitAseoItemId, ej. ASE-001 shampoo).');",
+                                    "}"
+                                ]
+                            }
+                        },
                         {
                             "listen": "test",
                             "script": {
@@ -1737,7 +1824,8 @@
                                 "exec": [
                                     "pm.test('Asignacion creada', function () { pm.response.to.have.status(200); });",
                                     "const json = pm.response.json();",
-                                    "if (json.roomId !== undefined) pm.collectionVariables.set('roomId', json.roomId);"
+                                    "if (json.roomId !== undefined) pm.collectionVariables.set('roomId', json.roomId);",
+                                    "if (json.movementId) pm.collectionVariables.set('createdMovementId', json.movementId);"
                                 ]
                             }
                         }
@@ -1757,9 +1845,21 @@
                             "mode": "raw",
                             "raw": "{\n  \"itemId\": {{minibarItemId}},\n  \"quantity\": 1,\n  \"deliveredBy\": \"Housekeeping\",\n  \"guestName\": \"Carlos Perez\",\n  \"assignmentType\": \"MINIBAR\"\n}"
                         },
+                        "description": "assignmentType MINIBAR → solo insumos categoría MINIBAR (ej. agua MIN-001). Ejecutar Listar insumos antes (minibarItemId).",
                         "url": "{{baseUrl}}/rooms/api/rooms/{{roomId}}/supplies/assign"
                     },
                     "event": [
+                        {
+                            "listen": "prerequest",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "if (!pm.collectionVariables.get('minibarItemId')) {",
+                                    "  throw new Error('Ejecuta Listar insumos primero (necesita minibarItemId, ej. MIN-001 agua).');",
+                                    "}"
+                                ]
+                            }
+                        },
                         {
                             "listen": "test",
                             "script": {

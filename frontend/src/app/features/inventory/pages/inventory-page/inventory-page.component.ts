@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, computed, DestroyRef, effect, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
-import { catchError, forkJoin, of, take } from 'rxjs';
+import { forkJoin, take } from 'rxjs';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { DrawerModule } from 'primeng/drawer';
@@ -35,6 +35,7 @@ import { MinNumberDirective } from '@shared/directives/min-number.directive';
 import { notBlankValidator } from '@shared/utils/app-validators.util';
 import { applyServerValidationErrors } from '@shared/utils/form-errors.util';
 import { isHttp403 } from '@shared/utils/http-error.util';
+import { emptyArrayOnError } from '@shared/utils/safe-api.util';
 
 type InventoryDialog = 'item' | 'entry' | 'return' | 'decrease' | 'transfer';
 
@@ -1205,25 +1206,18 @@ export class InventoryPageComponent implements OnInit {
     if (this.canManageItems()) {
       this.inventoryApi
         .getLocations({ activeOnly: true })
-        .pipe(take(1))
-        .subscribe({
-          next: (locations) => this.locations.set(locations),
-          error: () => this.locations.set([])
-        });
+        .pipe(take(1), emptyArrayOnError())
+        .subscribe((locations) => this.locations.set(locations));
     }
 
     if (this.isAdmin()) {
       forkJoin({
-        categories: this.inventoryApi
-          .getCategories()
-          .pipe(catchError(() => of([] as CatalogEntity[]))),
-        units: this.inventoryApi.getUnits().pipe(catchError(() => of([] as UnitOfMeasure[]))),
-        providers: this.inventoryApi
-          .getProviders()
-          .pipe(catchError(() => of([] as Provider[]))),
-        areas: this.inventoryApi.getAreas().pipe(catchError(() => of([] as CatalogEntity[]))),
-        rooms: this.roomsApi.getRooms().pipe(catchError(() => of([] as Room[]))),
-        users: this.usersApi.getUsers().pipe(catchError(() => of([] as AppUser[])))
+        categories: this.inventoryApi.getCategories().pipe(emptyArrayOnError()),
+        units: this.inventoryApi.getUnits().pipe(emptyArrayOnError()),
+        providers: this.inventoryApi.getProviders().pipe(emptyArrayOnError()),
+        areas: this.inventoryApi.getAreas().pipe(emptyArrayOnError()),
+        rooms: this.roomsApi.getRooms().pipe(emptyArrayOnError()),
+        users: this.usersApi.getUsers().pipe(emptyArrayOnError())
       })
         .pipe(take(1))
         .subscribe((result) => {
@@ -1241,38 +1235,23 @@ export class InventoryPageComponent implements OnInit {
 
     if (this.canManageItems()) {
       forkJoin({
-        providers: this.inventoryApi
-          .getProviders()
-          .pipe(catchError(() => of([] as Provider[]))),
-        areas: this.inventoryApi.getAreas().pipe(catchError(() => of([] as CatalogEntity[]))),
-        rooms: this.roomsApi.getRooms().pipe(catchError(() => of([] as Room[]))),
-        users: this.usersApi.getUsers().pipe(catchError(() => of([] as AppUser[])))
+        providers: this.inventoryApi.getProviders().pipe(emptyArrayOnError()),
+        areas: this.inventoryApi.getAreas().pipe(emptyArrayOnError()),
+        rooms: this.roomsApi.getRooms().pipe(emptyArrayOnError())
       })
         .pipe(take(1))
         .subscribe((result) => {
           this.providers.set(result.providers);
           this.areas.set(result.areas);
           this.rooms.set(result.rooms);
-          this.serviceUsers.set(
-            result.users.filter((user) => user.active && user.roles.includes('SERVICIO'))
-          );
         });
       return;
     }
 
-    forkJoin({
-      areas: this.inventoryApi.getAreas().pipe(catchError(() => of([] as CatalogEntity[]))),
-      rooms: this.roomsApi.getRooms().pipe(catchError(() => of([] as Room[]))),
-      users: this.usersApi.getUsers().pipe(catchError(() => of([] as AppUser[])))
-    })
-      .pipe(take(1))
-      .subscribe((result) => {
-        this.areas.set(result.areas);
-        this.rooms.set(result.rooms);
-        this.serviceUsers.set(
-          result.users.filter((user) => user.active && user.roles.includes('SERVICIO'))
-        );
-      });
+    this.roomsApi
+      .getRooms()
+      .pipe(take(1), emptyArrayOnError())
+      .subscribe((rooms) => this.rooms.set(rooms));
   }
 
   private loadReturnSourceMovements(itemId: number): void {

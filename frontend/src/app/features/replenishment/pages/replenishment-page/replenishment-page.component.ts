@@ -6,6 +6,9 @@ import { ButtonModule } from 'primeng/button';
 import { TableModule } from 'primeng/table';
 import { InventoryApiService } from '@core/services/api/inventory-api.service';
 import { ROOM_PAR_SCOPE_OPTIONS } from '@core/constants/domain-options';
+import { NotificationService } from '@core/services/ui/notification.service';
+import { extractApiErrorMessage } from '@models/api-error.model';
+import { isHttp403 } from '@shared/utils/http-error.util';
 import type { ReplenishmentSuggestion } from '@models/inventory.model';
 import { PageHeaderComponent } from '@shared/components/page-header/page-header.component';
 
@@ -18,6 +21,7 @@ import { PageHeaderComponent } from '@shared/components/page-header/page-header.
 })
 export class ReplenishmentPageComponent implements OnInit {
   private readonly api = inject(InventoryApiService);
+  private readonly notify = inject(NotificationService);
   private readonly fb = inject(FormBuilder);
 
   protected readonly scopes = ROOM_PAR_SCOPE_OPTIONS;
@@ -47,9 +51,12 @@ export class ReplenishmentPageComponent implements OnInit {
           this.suggestions.set(list);
           this.loading.set(false);
         },
-        error: () => {
+        error: (error) => {
           this.suggestions.set([]);
           this.loading.set(false);
+          if (!isHttp403(error)) {
+            this.notify.error('Reposición', extractApiErrorMessage(error.error));
+          }
         }
       });
   }

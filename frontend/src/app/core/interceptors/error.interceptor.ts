@@ -7,6 +7,8 @@ import { UiStateService } from '@core/services/ui/ui-state.service';
 import { extractApiErrorMessage } from '@models/api-error.model';
 import { catchError, throwError } from 'rxjs';
 
+const DEFAULT_FORBIDDEN_MESSAGE = 'No fue posible completar la operación.';
+
 export const errorInterceptor: HttpInterceptorFn = (request, next) => {
   const authService = inject(AuthService);
   const router = inject(Router);
@@ -54,8 +56,17 @@ export const errorInterceptor: HttpInterceptorFn = (request, next) => {
         if (shouldNotify) {
           notificationService.error('Error del servidor', message);
         }
-      } else if (!isLoginRequest && !hasFieldErrors && error.status !== 403) {
-        notificationService.error('Operación no completada', message);
+      } else if (!isLoginRequest && !hasFieldErrors) {
+        if (error.status === 403) {
+          notificationService.error(
+            'Sin permiso',
+            message === DEFAULT_FORBIDDEN_MESSAGE
+              ? 'Tu rol no puede ejecutar esta acción. Prueba con admin o almacenista.'
+              : message
+          );
+        } else {
+          notificationService.error('Operación no completada', message);
+        }
       }
 
       return throwError(() => error);

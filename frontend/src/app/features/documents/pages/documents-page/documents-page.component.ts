@@ -113,7 +113,12 @@ export class DocumentsPageComponent implements OnInit {
           this.documents.set(docs);
           this.loading.set(false);
         },
-        error: () => this.loading.set(false)
+        error: (error) => {
+          this.loading.set(false);
+          if (!isHttp403(error)) {
+            this.notificationService.error('Documentos', extractApiErrorMessage(error.error));
+          }
+        }
       });
   }
 
