@@ -2,7 +2,10 @@ package com.hotel.ai.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hotel.ai.client.GatewayClient;
 import com.hotel.ai.client.InventoryClient;
+import com.hotel.ai.client.RoomsClient;
+import com.hotel.ai.dto.AppUserDto;
 import com.hotel.ai.dto.InventoryAssistantRequest;
 import com.hotel.ai.dto.InventoryAssistantResponse;
 import com.hotel.ai.dto.InventoryContextDto;
@@ -10,6 +13,9 @@ import com.hotel.ai.dto.InventoryItemDto;
 import com.hotel.ai.dto.InventoryMovementDto;
 import com.hotel.ai.dto.InventorySummaryDto;
 import com.hotel.ai.dto.LowStockAlertDto;
+import com.hotel.ai.dto.RoomConsumptionDto;
+import com.hotel.ai.dto.RoomDistributionDto;
+import com.hotel.ai.dto.RoomDto;
 import com.hotel.ai.dto.SimpleAreaDto;
 import com.hotel.ai.dto.SimpleCategoryDto;
 import com.hotel.ai.dto.SimpleProviderDto;
@@ -21,7 +27,9 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 
 @Service
@@ -31,21 +39,31 @@ public class InventoryAssistantService {
             Responde siempre en espanol claro y accionable.
             Usa solo el contexto entregado en la solicitud.
             Si algun bloque del contexto llega vacio, asume que no estuvo disponible o no era accesible con los permisos del usuario.
-            No inventes stock, movimientos, proveedores, areas ni productos que no aparecen en el contexto.
-            Prioriza recomendaciones practicas sobre reabastecimiento, riesgo de agotamiento, consumo, alertas y resumen operativo.
+            No inventes stock, movimientos, proveedores, areas, habitaciones, usuarios, roles ni productos que no aparecen en el contexto.
+            Prioriza recomendaciones practicas sobre reabastecimiento, riesgo de agotamiento, consumo, alertas, operacion de habitaciones y resumen administrativo.
             Cuando hables de consumo promedio, basate en el periodo de 30 dias incluido en el contexto.
             """;
     private static final int RECENT_MOVEMENTS_LIMIT = 15;
     private static final int TOP_USED_LIMIT = 10;
     private static final int REPLENISHMENT_LIMIT = 8;
     private static final int AVERAGE_CONSUMPTION_DAYS = 30;
+    private static final int ROOM_CONSUMPTION_LIMIT = 12;
+    private static final int ROOM_DISTRIBUTION_LIMIT = 12;
 
     private final InventoryClient inventoryClient;
+    private final RoomsClient roomsClient;
+    private final GatewayClient gatewayClient;
     private final GeminiClient geminiClient;
     private final ObjectMapper objectMapper;
 
-    public InventoryAssistantService(InventoryClient inventoryClient, GeminiClient geminiClient, ObjectMapper objectMapper) {
+    public InventoryAssistantService(InventoryClient inventoryClient,
+                                     RoomsClient roomsClient,
+                                     GatewayClient gatewayClient,
+                                     GeminiClient geminiClient,
+                                     ObjectMapper objectMapper) {
         this.inventoryClient = inventoryClient;
+        this.roomsClient = roomsClient;
+        this.gatewayClient = gatewayClient;
         this.geminiClient = geminiClient;
         this.objectMapper = objectMapper;
     }
@@ -63,6 +81,10 @@ public class InventoryAssistantService {
             return new InventorySnapshot(
                     items,
                     detectLowStock(items),
+                    List.of(),
+                    List.of(),
+                    List.of(),
+                    List.of(),
                     List.of(),
                     List.of(),
                     List.of(),
@@ -92,6 +114,18 @@ public class InventoryAssistantService {
         List<SimpleProviderDto> providers = sanitizeProviders(inventoryClient.providers());
         List<SimpleAreaDto> areas = sanitizeAreas(inventoryClient.areas());
         List<SimpleCategoryDto> categories = sanitizeCategories(inventoryClient.categories());
+        List<RoomDto> rooms = sanitizeRooms(roomsClient.listRooms());
+        List<RoomConsumptionDto> roomConsumption = sanitizeRoomConsumption(roomsClient.consumptionReport(startDate, endDate)).stream()
+                .sorted(Comparator.comparing(RoomConsumptionDto::getTotalQuantity, Comparator.nullsLast(Comparator.reverseOrder())))
+                .limit(ROOM_CONSUMPTION_LIMIT)
+                .toList();
+        List<RoomDistributionDto> roomDistribution = sanitizeRoomDistribution(roomsClient.distributionReport(startDate, endDate)).stream()
+                .sorted(Comparator.comparing(RoomDistributionDto::getDeliveredAt, Comparator.nullsLast(Comparator.reverseOrder())))
+                .limit(ROOM_DISTRIBUTION_LIMIT)
+                .toList();
+        List<AppUserDto> users = sanitizeUsers(gatewayClient.listUsers());
+        String contextSource = contextSource(items, lowStockItems, recentMovements, topUsedItems, inventoryReport, alerts,
+                providers, categories, areas, rooms, roomConsumption, roomDistribution, users);
 
         return new InventorySnapshot(
                 items,
@@ -103,12 +137,16 @@ public class InventoryAssistantService {
                 providers,
                 categories,
                 areas,
-                "inventory-service"
+                rooms,
+                roomConsumption,
+                roomDistribution,
+                users,
+                contextSource
         );
     }
 
     private String buildPrompt(String question, InventorySnapshot snapshot) {
-        InventoryMetrics metrics = metrics(snapshot.items(), snapshot.lowStockItems(), snapshot.alerts(), snapshot.providers(), snapshot.categories(), snapshot.areas(), snapshot.recentMovements(), snapshot.inventoryReport());
+        InventoryMetrics metrics = metrics(snapshot);
         List<RiskRow> prioritized = prioritizedRestock(snapshot.items(), snapshot.inventoryReport());
 
         String detailedContext;
@@ -132,6 +170,13 @@ public class InventoryAssistantService {
                 .append("- Categorias disponibles: ").append(metrics.totalCategories()).append('\n')
                 .append("- Proveedores disponibles: ").append(metrics.totalProviders()).append('\n')
                 .append("- Areas del hotel disponibles: ").append(metrics.totalAreas()).append('\n')
+                .append("- Habitaciones visibles: ").append(metrics.totalRooms()).append('\n')
+                .append("- Habitaciones activas: ").append(metrics.activeRooms()).append('\n')
+                .append("- Habitaciones ocupadas: ").append(metrics.occupiedRooms()).append('\n')
+                .append("- Habitaciones disponibles: ").append(metrics.availableRooms()).append('\n')
+                .append("- Usuarios visibles: ").append(metrics.totalUsers()).append('\n')
+                .append("- Usuarios activos: ").append(metrics.activeUsers()).append('\n')
+                .append("- Roles visibles: ").append(metrics.totalDistinctRoles()).append('\n')
                 .append("- Productos con stock bajo: ").append(metrics.lowStockItems()).append('\n')
                 .append("- Productos agotados: ").append(metrics.outOfStockItems()).append('\n')
                 .append("- Productos por debajo del minimo: ").append(metrics.belowMinimumItems()).append('\n')
@@ -139,6 +184,8 @@ public class InventoryAssistantService {
                 .append("- Movimientos recientes incluidos: ").append(metrics.recentMovements()).append('\n')
                 .append("- Consumo total ultimos 30 dias: ").append(decimal(metrics.totalConsumptionLast30Days())).append('\n')
                 .append("- Consumo promedio por producto activo ultimos 30 dias: ").append(decimal(metrics.averageConsumptionPerActiveProduct())).append('\n')
+                .append("- Registros de consumo por habitaciones incluidos: ").append(metrics.roomConsumptionRows()).append('\n')
+                .append("- Registros de distribucion por habitaciones incluidos: ").append(metrics.roomDistributionRows()).append('\n')
                 .append("\n")
                 .append("Prioridad sugerida de reabastecimiento:\n");
 
@@ -168,6 +215,33 @@ public class InventoryAssistantService {
                         .append(safe(row.getItemName()))
                         .append(" - total ")
                         .append(value(row.getTotalQuantity()))
+                        .append('\n');
+            }
+        }
+
+        if (!snapshot.roomConsumption().isEmpty()) {
+            builder.append("\nMayor consumo por habitaciones ultimos 30 dias:\n");
+            int position = 1;
+            for (RoomConsumptionDto row : snapshot.roomConsumption()) {
+                builder.append(position++)
+                        .append(". Habitacion ")
+                        .append(safe(row.getRoomNumber()))
+                        .append(" (").append(safe(row.getRoomType())).append(")")
+                        .append(" - ")
+                        .append(safe(row.getItemName()))
+                        .append(", total ")
+                        .append(value(row.getTotalQuantity()))
+                        .append('\n');
+            }
+        }
+
+        if (!snapshot.users().isEmpty()) {
+            builder.append("\nResumen de roles visibles:\n");
+            for (RoleCountRow row : metrics.roleCounts()) {
+                builder.append("- ")
+                        .append(row.role())
+                        .append(": ")
+                        .append(row.total())
                         .append('\n');
             }
         }
@@ -247,6 +321,34 @@ public class InventoryAssistantService {
         return rows.stream().filter(Objects::nonNull).toList();
     }
 
+    private List<RoomDto> sanitizeRooms(List<RoomDto> rows) {
+        if (rows == null) {
+            return List.of();
+        }
+        return rows.stream().filter(Objects::nonNull).toList();
+    }
+
+    private List<RoomConsumptionDto> sanitizeRoomConsumption(List<RoomConsumptionDto> rows) {
+        if (rows == null) {
+            return List.of();
+        }
+        return rows.stream().filter(Objects::nonNull).toList();
+    }
+
+    private List<RoomDistributionDto> sanitizeRoomDistribution(List<RoomDistributionDto> rows) {
+        if (rows == null) {
+            return List.of();
+        }
+        return rows.stream().filter(Objects::nonNull).toList();
+    }
+
+    private List<AppUserDto> sanitizeUsers(List<AppUserDto> rows) {
+        if (rows == null) {
+            return List.of();
+        }
+        return rows.stream().filter(Objects::nonNull).toList();
+    }
+
     private List<InventoryItemDto> detectLowStock(List<InventoryItemDto> items) {
         return items.stream()
                 .filter(this::isActive)
@@ -254,20 +356,38 @@ public class InventoryAssistantService {
                 .toList();
     }
 
-    private InventoryMetrics metrics(
-            List<InventoryItemDto> items,
-            List<InventoryItemDto> lowStockItems,
-            List<LowStockAlertDto> alerts,
-            List<SimpleProviderDto> providers,
-            List<SimpleCategoryDto> categories,
-            List<SimpleAreaDto> areas,
-            List<InventoryMovementDto> recentMovements,
-            List<InventorySummaryDto> inventoryReport
-    ) {
+    private InventoryMetrics metrics(InventorySnapshot snapshot) {
+        List<InventoryItemDto> items = snapshot.items();
+        List<InventoryItemDto> lowStockItems = snapshot.lowStockItems();
+        List<LowStockAlertDto> alerts = snapshot.alerts();
+        List<SimpleProviderDto> providers = snapshot.providers();
+        List<SimpleCategoryDto> categories = snapshot.categories();
+        List<SimpleAreaDto> areas = snapshot.areas();
+        List<InventoryMovementDto> recentMovements = snapshot.recentMovements();
+        List<InventorySummaryDto> inventoryReport = snapshot.inventoryReport();
+        List<RoomDto> rooms = snapshot.rooms();
+        List<RoomConsumptionDto> roomConsumption = snapshot.roomConsumption();
+        List<RoomDistributionDto> roomDistribution = snapshot.roomDistribution();
+        List<AppUserDto> users = snapshot.users();
+
         int activeItems = (int) items.stream().filter(this::isActive).count();
         int outOfStockItems = (int) items.stream().filter(this::isActive).filter(item -> value(item.getStock()) <= 0).count();
         int belowMinimumItems = (int) items.stream().filter(this::isActive).filter(item -> value(item.getStock()) < value(item.getMinStock())).count();
         int openAlerts = (int) alerts.stream().filter(alert -> "ABIERTA".equalsIgnoreCase(safe(alert.getStatus())) || "OPEN".equalsIgnoreCase(safe(alert.getStatus()))).count();
+        int activeRooms = (int) rooms.stream().filter(room -> Boolean.TRUE.equals(room.getActive())).count();
+        int occupiedRooms = (int) rooms.stream().filter(room -> "OCUPADA".equalsIgnoreCase(safe(room.getStatus()))).count();
+        int availableRooms = (int) rooms.stream().filter(room -> "DISPONIBLE".equalsIgnoreCase(safe(room.getStatus()))).count();
+        int activeUsers = (int) users.stream().filter(user -> Boolean.TRUE.equals(user.getActive())).count();
+        List<RoleCountRow> roleCounts = users.stream()
+                .flatMap(user -> safeList(user.getRoles()).stream())
+                .map(role -> role == null ? "SIN_ROL" : role.trim().toUpperCase(Locale.ROOT))
+                .filter(role -> !role.isBlank())
+                .sorted()
+                .collect(java.util.stream.Collectors.groupingBy(role -> role, java.util.LinkedHashMap::new, java.util.stream.Collectors.counting()))
+                .entrySet()
+                .stream()
+                .map(entry -> new RoleCountRow(entry.getKey(), entry.getValue().intValue()))
+                .toList();
         BigDecimal totalConsumption = inventoryReport.stream()
                 .map(InventorySummaryDto::getTurnoverQuantity)
                 .filter(Objects::nonNull)
@@ -287,7 +407,17 @@ public class InventoryAssistantService {
                 providers.size(),
                 categories.size(),
                 areas.size(),
+                rooms.size(),
+                activeRooms,
+                occupiedRooms,
+                availableRooms,
+                users.size(),
+                activeUsers,
+                roleCounts.size(),
+                roleCounts,
                 recentMovements.size(),
+                roomConsumption.size(),
+                roomDistribution.size(),
                 totalConsumption,
                 averageConsumption
         );
@@ -376,8 +506,48 @@ public class InventoryAssistantService {
         return value == null || value.isBlank() ? "SIN_DATO" : value.trim();
     }
 
+    private List<String> safeList(List<String> values) {
+        return values == null ? List.of() : values.stream().filter(Objects::nonNull).toList();
+    }
+
     private String decimal(BigDecimal value) {
         return value == null ? "0" : value.stripTrailingZeros().toPlainString();
+    }
+
+    private String contextSource(List<InventoryItemDto> items,
+                                 List<InventoryItemDto> lowStockItems,
+                                 List<InventoryMovementDto> recentMovements,
+                                 List<TopUsedItemDto> topUsedItems,
+                                 List<InventorySummaryDto> inventoryReport,
+                                 List<LowStockAlertDto> alerts,
+                                 List<SimpleProviderDto> providers,
+                                 List<SimpleCategoryDto> categories,
+                                 List<SimpleAreaDto> areas,
+                                 List<RoomDto> rooms,
+                                 List<RoomConsumptionDto> roomConsumption,
+                                 List<RoomDistributionDto> roomDistribution,
+                                 List<AppUserDto> users) {
+        LinkedHashSet<String> sources = new LinkedHashSet<>();
+        if (hasAny(items, lowStockItems, recentMovements, topUsedItems, inventoryReport, alerts, providers, categories, areas)) {
+            sources.add("inventory-service");
+        }
+        if (hasAny(rooms, roomConsumption, roomDistribution)) {
+            sources.add("rooms-service");
+        }
+        if (hasAny(users)) {
+            sources.add("gateway-service");
+        }
+        return sources.isEmpty() ? "no-context" : String.join(", ", sources);
+    }
+
+    @SafeVarargs
+    private boolean hasAny(List<?>... blocks) {
+        for (List<?> block : blocks) {
+            if (block != null && !block.isEmpty()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private record InventorySnapshot(
@@ -390,6 +560,10 @@ public class InventoryAssistantService {
             List<SimpleProviderDto> providers,
             List<SimpleCategoryDto> categories,
             List<SimpleAreaDto> areas,
+            List<RoomDto> rooms,
+            List<RoomConsumptionDto> roomConsumption,
+            List<RoomDistributionDto> roomDistribution,
+            List<AppUserDto> users,
             String contextSource
     ) {
     }
@@ -405,10 +579,23 @@ public class InventoryAssistantService {
             int totalProviders,
             int totalCategories,
             int totalAreas,
+            int totalRooms,
+            int activeRooms,
+            int occupiedRooms,
+            int availableRooms,
+            int totalUsers,
+            int activeUsers,
+            int totalDistinctRoles,
+            List<RoleCountRow> roleCounts,
             int recentMovements,
+            int roomConsumptionRows,
+            int roomDistributionRows,
             BigDecimal totalConsumptionLast30Days,
             BigDecimal averageConsumptionPerActiveProduct
     ) {
+    }
+
+    private record RoleCountRow(String role, int total) {
     }
 
     private record RiskRow(

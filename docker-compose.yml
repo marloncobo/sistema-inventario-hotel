@@ -122,6 +122,8 @@ services:
       JAVA_OPTS: -XX:MaxRAMPercentage=75
       JWT_SECRET: ${JWT_SECRET:-hotel-inventory-demo-secret-key-32}
       INVENTORY_SERVICE_URL: http://inventory-service:8081
+      ROOMS_SERVICE_URL: http://rooms-service:8082
+      GATEWAY_SERVICE_URL: http://gateway-service:8080
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       GEMINI_BASE_URL: ${GEMINI_BASE_URL:-https://generativelanguage.googleapis.com}
       GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash}

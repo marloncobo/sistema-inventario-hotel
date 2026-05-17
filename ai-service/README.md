@@ -68,13 +68,13 @@ JWT_SECRET=hotel-inventory-demo-secret-key-32
 2. Obtiene items del inventario desde `inventory-service` o usa el contexto recibido.
 3. Calcula un resumen operativo y una prioridad sugerida de reabastecimiento.
 4. Construye un prompt claro y controlado.
-5. Enriquce la consulta con productos, stock actual, stock minimo, categorias, movimientos recientes, consumo promedio, alertas, proveedores y areas cuando esos datos estan disponibles para el usuario.
+5. Enriquece la consulta con productos, stock actual, stock minimo, categorias, movimientos recientes, consumo promedio, alertas, proveedores, areas, habitaciones, consumo/distribucion por habitaciones y usuarios/roles cuando esos datos estan disponibles para el usuario.
 6. Llama a `POST /v1beta/models/{model}:generateContent` de Gemini.
 7. Devuelve la respuesta de la IA.
 
 ## Que puede mirar la IA
 
-Cuando no mandas `inventoryContext`, `ai-service` consulta `inventory-service` para obtener:
+Cuando no mandas `inventoryContext`, `ai-service` consulta `inventory-service`, `rooms-service` y `gateway-service` para obtener:
 
 - productos
 - stock actual
@@ -86,8 +86,14 @@ Cuando no mandas `inventoryContext`, `ai-service` consulta `inventory-service` p
 - alertas de stock bajo
 - proveedores
 - areas del hotel
+- habitaciones
+- consumo por habitaciones
+- distribucion por habitaciones
+- usuarios
+- roles
+- conteos administrativos derivados del contexto visible
 
-Algunos bloques dependen de los permisos del usuario autenticado. Si un bloque no esta disponible para ese rol, la IA sigue respondiendo con el contexto restante.
+Algunos bloques dependen de los permisos del usuario autenticado. Por ejemplo, usuarios y roles solo estaran disponibles si el JWT tiene acceso administrativo a `gateway-service`. Si un bloque no esta disponible para ese rol, la IA sigue respondiendo con el contexto restante.
 
 ## Probar con Postman
 

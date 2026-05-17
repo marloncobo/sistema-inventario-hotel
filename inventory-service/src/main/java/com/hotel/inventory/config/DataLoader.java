@@ -2,7 +2,9 @@ package com.hotel.inventory.config;
 
 import com.hotel.inventory.model.Area;
 import com.hotel.inventory.model.Category;
+import com.hotel.inventory.model.InventoryMovement;
 import com.hotel.inventory.model.Location;
+import com.hotel.inventory.model.LowStockAlert;
 import com.hotel.inventory.model.Provider;
 import com.hotel.inventory.model.RoomPar;
 import com.hotel.inventory.model.RoomParLine;
@@ -10,10 +12,12 @@ import com.hotel.inventory.model.StockByLocation;
 import com.hotel.inventory.model.SupplyItem;
 import com.hotel.inventory.model.UnitOfMeasure;
 import com.hotel.inventory.repository.AreaRepository;
-import com.hotel.inventory.repository.RoomParRepository;
 import com.hotel.inventory.repository.CategoryRepository;
+import com.hotel.inventory.repository.InventoryMovementRepository;
 import com.hotel.inventory.repository.LocationRepository;
+import com.hotel.inventory.repository.LowStockAlertRepository;
 import com.hotel.inventory.repository.ProviderRepository;
+import com.hotel.inventory.repository.RoomParRepository;
 import com.hotel.inventory.repository.StockByLocationRepository;
 import com.hotel.inventory.repository.SupplyItemRepository;
 import com.hotel.inventory.repository.UnitOfMeasureRepository;
@@ -26,6 +30,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Configuration
@@ -33,42 +38,53 @@ public class DataLoader {
 
     private static final Logger log = LoggerFactory.getLogger(DataLoader.class);
     @Bean
+    @Order(2)
     CommandLineRunner loadInventoryData(SupplyItemRepository repository, CategoryRepository categoryRepository,
                                         UnitOfMeasureRepository unitRepository, ProviderRepository providerRepository,
                                         AreaRepository areaRepository) {
         return args -> {
-            if (categoryRepository.count() == 0) {
-                categoryRepository.save(new Category("MINIBAR", "MINIBAR", true));
-                categoryRepository.save(new Category("ASEO", "ASEO", true));
-                categoryRepository.save(new Category("LENCERIA", "LENCERIA", true));
-                categoryRepository.save(new Category("ALIMENTOS", "ALIMENTOS", true));
-            }
-            if (unitRepository.count() == 0) {
-                unitRepository.save(new UnitOfMeasure("UND", "UNIDAD", "UND", true));
-                unitRepository.save(new UnitOfMeasure("CAJA", "CAJA", "CJ", true));
-                unitRepository.save(new UnitOfMeasure("LITRO", "LITRO", "LT", true, true));
-            }
-            if (providerRepository.count() == 0) {
-                providerRepository.save(new Provider("PRO-0001", "900001001", "Aseo Premium SAS", null, null, true));
-                providerRepository.save(new Provider("PRO-0002", "900001002", "Distribuciones Hoteleras SAS", null, null, true));
-            }
-            if (areaRepository.count() == 0) {
-                areaRepository.save(new Area("LIMPIEZA", "LIMPIEZA", true));
-                areaRepository.save(new Area("RESTAURANTE", "RESTAURANTE", true));
-                areaRepository.save(new Area("MANTENIMIENTO", "MANTENIMIENTO", true));
-            }
-            if (repository.count() == 0) {
-                Category minibar = categoryRepository.findByCodeIgnoreCase("MINIBAR").orElseThrow();
-                Category aseo = categoryRepository.findByCodeIgnoreCase("ASEO").orElseThrow();
-                Category lenceria = categoryRepository.findByCodeIgnoreCase("LENCERIA").orElseThrow();
-                UnitOfMeasure unit = unitRepository.findByCodeIgnoreCase("UND").orElseThrow();
-                Provider aseoProvider = providerRepository.findByNameIgnoreCase("Aseo Premium SAS").orElseThrow();
-                Provider hotelProvider = providerRepository.findByNameIgnoreCase("Distribuciones Hoteleras SAS").orElseThrow();
+            ensureCategory(categoryRepository, "MINIBAR", "MINIBAR");
+            ensureCategory(categoryRepository, "ASEO", "ASEO");
+            ensureCategory(categoryRepository, "LENCERIA", "LENCERIA");
+            ensureCategory(categoryRepository, "ALIMENTOS", "ALIMENTOS");
+            ensureCategory(categoryRepository, "MANTENIMIENTO", "MANTENIMIENTO");
 
-                repository.save(new SupplyItem("MIN-001", "Agua embotellada 600ml", "Agua para minibar", minibar, unit, aseoProvider, 30, 10, 120, true));
-                repository.save(new SupplyItem("ASE-001", "Shampoo individual", "Amenidad para huesped", aseo, unit, hotelProvider, 50, 15, 200, true));
-                repository.save(new SupplyItem("LEN-001", "Toalla facial", "Lenceria de habitacion", lenceria, unit, hotelProvider, 40, 12, 100, true));
-            }
+            ensureUnit(unitRepository, "UND", "UNIDAD", "UND", false);
+            ensureUnit(unitRepository, "CAJA", "CAJA", "CJ", false);
+            ensureUnit(unitRepository, "LITRO", "LITRO", "LT", true);
+
+            ensureProvider(providerRepository, "PRO-0001", "900001001", "Aseo Premium SAS");
+            ensureProvider(providerRepository, "PRO-0002", "900001002", "Distribuciones Hoteleras SAS");
+            ensureProvider(providerRepository, "PRO-0003", "900001003", "Bebidas del Caribe SAS");
+            ensureProvider(providerRepository, "PRO-0004", "900001004", "Textiles y Blancos Andinos");
+            ensureProvider(providerRepository, "PRO-0005", "900001005", "Mantenimiento Express SAS");
+
+            ensureArea(areaRepository, "LIMPIEZA", "LIMPIEZA");
+            ensureArea(areaRepository, "RESTAURANTE", "RESTAURANTE");
+            ensureArea(areaRepository, "MANTENIMIENTO", "MANTENIMIENTO");
+            ensureArea(areaRepository, "MINIBAR", "MINIBAR");
+
+            Category minibar = categoryRepository.findByCodeIgnoreCase("MINIBAR").orElseThrow();
+            Category aseo = categoryRepository.findByCodeIgnoreCase("ASEO").orElseThrow();
+            Category lenceria = categoryRepository.findByCodeIgnoreCase("LENCERIA").orElseThrow();
+            Category alimentos = categoryRepository.findByCodeIgnoreCase("ALIMENTOS").orElseThrow();
+            Category mantenimiento = categoryRepository.findByCodeIgnoreCase("MANTENIMIENTO").orElseThrow();
+            UnitOfMeasure unit = unitRepository.findByCodeIgnoreCase("UND").orElseThrow();
+            Provider aseoProvider = providerRepository.findByNameIgnoreCase("Aseo Premium SAS").orElseThrow();
+            Provider hotelProvider = providerRepository.findByNameIgnoreCase("Distribuciones Hoteleras SAS").orElseThrow();
+            Provider bebidasProvider = providerRepository.findByNameIgnoreCase("Bebidas del Caribe SAS").orElseThrow();
+            Provider textilProvider = providerRepository.findByNameIgnoreCase("Textiles y Blancos Andinos").orElseThrow();
+            Provider mantenimientoProvider = providerRepository.findByNameIgnoreCase("Mantenimiento Express SAS").orElseThrow();
+
+            ensureItem(repository, "MIN-001", "Agua embotellada 600ml", "Agua para minibar", minibar, unit, bebidasProvider, 82, 18, 120);
+            ensureItem(repository, "MIN-002", "Gaseosa cola 350ml", "Bebida fria para minibar", minibar, unit, bebidasProvider, 26, 20, 96);
+            ensureItem(repository, "MIN-003", "Papas premium 45g", "Snack individual para minibar", minibar, unit, hotelProvider, 38, 12, 120);
+            ensureItem(repository, "ASE-001", "Shampoo individual", "Amenidad para huesped", aseo, unit, hotelProvider, 64, 20, 200);
+            ensureItem(repository, "ASE-002", "Jabon de manos", "Amenidad para banos de habitaciones", aseo, unit, aseoProvider, 18, 20, 120);
+            ensureItem(repository, "LEN-001", "Toalla facial", "Lenceria de habitacion", lenceria, unit, textilProvider, 52, 18, 100);
+            ensureItem(repository, "LEN-002", "Juego de sabanas queen", "Reposicion de lenceria para habitaciones", lenceria, unit, textilProvider, 12, 10, 40);
+            ensureItem(repository, "ALI-001", "Cafe molido premium 500g", "Consumo del restaurante y room service", alimentos, unit, hotelProvider, 22, 8, 60);
+            ensureItem(repository, "MAN-001", "Bombillo LED E27", "Repuesto para mantenimiento", mantenimiento, unit, mantenimientoProvider, 9, 6, 30);
         };
     }
 
@@ -81,7 +97,7 @@ public class DataLoader {
      * hace nada.
      */
     @Bean
-    @Order(2)
+    @Order(3)
     CommandLineRunner loadLocationsAndMigrateStock(LocationRepository locationRepository,
                                                    StockByLocationRepository stockByLocationRepository,
                                                    SupplyItemRepository supplyItemRepository) {
@@ -92,7 +108,7 @@ public class DataLoader {
     }
 
     @Bean
-    @Order(3)
+    @Order(4)
     CommandLineRunner seedDefaultRoomPars(RoomParRepository roomParRepository,
                                           SupplyItemRepository supplyItemRepository) {
         return args -> {
@@ -120,6 +136,115 @@ public class DataLoader {
                 roomParRepository.save(minibar);
             }
             log.info("PAR demo sembrados para habitación estándar");
+        };
+    }
+
+    @Bean
+    @Order(5)
+    CommandLineRunner seedDetailedDemoInventory(LocationRepository locationRepository,
+                                                StockByLocationRepository stockByLocationRepository,
+                                                SupplyItemRepository supplyItemRepository,
+                                                InventoryMovementRepository movementRepository,
+                                                LowStockAlertRepository lowStockAlertRepository,
+                                                AreaRepository areaRepository,
+                                                ProviderRepository providerRepository) {
+        return args -> {
+            Location bodega = locationRepository.findByCodeIgnoreCase("BODEGA_PRINCIPAL").orElseThrow();
+            Location carro1 = locationRepository.findByCodeIgnoreCase("CARRO_HOUSEKEEPING_1").orElseThrow();
+            Location carro2 = locationRepository.findByCodeIgnoreCase("CARRO_HOUSEKEEPING_2").orElseThrow();
+            Location lavanderia = locationRepository.findByCodeIgnoreCase("LAVANDERIA").orElseThrow();
+            Location restaurante = locationRepository.findByCodeIgnoreCase("RESTAURANTE").orElseThrow();
+            Location mantenimiento = locationRepository.findByCodeIgnoreCase("MANTENIMIENTO").orElseThrow();
+            Location minibar101 = locationRepository.findByCodeIgnoreCase("MINIBAR_101").orElseThrow();
+            Location minibar102 = locationRepository.findByCodeIgnoreCase("MINIBAR_102").orElseThrow();
+            Location minibar201 = locationRepository.findByCodeIgnoreCase("MINIBAR_201").orElseThrow();
+            Location hab101 = locationRepository.findByCodeIgnoreCase("HAB_101").orElseThrow();
+            Location hab102 = locationRepository.findByCodeIgnoreCase("HAB_102").orElseThrow();
+
+            SupplyItem agua = supplyItemRepository.findByCodeIgnoreCase("MIN-001").orElseThrow();
+            SupplyItem cola = supplyItemRepository.findByCodeIgnoreCase("MIN-002").orElseThrow();
+            SupplyItem papas = supplyItemRepository.findByCodeIgnoreCase("MIN-003").orElseThrow();
+            SupplyItem shampoo = supplyItemRepository.findByCodeIgnoreCase("ASE-001").orElseThrow();
+            SupplyItem jabon = supplyItemRepository.findByCodeIgnoreCase("ASE-002").orElseThrow();
+            SupplyItem toalla = supplyItemRepository.findByCodeIgnoreCase("LEN-001").orElseThrow();
+            SupplyItem sabanas = supplyItemRepository.findByCodeIgnoreCase("LEN-002").orElseThrow();
+            SupplyItem cafe = supplyItemRepository.findByCodeIgnoreCase("ALI-001").orElseThrow();
+            SupplyItem bombillo = supplyItemRepository.findByCodeIgnoreCase("MAN-001").orElseThrow();
+
+            upsertStock(stockByLocationRepository, agua, bodega, 70, 15);
+            upsertStock(stockByLocationRepository, agua, minibar101, 6, 2);
+            upsertStock(stockByLocationRepository, agua, minibar102, 4, 2);
+            upsertStock(stockByLocationRepository, agua, minibar201, 2, 2);
+
+            upsertStock(stockByLocationRepository, cola, bodega, 18, 10);
+            upsertStock(stockByLocationRepository, cola, minibar101, 4, 2);
+            upsertStock(stockByLocationRepository, cola, minibar102, 2, 2);
+            upsertStock(stockByLocationRepository, cola, minibar201, 2, 2);
+
+            upsertStock(stockByLocationRepository, papas, bodega, 28, 10);
+            upsertStock(stockByLocationRepository, papas, minibar101, 4, 2);
+            upsertStock(stockByLocationRepository, papas, minibar102, 3, 2);
+            upsertStock(stockByLocationRepository, papas, minibar201, 3, 2);
+
+            upsertStock(stockByLocationRepository, shampoo, bodega, 40, 15);
+            upsertStock(stockByLocationRepository, shampoo, carro1, 12, 4);
+            upsertStock(stockByLocationRepository, shampoo, carro2, 12, 4);
+
+            upsertStock(stockByLocationRepository, jabon, bodega, 10, 12);
+            upsertStock(stockByLocationRepository, jabon, carro1, 4, 3);
+            upsertStock(stockByLocationRepository, jabon, carro2, 4, 3);
+
+            upsertStock(stockByLocationRepository, toalla, bodega, 28, 10);
+            upsertStock(stockByLocationRepository, toalla, lavanderia, 20, 6);
+            upsertStock(stockByLocationRepository, toalla, hab101, 2, 2);
+            upsertStock(stockByLocationRepository, toalla, hab102, 2, 2);
+
+            upsertStock(stockByLocationRepository, sabanas, bodega, 6, 4);
+            upsertStock(stockByLocationRepository, sabanas, lavanderia, 6, 4);
+
+            upsertStock(stockByLocationRepository, cafe, bodega, 10, 4);
+            upsertStock(stockByLocationRepository, cafe, restaurante, 12, 4);
+
+            upsertStock(stockByLocationRepository, bombillo, bodega, 5, 3);
+            upsertStock(stockByLocationRepository, bombillo, mantenimiento, 4, 2);
+
+            syncGlobalStock(supplyItemRepository, stockByLocationRepository, agua, cola, papas, shampoo, jabon, toalla, sabanas, cafe, bombillo);
+
+            if (movementRepository.count() == 0) {
+                Area limpieza = areaRepository.findByNameIgnoreCase("LIMPIEZA").orElseThrow();
+                Area minibar = areaRepository.findByNameIgnoreCase("MINIBAR").orElseThrow();
+                Area mantenimientoArea = areaRepository.findByNameIgnoreCase("MANTENIMIENTO").orElseThrow();
+                Area restauranteArea = areaRepository.findByNameIgnoreCase("RESTAURANTE").orElseThrow();
+                Provider bebidasProvider = providerRepository.findByNameIgnoreCase("Bebidas del Caribe SAS").orElseThrow();
+                Provider mantenimientoProvider = providerRepository.findByNameIgnoreCase("Mantenimiento Express SAS").orElseThrow();
+
+                movementRepository.save(buildMovement(agua, InventoryMovement.Type.RECEPCION, "COMPRA", 24, 58, 82,
+                        null, minibar, bebidasProvider, "almacen", "Recepcion semanal de bebidas", bodega, null, 3));
+                movementRepository.save(buildMovement(cola, InventoryMovement.Type.SALIDA, "MINIBAR", 6, 32, 26,
+                        "101", minibar, bebidasProvider, "servicio", "Reposicion minibar habitacion 101", bodega, minibar101, 2));
+                movementRepository.save(buildMovement(papas, InventoryMovement.Type.SALIDA, "MINIBAR", 5, 43, 38,
+                        "102", minibar, null, "servicio", "Reposicion minibar habitacion 102", bodega, minibar102, 2));
+                movementRepository.save(buildMovement(shampoo, InventoryMovement.Type.TRANSFERENCIA, "HOUSEKEEPING", 8, 72, 64,
+                        null, limpieza, null, "almacen", "Despacho a carro de housekeeping", bodega, carro1, 1));
+                movementRepository.save(buildMovement(jabon, InventoryMovement.Type.SALIDA, "HOUSEKEEPING", 4, 22, 18,
+                        "201", limpieza, null, "servicio", "Reposicion de amenidades en habitaciones", carro1, hab101, 1));
+                movementRepository.save(buildMovement(cafe, InventoryMovement.Type.SALIDA, "RESTAURANTE", 5, 27, 22,
+                        null, restauranteArea, null, "restaurante", "Consumo de cafeteria y desayunos", bodega, restaurante, 4));
+                movementRepository.save(buildMovement(bombillo, InventoryMovement.Type.SALIDA, "MANTENIMIENTO", 2, 11, 9,
+                        null, mantenimientoArea, mantenimientoProvider, "mantenimiento", "Cambio de bombillos en pasillo", bodega, mantenimiento, 5));
+            }
+
+            if (lowStockAlertRepository.count() == 0) {
+                lowStockAlertRepository.save(new LowStockAlert(jabon, jabon.getStock(), jabon.getMinStock(), "ABIERTA",
+                        LocalDateTime.now().minusHours(14)));
+                lowStockAlertRepository.save(new LowStockAlert(sabanas, sabanas.getStock(), sabanas.getMinStock(), "ABIERTA",
+                        LocalDateTime.now().minusDays(1)));
+
+                LowStockAlert resolved = new LowStockAlert(cola, cola.getStock(), cola.getMinStock(), "RESUELTA",
+                        LocalDateTime.now().minusDays(5));
+                resolved.setResolvedAt(LocalDateTime.now().minusDays(3));
+                lowStockAlertRepository.save(resolved);
+            }
         };
     }
 
@@ -185,6 +310,90 @@ public class DataLoader {
         if (migrated > 0) {
             log.info("Migrados {} insumos a BODEGA_PRINCIPAL desde stock global", migrated);
         }
+    }
+
+    private void ensureCategory(CategoryRepository repository, String code, String name) {
+        if (repository.existsByCodeIgnoreCase(code)) {
+            return;
+        }
+        repository.save(new Category(code, name, true));
+    }
+
+    private void ensureUnit(UnitOfMeasureRepository repository, String code, String name, String abbreviation,
+                            boolean allowsDecimal) {
+        if (repository.existsByCodeIgnoreCase(code)) {
+            return;
+        }
+        repository.save(new UnitOfMeasure(code, name, abbreviation, true, allowsDecimal));
+    }
+
+    private void ensureProvider(ProviderRepository repository, String code, String documentNumber, String name) {
+        if (repository.existsByCodeIgnoreCase(code)) {
+            return;
+        }
+        repository.save(new Provider(code, documentNumber, name, null, null, true));
+    }
+
+    private void ensureArea(AreaRepository repository, String code, String name) {
+        if (repository.existsByCodeIgnoreCase(code)) {
+            return;
+        }
+        repository.save(new Area(code, name, true));
+    }
+
+    private void ensureItem(SupplyItemRepository repository, String code, String name, String description,
+                            Category category, UnitOfMeasure unit, Provider provider,
+                            int stock, int minStock, int maxStock) {
+        if (repository.existsByCodeIgnoreCase(code)) {
+            return;
+        }
+        repository.save(new SupplyItem(code, name, description, category, unit, provider, stock, minStock, maxStock, true));
+    }
+
+    private void upsertStock(StockByLocationRepository repository, SupplyItem item, Location location,
+                             int quantity, Integer minStock) {
+        StockByLocation row = repository.findByItem_IdAndLocation_Id(item.getId(), location.getId())
+                .orElseGet(() -> new StockByLocation(item, location, quantity));
+        row.setQuantity(BigDecimal.valueOf(quantity));
+        row.setMinStock(minStock);
+        repository.save(row);
+    }
+
+    private void syncGlobalStock(SupplyItemRepository itemRepository, StockByLocationRepository stockRepository,
+                                 SupplyItem... items) {
+        for (SupplyItem item : items) {
+            BigDecimal total = stockRepository.sumQuantityByItem(item.getId());
+            int totalValue = total == null ? 0 : total.intValue();
+            if (item.getStock() == null || item.getStock() != totalValue) {
+                item.setStock(totalValue);
+                itemRepository.save(item);
+            }
+        }
+    }
+
+    private InventoryMovement buildMovement(SupplyItem item, String movementType, String origin, int quantity,
+                                            int stockBefore, int stockAfter, String roomNumber, Area area,
+                                            Provider provider, String responsible, String referenceText,
+                                            Location fromLocation, Location toLocation, int daysAgo) {
+        InventoryMovement movement = new InventoryMovement(
+                item,
+                movementType,
+                origin,
+                quantity,
+                stockBefore,
+                stockAfter,
+                roomNumber,
+                area,
+                provider,
+                responsible,
+                referenceText,
+                "VALIDO",
+                LocalDateTime.now().minusDays(daysAgo)
+        );
+        movement.setFromLocation(fromLocation);
+        movement.setToLocation(toLocation);
+        movement.setLegacy(false);
+        return movement;
     }
 
     @Bean
