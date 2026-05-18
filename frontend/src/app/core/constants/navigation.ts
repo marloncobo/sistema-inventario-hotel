@@ -153,13 +153,6 @@ export const APP_NAV_CATEGORIES: NavigationCategory[] = [
             icon: 'pi pi-lock',
             description: 'Bitácoras del sistema.',
             roles: rolesForShellRoute('auditoria')
-          },
-          {
-            label: 'Asistente IA',
-            route: '/asistente-ia',
-            icon: 'pi pi-sparkles',
-            description: 'Consultas guiadas según tu rol.',
-            roles: rolesForShellRoute('asistente-ia')
           }
         ]
       }
