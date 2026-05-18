@@ -1,561 +1,270 @@
-<div class="assistant-page app-page pp-root">
-  <header class="assistant-page-head">
-    <div class="assistant-page-head__copy">
-      <div class="assistant-page-head__role-badge" [style.backgroundColor]="roleColor()">
-        <span class="assistant-page-head__role-label">{{ userRole() }}</span>
-        <span class="assistant-page-head__role-desc">{{ roleDescription() }}</span>
-      </div>
-      <h1 class="assistant-page-head__title pp-hero-title">Asistente IA</h1>
-      <p class="assistant-page-head__desc pp-hero-lede">
-        Consultas inteligentes adaptadas a tu rol de {{ userRole() }}.
-      </p>
+<div class="ai-page">
+
+  <!-- ══════════ TOPBAR ══════════ -->
+  <header class="ai-topbar">
+
+    <!-- Izquierda: título de conversación -->
+    <div class="topbar-left">
+      <div class="ai-brand-dot"></div>
+      <span class="topbar-conv-title">
+        @if (currentConversationTitle()) {
+          {{ currentConversationTitle() }}
+        } @else {
+          Nueva conversación
+        }
+      </span>
+      @if (isNewConversation()) {
+        <span class="unsaved-pill">Sin guardar</span>
+      }
     </div>
 
-    @if (hasHistory()) {
-      <div class="assistant-page-head__actions">
+    <!-- Derecha: acciones -->
+    <div class="topbar-right">
+
+      <!-- Historial dropdown -->
+      <div class="history-dropdown-wrap" #historyWrap>
         <button
-          pButton
           type="button"
-          severity="secondary"
-          variant="outlined"
-          icon="pi pi-trash"
-          label="Limpiar chat"
-          (click)="clearHistory()"
-          [disabled]="loading()"
-        ></button>
+          class="topbar-btn"
+          (click)="toggleHistoryPanel()"
+          [class.active]="showHistory()"
+          title="Historial"
+        >
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+          </svg>
+          Historial
+          @if (conversations().length > 0) {
+            <span class="history-count">{{ conversations().length }}</span>
+          }
+          <svg class="chevron" [class.open]="showHistory()" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </button>
+
+        <!-- Panel dropdown del historial -->
+        @if (showHistory()) {
+          <div class="history-panel">
+            <div class="history-panel-header">
+              <span>Conversaciones recientes</span>
+              <button
+                type="button"
+                class="new-conv-mini"
+                (click)="createNewConversation(); toggleHistoryPanel()"
+                [disabled]="loading()"
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+                Nueva
+              </button>
+            </div>
+
+            @if (conversations().length > 0) {
+              <div class="history-panel-list">
+                @for (conv of conversations(); track conv.id) {
+                  <div class="hp-item" [class.active]="currentConversationId() === conv.id">
+                    <button
+                      type="button"
+                      class="hp-item-btn"
+                      (click)="loadConversation(conv.id); toggleHistoryPanel()"
+                    >
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                      </svg>
+                      <span>{{ conv.title }}</span>
+                    </button>
+                    <button
+                      type="button"
+                      class="hp-delete"
+                      (click)="deleteConversation(conv.id)"
+                      [disabled]="loading()"
+                      title="Eliminar"
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                      </svg>
+                    </button>
+                  </div>
+                }
+              </div>
+              @if (hasHistory()) {
+                <button type="button" class="hp-clear" (click)="clearHistory()" [disabled]="loading()">
+                  Limpiar todo
+                </button>
+              }
+            } @else {
+              <div class="hp-empty">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                </svg>
+                <p>Sin conversaciones aún</p>
+              </div>
+            }
+          </div>
+        }
       </div>
-    }
+
+      <!-- Botón nueva conversación -->
+      <button
+        type="button"
+        class="topbar-btn topbar-btn--primary"
+        (click)="createNewConversation()"
+        [disabled]="loading()"
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        Nueva
+      </button>
+
+      <!-- Chip de rol -->
+      <div class="role-chip">
+        <span class="role-dot"></span>
+        {{ userRole() }}
+      </div>
+
+    </div>
   </header>
 
-  <section class="assistant-workbench">
-    <div class="assistant-shell">
-    <section class="assistant-panel pp-surface-solid" aria-label="Conversación">
-      <div
-        class="assistant-thread"
-        #chatThread
-        tabindex="0"
-        aria-live="polite"
-        aria-relevant="additions"
-      >
-        @if (!hasHistory()) {
-          <div class="assistant-empty">
-            <div class="assistant-empty__hero">
-              <span class="assistant-empty__icon" aria-hidden="true">
-                <i class="pi pi-sparkles"></i>
-              </span>
-              <div>
-                <h2 class="assistant-empty__title">¿Qué necesitas saber?</h2>
-                <p class="assistant-empty__text">
-                  Estás conectado como <strong>{{ userRole() }}</strong>. El asistente te mostrará opciones según tu rol. Elige una consulta o escribe la tuya.
-                </p>
+  <!-- ══════════ ZONA DE MENSAJES ══════════ -->
+  <div class="messages-zone" #chatThread>
+
+    @if (!hasHistory()) {
+
+      <!-- Estado vacío -->
+      <div class="empty-state">
+        <div class="empty-orb"></div>
+        <div class="empty-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+        </div>
+        <h2 class="empty-title">¿En qué puedo ayudarte?</h2>
+        <p class="empty-sub">Pregunta cualquier cosa relacionada con tu rol de <strong>{{ userRole() }}</strong></p>
+
+        @if (starterPrompts().length > 0) {
+          <div class="suggestions-grid">
+            @for (suggestion of starterPrompts(); track trackByQuestion($index, suggestion)) {
+              <button
+                type="button"
+                class="sug-card"
+                (click)="useSuggestion(suggestion.text)"
+              >
+                <span class="sug-icon"><i class="pi" [ngClass]="suggestion.icon"></i></span>
+                <span class="sug-text">{{ suggestion.text }}</span>
+              </button>
+            }
+          </div>
+        }
+      </div>
+
+    } @else {
+
+      <!-- Feed de mensajes -->
+      <div class="messages-feed">
+        @for (entry of history(); track trackByHistoryId($index, entry)) {
+          <div class="msg-group" [attr.data-status]="entry.status">
+
+            <!-- Mensaje usuario -->
+            <div class="msg-row msg-row--user">
+              <div class="bubble bubble--user"><p>{{ entry.question }}</p></div>
+              <time class="msg-time">{{ formatAskedAt(entry.askedAt) }}</time>
+            </div>
+
+            <!-- Respuesta IA -->
+            <div class="msg-row msg-row--ai">
+              <div class="ai-dot"></div>
+              <div class="ai-body">
+                @if (entry.status === 'loading') {
+                  <div class="bubble bubble--ai">
+                    <div class="typing"><span></span><span></span><span></span></div>
+                  </div>
+                } @else if (entry.status === 'error') {
+                  <div class="bubble bubble--error">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                    </svg>
+                    <span>{{ entry.errorMessage || 'Error al procesar la pregunta' }}</span>
+                  </div>
+                } @else {
+                  <div class="bubble bubble--ai">
+                    @for (paragraph of answerParagraphs(entry.answer); track $index) {
+                      <p>{{ paragraph }}</p>
+                    }
+                    <div class="bubble-footer">
+                      @if (entry.contextSource) {
+                        <span class="source-tag">{{ entry.contextSource }}</span>
+                      }
+                      <button
+                        type="button"
+                        class="retry-btn"
+                        (click)="resendQuestion(entry.question)"
+                        [disabled]="loading()"
+                        title="Repetir"
+                      >
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.96"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                }
               </div>
             </div>
 
-            <div class="assistant-prompt-grid">
-              @for (suggestion of starterPrompts(); track trackByQuestion($index, suggestion)) {
-                <button type="button" class="assistant-prompt-card" (click)="useSuggestion(suggestion.text)">
-                  <span class="assistant-prompt-card__icon" aria-hidden="true">
-                    <i class="pi" [ngClass]="suggestion.icon"></i>
-                  </span>
-                  <span class="assistant-prompt-card__category">{{ suggestion.category }}</span>
-                  <span class="assistant-prompt-card__text">{{ suggestion.text }}</span>
-                  <i class="pi pi-arrow-right assistant-prompt-card__arrow" aria-hidden="true"></i>
-                </button>
-              }
-            </div>
-          </div>
-        } @else {
-          <div class="assistant-messages">
-            @for (entry of history(); track trackByHistoryId($index, entry)) {
-              <article class="assistant-turn" [attr.data-status]="entry.status">
-                <div class="assistant-msg assistant-msg--user">
-                  <span class="assistant-msg__avatar assistant-msg__avatar--user" aria-hidden="true">
-                    <i class="pi pi-user"></i>
-                  </span>
-                  <div class="assistant-msg__body">
-                    <header class="assistant-msg__meta">
-                      <span class="assistant-msg__name">Tú ({{ userRole() }})</span>
-                      <time>{{ formatAskedAt(entry.askedAt) }}</time>
-                    </header>
-                    <p>{{ entry.question }}</p>
-                  </div>
-                </div>
-
-                <div class="assistant-msg assistant-msg--ai">
-                  <span class="assistant-msg__avatar assistant-msg__avatar--ai" aria-hidden="true">
-                    <i class="pi pi-sparkles"></i>
-                  </span>
-                  <div class="assistant-msg__body">
-                    <header class="assistant-msg__meta">
-                      <span class="assistant-msg__name">Asistente Lunara</span>
-                      @if (entry.contextSource) {
-                        <span class="assistant-msg__tag">{{ entry.contextSource }}</span>
-                      }
-                      @if (entry.status === 'success') {
-                        <button
-                          type="button"
-                          class="assistant-msg__retry"
-                          (click)="resendQuestion(entry.question)"
-                          [disabled]="loading()"
-                          aria-label="Repetir consulta"
-                        >
-                          <i class="pi pi-refresh"></i>
-                        </button>
-                      }
-                    </header>
-
-                    @if (entry.status === 'loading') {
-                      <div class="assistant-msg__loading">
-                        <span class="assistant-typing" aria-hidden="true">
-                          <span></span><span></span><span></span>
-                        </span>
-                        <span>Analizando datos de {{ userRole() }}…</span>
-                      </div>
-                    } @else if (entry.status === 'error') {
-                      <p class="assistant-msg__error" role="alert">
-                        <i class="pi pi-exclamation-circle"></i>
-                        {{ entry.errorMessage || 'No fue posible completar la consulta. Verifica que tu rol tiene acceso.' }}
-                      </p>
-                    } @else {
-                      <div class="assistant-msg__answer">
-                        @for (paragraph of answerParagraphs(entry.answer); track $index) {
-                          <p>{{ paragraph }}</p>
-                        }
-                      </div>
-                    }
-                  </div>
-                </div>
-              </article>
-            }
           </div>
         }
       </div>
 
-      <footer class="assistant-footer">
-        @if (submitError()) {
-          <p class="assistant-footer__error" role="alert">
-            <i class="pi pi-exclamation-triangle"></i>
-            {{ submitError() }}
-          </p>
-        }
+    }
+  </div>
 
-        <div class="assistant-input">
-          <span class="assistant-input__prefix" aria-hidden="true">
-            <i class="pi pi-comment"></i>
-          </span>
-          <textarea
-            id="assistant-question"
-            class="assistant-input__field"
-            rows="2"
-            [ngModel]="question()"
-            (ngModelChange)="updateQuestion($event)"
-            (keydown)="onComposerKeydown($event)"
-            placeholder="Escribe tu pregunta…"
-            [disabled]="loading()"
-          ></textarea>
-          <button
-            pButton
-            type="button"
-            class="assistant-input__send"
-            icon="pi pi-send"
-            [rounded]="true"
-            [loading]="loading()"
-            [disabled]="!canSubmit()"
-            (click)="askQuestion()"
-            aria-label="Enviar"
-          ></button>
-        </div>
-        <p class="assistant-footer__hint">
-          <i class="pi pi-keyboard"></i>
-          Enter envía · Mayús+Enter nueva línea
-        </p>
-      </footer>
-    </section>
+  <!-- ══════════ INPUT ══════════ -->
+  <footer class="ai-footer">
+    @if (submitError()) {
+      <div class="error-bar">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        <span>{{ submitError() }}</span>
+        <button class="error-close" (click)="submitError.set(null)">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+    }
 
-    <aside class="assistant-rail pp-surface-solid" aria-label="Panel lateral">
-      <!-- Nueva Conversación -->
+    <div class="composer">
+      <textarea
+        id="chat-input"
+        class="composer-input"
+        [ngModel]="question()"
+        (ngModelChange)="updateQuestion($event)"
+        (keydown)="onComposerKeydown($event)"
+        placeholder="Escribe tu pregunta..."
+        [disabled]="loading()"
+        rows="1"
+      ></textarea>
       <button
         type="button"
-        pButton
-        class="assistant-rail__btn-new-large"
-        icon="pi pi-plus"
-        label="+ Nueva conversación"
-        (click)="createNewConversation()"
-        [disabled]="loading()"
-      ></button>
-
-      <!-- Conversación Actual -->
-      @if (currentConversationId()) {
-        <div class="assistant-rail__current">
-          <span class="pp-section-label">Conversación actual</span>
-          <h3 class="assistant-rail__current-title">{{ currentConversationTitle() }}</h3>
-          @if (isNewConversation()) {
-            <span class="assistant-rail__badge-new">Sin guardar</span>
-          }
-        </div>
-      }
-
-      <!-- Historial de Conversaciones -->
-      @if (conversations().length > 0) {
-        <div class="assistant-rail__conversations">
-          <div class="assistant-rail__head">
-            <span class="pp-section-label">Historial</span>
-            <button
-              type="button"
-              class="assistant-rail__btn-toggle"
-              (click)="toggleConversationList()"
-              [attr.aria-expanded]="showConversationList()"
-              title="Mostrar/ocultar historial"
-            >
-              <i class="pi" [ngClass]="showConversationList() ? 'pi-chevron-up' : 'pi-chevron-down'"></i>
-            </button>
-          </div>
-
-          @if (showConversationList()) {
-            <ul class="assistant-rail__conv-list">
-              @for (conv of conversations(); track conv.id) {
-                <li class="assistant-rail__conv-item" [class.active]="currentConversationId() === conv.id">
-                  <button
-                    type="button"
-                    class="assistant-rail__conv-btn"
-                    (click)="loadConversation(conv.id)"
-                    title="Cargar conversación"
-                  >
-                    <span class="assistant-rail__conv-title">{{ conv.title }}</span>
-                    <span class="assistant-rail__conv-date">{{ conv.updatedAt | date: 'short' }}</span>
-                  </button>
-                  <button
-                    type="button"
-                    class="assistant-rail__conv-delete"
-                    pButton
-                    icon="pi pi-trash"
-                    [text]="true"
-                    severity="danger"
-                    (click)="deleteConversation(conv.id)"
-                    [disabled]="loading()"
-                    title="Eliminar conversación"
-                  ></button>
-                </li>
-              }
-            </ul>
-          }
-        </div>
-      } @else if (!currentConversationId()) {
-        <div class="assistant-rail__empty">
-          <i class="pi pi-inbox"></i>
-          <p>No hay conversaciones aún</p>
-          <p class="assistant-rail__empty-hint">Empieza una nueva para guardar tu historial</p>
-        </div>
-      }
-
-      <hr class="assistant-rail__divider">
-
-      <!-- Tu Rol -->
-      @if (hasHistory()) {
-        <div class="assistant-rail__head">
-          <span class="pp-section-label">Atajos</span>
-          <h3 class="assistant-rail__title">Nueva consulta</h3>
-        </div>
-
-        <ul class="assistant-rail__list">
-          @for (suggestion of railQuickPrompts(); track trackByQuestion($index, suggestion)) {
-          <li>
-            <button type="button" class="assistant-rail__item" (click)="useSuggestion(suggestion.text)">
-              <span class="assistant-rail__item-icon" aria-hidden="true">
-                <i class="pi" [ngClass]="suggestion.icon"></i>
-              </span>
-              <span>{{ suggestion.text }}</span>
-            </button>
-          </li>
-          }
-        </ul>
-      } @else {
-        <div class="assistant-rail__head">
-          <span class="pp-section-label">Tu Rol</span>
-          <h3 class="assistant-rail__title">{{ userRole() }}</h3>
-        </div>
-
-        <div class="assistant-rail__role-info">
-          <p class="assistant-rail__role-desc">{{ roleDescription() }}</p>
-          <ul class="assistant-rail__role-features">
-            @switch(userRole()) {
-              @case('ADMIN') {
-                <li><i class="pi pi-check" style="color: var(--green-500)"></i> Acceso completo al sistema</li>
-                <li><i class="pi pi-check" style="color: var(--green-500)"></i> Reportes ejecutivos</li>
-                <li><i class="pi pi-check" style="color: var(--green-500)"></i> Gestión de usuarios</li>
-                <li><i class="pi pi-check" style="color: var(--green-500)"></i> Visión estratégica</li>
-              }
-              @case('ALMACENISTA') {
-                <li><i class="pi pi-check" style="color: var(--green-500)"></i> Gestión de bodega</li>
-                <li><i class="pi pi-check" style="color: var(--green-500)"></i> Alertas de stock</li>
-                <li><i class="pi pi-check" style="color: var(--green-500)"></i> Reabastecimiento</li>
-                <li><i class="pi pi-check" style="color: var(--green-500)"></i> Movimientos</li>
-              }
-              @case('SERVICIO') {
-                <li><i class="pi pi-check" style="color: var(--green-500)"></i> Productos por habitación</li>
-                <li><i class="pi pi-check" style="color: var(--green-500)"></i> Consumo por tipo de cuarto</li>
-                <li><i class="pi pi-check" style="color: var(--green-500)"></i> Tus movimientos</li>
-                <li><i class="pi pi-check" style="color: var(--green-500)"></i> Distribución de aseo</li>
-              }
-              @case('RECEPCION') {
-                <li><i class="pi pi-check" style="color: var(--green-500)"></i> Estado de habitaciones</li>
-                <li><i class="pi pi-check" style="color: var(--green-500)"></i> PAR (Qué debe tener)</li>
-                <li><i class="pi pi-check" style="color: var(--green-500)"></i> Ocupancy</li>
-                <li><i class="pi pi-check" style="color: var(--green-500)"></i> Información de huéspedes</li>
-              }
-            }
-          </ul>
-        </div>
-      }
-
-      <div class="assistant-rail__note">
-        <i class="pi pi-info-circle"></i>
-        <p>Las respuestas están adaptadas a tu rol. Solo verás datos que te corresponden.</p>
-      </div>
-    </aside>
+        class="composer-send"
+        [class.ready]="canSubmit()"
+        [disabled]="!canSubmit()"
+        (click)="askQuestion()"
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+        </svg>
+      </button>
     </div>
-  </section>
+
+    <p class="composer-hint">
+      <kbd>Enter</kbd> para enviar &nbsp;·&nbsp; <kbd>Shift + Enter</kbd> nueva línea
+    </p>
+  </footer>
+
 </div>
-
-<style>
-  .assistant-page-head__role-badge {
-    display: inline-flex;
-    flex-direction: column;
-    align-items: flex-start;
-    padding: 0.5rem 1rem;
-    border-radius: 0.5rem;
-    color: white;
-    font-weight: 600;
-    margin-bottom: 1rem;
-    font-size: 0.875rem;
-  }
-
-  .assistant-page-head__role-label {
-    font-weight: 700;
-    font-size: 1rem;
-  }
-
-  .assistant-page-head__role-desc {
-    font-size: 0.75rem;
-    opacity: 0.9;
-  }
-
-  .assistant-prompt-card__category {
-    display: block;
-    font-size: 0.75rem;
-    opacity: 0.6;
-    margin-bottom: 0.25rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-
-  .assistant-rail__role-info {
-    padding: 1rem;
-    background: rgba(0, 0, 0, 0.02);
-    border-radius: 0.5rem;
-    margin-bottom: 1rem;
-  }
-
-  .assistant-rail__role-desc {
-    margin: 0 0 0.75rem 0;
-    font-size: 0.875rem;
-    color: var(--text-color-secondary);
-  }
-
-  .assistant-rail__role-features {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    font-size: 0.875rem;
-  }
-
-  .assistant-rail__role-features li {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.25rem 0;
-  }
-
-  .assistant-rail__role-features i {
-    font-size: 0.75rem;
-  }
-
-  .assistant-rail__conversations {
-    margin-bottom: 1.5rem;
-  }
-
-  .assistant-rail__head {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 0.75rem;
-  }
-
-  .assistant-rail__btn-toggle {
-    background: none;
-    border: none;
-    color: var(--text-color-secondary);
-    cursor: pointer;
-    padding: 0;
-    font-size: 1rem;
-  }
-
-  .assistant-rail__btn-new {
-    width: 100%;
-    margin-bottom: 0.75rem;
-  }
-
-  .assistant-rail__conv-list {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    margin-bottom: 0.75rem;
-    max-height: 300px;
-    overflow-y: auto;
-  }
-
-  .assistant-rail__conv-item {
-    display: flex;
-    gap: 0.5rem;
-    align-items: center;
-    padding: 0.5rem;
-    border-radius: 0.375rem;
-    background: rgba(0, 0, 0, 0.02);
-    transition: background-color 0.2s;
-  }
-
-  .assistant-rail__conv-item.active {
-    background: rgba(0, 0, 0, 0.05);
-    border-left: 3px solid var(--primary-color);
-    padding-left: calc(0.5rem - 3px);
-  }
-
-  .assistant-rail__conv-item:hover {
-    background: rgba(0, 0, 0, 0.05);
-  }
-
-  .assistant-rail__conv-btn {
-    flex: 1;
-    background: none;
-    border: none;
-    text-align: left;
-    padding: 0;
-    cursor: pointer;
-    font-size: 0.875rem;
-    color: var(--text-color);
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-  }
-
-  .assistant-rail__conv-title {
-    font-weight: 500;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .assistant-rail__conv-date {
-    font-size: 0.75rem;
-    color: var(--text-color-secondary);
-  }
-
-  .assistant-rail__conv-delete {
-    background: none;
-    border: none;
-    color: var(--red-500);
-    cursor: pointer;
-    padding: 0.25rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .assistant-rail__conv-delete:hover {
-    opacity: 0.8;
-  }
-
-  .assistant-rail__conv-empty {
-    padding: 1rem 0.5rem;
-    text-align: center;
-    color: var(--text-color-secondary);
-    font-size: 0.875rem;
-  }
-
-  .assistant-rail__divider {
-    border: none;
-    border-top: 1px solid var(--surface-border);
-    margin: 1rem 0;
-  }
-
-  .assistant-rail__btn-new-large {
-    width: 100%;
-    margin-bottom: 1.5rem;
-    background: var(--primary-color) !important;
-    color: white !important;
-    font-weight: 600;
-    border-radius: 0.5rem;
-  }
-
-  .assistant-rail__btn-new-large:hover {
-    background: var(--primary-600) !important;
-  }
-
-  .assistant-rail__current {
-    padding: 1rem;
-    background: rgba(var(--primary-500-rgb), 0.1);
-    border-radius: 0.5rem;
-    margin-bottom: 1.5rem;
-    border-left: 3px solid var(--primary-color);
-  }
-
-  .assistant-rail__current-title {
-    margin: 0.5rem 0 0.75rem 0;
-    font-size: 0.95rem;
-    font-weight: 600;
-    color: var(--text-color);
-    word-break: break-word;
-  }
-
-  .assistant-rail__badge-new {
-    display: inline-block;
-    padding: 0.25rem 0.75rem;
-    background: var(--orange-100);
-    color: var(--orange-700);
-    border-radius: 0.25rem;
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-
-  .assistant-rail__empty {
-    text-align: center;
-    padding: 2rem 1rem;
-    color: var(--text-color-secondary);
-    margin-top: 2rem;
-  }
-
-  .assistant-rail__empty i {
-    display: block;
-    font-size: 2.5rem;
-    margin-bottom: 1rem;
-    opacity: 0.5;
-  }
-
-  .assistant-rail__empty p {
-    margin: 0.5rem 0;
-    font-size: 0.875rem;
-  }
-
-  .assistant-rail__empty-hint {
-    font-size: 0.75rem !important;
-    opacity: 0.7;
-  }
-</style>

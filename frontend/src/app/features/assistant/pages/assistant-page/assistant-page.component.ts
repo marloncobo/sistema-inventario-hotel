@@ -52,6 +52,7 @@ export class AssistantPageComponent implements AfterViewChecked, OnInit {
   protected readonly currentConversationTitle = signal<string | null>(null);
   protected readonly isNewConversation = signal(false);
   protected readonly showConversationList = signal(false);
+  protected readonly showHistory = signal(false);
 
   private shouldScrollToBottom = false;
 
@@ -334,6 +335,10 @@ export class AssistantPageComponent implements AfterViewChecked, OnInit {
 
   protected toggleConversationList(): void {
     this.showConversationList.update(show => !show);
+  }
+
+  protected toggleHistoryPanel(): void {
+    this.showHistory.update(show => !show);
   }
 
   private scrollToBottom(): void {

@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Asistente IA — Hotel</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+      background: #fff;
+      height: 100vh;
+      overflow: hidden;
+      color: #111827;
+    }
+
+    /* ══════════════════════════════════════
+       LAYOUT RAÍZ — columna única
+    ══════════════════════════════════════ */
+    .ai-page {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      height: 100vh;
+      background: #fff;
+    }
+
+    /* ══════════════════════════════════════
+       TOPBAR
+    ══════════════════════════════════════ */
+    .ai-topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 32px;
+      height: 65px;
+      border-bottom: 1px solid rgba(200, 146, 45, 0.15);
+      background: #fff;
+      flex-shrink: 0;
+      gap: 16px;
+      z-index: 10;
+    }
+
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .ai-brand-dot {
+      width: 10px;
+      height: 10px;
+      min-width: 10px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #c8922d, #e6bd6a);
+      box-shadow: 0 0 0 3px rgba(200, 146, 45, 0.15);
+    }
+
+    .topbar-conv-title {
+      font-size: 15.5px;
+      font-weight: 600;
+      color: #3d2b1f;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      letter-spacing: -0.2px;
+    }
+
+    .unsaved-pill {
+      font-size: 11px;
+      color: #9ca3af;
+      background: #f3f4f6;
+      padding: 2px 8px;
+      border-radius: 20px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+      position: relative;
+    }
+
+    .topbar-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: 10px;
+      border: 1px solid rgba(200, 146, 45, 0.2);
+      background: #fdfbf7;
+      color: #5d4837;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s;
+      font-family: inherit;
+    }
+
+    .topbar-btn:hover {
+      background: #f5f0e6;
+      border-color: rgba(200, 146, 45, 0.4);
+      color: #3d2b1f;
+    }
+
+    .topbar-btn.active {
+      background: rgba(200, 146, 45, 0.1);
+      border-color: #c8922d;
+      color: #c8922d;
+    }
+
+    .topbar-btn--primary {
+      background: #c8922d;
+      border-color: #c8922d;
+      color: #fff;
+    }
+
+    .topbar-btn--primary:hover {
+      background: #b57b17;
+      border-color: #b57b17;
+    }
+
+    .history-count {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 20px;
+      height: 20px;
+      padding: 0 6px;
+      border-radius: 10px;
+      background: #c8922d;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .chevron {
+      transition: transform 0.2s;
+      display: inline-block;
+      font-size: 10px;
+    }
+
+    .chevron.open {
+      transform: rotate(180deg);
+    }
+
+    .role-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #16a34a;
+    }
+
+    .role-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #22c55e;
+      animation: rolePulse 2.4s ease-in-out infinite;
+    }
+
+    @keyframes rolePulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.55; transform: scale(0.8); }
+    }
+
+    /* ══════════════════════════════════════
+       HISTORIAL DROPDOWN
+    ══════════════════════════════════════ */
+    .history-dropdown-wrap {
+      position: relative;
+    }
+
+    .history-panel {
+      display: none;
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      width: 320px;
+      background: #fff;
+      border: 1px solid rgba(200, 146, 45, 0.2);
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06);
+      overflow: hidden;
+      z-index: 100;
+    }
+
+    .history-panel.open {
+      display: block;
+      animation: dropIn 0.18s ease;
+    }
+
+    @keyframes dropIn {
+      from { opacity: 0; transform: translateY(-6px) scale(0.98); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .history-panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 14px;
+      border-bottom: 1px solid #f3f4f6;
+      font-size: 11px;
+      font-weight: 700;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+    }
+
+    .new-conv-mini {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 12px;
+      background: #c8922d;
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .history-panel-list {
+      max-height: 280px;
+      overflow-y: auto;
+      padding: 6px;
+    }
+
+    .history-panel-list::-webkit-scrollbar { width: 4px; }
+    .history-panel-list::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 2px; }
+
+    .hp-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      border-radius: 8px;
+      transition: background 0.12s;
+    }
+
+    .hp-item:hover { background: #fdfbf7; }
+    .hp-item.active { background: rgba(200, 146, 45, 0.1); }
+
+    .hp-item-btn {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 10px;
+      background: transparent;
+      border: none;
+      color: #5d4837;
+      font-size: 14px;
+      cursor: pointer;
+      border-radius: 8px;
+      min-width: 0;
+      font-family: inherit;
+    }
+
+    .hp-item.active .hp-item-btn {
+      color: #c8922d;
+      font-weight: 600;
+    }
+
+    .hp-item-btn span {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .hp-delete {
+      width: 28px;
+      height: 28px;
+      background: transparent;
+      border: none;
+      color: #d1d5db;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
+      font-size: 14px;
+      opacity: 0;
+      transition: all 0.12s;
+    }
+
+    .hp-item:hover .hp-delete { opacity: 1; }
+    .hp-delete:hover { background: #fef2f2; color: #ef4444; }
+
+    /* ══════════════════════════════════════
+       ZONA DE MENSAJES
+    ══════════════════════════════════════ */
+    .messages-zone {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .messages-zone::-webkit-scrollbar { width: 5px; }
+    .messages-zone::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 3px; }
+
+    /* Estado vacío */
+    .empty-state {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 28px 32px 32px;
+      padding-top: 40px;
+      text-align: center;
+      position: relative;
+    }
+
+    .empty-orb {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 60% 50% at 50% 40%, rgba(200, 146, 45, 0.05) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .empty-icon {
+      width: 62px;
+      height: 62px;
+      background: linear-gradient(135deg, #fdfbf7, #f5f0e6);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      margin-bottom: 16px;
+      box-shadow: 0 4px 16px rgba(200, 146, 45, 0.12);
+      position: relative;
+      z-index: 1;
+    }
+
+    .empty-title {
+      font-size: 26px;
+      font-weight: 700;
+      color: #3d2b1f;
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .empty-sub {
+      font-size: 14px;
+      color: #8a735c;
+      margin-bottom: 28px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .empty-sub strong { color: #c8922d; font-weight: 600; }
+
+    /* Sugerencias */
+    .suggestions-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      width: 100%;
+      max-width: 800px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .sug-card {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 16px;
+      background: #fdfbf7;
+      border: 1.5px solid rgba(200, 146, 45, 0.15);
+      border-radius: 12px;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      font-family: inherit;
+    }
+
+    .sug-card:hover {
+      background: #fff;
+      border-color: #c8922d;
+      box-shadow: 0 6px 20px rgba(200, 146, 45, 0.12);
+      transform: translateY(-2px);
+    }
+
+    .sug-icon {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, #fdfbf7, #f5f0e6);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+
+    .sug-text {
+      font-size: 13px;
+      font-weight: 500;
+      color: #5d4837;
+      line-height: 1.45;
+    }
+
+    /* ══════════════════════════════════════
+       FEED DE MENSAJES
+    ══════════════════════════════════════ */
+    .messages-feed {
+      display: flex;
+      flex-direction: column;
+      padding: 32px 32px;
+      gap: 24px;
+      max-width: 780px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .msg-group {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      animation: msgFade 0.25s ease;
+    }
+
+    @keyframes msgFade {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .msg-row { display: flex; flex-direction: column; gap: 6px; }
+    .msg-row--user { align-items: flex-end; }
+    .msg-row--ai { flex-direction: row; align-items: flex-start; gap: 12px; }
+
+    .ai-dot {
+      width: 34px;
+      height: 34px;
+      min-width: 34px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #c8922d, #e6bd6a);
+      margin-top: 4px;
+      flex-shrink: 0;
+      box-shadow: 0 2px 8px rgba(200, 146, 45, 0.25);
+    }
+
+    .ai-body {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .bubble {
+      padding: 14px 18px;
+      font-size: 15px;
+      line-height: 1.7;
+      word-break: break-word;
+    }
+
+    .bubble p { margin: 0 0 8px; }
+    .bubble p:last-child { margin-bottom: 0; }
+
+    .bubble--user {
+      background: #3d2b1f;
+      color: #fff;
+      border-radius: 18px 18px 4px 18px;
+      max-width: 66%;
+    }
+
+    .bubble--ai {
+      background: #fdfbf7;
+      border: 1px solid rgba(200, 146, 45, 0.15);
+      color: #3d2b1f;
+      border-radius: 4px 18px 18px 18px;
+    }
+
+    .msg-time { font-size: 11px; color: #9ca3af; padding: 0 2px; }
+
+    .bubble-footer {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(200, 146, 45, 0.1);
+    }
+
+    .source-tag {
+      font-size: 12px;
+      background: rgba(200, 146, 45, 0.1);
+      color: #c8922d;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-weight: 500;
+    }
+
+    /* Typing */
+    .typing { display: flex; align-items: center; gap: 5px; padding: 2px 0; }
+
+    .typing span {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: #9ca3af;
+      animation: typeBounce 1.4s ease-in-out infinite;
+    }
+
+    .typing span:nth-child(2) { animation-delay: 0.2s; }
+    .typing span:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes typeBounce {
+      0%, 100% { transform: translateY(0); opacity: 0.35; }
+      50% { transform: translateY(-5px); opacity: 1; }
+    }
+
+    /* ══════════════════════════════════════
+       FOOTER / INPUT
+    ══════════════════════════════════════ */
+    .ai-footer {
+      flex-shrink: 0;
+      padding: 18px 32px 24px;
+      border-top: 1px solid rgba(200, 146, 45, 0.15);
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-width: 780px;
+      width: 100%;
+      margin: 0 auto;
+      align-self: stretch;
+    }
+
+    .composer {
+      display: flex;
+      align-items: flex-end;
+      gap: 12px;
+      background: #fdfbf7;
+      border: 1.5px solid rgba(200, 146, 45, 0.2);
+      border-radius: 16px;
+      padding: 13px 18px;
+      transition: all 0.2s;
+    }
+
+    .composer:focus-within {
+      background: #fff;
+      border-color: #c8922d;
+      box-shadow: 0 0 0 3px rgba(200, 146, 45, 0.1);
+    }
+
+    .composer-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      font-size: 15px;
+      font-family: inherit;
+      color: #3d2b1f;
+      line-height: 1.6;
+      padding: 0;
+    }
+
+    .composer-input::placeholder { color: #a3907d; }
+
+    .composer-send {
+      width: 42px;
+      height: 42px;
+      min-width: 42px;
+      border-radius: 12px;
+      background: #e5e7eb;
+      border: none;
+      color: #a3907d;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: not-allowed;
+      font-size: 18px;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+
+    .composer-send.ready {
+      background: #c8922d;
+      color: #fff;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(200, 146, 45, 0.3);
+    }
+
+    .composer-send.ready:hover {
+      background: #b57b17;
+      transform: scale(1.06);
+    }
+
+    .composer-send.ready:active { transform: scale(0.95); }
+
+    .composer-hint {
+      font-size: 12px;
+      color: #8a735c;
+      text-align: center;
+    }
+
+    .composer-hint kbd {
+      display: inline-block;
+      padding: 2px 7px;
+      background: #fdfbf7;
+      border: 1px solid rgba(200, 146, 45, 0.2);
+      border-radius: 5px;
+      font-size: 11px;
+      font-family: inherit;
+      color: #7b6754;
+      font-weight: 500;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 1024px) {
+      .suggestions-grid {
+        grid-template-columns: repeat(2, 1fr);
+        max-width: 600px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .empty-state {
+        padding: 24px 24px 28px;
+        padding-top: 32px;
+      }
+
+      .suggestions-grid {
+        grid-template-columns: repeat(2, 1fr);
+        max-width: 100%;
+      }
+
+      .messages-feed {
+        padding: 24px 24px;
+      }
+
+      .ai-footer {
+        padding: 14px 24px 20px;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .topbar-conv-title {
+        max-width: 120px;
+      }
+
+      .suggestions-grid {
+        grid-template-columns: 1fr;
+        max-width: 100%;
+      }
+
+      .bubble--user {
+        max-width: 88%;
+      }
+
+      .role-chip {
+        display: none;
+      }
+
+      .empty-state {
+        padding: 20px 20px 24px;
+        padding-top: 28px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="ai-page">
+
+  <!-- TOPBAR -->
+  <header class="ai-topbar">
+
+    <div class="topbar-left">
+      <div class="ai-brand-dot"></div>
+      <span class="topbar-conv-title" id="conv-title">Nueva conversación</span>
+      <span class="unsaved-pill" id="unsaved-pill">Sin guardar</span>
+    </div>
+
+    <div class="topbar-right">
+
+      <!-- Dropdown historial -->
+      <div class="history-dropdown-wrap">
+        <button class="topbar-btn" id="history-toggle-btn" onclick="toggleHistory()">
+          💬 Historial
+          <span class="history-count" id="history-count">5</span>
+          <span class="chevron" id="chevron">▾</span>
+        </button>
+
+        <div class="history-panel" id="history-panel">
+          <div class="history-panel-header">
+            Conversaciones recientes
+            <button class="new-conv-mini" onclick="newChat(); toggleHistory()">+ Nueva</button>
+          </div>
+          <div class="history-panel-list" id="history-list">
+            <div class="hp-item active">
+              <button class="hp-item-btn" onclick="selectConv(this)">
+                <span>💬</span><span>Consulta sobre occupancy...</span>
+              </button>
+              <button class="hp-delete">✕</button>
+            </div>
+            <div class="hp-item">
+              <button class="hp-item-btn" onclick="selectConv(this)">
+                <span>💬</span><span>Análisis de riesgos operacionales</span>
+              </button>
+              <button class="hp-delete">✕</button>
+            </div>
+            <div class="hp-item">
+              <button class="hp-item-btn" onclick="selectConv(this)">
+                <span>💬</span><span>Reporte de ingresos últimos 30...</span>
+              </button>
+              <button class="hp-delete">✕</button>
+            </div>
+            <div class="hp-item">
+              <button class="hp-item-btn" onclick="selectConv(this)">
+                <span>💬</span><span>Usuarios activos del sistema</span>
+              </button>
+              <button class="hp-delete">✕</button>
+            </div>
+            <div class="hp-item">
+              <button class="hp-item-btn" onclick="selectConv(this)">
+                <span>💬</span><span>Relación ingresos vs gastos</span>
+              </button>
+              <button class="hp-delete">✕</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Nueva conversación -->
+      <button class="topbar-btn topbar-btn--primary" onclick="newChat()">
+        + Nueva
+      </button>
+
+      <!-- Rol -->
+      <div class="role-chip">
+        <span class="role-dot"></span>
+        ADMIN
+      </div>
+    </div>
+  </header>
+
+  <!-- MENSAJES -->
+  <div class="messages-zone" id="messages-zone">
+
+    <!-- Estado vacío -->
+    <div class="empty-state" id="empty-state">
+      <div class="empty-orb"></div>
+      <div class="empty-icon">✦</div>
+      <h2 class="empty-title">¿En qué puedo ayudarte?</h2>
+      <p class="empty-sub">Pregunta cualquier cosa relacionada con tu rol de <strong>ADMIN</strong></p>
+
+      <div class="suggestions-grid">
+        <button class="sug-card" onclick="useSuggestion('¿Cuál es el estado general del sistema?')">
+          <span class="sug-icon">📊</span>
+          <span class="sug-text">¿Cuál es el estado general del sistema?</span>
+        </button>
+        <button class="sug-card" onclick="useSuggestion('¿Qué riesgos operativos identificas?')">
+          <span class="sug-icon">⚠️</span>
+          <span class="sug-text">¿Qué riesgos operativos identificas?</span>
+        </button>
+        <button class="sug-card" onclick="useSuggestion('¿Cuál es la occupancy actual del hotel?')">
+          <span class="sug-icon">🏨</span>
+          <span class="sug-text">¿Cuál es la occupancy actual del hotel?</span>
+        </button>
+        <button class="sug-card" onclick="useSuggestion('¿Quiénes son los usuarios activos?')">
+          <span class="sug-icon">👥</span>
+          <span class="sug-text">¿Quiénes son los usuarios activos?</span>
+        </button>
+        <button class="sug-card" onclick="useSuggestion('Análisis de consumo últimos 30 días')">
+          <span class="sug-icon">📈</span>
+          <span class="sug-text">Análisis de consumo últimos 30 días</span>
+        </button>
+        <button class="sug-card" onclick="useSuggestion('¿Cómo está la relación ingresos vs gastos?')">
+          <span class="sug-icon">💰</span>
+          <span class="sug-text">¿Cómo está ingresos vs gastos?</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Feed (oculto hasta primer mensaje) -->
+    <div class="messages-feed" id="messages-feed" style="display:none;"></div>
+  </div>
+
+  <!-- INPUT -->
+  <div class="ai-footer" style="box-sizing:border-box;">
+    <div class="composer">
+      <input
+        type="text"
+        class="composer-input"
+        id="chat-input"
+        placeholder="Escribe tu pregunta..."
+        onkeydown="handleKey(event)"
+        oninput="checkReady()"
+      >
+      <button class="composer-send" id="send-btn" onclick="sendMessage()">➤</button>
+    </div>
+    <p class="composer-hint"><kbd>Enter</kbd> para enviar &nbsp;·&nbsp; <kbd>Shift+Enter</kbd> nueva línea</p>
+  </div>
+
+</div>
+
+<script>
+  const feed = document.getElementById('messages-feed');
+  const emptyState = document.getElementById('empty-state');
+  const input = document.getElementById('chat-input');
+  const sendBtn = document.getElementById('send-btn');
+  const convTitle = document.getElementById('conv-title');
+  const historyPanel = document.getElementById('history-panel');
+  const chevron = document.getElementById('chevron');
+  const toggleBtn = document.getElementById('history-toggle-btn');
+
+  // ── historial dropdown ──────────────────────
+  let historyOpen = false;
+
+  function toggleHistory() {
+    historyOpen = !historyOpen;
+    historyPanel.classList.toggle('open', historyOpen);
+    chevron.classList.toggle('open', historyOpen);
+    toggleBtn.classList.toggle('active', historyOpen);
+  }
+
+  document.addEventListener('click', function(e) {
+    if (!e.target.closest('.history-dropdown-wrap') && historyOpen) {
+      historyOpen = false;
+      historyPanel.classList.remove('open');
+      chevron.classList.remove('open');
+      toggleBtn.classList.remove('active');
+    }
+  });
+
+  function selectConv(btn) {
+    document.querySelectorAll('.hp-item').forEach(i => i.classList.remove('active'));
+    btn.closest('.hp-item').classList.add('active');
+    const title = btn.querySelector('span:last-child').textContent;
+    convTitle.textContent = title;
+    document.getElementById('unsaved-pill').style.display = 'none';
+    toggleHistory();
+  }
+
+  // ── input ──────────────────────────────────
+  function checkReady() {
+    sendBtn.classList.toggle('ready', input.value.trim().length > 0);
+  }
+
+  function handleKey(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  }
+
+  function useSuggestion(text) {
+    input.value = text;
+    checkReady();
+    sendMessage();
+  }
+
+  function newChat() {
+    feed.innerHTML = '';
+    feed.style.display = 'none';
+    emptyState.style.display = 'flex';
+    convTitle.textContent = 'Nueva conversación';
+    document.getElementById('unsaved-pill').style.display = '';
+    input.value = '';
+    checkReady();
+  }
+
+  function sendMessage() {
+    const text = input.value.trim();
+    if (!text) return;
+
+    emptyState.style.display = 'none';
+    feed.style.display = 'flex';
+    convTitle.textContent = text.length > 40 ? text.slice(0, 40) + '…' : text;
+    document.getElementById('unsaved-pill').style.display = 'none';
+
+    const now = new Date().toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' });
+    const bubbleId = 'ai-' + Date.now();
+
+    const group = document.createElement('div');
+    group.className = 'msg-group';
+    group.innerHTML = `
+      <div class="msg-row msg-row--user">
+        <div class="bubble bubble--user"><p>${text}</p></div>
+        <time class="msg-time">${now}</time>
+      </div>
+      <div class="msg-row msg-row--ai">
+        <div class="ai-dot"></div>
+        <div class="ai-body">
+          <div class="bubble bubble--ai" id="${bubbleId}">
+            <div class="typing"><span></span><span></span><span></span></div>
+          </div>
+        </div>
+      </div>`;
+
+    feed.appendChild(group);
+    feed.parentElement.scrollTop = 99999;
+    input.value = '';
+    checkReady();
+
+    setTimeout(() => {
+      const bubble = document.getElementById(bubbleId);
+      if (bubble) {
+        bubble.innerHTML = `
+          <p>Respuesta del asistente IA para: <em>"${text}"</em>. Aquí aparecería el análisis generado por el sistema basado en los datos del hotel.</p>
+          <div class="bubble-footer">
+            <span class="source-tag">Sistema</span>
+          </div>`;
+        feed.parentElement.scrollTop = 99999;
+      }
+    }, 1500);
+  }
+</script>
+</body>
+</html>
