@@ -2,6 +2,7 @@
 @import 'primeicons/primeicons.css';
 @import './styles-responsive-polish.css';
 @import './app/shared/styles/app-page-layout.css';
+@import './app/shared/styles/chat-markdown.css';
 
 :root {
   color-scheme: light;

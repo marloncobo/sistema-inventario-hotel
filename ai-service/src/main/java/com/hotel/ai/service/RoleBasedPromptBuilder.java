@@ -49,6 +49,7 @@ public class RoleBasedPromptBuilder {
             - Parrafos cortos y claros (máximo 3 líneas por párrafo)
             - Espacios en blanco entre secciones para legibilidad
             - Tablas cuando sea necesario comparar datos
+            - Si una tabla requiere listas o explicaciones largas dentro de las celdas, usa HTML semantico dentro del Markdown (<table>, <ul>, <li>)
 
             CONTENIDO:
             ----------
@@ -85,6 +86,7 @@ public class RoleBasedPromptBuilder {
             - **Texto en negrita** para datos críticos y acciones
             - Parrafos cortos (máximo 3 líneas)
             - Espacios entre secciones
+            - Si una tabla requiere listas o explicaciones largas dentro de las celdas, usa HTML semantico dentro del Markdown (<table>, <ul>, <li>)
 
             CONTENIDO:
             ----------
@@ -122,6 +124,7 @@ public class RoleBasedPromptBuilder {
             - **Texto en negrita** para cantidades y tipos de habitación
             - Parrafos cortos y claros
             - Espacios entre secciones para legibilidad
+            - Si una tabla requiere listas o explicaciones largas dentro de las celdas, usa HTML semantico dentro del Markdown (<table>, <ul>, <li>)
 
             CONTENIDO:
             ----------
@@ -159,6 +162,7 @@ public class RoleBasedPromptBuilder {
             - **Texto en negrita** para números de habitación y datos críticos
             - Párrafos cortos y precisos
             - Espacios en blanco entre secciones
+            - Si una tabla requiere listas o explicaciones largas dentro de las celdas, usa HTML semantico dentro del Markdown (<table>, <ul>, <li>)
 
             CONTENIDO:
             ----------

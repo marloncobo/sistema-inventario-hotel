@@ -7,7 +7,8 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "build:prod": "ng build --configuration production"
+    "build:prod": "ng build --configuration production",
+    "build:docker": "ng build --configuration docker"
   },
   "prettier": {
     "printWidth": 100,
