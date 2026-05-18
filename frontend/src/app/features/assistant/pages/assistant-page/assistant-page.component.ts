@@ -148,17 +148,63 @@ export class AssistantPageComponent implements AfterViewChecked, OnInit {
     this.history.update((entries) => [...entries, optimisticEntry]);
     this.shouldScrollToBottom = true;
 
-    // Si no hay conversación abierta, crear una nueva
+    // Si no hay conversación abierta, crear una nueva ANTES de enviar el mensaje
+    // Esto garantiza que las conversaciones solo se guarden si el usuario envía al menos un mensaje
     let conversationId = this.currentConversationId();
-    let isNewConv = false;
     if (!conversationId) {
-      isNewConv = true;
-      this.createNewConversation();
-      conversationId = this.conversations()[0]?.id || null;
+      this.createNewConversationAndSendMessage(nextQuestion, historyId);
+      return;
     }
 
+    this.sendMessageToAssistant(nextQuestion, conversationId, historyId);
+  }
+
+  /**
+   * Crea una nueva conversación y envía el mensaje en un solo flujo.
+   * Esto asegura que solo se guarden conversaciones con al menos un mensaje.
+   */
+  private createNewConversationAndSendMessage(question: string, historyId: string): void {
+    const title = 'Nueva conversación';
+    this.conversationApi.createConversation(title)
+      .pipe(take(1))
+      .subscribe({
+        next: (conversation) => {
+          // Agregar al inicio de la lista
+          this.conversations.update(convs => [conversation, ...convs]);
+          this.currentConversationId.set(conversation.id);
+          this.currentConversationTitle.set(conversation.title);
+          this.isNewConversation.set(true);
+
+          // Ahora enviar el mensaje con la conversación creada
+          this.sendMessageToAssistant(question, conversation.id, historyId);
+        },
+        error: (error) => {
+          const message = extractApiErrorMessage(error?.error);
+          this.submitError.set(message);
+          this.history.update((entries) =>
+            entries.map((entry) =>
+              entry.id === historyId
+                ? {
+                    ...entry,
+                    answer: '',
+                    status: 'error',
+                    errorMessage: message
+                  }
+                : entry
+            )
+          );
+          this.loading.set(false);
+          this.shouldScrollToBottom = true;
+        }
+      });
+  }
+
+  /**
+   * Envía el mensaje al asistente y actualiza la conversación con la respuesta.
+   */
+  private sendMessageToAssistant(question: string, conversationId: number, historyId: string): void {
     this.assistantApi
-      .askInventoryAssistant(nextQuestion, conversationId || undefined)
+      .askInventoryAssistant(question, conversationId)
       .pipe(take(1))
       .subscribe({
         next: (response) => {
@@ -176,7 +222,7 @@ export class AssistantPageComponent implements AfterViewChecked, OnInit {
           );
 
           // Actualizar título con el generado por IA en el backend (estilo ChatGPT)
-          if (response.conversationTitle && conversationId) {
+          if (response.conversationTitle) {
             const aiTitle = response.conversationTitle;
             this.currentConversationTitle.set(aiTitle);
             this.isNewConversation.set(false);
@@ -293,29 +339,16 @@ export class AssistantPageComponent implements AfterViewChecked, OnInit {
   }
 
   protected createNewConversation(): void {
-    // Crear conversación con título temporal
-    const title = `Nueva conversación`;
-    this.conversationApi.createConversation(title)
-      .pipe(take(1))
-      .subscribe({
-        next: (conversation) => {
-          // Agregar al inicio de la lista
-          this.conversations.update(convs => [conversation, ...convs]);
-          // Limpiar historial para nueva conversación
-          this.history.set([]);
-          this.currentConversationId.set(conversation.id);
-          this.currentConversationTitle.set(conversation.title);
-          this.isNewConversation.set(true);
-          this.submitError.set(null);
-          this.showConversationList.set(false);
-        },
-        error: () => {
-          // Si falla, al menos limpia el historial
-          this.history.set([]);
-          this.currentConversationId.set(null);
-          this.isNewConversation.set(true);
-        }
-      });
+    // Este método ahora solo limpia el estado local sin crear una conversación en la BD.
+    // La conversación se creará automáticamente cuando el usuario envíe el primer mensaje.
+    // Esto evita que se guarden conversaciones vacías en la base de datos.
+
+    this.history.set([]);
+    this.currentConversationId.set(null);
+    this.currentConversationTitle.set(null);
+    this.isNewConversation.set(true);
+    this.submitError.set(null);
+    this.showConversationList.set(false);
   }
 
   protected loadConversation(conversationId: number): void {

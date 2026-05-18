@@ -5,15 +5,19 @@ import com.hotel.ai.dto.ConversationMessageDto;
 import com.hotel.ai.model.Conversation;
 import com.hotel.ai.model.ConversationMessage;
 import com.hotel.ai.repository.ConversationRepository;
+import com.hotel.ai.util.DateTimeUtil;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
 @Service
 public class ConversationService {
     private static final int RELATED_CONVERSATIONS_LIMIT = 4;
+    private static final int EMPTY_CONVERSATION_CLEANUP_HOURS = 1;
     private final ConversationRepository conversationRepository;
     private final GeminiClient geminiClient;
 
@@ -26,6 +30,7 @@ public class ConversationService {
     public List<ConversationDto> getUserConversations(Long userId) {
         return conversationRepository.findByUserIdOrderByUpdatedAtDesc(userId)
                 .stream()
+                .filter(conversation -> !conversation.getMessages().isEmpty()) // Solo mostrar conversaciones con mensajes
                 .map(this::toDto)
                 .toList();
     }
@@ -40,6 +45,7 @@ public class ConversationService {
     public List<ConversationDto> getRelatedConversationContext(Long userId, Long activeConversationId) {
         return conversationRepository.findByUserIdOrderByUpdatedAtDesc(userId)
                 .stream()
+                .filter(conversation -> !conversation.getMessages().isEmpty()) // Solo conversaciones con mensajes
                 .filter(conversation -> activeConversationId == null || !conversation.getId().equals(activeConversationId))
                 .limit(RELATED_CONVERSATIONS_LIMIT)
                 .map(this::toDto)
@@ -164,6 +170,33 @@ public class ConversationService {
             return text;
         }
         return text.substring(0, 1).toUpperCase() + text.substring(1);
+    }
+
+    /**
+     * TAREA PROGRAMADA: Limpia conversaciones vacías creadas hace más de EMPTY_CONVERSATION_CLEANUP_HOURS.
+     * Se ejecuta automáticamente cada hora.
+     */
+    @Scheduled(cron = "0 0 * * * *") // Cada hora en punto
+    @Transactional
+    public void deleteEmptyConversations() {
+        try {
+            LocalDateTime cutoffTime = DateTimeUtil.nowColombia().minusHours(EMPTY_CONVERSATION_CLEANUP_HOURS);
+
+            List<Conversation> emptyConversations = conversationRepository.findAll()
+                    .stream()
+                    .filter(conversation -> conversation.getMessages().isEmpty())
+                    .filter(conversation -> conversation.getCreatedAt().isBefore(cutoffTime))
+                    .toList();
+
+            if (!emptyConversations.isEmpty()) {
+                conversationRepository.deleteAll(emptyConversations);
+                System.out.println("[ConversationService] Se eliminaron " + emptyConversations.size() +
+                        " conversaciones vacías creadas hace más de " + EMPTY_CONVERSATION_CLEANUP_HOURS + " hora(s).");
+            }
+        } catch (Exception e) {
+            System.err.println("[ConversationService] Error al limpiar conversaciones vacías: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     private ConversationDto toDto(Conversation conversation) {

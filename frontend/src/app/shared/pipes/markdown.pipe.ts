@@ -215,6 +215,10 @@ export class MarkdownPipe implements PipeTransform {
       return false;
     }
 
+    if (this.isSystemRoleLabel(normalized)) {
+      return false;
+    }
+
     const known =
       /^(activo|inactivo|ocupada|disponible|pendiente|cerrada|abierta|critico|crítico|alto|medio|bajo|bajo stock|completa|parcial|no disponibles?|no incluida|incluida|n\/a|na|sí|si|no)$/i;
     if (known.test(normalized)) {
@@ -227,6 +231,10 @@ export class MarkdownPipe implements PipeTransform {
       normalized === normalized.toUpperCase() &&
       /^[A-ZÁÉÍÓÚÑ0-9][A-ZÁÉÍÓÚÑ0-9\s./-]+$/.test(normalized)
     );
+  }
+
+  private isSystemRoleLabel(text: string): boolean {
+    return /^(admin|almacenista|recepcion|recepción|servicio)$/i.test(text.trim());
   }
 
   private isVerboseCell(cell: HTMLTableCellElement): boolean {
