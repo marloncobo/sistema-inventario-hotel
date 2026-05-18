@@ -1,6 +1,7 @@
 package com.hotel.ai.model;
 
 import jakarta.persistence.*;
+import com.hotel.ai.util.DateTimeUtil;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -33,13 +34,15 @@ public class Conversation {
     public Conversation(Long userId, String title) {
         this.userId = userId;
         this.title = title;
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
+        // Usar zona horaria de Bogotá, Colombia (UTC-5)
+        this.createdAt = DateTimeUtil.nowColombia();
+        this.updatedAt = DateTimeUtil.nowColombia();
     }
 
     @PreUpdate
     protected void onUpdate() {
-        this.updatedAt = LocalDateTime.now();
+        // Usar zona horaria de Bogotá, Colombia (UTC-5)
+        this.updatedAt = DateTimeUtil.nowColombia();
     }
 
     // Getters y Setters

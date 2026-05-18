@@ -164,6 +164,9 @@ export class MarkdownPipe implements PipeTransform {
       return;
     }
 
+    const blockCount = cell.querySelectorAll(':scope > p, :scope > ul, :scope > ol').length;
+    const isRichCell = blockCount > 1 || text.length >= 96;
+
     if (/^-?\d+(?:[.,]\d+)?%?$/.test(text)) {
       cell.classList.add('is-numeric');
     }
@@ -172,10 +175,58 @@ export class MarkdownPipe implements PipeTransform {
       cell.classList.add('is-code');
     }
 
-    if (/^(activo|inactivo|ocupada|disponible|pendiente|cerrada|abierta|critico|alto|medio|bajo stock|bajo)$/i.test(text)) {
-      cell.classList.add('is-status');
-      this.wrapStatusContent(cell, text);
+    if (isRichCell) {
+      cell.classList.add('markdown-table-cell--rich');
+      this.decorateLeadingStatusBlock(cell);
+      return;
     }
+
+    if (this.isStatusLabel(text)) {
+      cell.classList.add('is-status', 'is-status-only');
+      this.wrapStatusContent(cell, text);
+      return;
+    }
+
+    this.decorateLeadingStatusBlock(cell);
+  }
+
+  private decorateLeadingStatusBlock(cell: HTMLTableCellElement): void {
+    const firstBlock = cell.querySelector(':scope > p:first-child');
+    if (!firstBlock || firstBlock.querySelector('.status-pill')) {
+      return;
+    }
+
+    const firstText = this.toPlainText(firstBlock.innerHTML).trim();
+    if (!this.isStatusLabel(firstText)) {
+      return;
+    }
+
+    const pill = document.createElement('span');
+    pill.className = `status-pill status-pill--${this.resolveStatusTone(firstText)}`;
+    pill.textContent = firstText;
+    firstBlock.innerHTML = '';
+    firstBlock.appendChild(pill);
+    firstBlock.classList.add('markdown-table-status-line');
+  }
+
+  private isStatusLabel(text: string): boolean {
+    const normalized = text.trim();
+    if (!normalized || normalized.length > 48) {
+      return false;
+    }
+
+    const known =
+      /^(activo|inactivo|ocupada|disponible|pendiente|cerrada|abierta|critico|crítico|alto|medio|bajo|bajo stock|completa|parcial|no disponibles?|no incluida|incluida|n\/a|na|sí|si|no)$/i;
+    if (known.test(normalized)) {
+      return true;
+    }
+
+    return (
+      normalized.length >= 3 &&
+      normalized.length <= 40 &&
+      normalized === normalized.toUpperCase() &&
+      /^[A-ZÁÉÍÓÚÑ0-9][A-ZÁÉÍÓÚÑ0-9\s./-]+$/.test(normalized)
+    );
   }
 
   private isVerboseCell(cell: HTMLTableCellElement): boolean {
@@ -211,13 +262,28 @@ export class MarkdownPipe implements PipeTransform {
 
   private resolveStatusTone(text: string): string {
     const normalized = text.trim().toLowerCase();
-    if (normalized === 'bajo stock' || normalized === 'critico' || normalized === 'cerrada') {
+    if (
+      normalized.includes('no disponible') ||
+      normalized.includes('no incluida') ||
+      normalized === 'no' ||
+      normalized === 'critico' ||
+      normalized === 'crítico' ||
+      normalized === 'cerrada' ||
+      normalized === 'bajo' ||
+      normalized === 'bajo stock'
+    ) {
       return 'danger';
     }
-    if (normalized === 'alto' || normalized === 'pendiente' || normalized === 'ocupada') {
+    if (
+      normalized === 'alto' ||
+      normalized === 'pendiente' ||
+      normalized === 'ocupada' ||
+      normalized === 'parcial' ||
+      normalized === 'medio'
+    ) {
       return 'warning';
     }
-    if (normalized === 'medio') {
+    if (normalized === 'inactivo' || normalized === 'n/a' || normalized === 'na') {
       return 'neutral';
     }
     return 'success';

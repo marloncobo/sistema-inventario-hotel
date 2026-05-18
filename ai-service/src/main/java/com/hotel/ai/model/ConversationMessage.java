@@ -1,6 +1,7 @@
 package com.hotel.ai.model;
 
 import jakarta.persistence.*;
+import com.hotel.ai.util.DateTimeUtil;
 import java.time.LocalDateTime;
 
 @Entity
@@ -33,7 +34,8 @@ public class ConversationMessage {
         this.question = question;
         this.answer = answer;
         this.userRole = userRole;
-        this.createdAt = LocalDateTime.now();
+        // Usar zona horaria de Bogotá, Colombia (UTC-5)
+        this.createdAt = DateTimeUtil.nowColombia();
     }
 
     // Getters y Setters

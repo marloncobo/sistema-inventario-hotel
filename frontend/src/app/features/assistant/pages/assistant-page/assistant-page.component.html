@@ -1,250 +1,262 @@
-<div class="ai-page">
+<div class="chat ai-page">
 
-  <!-- ══════════ SIDEBAR DE CONVERSACIONES (estilo ChatGPT) ══════════ -->
-  <aside class="ai-conv-sidebar" [class.collapsed]="convSidebarCollapsed()">
-    <div class="conv-sidebar-inner">
-      <div class="conv-sidebar-brand">
-        <span class="conv-brand-icon">
-          <i class="pi pi-sparkles" aria-hidden="true"></i>
-        </span>
-        <span class="conv-brand-label">Asistente IA</span>
+  <header class="chat__header">
+    <div class="chat__header-start">
+      <span class="chat__logo" aria-hidden="true"><i class="pi pi-sparkles"></i></span>
+      <div class="chat__header-titles">
+        <h1 class="chat__title">
+          @if (currentConversationTitle()) {
+            {{ currentConversationTitle() }}
+          } @else {
+            Asistente de inventario
+          }
+        </h1>
+        @if (isNewConversation()) {
+          <span class="chat__badge">Borrador</span>
+        }
       </div>
+    </div>
+
+    <div class="chat__header-actions">
+      <button
+        type="button"
+        class="chat__btn chat__btn--ghost"
+        (click)="toggleHistoryPanel()"
+        [class.is-active]="showHistory()"
+        [attr.aria-expanded]="showHistory()"
+      >
+        <i class="pi pi-history" aria-hidden="true"></i>
+        <span>Historial</span>
+        @if (conversations().length > 0) {
+          <span class="chat__count">{{ conversations().length }}</span>
+        }
+      </button>
 
       <button
         type="button"
-        class="conv-new-btn"
+        class="chat__btn chat__btn--primary"
         (click)="createNewConversation()"
         [disabled]="loading()"
       >
         <i class="pi pi-plus" aria-hidden="true"></i>
-        Nueva conversación
+        <span>Nueva</span>
       </button>
 
-      <div class="conv-list-wrap">
-        @if (conversations().length > 0) {
-          <p class="conv-list-label">Recientes</p>
-          <ul class="conv-list">
-            @for (conv of conversations(); track conv.id) {
-              <li class="conv-item" [class.active]="currentConversationId() === conv.id">
-                <button
-                  type="button"
-                  class="conv-item-btn"
-                  (click)="loadConversation(conv.id)"
-                  [title]="conv.title"
-                >
-                  <i class="pi pi-comments" aria-hidden="true"></i>
-                  <span>{{ conv.title }}</span>
-                </button>
-                <button
-                  type="button"
-                  class="conv-item-delete"
-                  (click)="deleteConversation(conv.id)"
-                  [disabled]="loading()"
-                  title="Eliminar"
-                  aria-label="Eliminar conversación"
-                >
-                  <i class="pi pi-trash" aria-hidden="true"></i>
-                </button>
-              </li>
-            }
-          </ul>
-          @if (hasHistory()) {
-            <button type="button" class="conv-clear-btn" (click)="clearHistory()" [disabled]="loading()">
-              Limpiar historial actual
-            </button>
-          }
-        } @else {
-          <div class="conv-empty">
-            <i class="pi pi-inbox" aria-hidden="true"></i>
-            <p>Sin conversaciones</p>
-            <span>Inicia una nueva para comenzar</span>
-          </div>
-        }
-      </div>
     </div>
-  </aside>
+  </header>
 
-  <!-- ══════════ ÁREA PRINCIPAL DEL CHAT ══════════ -->
-  <main class="ai-main">
+  <section class="chat__messages" #chatThread aria-live="polite">
+    <div class="chat__messages-inner">
 
-    <header class="ai-topbar">
-      <div class="topbar-left">
-        <button
-          type="button"
-          class="topbar-toggle"
-          (click)="toggleConvSidebar()"
-          aria-label="Mostrar u ocultar conversaciones"
-        >
-          <i class="pi" [ngClass]="convSidebarCollapsed() ? 'pi-bars' : 'pi-times'" aria-hidden="true"></i>
-        </button>
-        <div class="topbar-title-block">
-          <h1 class="topbar-conv-title">
-            @if (currentConversationTitle()) {
-              {{ currentConversationTitle() }}
-            } @else {
-              Nueva conversación
-            }
-          </h1>
-          @if (isNewConversation()) {
-            <span class="unsaved-pill">Sin guardar</span>
-          }
-        </div>
-      </div>
+      @if (!hasHistory()) {
+        <div class="chat__welcome">
+          <div class="chat__welcome-icon" aria-hidden="true">
+            <i class="pi pi-sparkles"></i>
+          </div>
+          <h2 class="chat__welcome-title">¿En qué puedo ayudarte?</h2>
+          <p class="chat__welcome-text">
+            Pregunta sobre inventario, alertas o tu rol de
+            <strong>{{ roleDescription() }}</strong>.
+          </p>
 
-      <div class="topbar-right">
-        <div class="role-chip" [style.--role-color]="roleColor()">
-          <span class="role-dot"></span>
-          {{ roleDescription() }}
-        </div>
-        <button
-          type="button"
-          class="topbar-btn topbar-btn--gold"
-          (click)="createNewConversation()"
-          [disabled]="loading()"
-        >
-          <i class="pi pi-plus" aria-hidden="true"></i>
-          Nueva
-        </button>
-      </div>
-    </header>
-
-    <div class="messages-zone" #chatThread>
-      <div class="messages-inner">
-
-        @if (!hasHistory()) {
-          <div class="empty-state">
-            <div class="empty-orb"></div>
-            <div class="empty-icon">
-              <i class="pi pi-sparkles" aria-hidden="true"></i>
+          @if (starterPrompts().length > 0) {
+            <div class="chat__prompts">
+              @for (suggestion of starterPrompts(); track trackByQuestion($index, suggestion)) {
+                <button
+                  type="button"
+                  class="chat__prompt"
+                  (click)="useSuggestion(suggestion.text)"
+                >
+                  <i class="pi" [ngClass]="suggestion.icon" aria-hidden="true"></i>
+                  <span>{{ suggestion.text }}</span>
+                </button>
+              }
             </div>
-            <h2 class="empty-title">¿En qué puedo ayudarte?</h2>
-            <p class="empty-sub">
-              Consulta inventario, alertas y operaciones como
-              <strong>{{ roleDescription() }}</strong>
-            </p>
+          }
+        </div>
+      } @else {
+        <div class="chat__thread">
+          @for (entry of history(); track trackByHistoryId($index, entry)) {
+            <article class="chat__turn" [attr.data-status]="entry.status">
 
-            @if (starterPrompts().length > 0) {
-              <div class="suggestions-grid">
-                @for (suggestion of starterPrompts(); track trackByQuestion($index, suggestion)) {
-                  <button
-                    type="button"
-                    class="sug-card"
-                    (click)="useSuggestion(suggestion.text)"
-                  >
-                    <span class="sug-icon"><i class="pi" [ngClass]="suggestion.icon"></i></span>
-                    <span class="sug-text">{{ suggestion.text }}</span>
-                  </button>
-                }
+              <div class="chat__message chat__message--user">
+                <div class="chat__message-content">
+                  <p>{{ entry.question }}</p>
+                </div>
+                <time
+                  class="chat__message-time"
+                  [attr.datetime]="entry.askedAt"
+                  [title]="formatAskedAtRelative(entry.askedAt)"
+                >{{ formatAskedAtRelative(entry.askedAt) }}</time>
               </div>
-            }
-          </div>
-        } @else {
-          <div class="messages-feed">
-            @for (entry of history(); track trackByHistoryId($index, entry)) {
-              <article class="msg-group" [attr.data-status]="entry.status">
 
-                <div class="msg-row msg-row--user">
-                  <div class="msg-user-label">Tú</div>
-                  <div class="bubble bubble--user">
-                    <p>{{ entry.question }}</p>
-                  </div>
-                  <time class="msg-time">{{ formatAskedAt(entry.askedAt) }}</time>
+              <div class="chat__message chat__message--assistant">
+                <div class="chat__avatar" aria-hidden="true">
+                  <i class="pi pi-sparkles"></i>
                 </div>
-
-                <div class="msg-row msg-row--ai">
-                  <div class="ai-avatar" aria-hidden="true">
-                    <i class="pi pi-sparkles"></i>
-                  </div>
-                  <div class="ai-body">
-                    @if (entry.status === 'loading') {
-                      <div class="bubble bubble--ai bubble--loading">
-                        <div class="typing"><span></span><span></span><span></span></div>
+                <div class="chat__message-body">
+                  @if (entry.status === 'loading') {
+                    <div class="chat__message-content chat__message-content--assistant">
+                      <div class="chat__typing" aria-label="Escribiendo">
+                        <span></span><span></span><span></span>
                       </div>
-                    } @else if (entry.status === 'error') {
-                      <div class="bubble bubble--error">
-                        <i class="pi pi-exclamation-circle" aria-hidden="true"></i>
-                        <span>{{ entry.errorMessage || 'Error al procesar la pregunta' }}</span>
-                      </div>
-                    } @else {
-                      <div class="bubble bubble--ai markdown-content" [innerHTML]="entry.answer | markdown"></div>
-                      <div class="bubble-footer">
-                        @if (entry.contextSource) {
-                          <span class="source-tag">{{ entry.contextSource }}</span>
-                        }
-                        <button
-                          type="button"
-                          class="retry-btn"
-                          (click)="resendQuestion(entry.question)"
-                          [disabled]="loading()"
-                          title="Repetir pregunta"
-                        >
-                          <i class="pi pi-refresh" aria-hidden="true"></i>
-                        </button>
-                      </div>
-                    }
-                  </div>
+                    </div>
+                  } @else if (entry.status === 'error') {
+                    <div class="chat__message-content chat__message-content--error">
+                      <i class="pi pi-exclamation-circle" aria-hidden="true"></i>
+                      <span>{{ entry.errorMessage || 'No se pudo procesar la pregunta.' }}</span>
+                    </div>
+                  } @else {
+                    <div
+                      class="chat__message-content chat__message-content--assistant markdown-content"
+                      [innerHTML]="entry.answer | markdown"
+                    ></div>
+                    <div class="chat__message-actions">
+                      @if (entry.contextSource) {
+                        <span class="chat__source">{{ entry.contextSource }}</span>
+                      }
+                      <button
+                        type="button"
+                        class="chat__action"
+                        [class.is-copied]="copiedMessageId() === entry.id"
+                        (click)="copyToClipboard(entry.answer, entry.id)"
+                        [disabled]="loading()"
+                        [title]="copiedMessageId() === entry.id ? 'Copiado' : 'Copiar'"
+                        aria-label="Copiar respuesta"
+                      >
+                        <i class="pi" [ngClass]="copiedMessageId() === entry.id ? 'pi-check' : 'pi-copy'"></i>
+                      </button>
+                      <button
+                        type="button"
+                        class="chat__action"
+                        (click)="resendQuestion(entry.question)"
+                        [disabled]="loading()"
+                        title="Repetir"
+                        aria-label="Repetir pregunta"
+                      >
+                        <i class="pi pi-refresh"></i>
+                      </button>
+                    </div>
+                  }
+                  @if (entry.status === 'success' || entry.status === 'error') {
+                    <time
+                      class="chat__message-time"
+                      [attr.datetime]="entry.askedAt"
+                      [title]="formatAskedAtRelative(entry.askedAt)"
+                    >{{ formatAskedAtRelative(entry.askedAt) }}</time>
+                  }
                 </div>
+              </div>
 
-              </article>
-            }
-          </div>
-        }
+            </article>
+          }
+        </div>
+      }
 
-      </div>
     </div>
+  </section>
 
-    <footer class="ai-footer">
-      <div class="composer-wrap">
-        @if (submitError()) {
-          <div class="error-bar">
-            <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
-            <span>{{ submitError() }}</span>
-            <button type="button" class="error-close" (click)="submitError.set(null)" aria-label="Cerrar">
-              <i class="pi pi-times" aria-hidden="true"></i>
-            </button>
-          </div>
-        }
-
-        <div class="composer" [class.composer--focused]="composerFocused()">
-          <textarea
-            id="chat-input"
-            class="composer-input"
-            [ngModel]="question()"
-            (ngModelChange)="updateQuestion($event)"
-            (keydown)="onComposerKeydown($event)"
-            (focus)="composerFocused.set(true)"
-            (blur)="composerFocused.set(false)"
-            placeholder="Escribe tu pregunta sobre inventario..."
-            [disabled]="loading()"
-            rows="1"
-          ></textarea>
-          <button
-            type="button"
-            class="composer-send"
-            [class.ready]="canSubmit()"
-            [disabled]="!canSubmit()"
-            (click)="askQuestion()"
-            aria-label="Enviar mensaje"
-          >
-            <i class="pi pi-send" aria-hidden="true"></i>
+  <footer class="chat__composer">
+    <div class="chat__composer-inner">
+      @if (submitError()) {
+        <div class="chat__alert" role="alert">
+          <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
+          <span>{{ submitError() }}</span>
+          <button type="button" (click)="submitError.set(null)" aria-label="Cerrar error">
+            <i class="pi pi-times"></i>
           </button>
         </div>
+      }
 
-        <p class="composer-hint">
-          <kbd>Enter</kbd> enviar &nbsp;·&nbsp; <kbd>Shift + Enter</kbd> nueva línea
-        </p>
+      <div class="chat__input-box" [class.is-focused]="composerFocused()">
+        <textarea
+          id="chat-input"
+          class="chat__input"
+          [ngModel]="question()"
+          (ngModelChange)="updateQuestion($event)"
+          (keydown)="onComposerKeydown($event)"
+          (focus)="composerFocused.set(true)"
+          (blur)="composerFocused.set(false)"
+          placeholder="Escribe tu pregunta..."
+          [disabled]="loading()"
+          rows="1"
+        ></textarea>
+        <button
+          type="button"
+          class="chat__send"
+          [class.is-ready]="canSubmit()"
+          [disabled]="!canSubmit()"
+          (click)="askQuestion()"
+          aria-label="Enviar"
+        >
+          <i class="pi pi-arrow-up"></i>
+        </button>
       </div>
-    </footer>
 
-  </main>
+      <p class="chat__hint">
+        <kbd>Enter</kbd> enviar · <kbd>Shift+Enter</kbd> nueva línea
+      </p>
+    </div>
+  </footer>
 
-  @if (!convSidebarCollapsed()) {
+  @if (showHistory()) {
     <button
       type="button"
-      class="conv-sidebar-backdrop"
-      (click)="convSidebarCollapsed.set(true)"
-      aria-label="Cerrar panel de conversaciones"
+      class="chat__overlay"
+      (click)="showHistory.set(false)"
+      aria-label="Cerrar historial"
     ></button>
   }
+
+  <aside class="chat__drawer" [class.is-open]="showHistory()" aria-label="Historial de conversaciones">
+    <div class="chat__drawer-head">
+      <h2>Conversaciones</h2>
+      <button type="button" class="chat__drawer-close" (click)="showHistory.set(false)" aria-label="Cerrar">
+        <i class="pi pi-times"></i>
+      </button>
+    </div>
+
+    <button
+      type="button"
+      class="chat__drawer-new"
+      (click)="createNewConversation(); showHistory.set(false)"
+      [disabled]="loading()"
+    >
+      <i class="pi pi-plus"></i> Nueva conversación
+    </button>
+
+    <div class="chat__drawer-list">
+      @if (conversations().length > 0) {
+        @for (conv of conversations(); track conv.id) {
+          <div class="chat__drawer-item" [class.is-active]="currentConversationId() === conv.id">
+            <button
+              type="button"
+              class="chat__drawer-item-btn"
+              (click)="loadConversation(conv.id)"
+            >
+              <i class="pi pi-comments" aria-hidden="true"></i>
+              <span>{{ conv.title }}</span>
+            </button>
+            <button
+              type="button"
+              class="chat__drawer-item-del"
+              (click)="deleteConversation(conv.id)"
+              [disabled]="loading()"
+              aria-label="Eliminar"
+            >
+              <i class="pi pi-trash"></i>
+            </button>
+          </div>
+        }
+        @if (hasHistory()) {
+          <button type="button" class="chat__drawer-clear" (click)="clearHistory()" [disabled]="loading()">
+            Limpiar mensajes actuales
+          </button>
+        }
+      } @else {
+        <p class="chat__drawer-empty">Aún no hay conversaciones guardadas.</p>
+      }
+    </div>
+  </aside>
 
 </div>

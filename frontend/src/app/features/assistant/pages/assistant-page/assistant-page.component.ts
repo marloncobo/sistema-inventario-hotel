@@ -24,16 +24,14 @@ import {
   QuestionSuggestion
 } from '../../data/role-based-suggestions';
 import { MarkdownPipe } from '@shared/pipes/markdown.pipe';
+import { formatDateTime, formatTimeOnly, formatDateRelative } from '@shared/utils/date-formatter.util';
 
 @Component({
   selector: 'app-assistant-page',
   standalone: true,
   imports: [CommonModule, FormsModule, ButtonModule, MarkdownPipe],
   templateUrl: './assistant-page.component.html',
-  styleUrls: [
-    './assistant-page.component.css',
-    '../../../../shared/styles/premium-panels.css'
-  ]
+  styleUrls: ['./assistant-page.component.css']
 })
 export class AssistantPageComponent implements AfterViewChecked, OnInit {
   private readonly assistantApi = inject(AssistantApiService);
@@ -54,8 +52,8 @@ export class AssistantPageComponent implements AfterViewChecked, OnInit {
   protected readonly isNewConversation = signal(false);
   protected readonly showConversationList = signal(false);
   protected readonly showHistory = signal(false);
-  protected readonly convSidebarCollapsed = signal(true);
   protected readonly composerFocused = signal(false);
+  protected readonly copiedMessageId = signal<string | null>(null);
 
   private shouldScrollToBottom = false;
 
@@ -222,6 +220,31 @@ export class AssistantPageComponent implements AfterViewChecked, OnInit {
     this.askQuestion(question);
   }
 
+  /**
+   * Copia el texto de la respuesta al portapapeles
+   * y muestra feedback visual temporal
+   */
+  protected copyToClipboard(answer: string, messageId: string): void {
+    // Extraer solo el texto sin HTML (en caso de markdown)
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = answer;
+    const plainText = tempDiv.textContent || tempDiv.innerText || '';
+
+    // Copiar al portapapeles
+    navigator.clipboard.writeText(plainText).then(() => {
+      // Mostrar feedback visual
+      this.copiedMessageId.set(messageId);
+
+      // Revertir el estado después de 2 segundos
+      setTimeout(() => {
+        this.copiedMessageId.set(null);
+      }, 2000);
+    }).catch(() => {
+      // Si falla, mostrar alternativa (less common en navegadores modernos)
+      console.error('Error al copiar al portapapeles');
+    });
+  }
+
   protected clearHistory(): void {
     if (this.loading()) {
       return;
@@ -249,11 +272,24 @@ export class AssistantPageComponent implements AfterViewChecked, OnInit {
     return question.text;
   }
 
-  protected formatAskedAt(value: string): string {
-    return new Date(value).toLocaleString('es-CO', {
-      dateStyle: 'medium',
-      timeStyle: 'short'
+  /**
+   * Formatea la fecha y hora de cuando se hizo la pregunta
+   * Retorna formato legible con fecha relativa (Hoy/Ayer) cuando aplica
+   */
+  protected formatAskedAt(value: string): { date: string; time: string } {
+    return formatDateTime(value, {
+      showDate: true,
+      showTime: true,
+      showSeconds: false,
+      compact: false
     });
+  }
+
+  /**
+   * Formatea la hora de forma relativa para mostrar debajo del mensaje
+   */
+  protected formatAskedAtRelative(value: string): string {
+    return formatDateRelative(value);
   }
 
   protected createNewConversation(): void {
@@ -285,7 +321,7 @@ export class AssistantPageComponent implements AfterViewChecked, OnInit {
   protected loadConversation(conversationId: number): void {
     this.currentConversationId.set(conversationId);
     this.isNewConversation.set(false);
-    this.convSidebarCollapsed.set(true);
+    this.showHistory.set(false);
     this.conversationApi.getConversation(conversationId)
       .pipe(take(1))
       .subscribe({
@@ -337,10 +373,6 @@ export class AssistantPageComponent implements AfterViewChecked, OnInit {
 
   protected toggleHistoryPanel(): void {
     this.showHistory.update(show => !show);
-  }
-
-  protected toggleConvSidebar(): void {
-    this.convSidebarCollapsed.update(collapsed => !collapsed);
   }
 
   private scrollToBottom(): void {
