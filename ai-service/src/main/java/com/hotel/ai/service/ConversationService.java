@@ -13,6 +13,7 @@ import java.util.Optional;
 
 @Service
 public class ConversationService {
+    private static final int RELATED_CONVERSATIONS_LIMIT = 4;
     private final ConversationRepository conversationRepository;
 
     public ConversationService(ConversationRepository conversationRepository) {
@@ -31,6 +32,16 @@ public class ConversationService {
     public Optional<ConversationDto> getConversation(Long conversationId, Long userId) {
         return conversationRepository.findByIdAndUserId(conversationId, userId)
                 .map(this::toDto);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ConversationDto> getRelatedConversationContext(Long userId, Long activeConversationId) {
+        return conversationRepository.findByUserIdOrderByUpdatedAtDesc(userId)
+                .stream()
+                .filter(conversation -> activeConversationId == null || !conversation.getId().equals(activeConversationId))
+                .limit(RELATED_CONVERSATIONS_LIMIT)
+                .map(this::toDto)
+                .toList();
     }
 
     @Transactional

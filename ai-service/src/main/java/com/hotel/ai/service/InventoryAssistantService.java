@@ -6,6 +6,8 @@ import com.hotel.ai.client.GatewayClient;
 import com.hotel.ai.client.InventoryClient;
 import com.hotel.ai.client.RoomsClient;
 import com.hotel.ai.dto.AppUserDto;
+import com.hotel.ai.dto.ConversationDto;
+import com.hotel.ai.dto.ConversationMessageDto;
 import com.hotel.ai.dto.InventoryAssistantRequest;
 import com.hotel.ai.dto.InventoryAssistantResponse;
 import com.hotel.ai.dto.InventoryContextDto;
@@ -55,6 +57,8 @@ public class InventoryAssistantService {
     private static final int AVERAGE_CONSUMPTION_DAYS = 30;
     private static final int ROOM_CONSUMPTION_LIMIT = 12;
     private static final int ROOM_DISTRIBUTION_LIMIT = 12;
+    private static final int RELATED_CONVERSATIONS_PROMPT_LIMIT = 4;
+    private static final int RELATED_MESSAGES_PER_CONVERSATION_LIMIT = 3;
 
     private final InventoryClient inventoryClient;
     private final RoomsClient roomsClient;
@@ -63,6 +67,7 @@ public class InventoryAssistantService {
     private final ObjectMapper objectMapper;
     private final RoleBasedContextFilter contextFilter;
     private final RoleBasedPromptBuilder promptBuilder;
+    private final RoleCapabilitiesService roleCapabilitiesService;
 
     public InventoryAssistantService(InventoryClient inventoryClient,
                                      RoomsClient roomsClient,
@@ -70,7 +75,8 @@ public class InventoryAssistantService {
                                      GeminiClient geminiClient,
                                      ObjectMapper objectMapper,
                                      RoleBasedContextFilter contextFilter,
-                                     RoleBasedPromptBuilder promptBuilder) {
+                                     RoleBasedPromptBuilder promptBuilder,
+                                     RoleCapabilitiesService roleCapabilitiesService) {
         this.inventoryClient = inventoryClient;
         this.roomsClient = roomsClient;
         this.gatewayClient = gatewayClient;
@@ -78,6 +84,7 @@ public class InventoryAssistantService {
         this.objectMapper = objectMapper;
         this.contextFilter = contextFilter;
         this.promptBuilder = promptBuilder;
+        this.roleCapabilitiesService = roleCapabilitiesService;
     }
 
     /**
@@ -99,13 +106,41 @@ public class InventoryAssistantService {
                 filterContextByRole(fullSnapshot, roleContext.role());
 
         // 3. Construir prompt adaptado al rol
-        String aiInstructions = promptBuilder.getAiInstructionsForRole(roleContext.role());
-        String prompt = buildPromptWithFilteredContext(request.getQuestion(), filteredContext);
+        String aiInstructions = promptBuilder.getAiInstructionsForRole(roleContext);
+        String prompt = buildPromptWithFilteredContext(request.getQuestion(), filteredContext, roleContext, List.of());
 
         // 4. Obtener respuesta de Gemini
         String answer = geminiClient.generateInventoryAnswer(aiInstructions, prompt);
 
         // 5. Retornar respuesta con metadata
+        return new InventoryAssistantResponse(answer, fullSnapshot.contextSource());
+    }
+
+    public InventoryAssistantResponse answerInventoryQuestion(
+            InventoryAssistantRequest request,
+            RoleContextInfo roleContext,
+            List<ConversationMessageDto> conversationHistory) {
+        return answerInventoryQuestion(request, roleContext, conversationHistory, List.of());
+    }
+
+    public InventoryAssistantResponse answerInventoryQuestion(
+            InventoryAssistantRequest request,
+            RoleContextInfo roleContext,
+            List<ConversationMessageDto> conversationHistory,
+            List<ConversationDto> relatedConversations) {
+
+        InventorySnapshot fullSnapshot = loadContext(request.getInventoryContext());
+        RoleBasedContextFilter.FilteredContextSnapshot filteredContext =
+                filterContextByRole(fullSnapshot, roleContext.role());
+        String aiInstructions = promptBuilder.getAiInstructionsForRole(roleContext);
+        String prompt = buildPromptWithFilteredContext(
+                request.getQuestion(),
+                filteredContext,
+                roleContext,
+                conversationHistory,
+                relatedConversations
+        );
+        String answer = geminiClient.generateInventoryAnswer(aiInstructions, prompt);
         return new InventoryAssistantResponse(answer, fullSnapshot.contextSource());
     }
 
@@ -151,7 +186,8 @@ public class InventoryAssistantService {
      */
     private String buildPromptWithFilteredContext(
             String question,
-            RoleBasedContextFilter.FilteredContextSnapshot filteredContext) {
+            RoleBasedContextFilter.FilteredContextSnapshot filteredContext,
+            RoleContextInfo roleContext) {
 
         // Convertir el snapshot filtrado a un snapshot completo con datos vacíos donde corresponda
         InventorySnapshot snapshot = new InventorySnapshot(
@@ -172,7 +208,48 @@ public class InventoryAssistantService {
         );
 
         // Usar el método existente buildPrompt
-        return buildPrompt(question, snapshot);
+        return buildPrompt(question, snapshot, roleContext);
+    }
+
+    private String buildPromptWithFilteredContext(
+            String question,
+            RoleBasedContextFilter.FilteredContextSnapshot filteredContext,
+            RoleContextInfo roleContext,
+            List<ConversationMessageDto> conversationHistory) {
+        return buildPromptWithFilteredContext(
+                question,
+                filteredContext,
+                roleContext,
+                conversationHistory,
+                List.of()
+        );
+    }
+
+    private String buildPromptWithFilteredContext(
+            String question,
+            RoleBasedContextFilter.FilteredContextSnapshot filteredContext,
+            RoleContextInfo roleContext,
+            List<ConversationMessageDto> conversationHistory,
+            List<ConversationDto> relatedConversations) {
+
+        InventorySnapshot snapshot = new InventorySnapshot(
+                filteredContext.items(),
+                filteredContext.lowStockItems(),
+                filteredContext.recentMovements(),
+                filteredContext.topUsedItems(),
+                filteredContext.inventoryReport(),
+                filteredContext.alerts(),
+                filteredContext.providers(),
+                filteredContext.categories(),
+                filteredContext.areas(),
+                filteredContext.rooms(),
+                filteredContext.roomConsumption(),
+                filteredContext.roomDistribution(),
+                filteredContext.users(),
+                contextSourceForFilteredContext(filteredContext)
+        );
+
+        return buildPrompt(question, snapshot, roleContext, conversationHistory, relatedConversations);
     }
 
     /**
@@ -266,6 +343,25 @@ public class InventoryAssistantService {
     }
 
     private String buildPrompt(String question, InventorySnapshot snapshot) {
+        return buildPrompt(question, snapshot, null);
+    }
+
+    private String buildPrompt(String question, InventorySnapshot snapshot, RoleContextInfo roleContext) {
+        return buildPrompt(question, snapshot, roleContext, List.of());
+    }
+
+    private String buildPrompt(String question,
+                               InventorySnapshot snapshot,
+                               RoleContextInfo roleContext,
+                               List<ConversationMessageDto> conversationHistory) {
+        return buildPrompt(question, snapshot, roleContext, conversationHistory, List.of());
+    }
+
+    private String buildPrompt(String question,
+                               InventorySnapshot snapshot,
+                               RoleContextInfo roleContext,
+                               List<ConversationMessageDto> conversationHistory,
+                               List<ConversationDto> relatedConversations) {
         InventoryMetrics metrics = metrics(snapshot);
         List<RiskRow> prioritized = prioritizedRestock(snapshot.items(), snapshot.inventoryReport());
 
@@ -280,6 +376,12 @@ public class InventoryAssistantService {
         builder.append("Pregunta del usuario:\n")
                 .append(question.trim())
                 .append("\n\n")
+                .append(roleContext == null
+                        ? ""
+                        : roleCapabilitiesService.buildRoleContextBlock(roleContext)
+                        + roleCapabilitiesService.buildAccessibleRolesBlock(roleContext) + "\n")
+                .append(buildConversationHistoryBlock(conversationHistory))
+                .append(buildRelatedConversationsBlock(relatedConversations))
                 .append("Fuente del contexto: ")
                 .append(snapshot.contextSource())
                 .append("\n")
@@ -376,6 +478,62 @@ public class InventoryAssistantService {
                 .append("- Si hablas de consumo promedio, usa el periodo de 30 dias ya calculado.\n")
                 .append("- Si algun bloque llega vacio, explica que puede deberse a permisos o falta de datos disponibles.\n")
                 .append("- Si aplica, cierra con una recomendacion operativa breve.\n");
+        return builder.toString();
+    }
+
+    private String buildConversationHistoryBlock(List<ConversationMessageDto> conversationHistory) {
+        if (conversationHistory == null || conversationHistory.isEmpty()) {
+            return "";
+        }
+
+        StringBuilder builder = new StringBuilder();
+        builder.append("Historial reciente de la conversacion:\n");
+        conversationHistory.stream()
+                .filter(Objects::nonNull)
+                .limit(8)
+                .forEach(message -> builder.append("- [")
+                        .append(message.createdAt())
+                        .append("] Pregunta: ")
+                        .append(safe(message.question()))
+                        .append('\n')
+                        .append("  Respuesta: ")
+                        .append(safe(message.answer()))
+                        .append('\n'));
+        builder.append("- Si el usuario menciona preguntas anteriores, usa este historial para mantener continuidad.\n\n");
+        return builder.toString();
+    }
+
+    private String buildRelatedConversationsBlock(List<ConversationDto> relatedConversations) {
+        if (relatedConversations == null || relatedConversations.isEmpty()) {
+            return "";
+        }
+
+        StringBuilder builder = new StringBuilder();
+        builder.append("Otras conversaciones recientes del mismo usuario:\n");
+        relatedConversations.stream()
+                .filter(Objects::nonNull)
+                .limit(RELATED_CONVERSATIONS_PROMPT_LIMIT)
+                .forEach(conversation -> {
+                    builder.append("- Conversacion #")
+                            .append(conversation.id())
+                            .append(" | titulo: ")
+                            .append(safe(conversation.title()))
+                            .append(" | actualizada: ")
+                            .append(conversation.updatedAt())
+                            .append('\n');
+
+                    conversation.messages().stream()
+                            .filter(Objects::nonNull)
+                            .limit(RELATED_MESSAGES_PER_CONVERSATION_LIMIT)
+                            .forEach(message -> builder.append("  * Pregunta: ")
+                                    .append(safe(message.question()))
+                                    .append('\n')
+                                    .append("    Respuesta: ")
+                                    .append(safe(message.answer()))
+                                    .append('\n'));
+                });
+        builder.append("- Usa estas conversaciones como memoria de preferencias, temas previos y continuidad del usuario.\n")
+                .append("- Si hay conflicto entre esas conversaciones y la conversacion actual, prioriza la conversacion actual y el contexto mas reciente.\n\n");
         return builder.toString();
     }
 

@@ -52,7 +52,23 @@ public class AiController {
             throw new IllegalStateException("Usuario no autenticado");
         }
 
-        InventoryAssistantResponse response = inventoryAssistantService.answerInventoryQuestion(request, roleContext);
+        java.util.List<com.hotel.ai.dto.ConversationMessageDto> conversationHistory =
+                conversationId == null || roleContext.userId() == null
+                        ? java.util.List.of()
+                        : conversationService.getConversation(conversationId, roleContext.userId())
+                                .map(ConversationDto::messages)
+                                .orElse(java.util.List.of());
+        java.util.List<ConversationDto> relatedConversations =
+                roleContext.userId() == null
+                        ? java.util.List.of()
+                        : conversationService.getRelatedConversationContext(roleContext.userId(), conversationId);
+
+        InventoryAssistantResponse response = inventoryAssistantService.answerInventoryQuestion(
+                request,
+                roleContext,
+                conversationHistory,
+                relatedConversations
+        );
 
         // Guardar en historial si se proporciona conversationId
         if (conversationId != null && roleContext.userId() != null) {
