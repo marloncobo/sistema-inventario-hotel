@@ -1,4 +1,4 @@
-FROM maven:3.9-eclipse-temurin-21 AS build
+FROM maven:3.9-eclipse-temurin-17 AS build
 WORKDIR /workspace
 COPY pom.xml .
 COPY ai-service/pom.xml ai-service/pom.xml
@@ -8,7 +8,7 @@ COPY gateway-service/pom.xml gateway-service/pom.xml
 COPY ai-service/src ai-service/src
 RUN mvn -pl ai-service -am package -DskipTests
 
-FROM eclipse-temurin:21-jre
+FROM eclipse-temurin:17-jre
 WORKDIR /app
 RUN apt-get update \
     && apt-get install -y --no-install-recommends curl \

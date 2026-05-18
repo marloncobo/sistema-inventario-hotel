@@ -14,6 +14,7 @@ import { take } from 'rxjs';
 import { ButtonModule } from 'primeng/button';
 import { AssistantApiService } from '@core/services/api/assistant-api.service';
 import { AuthService } from '@core/services/auth.service';
+import { ConversationApiService, ConversationDto } from '@core/services/api/conversation-api.service';
 import { extractApiErrorMessage } from '@models/api-error.model';
 import type { InventoryAssistantHistoryEntry } from '@models/assistant.model';
 import {
@@ -36,6 +37,7 @@ import {
 export class AssistantPageComponent implements AfterViewChecked, OnInit {
   private readonly assistantApi = inject(AssistantApiService);
   private readonly authService = inject(AuthService);
+  private readonly conversationApi = inject(ConversationApiService);
 
   @ViewChild('chatThread') private chatThreadRef?: ElementRef<HTMLElement>;
 
@@ -45,6 +47,9 @@ export class AssistantPageComponent implements AfterViewChecked, OnInit {
   protected readonly history = signal<InventoryAssistantHistoryEntry[]>([]);
   protected readonly userRole = signal<string | null>(null);
   protected readonly suggestedQuestions = signal<QuestionSuggestion[]>([]);
+  protected readonly conversations = signal<ConversationDto[]>([]);
+  protected readonly currentConversationId = signal<number | null>(null);
+  protected readonly showConversationList = signal(false);
 
   private shouldScrollToBottom = false;
 
@@ -74,6 +79,22 @@ export class AssistantPageComponent implements AfterViewChecked, OnInit {
     const role = this.authService.primaryRole()?.toUpperCase() || 'RECEPCION';
     this.userRole.set(role);
     this.suggestedQuestions.set(getSuggestionsForRole(role));
+
+    // Cargar conversaciones del usuario
+    this.conversationApi.getConversations()
+      .pipe(take(1))
+      .subscribe({
+        next: (conversations) => {
+          this.conversations.set(conversations);
+          // Si hay conversaciones previas, cargar la más reciente
+          if (conversations.length > 0) {
+            this.loadConversation(conversations[0].id);
+          }
+        },
+        error: () => {
+          // Silenciar errores de carga de conversaciones
+        }
+      });
   }
 
   ngAfterViewChecked(): void {
@@ -123,8 +144,16 @@ export class AssistantPageComponent implements AfterViewChecked, OnInit {
     this.history.update((entries) => [...entries, optimisticEntry]);
     this.shouldScrollToBottom = true;
 
+    // Si no hay conversación abierta, crear una nueva
+    let conversationId = this.currentConversationId();
+    if (!conversationId) {
+      this.createNewConversation();
+      // Después de crear, usar el ID de la nueva conversación
+      conversationId = this.conversations()[0]?.id || null;
+    }
+
     this.assistantApi
-      .askInventoryAssistant(nextQuestion)
+      .askInventoryAssistant(nextQuestion, conversationId || undefined)
       .pipe(take(1))
       .subscribe({
         next: (response) => {
@@ -205,6 +234,65 @@ export class AssistantPageComponent implements AfterViewChecked, OnInit {
       dateStyle: 'medium',
       timeStyle: 'short'
     });
+  }
+
+  protected createNewConversation(): void {
+    const title = `Conversación ${new Date().toLocaleDateString('es-CO')}`;
+    this.conversationApi.createConversation(title)
+      .pipe(take(1))
+      .subscribe({
+        next: (conversation) => {
+          this.conversations.update(convs => [conversation, ...convs]);
+          this.loadConversation(conversation.id);
+          this.history.set([]);
+          this.showConversationList.set(false);
+        }
+      });
+  }
+
+  protected loadConversation(conversationId: number): void {
+    this.currentConversationId.set(conversationId);
+    this.conversationApi.getConversation(conversationId)
+      .pipe(take(1))
+      .subscribe({
+        next: (conversation) => {
+          // Mapear mensajes guardados al formato de history
+          const messages = conversation.messages.map(msg => ({
+            id: `${msg.id}`,
+            question: msg.question,
+            answer: msg.answer,
+            askedAt: msg.createdAt,
+            status: 'success' as const,
+            contextSource: null,
+            errorMessage: null
+          }));
+          this.history.set(messages);
+          this.shouldScrollToBottom = true;
+        }
+      });
+  }
+
+  protected deleteConversation(conversationId: number): void {
+    if (!confirm('¿Eliminar esta conversación?')) {
+      return;
+    }
+    this.conversationApi.deleteConversation(conversationId)
+      .pipe(take(1))
+      .subscribe({
+        next: () => {
+          this.conversations.update(convs =>
+            convs.filter(c => c.id !== conversationId)
+          );
+          if (this.currentConversationId() === conversationId) {
+            this.currentConversationId.set(null);
+            this.history.set([]);
+          }
+        }
+      });
+  }
+
+  protected toggleConversationList(): void {
+    this.showConversationList.update(show => !show);
   }
 
   private scrollToBottom(): void {

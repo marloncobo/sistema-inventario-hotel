@@ -53,6 +53,24 @@ services:
       retries: 10
     restart: unless-stopped
 
+  ai-db:
+    image: postgres:16-alpine
+    container_name: ai-db
+    environment:
+      POSTGRES_DB: aidb
+      POSTGRES_USER: hotel
+      POSTGRES_PASSWORD: hotel
+    ports:
+      - "5436:5432"
+    volumes:
+      - ai-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hotel -d aidb"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
   inventory-service:
     build:
       context: .
@@ -115,20 +133,26 @@ services:
     depends_on:
       inventory-service:
         condition: service_healthy
+      ai-db:
+        condition: service_healthy
     ports:
-      - "8085:8085"
+      - "8085:8080"
     environment:
-      PORT: 8085
+      PORT: 8080
       JAVA_OPTS: -XX:MaxRAMPercentage=75
-      JWT_SECRET: ${JWT_SECRET:-hotel-inventory-demo-secret-key-32}
+      SECURITY_JWT_SECRET: ${JWT_SECRET:-hotel-inventory-demo-secret-key-32}
       INVENTORY_SERVICE_URL: http://inventory-service:8081
       ROOMS_SERVICE_URL: http://rooms-service:8082
       GATEWAY_SERVICE_URL: http://gateway-service:8080
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       GEMINI_BASE_URL: ${GEMINI_BASE_URL:-https://generativelanguage.googleapis.com}
       GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://ai-db:5432/aidb
+      SPRING_DATASOURCE_USERNAME: hotel
+      SPRING_DATASOURCE_PASSWORD: hotel
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
     healthcheck:
-      test: ["CMD-SHELL", "curl --fail --silent http://localhost:8085/actuator/health >/dev/null || exit 1"]
+      test: ["CMD-SHELL", "curl --fail --silent http://localhost:8080/actuator/health >/dev/null || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 12
@@ -145,8 +169,6 @@ services:
         condition: service_healthy
       rooms-service:
         condition: service_healthy
-      ai-service:
-        condition: service_healthy
       gateway-db:
         condition: service_healthy
     ports:
@@ -157,7 +179,7 @@ services:
       JWT_SECRET: ${JWT_SECRET:-hotel-inventory-demo-secret-key-32}
       INVENTORY_SERVICE_URL: http://inventory-service:8081
       ROOMS_SERVICE_URL: http://rooms-service:8082
-      AI_SERVICE_URL: http://ai-service:8085
+      AI_SERVICE_URL: http://ai-service:8080
       SPRING_DATASOURCE_URL: jdbc:postgresql://gateway-db:5432/gatewaydb
       SPRING_DATASOURCE_USERNAME: hotel
       SPRING_DATASOURCE_PASSWORD: hotel
@@ -185,3 +207,4 @@ volumes:
   inventory-db-data:
   rooms-db-data:
   gateway-db-data:
+  ai-db-data:

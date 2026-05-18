@@ -10,13 +10,14 @@ import { Observable } from 'rxjs';
 @Injectable({ providedIn: 'root' })
 export class AssistantApiService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = `${environment.apiBaseUrl}/ai/api/ai`;
+  private readonly baseUrl = `${environment.apiBaseUrl}/ai`;
 
-  askInventoryAssistant(question: string): Observable<InventoryAssistantResponse> {
+  askInventoryAssistant(question: string, conversationId?: number): Observable<InventoryAssistantResponse> {
     const payload: InventoryAssistantRequest = { question };
-    return this.http.post<InventoryAssistantResponse>(
-      `${this.baseUrl}/inventory-assistant`,
-      payload
-    );
+    let url = `${this.baseUrl}/inventory-assistant`;
+    if (conversationId) {
+      url += `?conversationId=${conversationId}`;
+    }
+    return this.http.post<InventoryAssistantResponse>(url, payload);
   }
 }

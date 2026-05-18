@@ -69,6 +69,7 @@ public class AuthService {
                 .expiresAt(expiresAt)
                 .subject(user.getUsername())
                 .claim("roles", user.getRoles())
+                .claim("userId", user.getId())
                 .build();
 
         JwsHeader headers = JwsHeader.with(MacAlgorithm.HS256).build();

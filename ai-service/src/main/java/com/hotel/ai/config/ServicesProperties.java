@@ -21,7 +21,7 @@ public class ServicesProperties {
     }
 
     public static class Inventory {
-        private String baseUrl = "http://localhost:8081";
+        private String baseUrl = "http://inventory-service:8081";
 
         public String getBaseUrl() {
             return baseUrl;
@@ -33,7 +33,7 @@ public class ServicesProperties {
     }
 
     public static class Rooms {
-        private String baseUrl = "http://localhost:8082";
+        private String baseUrl = "http://rooms-service:8082";
 
         public String getBaseUrl() {
             return baseUrl;
@@ -45,7 +45,7 @@ public class ServicesProperties {
     }
 
     public static class Gateway {
-        private String baseUrl = "http://localhost:8080";
+        private String baseUrl = "http://gateway-service:8080";
 
         public String getBaseUrl() {
             return baseUrl;

@@ -173,6 +173,62 @@
     </section>
 
     <aside class="assistant-rail pp-surface-solid" aria-label="Panel lateral">
+      <!-- Conversaciones -->
+      <div class="assistant-rail__conversations">
+        <div class="assistant-rail__head">
+          <span class="pp-section-label">Conversaciones</span>
+          <button
+            type="button"
+            class="assistant-rail__btn-toggle"
+            (click)="toggleConversationList()"
+            [attr.aria-expanded]="showConversationList()"
+          >
+            <i class="pi" [ngClass]="showConversationList() ? 'pi-chevron-up' : 'pi-chevron-down'"></i>
+          </button>
+        </div>
+
+        <button
+          type="button"
+          pButton
+          class="assistant-rail__btn-new"
+          icon="pi pi-plus"
+          label="Nueva conversación"
+          (click)="createNewConversation()"
+          [disabled]="loading()"
+        ></button>
+
+        @if (showConversationList()) {
+          <ul class="assistant-rail__conv-list">
+            @if (conversations().length === 0) {
+              <li class="assistant-rail__conv-empty">No hay conversaciones</li>
+            }
+            @for (conv of conversations(); track conv.id) {
+              <li class="assistant-rail__conv-item" [class.active]="currentConversationId() === conv.id">
+                <button
+                  type="button"
+                  class="assistant-rail__conv-btn"
+                  (click)="loadConversation(conv.id)"
+                >
+                  <span class="assistant-rail__conv-title">{{ conv.title }}</span>
+                  <span class="assistant-rail__conv-date">{{ conv.updatedAt | date: 'short' }}</span>
+                </button>
+                <button
+                  type="button"
+                  class="assistant-rail__conv-delete"
+                  icon="pi pi-trash"
+                  (click)="deleteConversation(conv.id)"
+                  [disabled]="loading()"
+                  title="Eliminar"
+                ></button>
+              </li>
+            }
+          </ul>
+        }
+      </div>
+
+      <hr class="assistant-rail__divider">
+
+      <!-- Tu Rol -->
       @if (hasHistory()) {
         <div class="assistant-rail__head">
           <span class="pp-section-label">Atajos</span>
@@ -303,5 +359,116 @@
 
   .assistant-rail__role-features i {
     font-size: 0.75rem;
+  }
+
+  .assistant-rail__conversations {
+    margin-bottom: 1.5rem;
+  }
+
+  .assistant-rail__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+  }
+
+  .assistant-rail__btn-toggle {
+    background: none;
+    border: none;
+    color: var(--text-color-secondary);
+    cursor: pointer;
+    padding: 0;
+    font-size: 1rem;
+  }
+
+  .assistant-rail__btn-new {
+    width: 100%;
+    margin-bottom: 0.75rem;
+  }
+
+  .assistant-rail__conv-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+    max-height: 300px;
+    overflow-y: auto;
+  }
+
+  .assistant-rail__conv-item {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 0.5rem;
+    border-radius: 0.375rem;
+    background: rgba(0, 0, 0, 0.02);
+    transition: background-color 0.2s;
+  }
+
+  .assistant-rail__conv-item.active {
+    background: rgba(0, 0, 0, 0.05);
+    border-left: 3px solid var(--primary-color);
+    padding-left: calc(0.5rem - 3px);
+  }
+
+  .assistant-rail__conv-item:hover {
+    background: rgba(0, 0, 0, 0.05);
+  }
+
+  .assistant-rail__conv-btn {
+    flex: 1;
+    background: none;
+    border: none;
+    text-align: left;
+    padding: 0;
+    cursor: pointer;
+    font-size: 0.875rem;
+    color: var(--text-color);
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .assistant-rail__conv-title {
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .assistant-rail__conv-date {
+    font-size: 0.75rem;
+    color: var(--text-color-secondary);
+  }
+
+  .assistant-rail__conv-delete {
+    background: none;
+    border: none;
+    color: var(--red-500);
+    cursor: pointer;
+    padding: 0.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .assistant-rail__conv-delete:hover {
+    opacity: 0.8;
+  }
+
+  .assistant-rail__conv-empty {
+    padding: 1rem 0.5rem;
+    text-align: center;
+    color: var(--text-color-secondary);
+    font-size: 0.875rem;
+  }
+
+  .assistant-rail__divider {
+    border: none;
+    border-top: 1px solid var(--surface-border);
+    margin: 1rem 0;
   }
 </style>
