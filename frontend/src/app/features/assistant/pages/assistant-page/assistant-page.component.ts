@@ -23,11 +23,12 @@ import {
   ROLE_COLORS,
   QuestionSuggestion
 } from '../../data/role-based-suggestions';
+import { MarkdownPipe } from '@shared/pipes/markdown.pipe';
 
 @Component({
   selector: 'app-assistant-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, ButtonModule],
+  imports: [CommonModule, FormsModule, ButtonModule, MarkdownPipe],
   templateUrl: './assistant-page.component.html',
   styleUrls: [
     './assistant-page.component.css',
@@ -53,6 +54,8 @@ export class AssistantPageComponent implements AfterViewChecked, OnInit {
   protected readonly isNewConversation = signal(false);
   protected readonly showConversationList = signal(false);
   protected readonly showHistory = signal(false);
+  protected readonly convSidebarCollapsed = signal(true);
+  protected readonly composerFocused = signal(false);
 
   private shouldScrollToBottom = false;
 
@@ -174,22 +177,16 @@ export class AssistantPageComponent implements AfterViewChecked, OnInit {
             )
           );
 
-          // Auto-renombrar conversación nueva después del primer mensaje
-          if (isNewConv && conversationId) {
-            const newTitle = nextQuestion.substring(0, 50);
-            this.conversationApi
-              .updateConversationTitle(conversationId, newTitle)
-              .pipe(take(1))
-              .subscribe({
-                next: (updated) => {
-                  this.conversations.update((convs) =>
-                    convs.map((c) =>
-                      c.id === conversationId ? updated : c
-                    )
-                  );
-                  this.currentConversationTitle.set(newTitle);
-                }
-              });
+          // Actualizar título con el generado por IA en el backend (estilo ChatGPT)
+          if (response.conversationTitle && conversationId) {
+            const aiTitle = response.conversationTitle;
+            this.currentConversationTitle.set(aiTitle);
+            this.isNewConversation.set(false);
+            this.conversations.update((convs) =>
+              convs.map((c) =>
+                c.id === conversationId ? { ...c, title: aiTitle } : c
+              )
+            );
           }
 
           this.loading.set(false);
@@ -288,6 +285,7 @@ export class AssistantPageComponent implements AfterViewChecked, OnInit {
   protected loadConversation(conversationId: number): void {
     this.currentConversationId.set(conversationId);
     this.isNewConversation.set(false);
+    this.convSidebarCollapsed.set(true);
     this.conversationApi.getConversation(conversationId)
       .pipe(take(1))
       .subscribe({
@@ -339,6 +337,10 @@ export class AssistantPageComponent implements AfterViewChecked, OnInit {
 
   protected toggleHistoryPanel(): void {
     this.showHistory.update(show => !show);
+  }
+
+  protected toggleConvSidebar(): void {
+    this.convSidebarCollapsed.update(collapsed => !collapsed);
   }
 
   private scrollToBottom(): void {

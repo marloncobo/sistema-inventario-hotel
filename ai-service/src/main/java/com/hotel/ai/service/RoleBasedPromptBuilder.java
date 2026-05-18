@@ -39,9 +39,22 @@ public class RoleBasedPromptBuilder {
 
             ACCESO BASE: inventario completo, usuarios, habitaciones y reportes ejecutivos.
 
-            Responde en espanol claro. Usa solo el contexto entregado.
+            FORMATO DE RESPUESTA (IMPORTANTE):
+            ================================
+            Responde SIEMPRE en Markdown estructurado con:
+            - Un titulo principal (# Titulo)
+            - Secciones claras con subtitulos (## Seccion)
+            - Listas con viñetas (-) o numeradas (1.) cuando sea apropiado
+            - **Texto en negrita** para datos importantes
+            - Parrafos cortos y claros (máximo 3 líneas por párrafo)
+            - Espacios en blanco entre secciones para legibilidad
+            - Tablas cuando sea necesario comparar datos
+
+            CONTENIDO:
+            ----------
+            Responde en español claro. Usa solo el contexto entregado.
             Si un bloque llega vacio, explica por que puede deberse a permisos o datos no disponibles.
-            Proporciona analisis estrategico y recomendaciones de impacto organizacional.
+            Proporciona análisis estratégico y recomendaciones de impacto organizacional.
             Prioriza por importancia e impacto en el negocio.
 
             TOMA COMO VERDAD OPERATIVA ESTA MATRIZ DE ROL:
@@ -62,9 +75,22 @@ public class RoleBasedPromptBuilder {
 
             ACCESO BASE: inventario de bodega, stock, movimientos, alertas y reposicion.
 
-            Responde en espanol claro y operativo. Usa solo el contexto entregado.
-            Enfocate en reabastecimiento, stock, alertas, movimientos, consumo de 30 dias y PAR visible.
-            Ordena recomendaciones por urgencia: CRITICO > ALTO > MEDIO > BAJO.
+            FORMATO DE RESPUESTA (IMPORTANTE):
+            ================================
+            Responde SIEMPRE en Markdown estructurado con:
+            - Un titulo principal (# Titulo)
+            - Secciones claras con subtitulos (## Seccion)
+            - Listas numeradas (1. 2. 3.) para prioridades y pasos
+            - Listas con viñetas (-) para detalles
+            - **Texto en negrita** para datos críticos y acciones
+            - Parrafos cortos (máximo 3 líneas)
+            - Espacios entre secciones
+
+            CONTENIDO:
+            ----------
+            Responde en español claro y operativo. Usa solo el contexto entregado.
+            Enfócate en reabastecimiento, stock, alertas, movimientos, consumo de 30 días y PAR visible.
+            Ordena recomendaciones por urgencia: **CRÍTICO > ALTO > MEDIO > BAJO**.
             Sugiere cantidades de reabastecimiento cuando sea aplicable.
 
             TOMA COMO VERDAD OPERATIVA ESTA MATRIZ DE ROL:
@@ -86,9 +112,22 @@ public class RoleBasedPromptBuilder {
 
             ACCESO BASE: productos operativos, consumo por habitacion, asignaciones y devoluciones permitidas.
 
-            Responde en espanol claro y practico. Usa solo el contexto entregado.
-            Enfocate en asignacion de productos a cuartos, consumo esperado por tipo y operacion de habitaciones.
-            Sugiere cantidades apropiadas para cada tipo de habitacion.
+            FORMATO DE RESPUESTA (IMPORTANTE):
+            ================================
+            Responde SIEMPRE en Markdown estructurado con:
+            - Un titulo principal (# Titulo)
+            - Secciones claras con subtitulos (## Seccion)
+            - Listas con viñetas (-) para productos y detalles
+            - Listas numeradas (1. 2. 3.) para pasos
+            - **Texto en negrita** para cantidades y tipos de habitación
+            - Parrafos cortos y claros
+            - Espacios entre secciones para legibilidad
+
+            CONTENIDO:
+            ----------
+            Responde en español claro y práctico. Usa solo el contexto entregado.
+            Enfócate en asignación de productos a cuartos, consumo esperado por tipo y operación de habitaciones.
+            Sugiere cantidades apropiadas para cada tipo de habitación.
             Ordena por importancia operativa.
 
             TOMA COMO VERDAD OPERATIVA ESTA MATRIZ DE ROL:
@@ -110,9 +149,22 @@ public class RoleBasedPromptBuilder {
 
             ACCESO BASE: habitaciones, estado, consumo visible, PAR y reportes operativos de recepcion.
 
-            Responde en espanol claro y profesional. Usa solo el contexto entregado.
-            Enfocate en estado de habitaciones, disponibilidad, consumo relacionado y PAR.
-            Para PAR, se especifico en productos y cantidades.
+            FORMATO DE RESPUESTA (IMPORTANTE):
+            ================================
+            Responde SIEMPRE en Markdown estructurado con:
+            - Un titulo principal (# Titulo)
+            - Secciones claras con subtitulos (## Seccion)
+            - Listas con viñetas (-) para detalles y opciones
+            - Listas numeradas (1. 2. 3.) para pasos o prioridades
+            - **Texto en negrita** para números de habitación y datos críticos
+            - Párrafos cortos y precisos
+            - Espacios en blanco entre secciones
+
+            CONTENIDO:
+            ----------
+            Responde en español claro y profesional. Usa solo el contexto entregado.
+            Enfócate en estado de habitaciones, disponibilidad, consumo relacionado y PAR.
+            Para PAR, sé específico en productos y cantidades.
 
             TOMA COMO VERDAD OPERATIVA ESTA MATRIZ DE ROL:
             """ + roleContextBlock + """

@@ -5,6 +5,8 @@ export interface InventoryAssistantRequest {
 export interface InventoryAssistantResponse {
   answer: string;
   contextSource: string;
+  /** Título generado automáticamente por IA tras el primer mensaje de la conversación */
+  conversationTitle?: string | null;
 }
 
 export type InventoryAssistantHistoryStatus = 'loading' | 'success' | 'error';

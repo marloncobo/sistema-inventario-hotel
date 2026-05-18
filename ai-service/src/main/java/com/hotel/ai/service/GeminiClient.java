@@ -22,6 +22,39 @@ public class GeminiClient {
         this.geminiProperties = geminiProperties;
     }
 
+    public String generateConversationTitle(String firstQuestion, String firstAnswer) {
+        if (geminiProperties.getApiKey() == null || geminiProperties.getApiKey().isBlank()) {
+            return null;
+        }
+        try {
+            String titleInstruction = "Eres un asistente que genera titulos cortos para conversaciones.\n"
+                    + "Tu unica tarea es devolver UN titulo corto (3 a 7 palabras) que resuma de que trata la conversacion.\n"
+                    + "REGLAS: Responde SOLAMENTE el titulo, sin comillas, sin puntuacion al final, sin explicaciones.\n"
+                    + "El titulo debe estar en espanol, maximo 7 palabras, descriptivo y profesional.\n";
+
+            String input = "Pregunta: " + firstQuestion.trim() + "\nRespuesta (resumen): "
+                    + firstAnswer.trim().substring(0, Math.min(300, firstAnswer.length()));
+
+            GeminiGenerateContentRequest request = new GeminiGenerateContentRequest(
+                    new GeminiInstruction(List.of(new GeminiPart(titleInstruction))),
+                    List.of(new GeminiContent("user", List.of(new GeminiPart(input))))
+            );
+            GeminiGenerateContentResponse response = geminiRestClient.post()
+                    .uri("/v1beta/models/{model}:generateContent", geminiProperties.getModel())
+                    .body(request)
+                    .retrieve()
+                    .body(GeminiGenerateContentResponse.class);
+            String title = extractAnswer(response);
+            if (title == null || title.isBlank()) {
+                return null;
+            }
+            title = title.trim().replaceAll("[\"']+", "").replaceAll("[.!?]+$", "").trim();
+            return title.length() > 70 ? title.substring(0, 70) : title;
+        } catch (Exception ex) {
+            return null;
+        }
+    }
+
     public String generateInventoryAnswer(String instructions, String input) {
         if (geminiProperties.getApiKey() == null || geminiProperties.getApiKey().isBlank()) {
             throw new AiConfigurationException("La variable de entorno GEMINI_API_KEY no esta configurada en ai-service");
@@ -58,7 +91,6 @@ public class GeminiClient {
         if (response == null || response.candidates() == null || response.candidates().isEmpty()) {
             return null;
         }
-
         StringBuilder builder = new StringBuilder();
         for (GeminiCandidate candidate : response.candidates()) {
             if (candidate.content() == null || candidate.content().parts() == null) {
@@ -79,24 +111,18 @@ public class GeminiClient {
     private record GeminiGenerateContentRequest(
             GeminiInstruction system_instruction,
             List<GeminiContent> contents
-    ) {
-    }
+    ) {}
 
-    private record GeminiInstruction(List<GeminiPart> parts) {
-    }
+    private record GeminiInstruction(List<GeminiPart> parts) {}
 
-    private record GeminiContent(String role, List<GeminiPart> parts) {
-    }
+    private record GeminiContent(String role, List<GeminiPart> parts) {}
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    private record GeminiPart(String text) {
-    }
+    private record GeminiPart(String text) {}
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    private record GeminiGenerateContentResponse(List<GeminiCandidate> candidates) {
-    }
+    private record GeminiGenerateContentResponse(List<GeminiCandidate> candidates) {}
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    private record GeminiCandidate(GeminiContent content) {
-    }
+    private record GeminiCandidate(GeminiContent content) {}
 }

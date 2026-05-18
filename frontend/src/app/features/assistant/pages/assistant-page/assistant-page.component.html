@@ -1,270 +1,250 @@
 <div class="ai-page">
 
-  <!-- ══════════ TOPBAR ══════════ -->
-  <header class="ai-topbar">
-
-    <!-- Izquierda: título de conversación -->
-    <div class="topbar-left">
-      <div class="ai-brand-dot"></div>
-      <span class="topbar-conv-title">
-        @if (currentConversationTitle()) {
-          {{ currentConversationTitle() }}
-        } @else {
-          Nueva conversación
-        }
-      </span>
-      @if (isNewConversation()) {
-        <span class="unsaved-pill">Sin guardar</span>
-      }
-    </div>
-
-    <!-- Derecha: acciones -->
-    <div class="topbar-right">
-
-      <!-- Historial dropdown -->
-      <div class="history-dropdown-wrap" #historyWrap>
-        <button
-          type="button"
-          class="topbar-btn"
-          (click)="toggleHistoryPanel()"
-          [class.active]="showHistory()"
-          title="Historial"
-        >
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-          </svg>
-          Historial
-          @if (conversations().length > 0) {
-            <span class="history-count">{{ conversations().length }}</span>
-          }
-          <svg class="chevron" [class.open]="showHistory()" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="6 9 12 15 18 9"/>
-          </svg>
-        </button>
-
-        <!-- Panel dropdown del historial -->
-        @if (showHistory()) {
-          <div class="history-panel">
-            <div class="history-panel-header">
-              <span>Conversaciones recientes</span>
-              <button
-                type="button"
-                class="new-conv-mini"
-                (click)="createNewConversation(); toggleHistoryPanel()"
-                [disabled]="loading()"
-              >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                  <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-                </svg>
-                Nueva
-              </button>
-            </div>
-
-            @if (conversations().length > 0) {
-              <div class="history-panel-list">
-                @for (conv of conversations(); track conv.id) {
-                  <div class="hp-item" [class.active]="currentConversationId() === conv.id">
-                    <button
-                      type="button"
-                      class="hp-item-btn"
-                      (click)="loadConversation(conv.id); toggleHistoryPanel()"
-                    >
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                      </svg>
-                      <span>{{ conv.title }}</span>
-                    </button>
-                    <button
-                      type="button"
-                      class="hp-delete"
-                      (click)="deleteConversation(conv.id)"
-                      [disabled]="loading()"
-                      title="Eliminar"
-                    >
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-                      </svg>
-                    </button>
-                  </div>
-                }
-              </div>
-              @if (hasHistory()) {
-                <button type="button" class="hp-clear" (click)="clearHistory()" [disabled]="loading()">
-                  Limpiar todo
-                </button>
-              }
-            } @else {
-              <div class="hp-empty">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                </svg>
-                <p>Sin conversaciones aún</p>
-              </div>
-            }
-          </div>
-        }
+  <!-- ══════════ SIDEBAR DE CONVERSACIONES (estilo ChatGPT) ══════════ -->
+  <aside class="ai-conv-sidebar" [class.collapsed]="convSidebarCollapsed()">
+    <div class="conv-sidebar-inner">
+      <div class="conv-sidebar-brand">
+        <span class="conv-brand-icon">
+          <i class="pi pi-sparkles" aria-hidden="true"></i>
+        </span>
+        <span class="conv-brand-label">Asistente IA</span>
       </div>
 
-      <!-- Botón nueva conversación -->
       <button
         type="button"
-        class="topbar-btn topbar-btn--primary"
+        class="conv-new-btn"
         (click)="createNewConversation()"
         [disabled]="loading()"
       >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-        </svg>
-        Nueva
+        <i class="pi pi-plus" aria-hidden="true"></i>
+        Nueva conversación
       </button>
 
-      <!-- Chip de rol -->
-      <div class="role-chip">
-        <span class="role-dot"></span>
-        {{ userRole() }}
+      <div class="conv-list-wrap">
+        @if (conversations().length > 0) {
+          <p class="conv-list-label">Recientes</p>
+          <ul class="conv-list">
+            @for (conv of conversations(); track conv.id) {
+              <li class="conv-item" [class.active]="currentConversationId() === conv.id">
+                <button
+                  type="button"
+                  class="conv-item-btn"
+                  (click)="loadConversation(conv.id)"
+                  [title]="conv.title"
+                >
+                  <i class="pi pi-comments" aria-hidden="true"></i>
+                  <span>{{ conv.title }}</span>
+                </button>
+                <button
+                  type="button"
+                  class="conv-item-delete"
+                  (click)="deleteConversation(conv.id)"
+                  [disabled]="loading()"
+                  title="Eliminar"
+                  aria-label="Eliminar conversación"
+                >
+                  <i class="pi pi-trash" aria-hidden="true"></i>
+                </button>
+              </li>
+            }
+          </ul>
+          @if (hasHistory()) {
+            <button type="button" class="conv-clear-btn" (click)="clearHistory()" [disabled]="loading()">
+              Limpiar historial actual
+            </button>
+          }
+        } @else {
+          <div class="conv-empty">
+            <i class="pi pi-inbox" aria-hidden="true"></i>
+            <p>Sin conversaciones</p>
+            <span>Inicia una nueva para comenzar</span>
+          </div>
+        }
+      </div>
+    </div>
+  </aside>
+
+  <!-- ══════════ ÁREA PRINCIPAL DEL CHAT ══════════ -->
+  <main class="ai-main">
+
+    <header class="ai-topbar">
+      <div class="topbar-left">
+        <button
+          type="button"
+          class="topbar-toggle"
+          (click)="toggleConvSidebar()"
+          aria-label="Mostrar u ocultar conversaciones"
+        >
+          <i class="pi" [ngClass]="convSidebarCollapsed() ? 'pi-bars' : 'pi-times'" aria-hidden="true"></i>
+        </button>
+        <div class="topbar-title-block">
+          <h1 class="topbar-conv-title">
+            @if (currentConversationTitle()) {
+              {{ currentConversationTitle() }}
+            } @else {
+              Nueva conversación
+            }
+          </h1>
+          @if (isNewConversation()) {
+            <span class="unsaved-pill">Sin guardar</span>
+          }
+        </div>
       </div>
 
-    </div>
-  </header>
-
-  <!-- ══════════ ZONA DE MENSAJES ══════════ -->
-  <div class="messages-zone" #chatThread>
-
-    @if (!hasHistory()) {
-
-      <!-- Estado vacío -->
-      <div class="empty-state">
-        <div class="empty-orb"></div>
-        <div class="empty-icon">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"/>
-            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
-            <line x1="12" y1="17" x2="12.01" y2="17"/>
-          </svg>
+      <div class="topbar-right">
+        <div class="role-chip" [style.--role-color]="roleColor()">
+          <span class="role-dot"></span>
+          {{ roleDescription() }}
         </div>
-        <h2 class="empty-title">¿En qué puedo ayudarte?</h2>
-        <p class="empty-sub">Pregunta cualquier cosa relacionada con tu rol de <strong>{{ userRole() }}</strong></p>
+        <button
+          type="button"
+          class="topbar-btn topbar-btn--gold"
+          (click)="createNewConversation()"
+          [disabled]="loading()"
+        >
+          <i class="pi pi-plus" aria-hidden="true"></i>
+          Nueva
+        </button>
+      </div>
+    </header>
 
-        @if (starterPrompts().length > 0) {
-          <div class="suggestions-grid">
-            @for (suggestion of starterPrompts(); track trackByQuestion($index, suggestion)) {
-              <button
-                type="button"
-                class="sug-card"
-                (click)="useSuggestion(suggestion.text)"
-              >
-                <span class="sug-icon"><i class="pi" [ngClass]="suggestion.icon"></i></span>
-                <span class="sug-text">{{ suggestion.text }}</span>
-              </button>
+    <div class="messages-zone" #chatThread>
+      <div class="messages-inner">
+
+        @if (!hasHistory()) {
+          <div class="empty-state">
+            <div class="empty-orb"></div>
+            <div class="empty-icon">
+              <i class="pi pi-sparkles" aria-hidden="true"></i>
+            </div>
+            <h2 class="empty-title">¿En qué puedo ayudarte?</h2>
+            <p class="empty-sub">
+              Consulta inventario, alertas y operaciones como
+              <strong>{{ roleDescription() }}</strong>
+            </p>
+
+            @if (starterPrompts().length > 0) {
+              <div class="suggestions-grid">
+                @for (suggestion of starterPrompts(); track trackByQuestion($index, suggestion)) {
+                  <button
+                    type="button"
+                    class="sug-card"
+                    (click)="useSuggestion(suggestion.text)"
+                  >
+                    <span class="sug-icon"><i class="pi" [ngClass]="suggestion.icon"></i></span>
+                    <span class="sug-text">{{ suggestion.text }}</span>
+                  </button>
+                }
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="messages-feed">
+            @for (entry of history(); track trackByHistoryId($index, entry)) {
+              <article class="msg-group" [attr.data-status]="entry.status">
+
+                <div class="msg-row msg-row--user">
+                  <div class="msg-user-label">Tú</div>
+                  <div class="bubble bubble--user">
+                    <p>{{ entry.question }}</p>
+                  </div>
+                  <time class="msg-time">{{ formatAskedAt(entry.askedAt) }}</time>
+                </div>
+
+                <div class="msg-row msg-row--ai">
+                  <div class="ai-avatar" aria-hidden="true">
+                    <i class="pi pi-sparkles"></i>
+                  </div>
+                  <div class="ai-body">
+                    @if (entry.status === 'loading') {
+                      <div class="bubble bubble--ai bubble--loading">
+                        <div class="typing"><span></span><span></span><span></span></div>
+                      </div>
+                    } @else if (entry.status === 'error') {
+                      <div class="bubble bubble--error">
+                        <i class="pi pi-exclamation-circle" aria-hidden="true"></i>
+                        <span>{{ entry.errorMessage || 'Error al procesar la pregunta' }}</span>
+                      </div>
+                    } @else {
+                      <div class="bubble bubble--ai markdown-content" [innerHTML]="entry.answer | markdown"></div>
+                      <div class="bubble-footer">
+                        @if (entry.contextSource) {
+                          <span class="source-tag">{{ entry.contextSource }}</span>
+                        }
+                        <button
+                          type="button"
+                          class="retry-btn"
+                          (click)="resendQuestion(entry.question)"
+                          [disabled]="loading()"
+                          title="Repetir pregunta"
+                        >
+                          <i class="pi pi-refresh" aria-hidden="true"></i>
+                        </button>
+                      </div>
+                    }
+                  </div>
+                </div>
+
+              </article>
             }
           </div>
         }
+
       </div>
-
-    } @else {
-
-      <!-- Feed de mensajes -->
-      <div class="messages-feed">
-        @for (entry of history(); track trackByHistoryId($index, entry)) {
-          <div class="msg-group" [attr.data-status]="entry.status">
-
-            <!-- Mensaje usuario -->
-            <div class="msg-row msg-row--user">
-              <div class="bubble bubble--user"><p>{{ entry.question }}</p></div>
-              <time class="msg-time">{{ formatAskedAt(entry.askedAt) }}</time>
-            </div>
-
-            <!-- Respuesta IA -->
-            <div class="msg-row msg-row--ai">
-              <div class="ai-dot"></div>
-              <div class="ai-body">
-                @if (entry.status === 'loading') {
-                  <div class="bubble bubble--ai">
-                    <div class="typing"><span></span><span></span><span></span></div>
-                  </div>
-                } @else if (entry.status === 'error') {
-                  <div class="bubble bubble--error">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-                    </svg>
-                    <span>{{ entry.errorMessage || 'Error al procesar la pregunta' }}</span>
-                  </div>
-                } @else {
-                  <div class="bubble bubble--ai">
-                    @for (paragraph of answerParagraphs(entry.answer); track $index) {
-                      <p>{{ paragraph }}</p>
-                    }
-                    <div class="bubble-footer">
-                      @if (entry.contextSource) {
-                        <span class="source-tag">{{ entry.contextSource }}</span>
-                      }
-                      <button
-                        type="button"
-                        class="retry-btn"
-                        (click)="resendQuestion(entry.question)"
-                        [disabled]="loading()"
-                        title="Repetir"
-                      >
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                          <polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.96"/>
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-                }
-              </div>
-            </div>
-
-          </div>
-        }
-      </div>
-
-    }
-  </div>
-
-  <!-- ══════════ INPUT ══════════ -->
-  <footer class="ai-footer">
-    @if (submitError()) {
-      <div class="error-bar">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-        </svg>
-        <span>{{ submitError() }}</span>
-        <button class="error-close" (click)="submitError.set(null)">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-          </svg>
-        </button>
-      </div>
-    }
-
-    <div class="composer">
-      <textarea
-        id="chat-input"
-        class="composer-input"
-        [ngModel]="question()"
-        (ngModelChange)="updateQuestion($event)"
-        (keydown)="onComposerKeydown($event)"
-        placeholder="Escribe tu pregunta..."
-        [disabled]="loading()"
-        rows="1"
-      ></textarea>
-      <button
-        type="button"
-        class="composer-send"
-        [class.ready]="canSubmit()"
-        [disabled]="!canSubmit()"
-        (click)="askQuestion()"
-      >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
-        </svg>
-      </button>
     </div>
 
-    <p class="composer-hint">
-      <kbd>Enter</kbd> para enviar &nbsp;·&nbsp; <kbd>Shift + Enter</kbd> nueva línea
-    </p>
-  </footer>
+    <footer class="ai-footer">
+      <div class="composer-wrap">
+        @if (submitError()) {
+          <div class="error-bar">
+            <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
+            <span>{{ submitError() }}</span>
+            <button type="button" class="error-close" (click)="submitError.set(null)" aria-label="Cerrar">
+              <i class="pi pi-times" aria-hidden="true"></i>
+            </button>
+          </div>
+        }
+
+        <div class="composer" [class.composer--focused]="composerFocused()">
+          <textarea
+            id="chat-input"
+            class="composer-input"
+            [ngModel]="question()"
+            (ngModelChange)="updateQuestion($event)"
+            (keydown)="onComposerKeydown($event)"
+            (focus)="composerFocused.set(true)"
+            (blur)="composerFocused.set(false)"
+            placeholder="Escribe tu pregunta sobre inventario..."
+            [disabled]="loading()"
+            rows="1"
+          ></textarea>
+          <button
+            type="button"
+            class="composer-send"
+            [class.ready]="canSubmit()"
+            [disabled]="!canSubmit()"
+            (click)="askQuestion()"
+            aria-label="Enviar mensaje"
+          >
+            <i class="pi pi-send" aria-hidden="true"></i>
+          </button>
+        </div>
+
+        <p class="composer-hint">
+          <kbd>Enter</kbd> enviar &nbsp;·&nbsp; <kbd>Shift + Enter</kbd> nueva línea
+        </p>
+      </div>
+    </footer>
+
+  </main>
+
+  @if (!convSidebarCollapsed()) {
+    <button
+      type="button"
+      class="conv-sidebar-backdrop"
+      (click)="convSidebarCollapsed.set(true)"
+      aria-label="Cerrar panel de conversaciones"
+    ></button>
+  }
 
 </div>

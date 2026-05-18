@@ -70,7 +70,7 @@ public class AiController {
                 relatedConversations
         );
 
-        // Guardar en historial si se proporciona conversationId
+        // Guardar en historial si se proporciona conversationId y devolver título actualizado
         if (conversationId != null && roleContext.userId() != null) {
             conversationService.addMessageToConversation(
                     conversationId,
@@ -79,6 +79,11 @@ public class AiController {
                     response.answer(),
                     roleContext.role()
             );
+            // Leer el título que el backend generó automáticamente (puede haber sido con IA)
+            String updatedTitle = conversationService.getConversation(conversationId, roleContext.userId())
+                    .map(ConversationDto::title)
+                    .orElse(null);
+            return new InventoryAssistantResponse(response.answer(), response.contextSource(), updatedTitle);
         }
 
         return response;
