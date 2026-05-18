@@ -11,9 +11,6 @@
             Asistente de inventario
           }
         </h1>
-        @if (isNewConversation()) {
-          <span class="chat__badge">Borrador</span>
-        }
       </div>
     </div>
 
@@ -41,7 +38,6 @@
         <i class="pi pi-plus" aria-hidden="true"></i>
         <span>Nueva</span>
       </button>
-
     </div>
   </header>
 
@@ -216,15 +212,6 @@
       </button>
     </div>
 
-    <button
-      type="button"
-      class="chat__drawer-new"
-      (click)="createNewConversation(); showHistory.set(false)"
-      [disabled]="loading()"
-    >
-      <i class="pi pi-plus"></i> Nueva conversación
-    </button>
-
     <div class="chat__drawer-list">
       @if (conversations().length > 0) {
         @for (conv of conversations(); track conv.id) {
@@ -258,5 +245,8 @@
       }
     </div>
   </aside>
+
+  <!-- Diálogo de confirmación para eliminar conversación -->
+  <p-confirmDialog></p-confirmDialog>
 
 </div>

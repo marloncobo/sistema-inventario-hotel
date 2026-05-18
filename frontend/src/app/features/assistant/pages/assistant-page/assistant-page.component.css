@@ -19,8 +19,9 @@
   --c-surface: #ffffff;
   --c-line: rgba(61, 43, 31, 0.08);
   --c-line-strong: rgba(200, 146, 45, 0.22);
-  --c-user-bg: #3d2b1f;
-  --c-user-text: #faf6f0;
+  --c-user-bg: #f7f0e4;
+  --c-user-text: #3d2b1f;
+  --c-user-border: rgba(200, 146, 45, 0.28);
   --c-max: 100%;
   --c-pad-x: 1rem;
   --c-header-h: 3.25rem;
@@ -301,9 +302,11 @@
 .chat__message--user .chat__message-content {
   max-width: 85%;
   padding: 0.7rem 1rem;
-  background: var(--c-user-bg);
+  background: linear-gradient(165deg, #fdfaf4 0%, var(--c-user-bg) 100%);
   color: var(--c-user-text);
+  border: 1px solid var(--c-user-border);
   border-radius: 1.125rem 1.125rem 0.25rem 1.125rem;
+  box-shadow: 0 2px 10px rgba(200, 146, 45, 0.08);
   font-size: 0.9rem;
   line-height: 1.55;
 }
@@ -613,26 +616,6 @@
   color: var(--c-brown);
 }
 
-.chat__drawer-new {
-  margin: 0.75rem 1rem;
-  padding: 0.6rem 0.85rem;
-  border: 1px dashed var(--c-line-strong);
-  border-radius: var(--c-radius);
-  background: var(--c-gold-soft);
-  color: var(--c-brown);
-  font-size: 0.8125rem;
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-
-.chat__drawer-new:hover:not(:disabled) {
-  border-color: var(--c-gold);
-}
-
 .chat__drawer-list {
   flex: 1;
   overflow-y: auto;
@@ -773,4 +756,49 @@
   :host {
     margin: 0;
   }
+}
+
+/* ── ConfirmDialog personalizado (compacto y discreto) ──── */
+
+:host ::ng-deep .p-confirm-dialog {
+  max-width: 320px !important;
+}
+
+:host ::ng-deep .p-confirm-dialog .p-dialog-header {
+  padding: 0.75rem 1rem !important;
+  border-bottom: 1px solid var(--c-line) !important;
+}
+
+:host ::ng-deep .p-confirm-dialog .p-dialog-header .p-dialog-title {
+  font-size: 0.95rem !important;
+  font-weight: 600 !important;
+  color: var(--c-brown) !important;
+}
+
+:host ::ng-deep .p-confirm-dialog .p-dialog-content {
+  padding: 1rem !important;
+  text-align: center;
+  font-size: 0.875rem !important;
+  color: var(--c-brown) !important;
+}
+
+:host ::ng-deep .p-confirm-dialog .p-dialog-footer {
+  padding: 0.75rem 1rem !important;
+  border-top: 1px solid var(--c-line) !important;
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+:host ::ng-deep .p-confirm-dialog .p-confirm-dialog-icon {
+  color: #f59e0b !important;
+  font-size: 1.5rem !important;
+  margin-bottom: 0.5rem;
+}
+
+:host ::ng-deep .p-dialog-mask.p-component-overlay {
+  background: rgba(61, 43, 31, 0.3) !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }

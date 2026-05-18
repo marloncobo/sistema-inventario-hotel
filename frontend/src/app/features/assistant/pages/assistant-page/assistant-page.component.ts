@@ -12,6 +12,8 @@ import {
 import { FormsModule } from '@angular/forms';
 import { take } from 'rxjs';
 import { ButtonModule } from 'primeng/button';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { ConfirmationService } from 'primeng/api';
 import { AssistantApiService } from '@core/services/api/assistant-api.service';
 import { AuthService } from '@core/services/auth.service';
 import { ConversationApiService, ConversationDto } from '@core/services/api/conversation-api.service';
@@ -29,14 +31,16 @@ import { formatDateTime, formatTimeOnly, formatDateRelative } from '@shared/util
 @Component({
   selector: 'app-assistant-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, ButtonModule, MarkdownPipe],
+  imports: [CommonModule, FormsModule, ButtonModule, MarkdownPipe, ConfirmDialogModule],
   templateUrl: './assistant-page.component.html',
-  styleUrls: ['./assistant-page.component.css']
+  styleUrls: ['./assistant-page.component.css'],
+  providers: [ConfirmationService]
 })
 export class AssistantPageComponent implements AfterViewChecked, OnInit {
   private readonly assistantApi = inject(AssistantApiService);
   private readonly authService = inject(AuthService);
   private readonly conversationApi = inject(ConversationApiService);
+  private readonly confirmationService = inject(ConfirmationService);
 
   @ViewChild('chatThread') private chatThreadRef?: ElementRef<HTMLElement>;
 
@@ -382,22 +386,28 @@ export class AssistantPageComponent implements AfterViewChecked, OnInit {
   }
 
   protected deleteConversation(conversationId: number): void {
-    if (!confirm('¿Eliminar esta conversación?')) {
-      return;
-    }
-    this.conversationApi.deleteConversation(conversationId)
-      .pipe(take(1))
-      .subscribe({
-        next: () => {
-          this.conversations.update(convs =>
-            convs.filter(c => c.id !== conversationId)
-          );
-          if (this.currentConversationId() === conversationId) {
-            this.currentConversationId.set(null);
-            this.history.set([]);
-          }
-        }
-      });
+    this.confirmationService.confirm({
+      message: '¿Eliminar esta conversación?',
+      header: 'Confirmar',
+      icon: 'pi pi-exclamation-triangle',
+      acceptButtonStyleClass: 'p-button-danger p-button-sm',
+      rejectButtonStyleClass: 'p-button-text p-button-sm',
+      accept: () => {
+        this.conversationApi.deleteConversation(conversationId)
+          .pipe(take(1))
+          .subscribe({
+            next: () => {
+              this.conversations.update(convs =>
+                convs.filter(c => c.id !== conversationId)
+              );
+              if (this.currentConversationId() === conversationId) {
+                this.currentConversationId.set(null);
+                this.history.set([]);
+              }
+            }
+          });
+      }
+    });
   }
 
   protected toggleConversationList(): void {
