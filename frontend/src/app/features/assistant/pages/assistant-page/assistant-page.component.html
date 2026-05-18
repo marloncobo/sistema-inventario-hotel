@@ -173,58 +173,80 @@
     </section>
 
     <aside class="assistant-rail pp-surface-solid" aria-label="Panel lateral">
-      <!-- Conversaciones -->
-      <div class="assistant-rail__conversations">
-        <div class="assistant-rail__head">
-          <span class="pp-section-label">Conversaciones</span>
-          <button
-            type="button"
-            class="assistant-rail__btn-toggle"
-            (click)="toggleConversationList()"
-            [attr.aria-expanded]="showConversationList()"
-          >
-            <i class="pi" [ngClass]="showConversationList() ? 'pi-chevron-up' : 'pi-chevron-down'"></i>
-          </button>
+      <!-- Nueva Conversación -->
+      <button
+        type="button"
+        pButton
+        class="assistant-rail__btn-new-large"
+        icon="pi pi-plus"
+        label="+ Nueva conversación"
+        (click)="createNewConversation()"
+        [disabled]="loading()"
+      ></button>
+
+      <!-- Conversación Actual -->
+      @if (currentConversationId()) {
+        <div class="assistant-rail__current">
+          <span class="pp-section-label">Conversación actual</span>
+          <h3 class="assistant-rail__current-title">{{ currentConversationTitle() }}</h3>
+          @if (isNewConversation()) {
+            <span class="assistant-rail__badge-new">Sin guardar</span>
+          }
         </div>
+      }
 
-        <button
-          type="button"
-          pButton
-          class="assistant-rail__btn-new"
-          icon="pi pi-plus"
-          label="Nueva conversación"
-          (click)="createNewConversation()"
-          [disabled]="loading()"
-        ></button>
+      <!-- Historial de Conversaciones -->
+      @if (conversations().length > 0) {
+        <div class="assistant-rail__conversations">
+          <div class="assistant-rail__head">
+            <span class="pp-section-label">Historial</span>
+            <button
+              type="button"
+              class="assistant-rail__btn-toggle"
+              (click)="toggleConversationList()"
+              [attr.aria-expanded]="showConversationList()"
+              title="Mostrar/ocultar historial"
+            >
+              <i class="pi" [ngClass]="showConversationList() ? 'pi-chevron-up' : 'pi-chevron-down'"></i>
+            </button>
+          </div>
 
-        @if (showConversationList()) {
-          <ul class="assistant-rail__conv-list">
-            @if (conversations().length === 0) {
-              <li class="assistant-rail__conv-empty">No hay conversaciones</li>
-            }
-            @for (conv of conversations(); track conv.id) {
-              <li class="assistant-rail__conv-item" [class.active]="currentConversationId() === conv.id">
-                <button
-                  type="button"
-                  class="assistant-rail__conv-btn"
-                  (click)="loadConversation(conv.id)"
-                >
-                  <span class="assistant-rail__conv-title">{{ conv.title }}</span>
-                  <span class="assistant-rail__conv-date">{{ conv.updatedAt | date: 'short' }}</span>
-                </button>
-                <button
-                  type="button"
-                  class="assistant-rail__conv-delete"
-                  icon="pi pi-trash"
-                  (click)="deleteConversation(conv.id)"
-                  [disabled]="loading()"
-                  title="Eliminar"
-                ></button>
-              </li>
-            }
-          </ul>
-        }
-      </div>
+          @if (showConversationList()) {
+            <ul class="assistant-rail__conv-list">
+              @for (conv of conversations(); track conv.id) {
+                <li class="assistant-rail__conv-item" [class.active]="currentConversationId() === conv.id">
+                  <button
+                    type="button"
+                    class="assistant-rail__conv-btn"
+                    (click)="loadConversation(conv.id)"
+                    title="Cargar conversación"
+                  >
+                    <span class="assistant-rail__conv-title">{{ conv.title }}</span>
+                    <span class="assistant-rail__conv-date">{{ conv.updatedAt | date: 'short' }}</span>
+                  </button>
+                  <button
+                    type="button"
+                    class="assistant-rail__conv-delete"
+                    pButton
+                    icon="pi pi-trash"
+                    [text]="true"
+                    severity="danger"
+                    (click)="deleteConversation(conv.id)"
+                    [disabled]="loading()"
+                    title="Eliminar conversación"
+                  ></button>
+                </li>
+              }
+            </ul>
+          }
+        </div>
+      } @else if (!currentConversationId()) {
+        <div class="assistant-rail__empty">
+          <i class="pi pi-inbox"></i>
+          <p>No hay conversaciones aún</p>
+          <p class="assistant-rail__empty-hint">Empieza una nueva para guardar tu historial</p>
+        </div>
+      }
 
       <hr class="assistant-rail__divider">
 
@@ -470,5 +492,70 @@
     border: none;
     border-top: 1px solid var(--surface-border);
     margin: 1rem 0;
+  }
+
+  .assistant-rail__btn-new-large {
+    width: 100%;
+    margin-bottom: 1.5rem;
+    background: var(--primary-color) !important;
+    color: white !important;
+    font-weight: 600;
+    border-radius: 0.5rem;
+  }
+
+  .assistant-rail__btn-new-large:hover {
+    background: var(--primary-600) !important;
+  }
+
+  .assistant-rail__current {
+    padding: 1rem;
+    background: rgba(var(--primary-500-rgb), 0.1);
+    border-radius: 0.5rem;
+    margin-bottom: 1.5rem;
+    border-left: 3px solid var(--primary-color);
+  }
+
+  .assistant-rail__current-title {
+    margin: 0.5rem 0 0.75rem 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-color);
+    word-break: break-word;
+  }
+
+  .assistant-rail__badge-new {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    background: var(--orange-100);
+    color: var(--orange-700);
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .assistant-rail__empty {
+    text-align: center;
+    padding: 2rem 1rem;
+    color: var(--text-color-secondary);
+    margin-top: 2rem;
+  }
+
+  .assistant-rail__empty i {
+    display: block;
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+  }
+
+  .assistant-rail__empty p {
+    margin: 0.5rem 0;
+    font-size: 0.875rem;
+  }
+
+  .assistant-rail__empty-hint {
+    font-size: 0.75rem !important;
+    opacity: 0.7;
   }
 </style>

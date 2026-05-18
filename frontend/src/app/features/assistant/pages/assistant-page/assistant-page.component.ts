@@ -49,6 +49,8 @@ export class AssistantPageComponent implements AfterViewChecked, OnInit {
   protected readonly suggestedQuestions = signal<QuestionSuggestion[]>([]);
   protected readonly conversations = signal<ConversationDto[]>([]);
   protected readonly currentConversationId = signal<number | null>(null);
+  protected readonly currentConversationTitle = signal<string | null>(null);
+  protected readonly isNewConversation = signal(false);
   protected readonly showConversationList = signal(false);
 
   private shouldScrollToBottom = false;
@@ -146,9 +148,10 @@ export class AssistantPageComponent implements AfterViewChecked, OnInit {
 
     // Si no hay conversación abierta, crear una nueva
     let conversationId = this.currentConversationId();
+    let isNewConv = false;
     if (!conversationId) {
+      isNewConv = true;
       this.createNewConversation();
-      // Después de crear, usar el ID de la nueva conversación
       conversationId = this.conversations()[0]?.id || null;
     }
 
@@ -169,6 +172,25 @@ export class AssistantPageComponent implements AfterViewChecked, OnInit {
                 : entry
             )
           );
+
+          // Auto-renombrar conversación nueva después del primer mensaje
+          if (isNewConv && conversationId) {
+            const newTitle = nextQuestion.substring(0, 50);
+            this.conversationApi
+              .updateConversationTitle(conversationId, newTitle)
+              .pipe(take(1))
+              .subscribe({
+                next: (updated) => {
+                  this.conversations.update((convs) =>
+                    convs.map((c) =>
+                      c.id === conversationId ? updated : c
+                    )
+                  );
+                  this.currentConversationTitle.set(newTitle);
+                }
+              });
+          }
+
           this.loading.set(false);
           this.shouldScrollToBottom = true;
         },
@@ -237,25 +259,39 @@ export class AssistantPageComponent implements AfterViewChecked, OnInit {
   }
 
   protected createNewConversation(): void {
-    const title = `Conversación ${new Date().toLocaleDateString('es-CO')}`;
+    // Crear conversación con título temporal
+    const title = `Nueva conversación`;
     this.conversationApi.createConversation(title)
       .pipe(take(1))
       .subscribe({
         next: (conversation) => {
+          // Agregar al inicio de la lista
           this.conversations.update(convs => [conversation, ...convs]);
-          this.loadConversation(conversation.id);
+          // Limpiar historial para nueva conversación
           this.history.set([]);
+          this.currentConversationId.set(conversation.id);
+          this.currentConversationTitle.set(conversation.title);
+          this.isNewConversation.set(true);
+          this.submitError.set(null);
           this.showConversationList.set(false);
+        },
+        error: () => {
+          // Si falla, al menos limpia el historial
+          this.history.set([]);
+          this.currentConversationId.set(null);
+          this.isNewConversation.set(true);
         }
       });
   }
 
   protected loadConversation(conversationId: number): void {
     this.currentConversationId.set(conversationId);
+    this.isNewConversation.set(false);
     this.conversationApi.getConversation(conversationId)
       .pipe(take(1))
       .subscribe({
         next: (conversation) => {
+          this.currentConversationTitle.set(conversation.title);
           // Mapear mensajes guardados al formato de history
           const messages = conversation.messages.map(msg => ({
             id: `${msg.id}`,
@@ -267,7 +303,12 @@ export class AssistantPageComponent implements AfterViewChecked, OnInit {
             errorMessage: null
           }));
           this.history.set(messages);
+          this.submitError.set(null);
           this.shouldScrollToBottom = true;
+        },
+        error: () => {
+          this.history.set([]);
+          this.currentConversationId.set(null);
         }
       });
   }
