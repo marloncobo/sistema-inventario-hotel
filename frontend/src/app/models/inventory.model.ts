@@ -90,7 +90,7 @@ export interface Location {
 }
 
 export interface CreateLocationRequest {
-  code: string;
+  code?: string | null;
   name: string;
   type: string;
   parentLocationId: number | null;

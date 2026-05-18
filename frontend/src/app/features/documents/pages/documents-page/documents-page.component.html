@@ -24,6 +24,16 @@
   <section class="surface-card documents-panel">
     <div class="documents-toolbar">
       <label class="field">
+        <span>Nombre</span>
+        <input
+          pInputText
+          class="field-control"
+          [value]="nameFilter()"
+          (input)="nameFilter.set($any($event.target).value)"
+          placeholder="Buscar por responsable, proveedor o ubicación..."
+        />
+      </label>
+      <label class="field">
         <span>Tipo</span>
         <select
           class="field-control"
@@ -52,7 +62,7 @@
     </div>
 
     <p-table
-      [value]="documents()"
+      [value]="filteredDocuments()"
       [loading]="loading()"
       [paginator]="true"
       [rows]="10"
@@ -60,7 +70,6 @@
     >
       <ng-template pTemplate="header">
         <tr>
-          <th>Código</th>
           <th>Tipo</th>
           <th>Estado</th>
           <th>Origen → Destino</th>
@@ -71,7 +80,6 @@
       </ng-template>
       <ng-template pTemplate="body" let-doc>
         <tr>
-          <td><strong>{{ doc.code }}</strong></td>
           <td>{{ label(doc.type) }}</td>
           <td><span class="documents-status">{{ label(doc.status) }}</span></td>
           <td>

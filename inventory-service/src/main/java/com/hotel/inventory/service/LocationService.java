@@ -12,12 +12,16 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * CRUD de ubicaciones físicas del inventario.
  */
 @Service
 public class LocationService {
+    private static final String LOCATION_CODE_PREFIX = "LOC-";
+    private static final Pattern LOCATION_CODE_PATTERN = Pattern.compile("^" + LOCATION_CODE_PREFIX + "(\\d+)$");
 
     private final LocationRepository locationRepository;
     private final StockByLocationRepository stockByLocationRepository;
@@ -89,7 +93,7 @@ public class LocationService {
 
     @Transactional
     public Location create(CreateLocationRequest request, String username) {
-        String code = normalize(request.code());
+        String code = generateNextLocationCode();
         String type = normalize(request.type());
         if (!Location.Type.isValid(type)) {
             throw new BusinessException("Tipo de ubicación no válido: " + type);
@@ -156,5 +160,29 @@ public class LocationService {
 
     private String normalizeRoom(String value) {
         return value == null || value.isBlank() ? null : value.trim();
+    }
+
+    private String generateNextLocationCode() {
+        int nextSequence = locationRepository.findAllCodes().stream()
+                .map(this::extractTrailingNumber)
+                .mapToInt(Integer::intValue)
+                .max()
+                .orElse(0) + 1;
+        return LOCATION_CODE_PREFIX + String.format("%04d", nextSequence);
+    }
+
+    private int extractTrailingNumber(String code) {
+        if (code == null || code.isBlank()) {
+            return 0;
+        }
+        Matcher matcher = LOCATION_CODE_PATTERN.matcher(normalize(code));
+        if (!matcher.find()) {
+            return 0;
+        }
+        try {
+            return Integer.parseInt(matcher.group(1));
+        } catch (NumberFormatException ex) {
+            return 0;
+        }
     }
 }
