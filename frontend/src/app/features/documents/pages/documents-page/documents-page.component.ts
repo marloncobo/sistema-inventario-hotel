@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormArray, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { take } from 'rxjs';
 import { ButtonModule } from 'primeng/button';
@@ -61,8 +61,17 @@ export class DocumentsPageComponent implements OnInit {
   protected readonly receiveDialogVisible = signal(false);
   protected readonly selectedDocument = signal<InventoryDocument | null>(null);
   protected readonly submitError = signal<string | null>(null);
+  protected readonly nameFilter = signal('');
   protected readonly typeFilter = signal('');
   protected readonly statusFilter = signal('');
+
+  protected readonly filteredDocuments = computed(() => {
+    const term = this.nameFilter().trim().toLowerCase();
+    if (!term) {
+      return this.documents();
+    }
+    return this.documents().filter((doc) => this.matchesDocumentFilter(doc, term));
+  });
 
   protected readonly createForm = this.fb.nonNullable.group({
     type: ['ORDEN_COMPRA', Validators.required],
@@ -432,5 +441,19 @@ export class DocumentsPageComponent implements OnInit {
       quantityActual: [qty, [Validators.required, Validators.min(0)]],
       unitCost: [unitCost ?? '']
     });
+  }
+
+  private matchesDocumentFilter(doc: InventoryDocument, term: string): boolean {
+    const fields = [
+      doc.providerName,
+      doc.responsible,
+      doc.fromLocationName,
+      doc.toLocationName,
+      doc.fromLocationCode,
+      doc.toLocationCode,
+      this.label(doc.type),
+      this.label(doc.status)
+    ];
+    return fields.some((value) => value?.toLowerCase().includes(term));
   }
 }

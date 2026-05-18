@@ -54,6 +54,16 @@
   <section class="surface-card locations-panel">
     <div class="locations-toolbar">
       <label class="field">
+        <span>Nombre</span>
+        <input
+          pInputText
+          class="field-control"
+          [value]="nameFilter()"
+          (input)="nameFilter.set($any($event.target).value)"
+          placeholder="Buscar ubicación..."
+        />
+      </label>
+      <label class="field">
         <span>Tipo</span>
         <select class="field-control" [value]="typeFilter()" (change)="typeFilter.set($any($event.target).value)">
           <option value="">Todos</option>
@@ -86,7 +96,6 @@
     >
       <ng-template pTemplate="header">
         <tr>
-          <th>Código</th>
           <th>Nombre</th>
           <th>Tipo</th>
           <th>Habitación</th>
@@ -99,7 +108,6 @@
       </ng-template>
       <ng-template pTemplate="body" let-location>
         <tr>
-          <td><strong>{{ location.code }}</strong></td>
           <td>{{ location.name }}</td>
           <td>{{ typeLabel(location.type) }}</td>
           <td>{{ location.roomNumber || '—' }}</td>
@@ -139,7 +147,7 @@
       </ng-template>
       <ng-template pTemplate="emptymessage">
         <tr>
-          <td [attr.colspan]="canManage() ? 7 : 6">No hay ubicaciones con los filtros actuales.</td>
+          <td [attr.colspan]="canManage() ? 6 : 5">No hay ubicaciones con los filtros actuales.</td>
         </tr>
       </ng-template>
     </p-table>
@@ -159,10 +167,12 @@
       <p class="validation-banner validation-banner--danger">{{ submitError() }}</p>
     }
 
-    <label class="field">
-      <span>Código</span>
-      <input pInputText class="field-control" formControlName="code" />
-    </label>
+    @if (editingId() !== null) {
+      <label class="field">
+        <span>Código</span>
+        <input pInputText class="field-control" formControlName="code" />
+      </label>
+    }
 
     <label class="field">
       <span>Nombre</span>

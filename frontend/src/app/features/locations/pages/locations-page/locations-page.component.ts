@@ -50,11 +50,12 @@ export class LocationsPageComponent implements OnInit {
   protected readonly dialogVisible = signal(false);
   protected readonly editingId = signal<number | null>(null);
   protected readonly submitError = signal<string | null>(null);
+  protected readonly nameFilter = signal('');
   protected readonly typeFilter = signal('');
   protected readonly activeFilter = signal<'all' | 'active' | 'inactive'>('active');
 
   protected readonly locationForm = this.fb.nonNullable.group({
-    code: ['', [Validators.required, Validators.maxLength(60), notBlankValidator]],
+    code: ['', [Validators.maxLength(60), notBlankValidator]],
     name: ['', [Validators.required, Validators.maxLength(120), notBlankValidator]],
     type: ['BODEGA', [Validators.required]],
     parentLocationId: [''],
@@ -64,9 +65,13 @@ export class LocationsPageComponent implements OnInit {
   });
 
   protected readonly filteredLocations = computed(() => {
+    const name = this.nameFilter().trim().toLowerCase();
     const type = this.typeFilter().trim().toUpperCase();
     const status = this.activeFilter();
     return this.locations().filter((location) => {
+      if (name && !location.name.toLowerCase().includes(name)) {
+        return false;
+      }
       if (type && location.type !== type) {
         return false;
       }
@@ -113,6 +118,7 @@ export class LocationsPageComponent implements OnInit {
     }
     this.editingId.set(null);
     this.submitError.set(null);
+    this.setCodeValidators(false);
     this.locationForm.reset({
       code: '',
       name: '',
@@ -131,6 +137,7 @@ export class LocationsPageComponent implements OnInit {
     }
     this.editingId.set(location.id);
     this.submitError.set(null);
+    this.setCodeValidators(true);
     this.locationForm.reset({
       code: location.code,
       name: location.name,
@@ -161,7 +168,6 @@ export class LocationsPageComponent implements OnInit {
     const request$ =
       editingId === null
         ? this.inventoryApi.createLocation({
-            code: raw.code.trim().toUpperCase(),
             name: raw.name.trim(),
             type: raw.type,
             parentLocationId: parentId,
@@ -229,5 +235,15 @@ export class LocationsPageComponent implements OnInit {
       .toLowerCase()
       .replace(/_/g, ' ')
       .replace(/\b\w/g, (letter) => letter.toUpperCase());
+  }
+
+  private setCodeValidators(required: boolean): void {
+    const control = this.locationForm.controls.code;
+    control.setValidators(
+      required
+        ? [Validators.required, Validators.maxLength(60), notBlankValidator]
+        : [Validators.maxLength(60)]
+    );
+    control.updateValueAndValidity({ emitEvent: false });
   }
 }
