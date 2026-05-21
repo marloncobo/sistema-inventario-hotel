@@ -19,11 +19,9 @@ public class ConversationService {
     private static final int RELATED_CONVERSATIONS_LIMIT = 4;
     private static final int EMPTY_CONVERSATION_CLEANUP_HOURS = 1;
     private final ConversationRepository conversationRepository;
-    private final GeminiClient geminiClient;
 
-    public ConversationService(ConversationRepository conversationRepository, GeminiClient geminiClient) {
+    public ConversationService(ConversationRepository conversationRepository) {
         this.conversationRepository = conversationRepository;
-        this.geminiClient = geminiClient;
     }
 
     @Transactional(readOnly = true)
@@ -83,11 +81,7 @@ public class ConversationService {
 
                     // Si es el primer mensaje y el título es genérico, generar uno con IA (estilo ChatGPT)
                     if (conversation.getMessages().size() == 1 && isGenericTitle(conversation.getTitle())) {
-                        String aiTitle = geminiClient.generateConversationTitle(question, answer);
-                        String autoTitle = (aiTitle != null && !aiTitle.isBlank())
-                                ? aiTitle
-                                : generateTitleFromQuestion(question);
-                        conversation.setTitle(autoTitle);
+                        conversation.setTitle(generateTitleFromQuestion(question));
                     }
 
                     conversationRepository.save(conversation);

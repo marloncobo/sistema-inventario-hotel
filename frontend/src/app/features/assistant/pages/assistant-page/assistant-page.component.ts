@@ -10,11 +10,13 @@ import {
   OnInit
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { take } from 'rxjs';
+import { Router } from '@angular/router';
+import { forkJoin, of, take } from 'rxjs';
 import { ButtonModule } from 'primeng/button';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
 import { AssistantApiService } from '@core/services/api/assistant-api.service';
+import { VoiceSpeechService } from '@core/services/voice-speech.service';
 import { AuthService } from '@core/services/auth.service';
 import { ConversationApiService, ConversationDto } from '@core/services/api/conversation-api.service';
 import { extractApiErrorMessage } from '@models/api-error.model';
@@ -38,9 +40,11 @@ import { formatDateTime, formatTimeOnly, formatDateRelative } from '@shared/util
 })
 export class AssistantPageComponent implements AfterViewChecked, OnInit {
   private readonly assistantApi = inject(AssistantApiService);
+  protected readonly voice = inject(VoiceSpeechService);
   private readonly authService = inject(AuthService);
   private readonly conversationApi = inject(ConversationApiService);
   private readonly confirmationService = inject(ConfirmationService);
+  private readonly router = inject(Router);
 
   @ViewChild('chatThread') private chatThreadRef?: ElementRef<HTMLElement>;
 
@@ -62,10 +66,22 @@ export class AssistantPageComponent implements AfterViewChecked, OnInit {
   private shouldScrollToBottom = false;
 
   protected readonly trimmedQuestion = computed(() => this.question().trim());
+  protected readonly composerDisplayValue = computed(() => {
+    if (this.voice.isListening()) {
+      const live = this.voice.interimTranscript().trim();
+      if (live) {
+        return live;
+      }
+    }
+    return this.question();
+  });
   protected readonly canSubmit = computed(
     () => this.trimmedQuestion().length > 0 && !this.loading()
   );
   protected readonly hasHistory = computed(() => this.history().length > 0);
+  protected readonly canClearCurrentChat = computed(
+    () => this.hasHistory() || this.currentConversationId() !== null
+  );
 
   protected readonly starterPrompts = computed(() => this.suggestedQuestions());
 
@@ -94,10 +110,7 @@ export class AssistantPageComponent implements AfterViewChecked, OnInit {
       .subscribe({
         next: (conversations) => {
           this.conversations.set(conversations);
-          // Si hay conversaciones previas, cargar la más reciente
-          if (conversations.length > 0) {
-            this.loadConversation(conversations[0].id);
-          }
+          this.showWelcomeScreen();
         },
         error: () => {
           // Silenciar errores de carga de conversaciones
@@ -118,6 +131,13 @@ export class AssistantPageComponent implements AfterViewChecked, OnInit {
     if (this.submitError()) {
       this.submitError.set(null);
     }
+  }
+
+  protected onComposerValueChange(value: string): void {
+    if (this.voice.isListening()) {
+      return;
+    }
+    this.updateQuestion(value);
   }
 
   protected onComposerKeydown(event: KeyboardEvent): void {
@@ -217,7 +237,7 @@ export class AssistantPageComponent implements AfterViewChecked, OnInit {
               entry.id === historyId
                 ? {
                     ...entry,
-                    answer: response.answer,
+                    answer: this.sanitizeAnswerForUser(response.answer),
                     contextSource: response.contextSource || null,
                     status: 'success'
                   }
@@ -266,6 +286,13 @@ export class AssistantPageComponent implements AfterViewChecked, OnInit {
     this.submitError.set(null);
   }
 
+  protected toggleVoiceInput(): void {
+    this.voice.toggle({
+      onFinal: (text) => this.askQuestion(text),
+      onError: (message) => this.submitError.set(message)
+    });
+  }
+
   protected resendQuestion(question: string): void {
     this.askQuestion(question);
   }
@@ -295,12 +322,56 @@ export class AssistantPageComponent implements AfterViewChecked, OnInit {
     });
   }
 
-  protected clearHistory(): void {
+  protected clearCurrentMessages(): void {
     if (this.loading()) {
       return;
     }
-    this.history.set([]);
-    this.submitError.set(null);
+
+    const conversationIds = this.conversations().map((conversation) => conversation.id);
+    const activeId = this.currentConversationId();
+
+    if (activeId !== null && !conversationIds.includes(activeId)) {
+      conversationIds.push(activeId);
+    }
+
+    if (conversationIds.length === 0 && !this.hasHistory()) {
+      this.showWelcomeScreen();
+      return;
+    }
+
+    this.confirmationService.confirm({
+      message:
+        conversationIds.length > 1
+          ? '¿Eliminar todas las conversaciones guardadas y volver al inicio?'
+          : '¿Eliminar esta conversación y volver al inicio?',
+      header: 'Limpiar mensajes actuales',
+      icon: 'pi pi-exclamation-triangle',
+      acceptButtonStyleClass: 'p-button-danger p-button-sm',
+      rejectButtonStyleClass: 'p-button-text p-button-sm',
+      accept: () => this.deleteConversationsAndReset(conversationIds)
+    });
+  }
+
+  private deleteConversationsAndReset(conversationIds: number[]): void {
+    this.loading.set(true);
+    this.voice.stop();
+
+    const deletions =
+      conversationIds.length > 0
+        ? forkJoin(conversationIds.map((id) => this.conversationApi.deleteConversation(id)))
+        : of([]);
+
+    deletions.pipe(take(1)).subscribe({
+      next: () => {
+        this.conversations.set([]);
+        this.showWelcomeScreen();
+        this.loading.set(false);
+      },
+      error: () => {
+        this.submitError.set('No se pudieron eliminar las conversaciones. Intenta de nuevo.');
+        this.loading.set(false);
+      }
+    });
   }
 
   protected answerParagraphs(answer: string): string[] {
@@ -343,16 +414,36 @@ export class AssistantPageComponent implements AfterViewChecked, OnInit {
   }
 
   protected createNewConversation(): void {
-    // Este método ahora solo limpia el estado local sin crear una conversación en la BD.
-    // La conversación se creará automáticamente cuando el usuario envíe el primer mensaje.
-    // Esto evita que se guarden conversaciones vacías en la base de datos.
+    this.showWelcomeScreen();
+  }
 
+  protected closeAssistant(): void {
+    this.voice.stop();
+    void this.router.navigate(['/dashboard']);
+  }
+
+  protected sanitizeAnswerForUser(answer: string): string {
+    const normalized = (answer ?? '').trim();
+    if (!normalized) {
+      return '';
+    }
+    return normalized
+      .split('\n')
+      .filter((line) => !/gemini|google cloud|api[_ ]?key|ai studio|generativelanguage|sin llamar a gemini/i.test(line))
+      .join('\n')
+      .replace(/\*[^*]*gemini[^*]*\*/gi, '')
+      .replace(/\*Respuesta generada[^*]*\*/gi, '')
+      .trim();
+  }
+
+  private showWelcomeScreen(): void {
     this.history.set([]);
     this.currentConversationId.set(null);
     this.currentConversationTitle.set(null);
     this.isNewConversation.set(true);
     this.submitError.set(null);
     this.showConversationList.set(false);
+    this.showHistory.set(false);
   }
 
   protected loadConversation(conversationId: number): void {
@@ -368,7 +459,7 @@ export class AssistantPageComponent implements AfterViewChecked, OnInit {
           const messages = conversation.messages.map(msg => ({
             id: `${msg.id}`,
             question: msg.question,
-            answer: msg.answer,
+            answer: this.sanitizeAnswerForUser(msg.answer),
             askedAt: msg.createdAt,
             status: 'success' as const,
             contextSource: null,

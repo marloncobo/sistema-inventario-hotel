@@ -21,7 +21,7 @@ public class GeminiProperties {
     }
 
     public void setApiKey(String apiKey) {
-        this.apiKey = apiKey;
+        this.apiKey = apiKey == null ? "" : apiKey.trim();
     }
 
     public String getModel() {

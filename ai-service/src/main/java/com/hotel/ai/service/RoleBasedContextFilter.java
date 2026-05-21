@@ -28,7 +28,10 @@ public class RoleBasedContextFilter {
             ContextSnapshot fullContext,
             String userRole) {
 
-        return switch (userRole.toUpperCase()) {
+        String normalizedRole = userRole == null || userRole.isBlank()
+                ? "RECEPCION"
+                : userRole.trim().toUpperCase(java.util.Locale.ROOT);
+        return switch (normalizedRole) {
             case "ADMIN" -> filterForAdmin(fullContext);
             case "ALMACENISTA" -> filterForAlmacenista(fullContext);
             case "SERVICIO" -> filterForServicio(fullContext);

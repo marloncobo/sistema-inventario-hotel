@@ -77,14 +77,31 @@ public class GeminiClient {
             }
             return answer.trim();
         } catch (RestClientResponseException ex) {
-            String body = ex.getResponseBodyAsString();
-            if (body != null && body.length() > 400) {
-                body = body.substring(0, 400);
+            if (ex.getStatusCode().value() == 429) {
+                throw new ExternalServiceException(
+                        "Cuota de Gemini agotada en tu proyecto de Google Cloud. "
+                                + "Crear muchas API keys en el mismo proyecto NO aumenta la cuota. "
+                                + "Usa un proyecto NUEVO en Google AI Studio, activa facturacion, "
+                                + "o preguntas simples de habitaciones (el sistema puede responder sin Gemini).",
+                        ex);
             }
-            throw new ExternalServiceException("Gemini respondio con error: " + ex.getStatusCode().value() + " " + ex.getStatusText() + (body == null || body.isBlank() ? "" : " - " + body), ex);
+            throw toExternalServiceException(ex);
         } catch (ResourceAccessException ex) {
             throw new ExternalServiceException("No fue posible conectar con Gemini", ex);
+        } catch (RuntimeException ex) {
+            throw new ExternalServiceException("Error al procesar la respuesta de Gemini: " + ex.getMessage(), ex);
         }
+    }
+
+    private ExternalServiceException toExternalServiceException(RestClientResponseException ex) {
+        String body = ex.getResponseBodyAsString();
+        if (body != null && body.length() > 400) {
+            body = body.substring(0, 400);
+        }
+        return new ExternalServiceException(
+                "Gemini respondio con error: " + ex.getStatusCode().value() + " " + ex.getStatusText()
+                        + (body == null || body.isBlank() ? "" : " - " + body),
+                ex);
     }
 
     private String extractAnswer(GeminiGenerateContentResponse response) {

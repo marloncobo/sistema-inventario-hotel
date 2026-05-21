@@ -68,6 +68,16 @@ function sanitizeApiErrorMessage(message: string): string {
 
   const lowerCased = normalized.toLowerCase();
 
+  if (
+    lowerCased.startsWith('gemini respondio') ||
+    lowerCased.includes('generativelanguage') ||
+    lowerCased.includes('gemini no') ||
+    lowerCased.includes('cuota de gemini') ||
+    lowerCased.includes('google cloud')
+  ) {
+    return 'No fue posible procesar la pregunta en este momento. Prueba una sugerencia del menu o reformula tu consulta.';
+  }
+
   // Mensajes de negocio del backend (español): mostrarlos tal cual.
   if (
     /[áéíóúñ]/i.test(normalized) ||

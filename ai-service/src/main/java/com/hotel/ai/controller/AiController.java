@@ -1,5 +1,7 @@
 package com.hotel.ai.controller;
 
+import com.hotel.ai.client.GatewayClient;
+import com.hotel.ai.dto.AppUserDto;
 import com.hotel.ai.dto.ConversationDto;
 import com.hotel.ai.dto.InventoryAssistantRequest;
 import com.hotel.ai.dto.InventoryAssistantResponse;
@@ -32,11 +34,14 @@ import java.util.Map;
 public class AiController {
     private final InventoryAssistantService inventoryAssistantService;
     private final ConversationService conversationService;
+    private final GatewayClient gatewayClient;
 
     public AiController(InventoryAssistantService inventoryAssistantService,
-                       ConversationService conversationService) {
+                       ConversationService conversationService,
+                       GatewayClient gatewayClient) {
         this.inventoryAssistantService = inventoryAssistantService;
         this.conversationService = conversationService;
+        this.gatewayClient = gatewayClient;
     }
 
     @PostMapping("/inventory-assistant")
@@ -161,12 +166,11 @@ public class AiController {
         String username = authentication.getName();
         Long userId = null;
 
-        // Extract userId from JWT token if available
         if (authentication.getPrincipal() instanceof Jwt jwt) {
-            Object userIdClaim = jwt.getClaim("userId");
-            if (userIdClaim instanceof Number number) {
-                userId = number.longValue();
-            }
+            userId = parseUserIdClaim(jwt.getClaim("userId"));
+        }
+        if (userId == null && username != null && !username.isBlank()) {
+            userId = resolveUserIdFromGateway(username);
         }
 
         String userRole = authentication.getAuthorities().stream()
@@ -185,5 +189,31 @@ public class AiController {
                         .collect(java.util.stream.Collectors.toSet()),
                 true
         );
+    }
+
+    private Long parseUserIdClaim(Object claim) {
+        if (claim == null) {
+            return null;
+        }
+        if (claim instanceof Number number) {
+            return number.longValue();
+        }
+        if (claim instanceof String text && !text.isBlank()) {
+            try {
+                return Long.parseLong(text.trim());
+            } catch (NumberFormatException ignored) {
+                return null;
+            }
+        }
+        return null;
+    }
+
+    private Long resolveUserIdFromGateway(String username) {
+        return gatewayClient.listUsers().stream()
+                .filter(user -> username.equalsIgnoreCase(user.getUsername()))
+                .map(AppUserDto::getId)
+                .filter(java.util.Objects::nonNull)
+                .findFirst()
+                .orElse(null);
     }
 }

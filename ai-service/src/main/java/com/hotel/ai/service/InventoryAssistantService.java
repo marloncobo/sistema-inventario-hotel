@@ -19,6 +19,7 @@ import com.hotel.ai.dto.RoleContextInfo;
 import com.hotel.ai.dto.RoomConsumptionDto;
 import com.hotel.ai.dto.RoomDistributionDto;
 import com.hotel.ai.dto.RoomDto;
+import com.hotel.ai.exception.ExternalServiceException;
 import com.hotel.ai.dto.SimpleAreaDto;
 import com.hotel.ai.dto.SimpleCategoryDto;
 import com.hotel.ai.dto.SimpleProviderDto;
@@ -28,12 +29,18 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * Servicio de asistente de inventario con soporte para control de acceso basado en roles (RBAC).
@@ -59,6 +66,14 @@ public class InventoryAssistantService {
     private static final int ROOM_DISTRIBUTION_LIMIT = 12;
     private static final int RELATED_CONVERSATIONS_PROMPT_LIMIT = 4;
     private static final int RELATED_MESSAGES_PER_CONVERSATION_LIMIT = 3;
+    private static final Pattern AVAILABLE_ROOMS_QUESTION = Pattern.compile(
+            ".*(habitacion|habitaciones|cuartos?).*(disponib|libre|vacant).*"
+                    + "|.*(disponib|libre|cuantas?).*(habitacion|habitaciones|cuartos?).*",
+            Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
+    private static final Pattern GENERAL_INVENTORY_QUESTION = Pattern.compile(
+            ".*(estado general|resumen|panorama|situacion|como esta).*(inventario|stock|hotel).*"
+                    + "|.*(inventario|stock).*(general|resumen|estado|actual).*",
+            Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
 
     private final InventoryClient inventoryClient;
     private final RoomsClient roomsClient;
@@ -101,19 +116,16 @@ public class InventoryAssistantService {
         // 1. Cargar contexto completo
         InventorySnapshot fullSnapshot = loadContext(request.getInventoryContext());
 
-        // 2. Filtrar contexto según rol del usuario
         RoleBasedContextFilter.FilteredContextSnapshot filteredContext =
                 filterContextByRole(fullSnapshot, roleContext.role());
-
-        // 3. Construir prompt adaptado al rol
-        String aiInstructions = promptBuilder.getAiInstructionsForRole(roleContext);
-        String prompt = buildPromptWithFilteredContext(request.getQuestion(), filteredContext, roleContext, List.of());
-
-        // 4. Obtener respuesta de Gemini
-        String answer = geminiClient.generateInventoryAnswer(aiInstructions, prompt);
-
-        // 5. Retornar respuesta con metadata
-        return new InventoryAssistantResponse(answer, fullSnapshot.contextSource());
+        return answerWithContext(
+                request.getQuestion(),
+                roleContext,
+                fullSnapshot,
+                filteredContext,
+                List.of(),
+                List.of()
+        );
     }
 
     public InventoryAssistantResponse answerInventoryQuestion(
@@ -132,16 +144,44 @@ public class InventoryAssistantService {
         InventorySnapshot fullSnapshot = loadContext(request.getInventoryContext());
         RoleBasedContextFilter.FilteredContextSnapshot filteredContext =
                 filterContextByRole(fullSnapshot, roleContext.role());
-        String aiInstructions = promptBuilder.getAiInstructionsForRole(roleContext);
-        String prompt = buildPromptWithFilteredContext(
+        return answerWithContext(
                 request.getQuestion(),
-                filteredContext,
                 roleContext,
+                fullSnapshot,
+                filteredContext,
                 conversationHistory,
                 relatedConversations
         );
-        String answer = geminiClient.generateInventoryAnswer(aiInstructions, prompt);
-        return new InventoryAssistantResponse(answer, fullSnapshot.contextSource());
+    }
+
+    private InventoryAssistantResponse answerWithContext(
+            String question,
+            RoleContextInfo roleContext,
+            InventorySnapshot fullSnapshot,
+            RoleBasedContextFilter.FilteredContextSnapshot filteredContext,
+            List<ConversationMessageDto> conversationHistory,
+            List<ConversationDto> relatedConversations) {
+        InventorySnapshot filteredSnapshot = snapshotFromFiltered(filteredContext);
+        Optional<String> directAnswer = tryDirectAnswer(question, filteredSnapshot);
+        if (directAnswer.isPresent()) {
+            return new InventoryAssistantResponse(directAnswer.get(), fullSnapshot.contextSource());
+        }
+        try {
+            String aiInstructions = promptBuilder.getAiInstructionsForRole(roleContext);
+            String prompt = buildPromptWithFilteredContext(
+                    question,
+                    filteredContext,
+                    roleContext,
+                    conversationHistory,
+                    relatedConversations
+            );
+            String answer = geminiClient.generateInventoryAnswer(aiInstructions, prompt);
+            return new InventoryAssistantResponse(answer, fullSnapshot.contextSource());
+        } catch (ExternalServiceException ex) {
+            String fallback = tryDirectAnswer(question, filteredSnapshot)
+                    .orElseGet(this::friendlyUnavailableMessage);
+            return new InventoryAssistantResponse(fallback, fullSnapshot.contextSource());
+        }
     }
 
     /**
@@ -255,6 +295,297 @@ public class InventoryAssistantService {
     /**
      * Determina la fuente del contexto para un snapshot filtrado.
      */
+    private InventorySnapshot snapshotFromFiltered(RoleBasedContextFilter.FilteredContextSnapshot filteredContext) {
+        return new InventorySnapshot(
+                filteredContext.items(),
+                filteredContext.lowStockItems(),
+                filteredContext.recentMovements(),
+                filteredContext.topUsedItems(),
+                filteredContext.inventoryReport(),
+                filteredContext.alerts(),
+                filteredContext.providers(),
+                filteredContext.categories(),
+                filteredContext.areas(),
+                filteredContext.rooms(),
+                filteredContext.roomConsumption(),
+                filteredContext.roomDistribution(),
+                filteredContext.users(),
+                contextSourceForFilteredContext(filteredContext)
+        );
+    }
+
+    private Optional<String> tryDirectAnswer(String question, InventorySnapshot snapshot) {
+        if (question == null || question.isBlank()) {
+            return Optional.empty();
+        }
+        String normalized = normalizeQuestion(question);
+        InventoryMetrics metrics = metrics(snapshot);
+
+        if (AVAILABLE_ROOMS_QUESTION.matcher(normalized).matches()) {
+            return Optional.of(answerAvailableRooms(snapshot, metrics));
+        }
+        if (containsAny(normalized, "stock critico", "critico", "agotad", "reabastec", "bajo stock")) {
+            return Optional.of(answerCriticalStock(snapshot, metrics));
+        }
+        if (containsAny(normalized, "proveedor")) {
+            return Optional.of(answerProviders(snapshot));
+        }
+        if (containsAny(normalized, "categoria", "distribu", "por categoria")) {
+            return Optional.of(answerByCategory(snapshot));
+        }
+        if (containsAny(normalized, "mas usad", "top", "mas utilizad", "mas consum")) {
+            return Optional.of(answerTopUsed(snapshot));
+        }
+        if (containsAny(normalized, "usuario") && containsAny(normalized, "movimiento", "registr", "hoy")) {
+            return Optional.of(answerUsersMovementsToday(snapshot));
+        }
+        if (containsAny(normalized, "movimiento", "reciente", "trazabil")) {
+            return Optional.of(answerRecentMovements(snapshot));
+        }
+        if (containsAny(normalized, "consumo", "promedio") && containsAny(normalized, "habitacion", "tipo")) {
+            return Optional.of(answerConsumptionByRoomType(snapshot));
+        }
+        if (GENERAL_INVENTORY_QUESTION.matcher(normalized).matches()
+                || containsAny(normalized, "estado del inventario", "estado inventario")) {
+            return Optional.of(answerInventoryStatus(metrics, snapshot));
+        }
+        return Optional.empty();
+    }
+
+    private String answerAvailableRooms(InventorySnapshot snapshot, InventoryMetrics metrics) {
+        if (metrics.totalRooms() == 0) {
+            return """
+                    ## Habitaciones disponibles
+
+                    No hay datos de habitaciones visibles para tu rol en este momento.
+                    """.trim();
+        }
+        List<String> numbers = snapshot.rooms().stream()
+                .filter(room -> Boolean.TRUE.equals(room.getActive()))
+                .filter(room -> "DISPONIBLE".equalsIgnoreCase(safe(room.getStatus())))
+                .map(RoomDto::getNumber)
+                .filter(Objects::nonNull)
+                .limit(25)
+                .toList();
+        String list = numbers.isEmpty() ? "sin numeros listados" : String.join(", ", numbers);
+        return """
+                ## Habitaciones disponibles
+
+                Hay **%d** habitacion(es) disponibles de **%d** registradas (%d activas).
+
+                - Ocupadas: **%d**
+                - Disponibles: **%d**
+
+                Numeros: %s
+                """.formatted(
+                metrics.availableRooms(),
+                metrics.totalRooms(),
+                metrics.activeRooms(),
+                metrics.occupiedRooms(),
+                metrics.availableRooms(),
+                list).trim();
+    }
+
+    private String answerInventoryStatus(InventoryMetrics metrics, InventorySnapshot snapshot) {
+        StringBuilder builder = new StringBuilder("""
+                ## Estado del inventario
+
+                - Productos registrados: **%d** (activos: **%d**)
+                - Stock bajo: **%d** | Agotados: **%d**
+                - Alertas abiertas: **%d**
+                - Proveedores / categorias / areas: **%d** / **%d** / **%d**
+                """.formatted(
+                metrics.totalItems(),
+                metrics.activeItems(),
+                metrics.lowStockItems(),
+                metrics.outOfStockItems(),
+                metrics.openAlerts(),
+                metrics.totalProviders(),
+                metrics.totalCategories(),
+                metrics.totalAreas()));
+        if (metrics.totalRooms() > 0) {
+            builder.append("\n- Habitaciones: **")
+                    .append(metrics.totalRooms())
+                    .append("** total | **")
+                    .append(metrics.availableRooms())
+                    .append("** disponibles | **")
+                    .append(metrics.occupiedRooms())
+                    .append("** ocupadas\n");
+        }
+        if (!snapshot.lowStockItems().isEmpty()) {
+            builder.append("\nProductos prioritarios:\n");
+            int n = 0;
+            for (InventoryItemDto item : snapshot.lowStockItems()) {
+                if (n++ >= 5) {
+                    break;
+                }
+                builder.append("- **").append(safe(item.getName())).append("** (stock ")
+                        .append(value(item.getStock())).append(", minimo ")
+                        .append(value(item.getMinStock())).append(")\n");
+            }
+        }
+        builder.append("\nRevisa **Reposicion** y **Alertas** para acciones inmediatas.");
+        return builder.toString().trim();
+    }
+
+    private String answerCriticalStock(InventorySnapshot snapshot, InventoryMetrics metrics) {
+        if (snapshot.lowStockItems().isEmpty()) {
+            return """
+                    ## Stock critico
+
+                    No hay productos con stock critico en este momento. Alertas abiertas: **%d**.
+                    """.formatted(metrics.openAlerts()).trim();
+        }
+        StringBuilder builder = new StringBuilder("## Productos con stock critico\n\n");
+        int n = 0;
+        for (InventoryItemDto item : snapshot.lowStockItems()) {
+            if (n++ >= 10) {
+                break;
+            }
+            builder.append("- **").append(safe(item.getName())).append("** — stock ")
+                    .append(value(item.getStock())).append(", minimo ")
+                    .append(value(item.getMinStock())).append('\n');
+        }
+        return builder.toString().trim();
+    }
+
+    private String answerProviders(InventorySnapshot snapshot) {
+        if (snapshot.providers().isEmpty()) {
+            return "## Proveedores\n\nNo hay proveedores visibles en tu contexto actual.";
+        }
+        StringBuilder builder = new StringBuilder("## Proveedores registrados\n\n");
+        snapshot.providers().stream().limit(15).forEach(provider ->
+                builder.append("- **").append(safe(provider.getName())).append("**")
+                        .append(provider.getEmail() != null && !provider.getEmail().isBlank()
+                                ? " — " + provider.getEmail()
+                                : "")
+                        .append('\n'));
+        return builder.toString().trim();
+    }
+
+    private String answerByCategory(InventorySnapshot snapshot) {
+        if (snapshot.items().isEmpty()) {
+            return "## Productos por categoria\n\nNo hay productos visibles para agrupar.";
+        }
+        Map<String, Long> byCategory = snapshot.items().stream()
+                .collect(Collectors.groupingBy(
+                        item -> {
+                            String name = item.getCategory();
+                            return name == null || name.isBlank() ? "Sin categoria" : name.trim();
+                        },
+                        LinkedHashMap::new,
+                        Collectors.counting()));
+        StringBuilder builder = new StringBuilder("## Distribucion por categoria\n\n");
+        byCategory.entrySet().stream()
+                .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
+                .forEach(entry -> builder.append("- **").append(entry.getKey()).append("**: ")
+                        .append(entry.getValue()).append(" producto(s)\n"));
+        return builder.toString().trim();
+    }
+
+    private String answerTopUsed(InventorySnapshot snapshot) {
+        if (snapshot.topUsedItems().isEmpty()) {
+            return "## Productos mas usados\n\nNo hay datos de consumo en los ultimos 30 dias.";
+        }
+        StringBuilder builder = new StringBuilder("## Top productos mas usados (30 dias)\n\n");
+        int n = 0;
+        for (TopUsedItemDto row : snapshot.topUsedItems()) {
+            if (n++ >= 10) {
+                break;
+            }
+            builder.append(n).append(". **").append(safe(row.getItemName())).append("** — ")
+                    .append(value(row.getTotalQuantity())).append(" unidades\n");
+        }
+        return builder.toString().trim();
+    }
+
+    private String answerRecentMovements(InventorySnapshot snapshot) {
+        if (snapshot.recentMovements().isEmpty()) {
+            return "## Movimientos recientes\n\nNo hay movimientos recientes visibles para tu rol.";
+        }
+        StringBuilder builder = new StringBuilder("## Movimientos recientes\n\n");
+        int n = 0;
+        for (InventoryMovementDto movement : snapshot.recentMovements()) {
+            if (n++ >= 10) {
+                break;
+            }
+            builder.append("- ").append(safe(movement.getMovementType()))
+                    .append(" · **").append(safe(movement.getItemName())).append("**")
+                    .append(" · cantidad ").append(value(movement.getQuantity()))
+                    .append('\n');
+        }
+        return builder.toString().trim();
+    }
+
+    private String answerUsersMovementsToday(InventorySnapshot snapshot) {
+        if (snapshot.recentMovements().isEmpty()) {
+            return "## Movimientos de hoy\n\nNo hay movimientos registrados hoy visibles para tu rol.";
+        }
+        var today = java.time.LocalDate.now(ZoneId.systemDefault());
+        Map<String, Long> byUser = snapshot.recentMovements().stream()
+                .filter(movement -> movement.getCreatedAt() != null
+                        && movement.getCreatedAt().toLocalDate().isEqual(today))
+                .collect(Collectors.groupingBy(
+                        movement -> {
+                            String name = movement.getResponsible();
+                            if (name == null || name.isBlank()) {
+                                name = movement.getOperationalResponsible();
+                            }
+                            return safe(name);
+                        },
+                        LinkedHashMap::new,
+                        Collectors.counting()));
+        if (byUser.isEmpty()) {
+            return "## Movimientos de hoy\n\nNo hay movimientos de hoy en el historial reciente cargado.";
+        }
+        StringBuilder builder = new StringBuilder("## Usuarios con movimientos hoy\n\n");
+        byUser.forEach((user, count) ->
+                builder.append("- **").append(user).append("**: ").append(count).append(" movimiento(s)\n"));
+        return builder.toString().trim();
+    }
+
+    private String answerConsumptionByRoomType(InventorySnapshot snapshot) {
+        if (snapshot.roomConsumption().isEmpty()) {
+            return "## Consumo por tipo de habitacion\n\nNo hay registros de consumo en los ultimos 30 dias.";
+        }
+        Map<String, Long> byType = snapshot.roomConsumption().stream()
+                .collect(Collectors.groupingBy(
+                        row -> safe(row.getRoomType()),
+                        LinkedHashMap::new,
+                        Collectors.summingLong(row -> value(row.getTotalQuantity()))));
+        StringBuilder builder = new StringBuilder("## Consumo por tipo de habitacion (30 dias)\n\n");
+        byType.entrySet().stream()
+                .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
+                .forEach(entry -> builder.append("- **").append(entry.getKey()).append("**: ")
+                        .append(entry.getValue()).append(" unidades\n"));
+        return builder.toString().trim();
+    }
+
+    private String friendlyUnavailableMessage() {
+        return """
+                No pude analizar esa pregunta en este momento.
+
+                Prueba una de las sugerencias del menu o reformula tu consulta con mas detalle.
+                """.trim();
+    }
+
+    private boolean containsAny(String text, String... keywords) {
+        for (String keyword : keywords) {
+            if (text.contains(keyword)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private String normalizeQuestion(String text) {
+        return text.toLowerCase(Locale.ROOT)
+                .replace('á', 'a').replace('é', 'e').replace('í', 'i')
+                .replace('ó', 'o').replace('ú', 'u').replace('ñ', 'n')
+                .replaceAll("\\s+", " ")
+                .trim();
+    }
+
     private String contextSourceForFilteredContext(
             RoleBasedContextFilter.FilteredContextSnapshot context) {
         LinkedHashSet<String> sources = new LinkedHashSet<>();
@@ -365,13 +696,6 @@ public class InventoryAssistantService {
         InventoryMetrics metrics = metrics(snapshot);
         List<RiskRow> prioritized = prioritizedRestock(snapshot.items(), snapshot.inventoryReport());
 
-        String detailedContext;
-        try {
-            detailedContext = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(snapshot);
-        } catch (JsonProcessingException ex) {
-            detailedContext = "{\"error\":\"No fue posible serializar el contexto de inventario\"}";
-        }
-
         StringBuilder builder = new StringBuilder();
         builder.append("Pregunta del usuario:\n")
                 .append(question.trim())
@@ -469,9 +793,7 @@ public class InventoryAssistantService {
         }
 
         builder.append("\n")
-                .append("Contexto detallado en JSON:\n")
-                .append(detailedContext)
-                .append("\n\n")
+                .append("Usa unicamente el resumen calculado y las listas anteriores (sin inventar datos).\n\n")
                 .append("━━━ INSTRUCCIONES DE FORMATO (OBLIGATORIO) ━━━\n\n")
                 .append("Genera tu respuesta en Markdown limpio y profesional. Sigue estas reglas sin excepción:\n\n")
                 .append("ESTRUCTURA:\n")

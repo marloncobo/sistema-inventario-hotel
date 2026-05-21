@@ -137,6 +137,8 @@ services:
         condition: service_healthy
     ports:
       - "8085:8080"
+    env_file:
+      - .env
     environment:
       PORT: 8080
       JAVA_OPTS: -XX:MaxRAMPercentage=75
@@ -144,9 +146,8 @@ services:
       INVENTORY_SERVICE_URL: http://inventory-service:8081
       ROOMS_SERVICE_URL: http://rooms-service:8082
       GATEWAY_SERVICE_URL: http://gateway-service:8080
-      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       GEMINI_BASE_URL: ${GEMINI_BASE_URL:-https://generativelanguage.googleapis.com}
-      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.0-flash}
       SPRING_DATASOURCE_URL: jdbc:postgresql://ai-db:5432/aidb
       SPRING_DATASOURCE_USERNAME: hotel
       SPRING_DATASOURCE_PASSWORD: hotel

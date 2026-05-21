@@ -17,6 +17,16 @@
     <div class="chat__header-actions">
       <button
         type="button"
+        class="chat__btn chat__btn--ghost chat__btn--close"
+        (click)="closeAssistant()"
+        aria-label="Salir del asistente"
+        title="Salir del asistente"
+      >
+        <i class="pi pi-times" aria-hidden="true"></i>
+      </button>
+
+      <button
+        type="button"
         class="chat__btn chat__btn--ghost"
         (click)="toggleHistoryPanel()"
         [class.is-active]="showHistory()"
@@ -105,7 +115,7 @@
                   } @else {
                     <div
                       class="chat__message-content chat__message-content--assistant markdown-content"
-                      [innerHTML]="entry.answer | markdown"
+                      [innerHTML]="sanitizeAnswerForUser(entry.answer) | markdown"
                     ></div>
                     <div class="chat__message-actions">
                       @if (entry.contextSource) {
@@ -164,19 +174,40 @@
         </div>
       }
 
-      <div class="chat__input-box" [class.is-focused]="composerFocused()">
+      <div
+        class="chat__input-box"
+        [class.is-focused]="composerFocused()"
+        [class.is-listening]="voice.isListening()"
+      >
         <textarea
           id="chat-input"
           class="chat__input"
-          [ngModel]="question()"
-          (ngModelChange)="updateQuestion($event)"
+          [ngModel]="composerDisplayValue()"
+          (ngModelChange)="onComposerValueChange($event)"
           (keydown)="onComposerKeydown($event)"
           (focus)="composerFocused.set(true)"
           (blur)="composerFocused.set(false)"
-          placeholder="Escribe tu pregunta..."
+          [placeholder]="voice.isListening() ? 'Escuchando...' : 'Escribe tu pregunta...'"
           [disabled]="loading()"
+          [attr.aria-live]="voice.isListening() ? 'polite' : null"
           rows="1"
         ></textarea>
+        <button
+          type="button"
+          class="chat__voice"
+          [class.is-listening]="voice.isListening()"
+          [disabled]="loading() || !voice.isSupported()"
+          [attr.aria-pressed]="voice.isListening()"
+          [attr.aria-label]="voice.isListening() ? 'Detener y enviar voz' : 'Preguntar por voz'"
+          [title]="voice.isSupported() ? 'Micrófono: envío tras 3 s de silencio' : 'Voz no disponible'"
+          (click)="toggleVoiceInput()"
+        >
+          <i
+            class="pi"
+            [ngClass]="voice.isListening() ? 'pi-stop-circle' : 'pi-microphone'"
+            aria-hidden="true"
+          ></i>
+        </button>
         <button
           type="button"
           class="chat__send"
@@ -235,13 +266,19 @@
             </button>
           </div>
         }
-        @if (hasHistory()) {
-          <button type="button" class="chat__drawer-clear" (click)="clearHistory()" [disabled]="loading()">
-            Limpiar mensajes actuales
-          </button>
-        }
       } @else {
         <p class="chat__drawer-empty">Aún no hay conversaciones guardadas.</p>
+      }
+
+      @if (conversations().length > 0 || canClearCurrentChat()) {
+        <button
+          type="button"
+          class="chat__drawer-clear"
+          (click)="clearCurrentMessages()"
+          [disabled]="loading()"
+        >
+          Limpiar mensajes actuales
+        </button>
       }
     </div>
   </aside>

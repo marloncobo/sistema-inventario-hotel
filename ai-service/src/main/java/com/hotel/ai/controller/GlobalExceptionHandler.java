@@ -43,6 +43,12 @@ public class GlobalExceptionHandler {
                 .body(body(HttpStatus.SERVICE_UNAVAILABLE, ex.getMessage(), path(request), null));
     }
 
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<ApiErrorResponse> handleIllegalState(IllegalStateException ex, WebRequest request) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(body(HttpStatus.UNAUTHORIZED, ex.getMessage(), path(request), null));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiErrorResponse> handleUnexpected(Exception ex, WebRequest request) {
         log.error("Unexpected error handling {}", path(request), ex);
